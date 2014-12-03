@@ -1,0 +1,7 @@
+When building the binutils package, be sure to
+also rebuild the following packages at a minimum:
+1. linux-tools
+2. gnu-efi
+3. systemd
+4. clr-systemd-config (build twice)
+5. systemd-bootchart
