@@ -26,6 +26,8 @@ Requires:	binutils-doc
 #Patch1:         switch-build-flow-to-production.patch
 Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
 
+# CVEs
+Patch101:   cve-2017-16826.patch
 
 
 %description
@@ -61,6 +63,7 @@ GNU binary utilities.
 
 #%patch1 -p1
 %patch2 -p1
+%patch101 -p1
 
 
 rm -rf gdb libdecnumber readline sim
