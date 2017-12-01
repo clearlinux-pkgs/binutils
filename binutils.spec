@@ -33,6 +33,7 @@ Patch103:   cve-2017-16829.patch
 Patch104:   cve-2017-16832.patch
 Patch105:   cve-2017-16828-1.patch
 Patch106:   cve-2017-16828-2.patch
+Patch107:   cve-2017-16830.patch
 
 
 %description
@@ -74,6 +75,7 @@ GNU binary utilities.
 %patch104 -p1
 %patch105 -p1
 %patch106 -p1
+%patch107 -p1
 
 
 rm -rf gdb libdecnumber readline sim
