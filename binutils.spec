@@ -42,6 +42,7 @@ Patch112:   cve-2017-17123.patch
 Patch113:   cve-2017-17124.patch
 Patch114:   cve-2017-17125.patch
 Patch115:   cve-2017-17126.patch
+Patch116:   cve-2017-17080.patch
 
 
 %description
@@ -92,6 +93,7 @@ GNU binary utilities.
 %patch113 -p1
 %patch114 -p1
 %patch115 -p1
+%patch116 -p1
 
 
 rm -rf gdb libdecnumber readline sim
