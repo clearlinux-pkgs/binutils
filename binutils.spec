@@ -5,13 +5,13 @@
 %define binutils_target %{_arch}-generic-linux
 
 Name:           binutils
-Version:        2.29.1
+Version:        2.30
 Release:        55
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Url:            http://www.gnu.org/software/binutils/
 Group:          devel
-Source0:        https://ftp.gnu.org/gnu/binutils/binutils-2.29.1.tar.xz
+Source0:        https://ftp.gnu.org/gnu/binutils/binutils-2.30.tar.xz
 BuildRequires:  flex
 BuildRequires:  libstdc++-dev
 BuildRequires:  dejagnu
@@ -27,22 +27,6 @@ Requires:	binutils-doc
 Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
 
 # CVEs
-Patch101:   cve-2017-16826.patch
-Patch102:   cve-2017-16827.patch
-Patch103:   cve-2017-16829.patch
-Patch104:   cve-2017-16832.patch
-Patch105:   cve-2017-16828.patch
-Patch106:   cve-2017-16828-2.patch
-Patch107:   cve-2017-16830.patch
-Patch108:   cve-2017-16831.patch
-Patch109:   cve-2017-16831-2.patch
-Patch110:   cve-2017-17121.patch
-Patch111:   cve-2017-17122.patch
-Patch112:   cve-2017-17123.patch
-Patch113:   cve-2017-17124.patch
-Patch114:   cve-2017-17125.patch
-Patch115:   cve-2017-17126.patch
-Patch116:   cve-2017-17080.patch
 
 
 %description
@@ -74,27 +58,10 @@ Group:          libs
 GNU binary utilities.
 
 %prep
-%setup -q -n binutils-2.29.1
+%setup -q -n binutils-2.30
 
 #%patch1 -p1
 %patch2 -p1
-%patch101 -p1
-%patch102 -p1
-%patch103 -p1
-%patch104 -p1
-%patch105 -p1
-%patch106 -p1
-%patch107 -p1
-%patch108 -p1
-%patch109 -p1
-%patch110 -p1
-%patch111 -p1
-%patch112 -p1
-%patch113 -p1
-%patch114 -p1
-%patch115 -p1
-%patch116 -p1
-
 
 rm -rf gdb libdecnumber readline sim
 
