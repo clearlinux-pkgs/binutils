@@ -6,7 +6,7 @@
 
 Name:           binutils
 Version:        2.30
-Release:        57
+Release:        58
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Url:            http://www.gnu.org/software/binutils/
@@ -27,7 +27,7 @@ Requires:	binutils-doc
 Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
 
 # CVEs
-
+Patch101:       cve-2018-6543.patch
 
 %description
 GNU binary utilities.
@@ -62,6 +62,9 @@ GNU binary utilities.
 
 #%patch1 -p1
 %patch2 -p1
+
+# CVEs
+%patch101 -p1
 
 rm -rf gdb libdecnumber readline sim
 
