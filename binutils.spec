@@ -28,6 +28,7 @@ Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
 
 # CVEs
 Patch101:       cve-2018-6543.patch
+Patch102:       cve-2018-6872.patch
 
 %description
 GNU binary utilities.
@@ -65,6 +66,7 @@ GNU binary utilities.
 
 # CVEs
 %patch101 -p1
+%patch102 -p1
 
 rm -rf gdb libdecnumber readline sim
 
