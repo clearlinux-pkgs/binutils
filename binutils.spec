@@ -35,6 +35,8 @@ Patch105:       cve-2018-7643.patch
 Patch106:       cve-2018-7568.patch
 Patch107:       cve-2018-7569.patch
 Patch108:       cve-2018-7642.patch
+Patch109:       cve-2018-7570-0.patch
+Patch110:       cve-2018-7570.patch
 
 %description
 GNU binary utilities.
@@ -79,6 +81,8 @@ GNU binary utilities.
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
+%patch109 -p1
+%patch110 -p1
 
 rm -rf gdb libdecnumber readline sim
 
