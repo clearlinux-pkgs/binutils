@@ -42,6 +42,8 @@ Patch112:       cve-2018-10373.patch
 Patch113:       cve-2018-10372.patch
 Patch114:       cve-2018-10535.patch
 Patch115:       cve-2018-10534.patch
+Patch116:       cve-2018-9138.nopatch
+Patch117:       cve-2018-9996.nopatch
 
 %description
 GNU binary utilities.
