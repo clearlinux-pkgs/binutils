@@ -5,13 +5,13 @@
 %define binutils_target %{_arch}-generic-linux
 
 Name:           binutils
-Version:        2.30
-Release:        69
+Version:        2.31
+Release:        0
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Url:            http://www.gnu.org/software/binutils/
 Group:          devel
-Source0:        https://mirrors.kernel.org/gnu/binutils/binutils-2.30.tar.xz
+Source0:        https://mirrors.kernel.org/gnu/binutils/binutils-2.31.tar.xz
 BuildRequires:  flex
 BuildRequires:  libstdc++-dev
 BuildRequires:  dejagnu
@@ -27,21 +27,21 @@ Requires:	binutils-doc
 Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
 
 # CVEs
-Patch101:       cve-2018-6543.patch
-Patch102:       cve-2018-6872.patch
-Patch103:       cve-2018-6759.patch
-Patch104:       cve-2018-7208.patch
-Patch105:       cve-2018-7643.patch
-Patch106:       cve-2018-7568.patch
-Patch107:       cve-2018-7569.patch
-Patch108:       cve-2018-7642.patch
-Patch109:       cve-2018-7570-0.patch
-Patch110:       cve-2018-7570.patch
-Patch111:       cve-2018-8945.patch
-Patch112:       cve-2018-10373.patch
-Patch113:       cve-2018-10372.patch
-Patch114:       cve-2018-10535.patch
-Patch115:       cve-2018-10534.patch
+# Patch101:       cve-2018-6543.patch
+# Patch102:       cve-2018-6872.patch
+# Patch103:       cve-2018-6759.patch
+# Patch104:       cve-2018-7208.patch
+# Patch105:       cve-2018-7643.patch
+# Patch106:       cve-2018-7568.patch
+# Patch107:       cve-2018-7569.patch
+# Patch108:       cve-2018-7642.patch
+# Patch109:       cve-2018-7570-0.patch
+# Patch110:       cve-2018-7570.patch
+# Patch111:       cve-2018-8945.patch
+# Patch112:       cve-2018-10373.patch
+# Patch113:       cve-2018-10372.patch
+# Patch114:       cve-2018-10535.patch
+# Patch115:       cve-2018-10534.patch
 Patch116:       cve-2018-9138.nopatch
 Patch117:       cve-2018-9996.nopatch
 
@@ -74,27 +74,27 @@ Group:          libs
 GNU binary utilities.
 
 %prep
-%setup -q -n binutils-2.30
+%setup -q -n binutils-2.31
 
 #%patch1 -p1
 %patch2 -p1
 
 # CVEs
-%patch101 -p1
-%patch102 -p1
-%patch103 -p1
-%patch104 -p1
-%patch105 -p1
-%patch106 -p1
-%patch107 -p1
-%patch108 -p1
-%patch109 -p1
-%patch110 -p1
-%patch111 -p1
-%patch112 -p1
-%patch113 -p1
-%patch114 -p1
-%patch115 -p1
+#patch101 -p1
+#patch102 -p1
+#patch103 -p1
+#patch104 -p1
+#patch105 -p1
+#patch106 -p1
+#patch107 -p1
+#patch108 -p1
+#patch109 -p1
+#patch110 -p1
+#patch111 -p1
+#patch112 -p1
+#patch113 -p1
+#patch114 -p1
+#patch115 -p1
 
 rm -rf gdb libdecnumber readline sim
 
@@ -186,6 +186,7 @@ cat *.lang > %{name}.lang
 %{_includedir}/bfd.h
 %{_includedir}/plugin-api.h
 %{_includedir}/libiberty/
+/usr/include/diagnostics.h
 /usr/lib64/libiberty.a
 
 
@@ -205,7 +206,6 @@ cat *.lang > %{name}.lang
 %{_mandir}/man1/ld.1
 %{_mandir}/man1/windres.1
 %{_mandir}/man1/ranlib.1
-%{_mandir}/man1/nlmconv.1
 %{_mandir}/man1/readelf.1
 %{_mandir}/man1/c++filt.1
 %{_mandir}/man1/dlltool.1
