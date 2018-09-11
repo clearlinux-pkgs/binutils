@@ -23,7 +23,7 @@ BuildRequires:  texinfo
 BuildRequires:  bison
 Requires:	binutils-doc
 
-#Patch1:         switch-build-flow-to-production.patch
+Patch1:		binutils-stable-branch.patch
 Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
 
 # CVEs
@@ -76,7 +76,7 @@ GNU binary utilities.
 %prep
 %setup -q -n binutils-2.31
 
-#%patch1 -p1
+%patch1 -p1
 %patch2 -p1
 
 # CVEs
