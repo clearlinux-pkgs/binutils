@@ -7,7 +7,7 @@ pushd ../linux-tools
 make bump
 make koji-nowait
 popd
-pushd ../gdn
+pushd ../gdb
 make bump
 make koji-nowait
 popd
