@@ -6,7 +6,7 @@
 
 Name:           binutils
 Version:        2.31
-Release:        2
+Release:        3
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Url:            http://www.gnu.org/software/binutils/
@@ -114,7 +114,8 @@ export SOURCE_DATE_EPOCH=1502738392
     --enable-secureplt \
     --with-lib-path=/usr/lib64:/usr/lib32:/usr/lib \
     --enable-targets=i386-linux,x86_64-linux,x86_64-pc-mingw64 \
-    --disable-werror
+    --disable-werror \
+    --with-pic
 make %{?_smp_flags} tooldir=/usr
 
 %check
