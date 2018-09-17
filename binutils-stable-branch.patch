@@ -943,10 +943,17 @@ index a7361fc26d..e57e26e9bd 100644
  
  	2.31 Release point.
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c21ac02abe..fe0d12a28f 100644
+index c21ac02abe..31ee45157f 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,48 @@
+@@ -1,3 +1,55 @@
++2018-09-17  Nick Clifton  <nickc@redhat.com>
++
++	backport from mainline:
++	* 2018-08-14  Robert Yang  <liezhi.yang@windriver.com>
++
++	* as.c (main): Improve check for input file matching output file.
++
 +2018-08-10  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	* testsuite/gas/i386/evex-no-scale.s: Removed.
@@ -995,6 +1002,45 @@ index c21ac02abe..fe0d12a28f 100644
  2018-07-14  Nick Clifton  <nickc@redhat.com>
  
  	2.31 Release point.
+diff --git a/gas/as.c b/gas/as.c
+index 02c7d2970b..919c24a24a 100644
+--- a/gas/as.c
++++ b/gas/as.c
+@@ -1254,14 +1254,27 @@ main (int argc, char ** argv)
+ 	{
+ 	  struct stat sib;
+ 
+-	  if (stat (argv[i], &sib) == 0)
++	  /* Check that the input file and output file are different.  */
++	  if (stat (argv[i], &sib) == 0
++	      && sib.st_ino == sob.st_ino
++	      /* POSIX emulating systems may support stat() but if the
++		 underlying file system does not support a file serial number
++		 of some kind then they will return 0 for the inode.  So
++		 two files with an inode of 0 may not actually be the same.
++		 On real POSIX systems no ordinary file will ever have an
++		 inode of 0.  */
++	      && sib.st_ino != 0
++	      /* Different files may have the same inode number if they
++		 reside on different devices, so check the st_dev field as
++		 well.  */
++	      && sib.st_dev == sob.st_dev)
+ 	    {
+-	      if (sib.st_ino == sob.st_ino && sib.st_ino != 0)
+-		{
+-		  /* Don't let as_fatal remove the output file!  */
+-		  out_file_name = NULL;
+-		  as_fatal (_("The input and output files must be distinct"));
+-		}
++	      const char *saved_out_file_name = out_file_name;
++
++	      /* Don't let as_fatal remove the output file!  */
++	      out_file_name = NULL;
++	      as_fatal (_("The input '%s' and output '%s' files are the same"),
++			argv[i], saved_out_file_name);
+ 	    }
+ 	}
+     }
 diff --git a/gas/config/tc-hppa.c b/gas/config/tc-hppa.c
 index e69fdb2b39..ccae68cb40 100644
 --- a/gas/config/tc-hppa.c
