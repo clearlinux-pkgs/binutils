@@ -943,10 +943,15 @@ index a7361fc26d..e57e26e9bd 100644
  
  	2.31 Release point.
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c21ac02abe..31ee45157f 100644
+index c21ac02abe..682ccb0e17 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,55 @@
+@@ -1,3 +1,60 @@
++2018-09-18  Tamar Christina  <tamar.christina@arm.com>
++
++	* config/tc-aarch64.c (output_operand_error_report): Apply filtering to
++	current instead of head message.
++
 +2018-09-17  Nick Clifton  <nickc@redhat.com>
 +
 +	backport from mainline:
@@ -1041,6 +1046,19 @@ index 02c7d2970b..919c24a24a 100644
  	    }
  	}
      }
+diff --git a/gas/config/tc-aarch64.c b/gas/config/tc-aarch64.c
+index 31985963e3..c77de21d19 100644
+--- a/gas/config/tc-aarch64.c
++++ b/gas/config/tc-aarch64.c
+@@ -4809,7 +4809,7 @@ output_operand_error_report (char *str, bfd_boolean non_fatal_only)
+       /* If we don't want to print non-fatal errors then don't consider them
+ 	 at all.  */
+       if (curr->detail.kind != kind
+-	  || (non_fatal_only && !head->detail.non_fatal))
++	  || (non_fatal_only && !curr->detail.non_fatal))
+ 	continue;
+       /* If there are multiple errors, pick up the one with the highest
+ 	 mismatching operand index.  In the case of multiple errors with
 diff --git a/gas/config/tc-hppa.c b/gas/config/tc-hppa.c
 index e69fdb2b39..ccae68cb40 100644
 --- a/gas/config/tc-hppa.c
