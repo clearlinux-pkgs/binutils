@@ -100,6 +100,7 @@ rm -rf gdb libdecnumber readline sim
 
 %build
 export SOURCE_DATE_EPOCH=1502738392
+sed -i -e "s/#define BFD_VERSION_DATE.*/#define BFD_VERSION_DATE 20180922/g" bfd/version.h
 # Do not use a macro - breaks toolchain
 ./configure --prefix=/usr \
     --enable-shared --disable-static \
