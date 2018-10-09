@@ -6,7 +6,7 @@
 
 Name:           binutils
 Version:        2.31
-Release:        30
+Release:        31
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Url:            http://www.gnu.org/software/binutils/
