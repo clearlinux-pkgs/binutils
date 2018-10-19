@@ -943,10 +943,16 @@ index a7361fc26d..e57e26e9bd 100644
  
  	2.31 Release point.
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c21ac02abe..4944f892a7 100644
+index c21ac02abe..37088283f4 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,73 @@
+@@ -1,3 +1,79 @@
++2018-10-19  Tamar Christina  <tamar.christina@arm.com>
++
++	* testsuite/gas/arm/undefined-insn-arm.d: New test.
++	* testsuite/gas/arm/undefined-insn-thumb.d: New test.
++	* testsuite/gas/arm/undefined-insn.s: New test.
++
 +2018-10-16  Matthew Malcomson  <matthew.malcomson@arm.com>
 +
 +	* testsuite/gas/aarch64/illegal-dotproduct.d: New test.
@@ -1233,6 +1239,35 @@ index 0000000000..9c714ae54d
 +UDOT	V0.4S, V0.8B, V0.4B[4]
 +SDOT	V0.2S, V0.8B, V0.4B[4]
 +SDOT	V0.2S, V0.8B, V0.4H[4]
+diff --git a/gas/testsuite/gas/arm/undefined-insn-arm.d b/gas/testsuite/gas/arm/undefined-insn-arm.d
+new file mode 100644
+index 0000000000..f779b2a90e
+--- /dev/null
++++ b/gas/testsuite/gas/arm/undefined-insn-arm.d
+@@ -0,0 +1,5 @@
++#name: Undefined binary printing in arm mode
++#skip: *-unknown-pe *-*-vxworks
++#source: undefined-insn.s
++#objdump: -D -b binary -m armv5te
++#...
+diff --git a/gas/testsuite/gas/arm/undefined-insn-thumb.d b/gas/testsuite/gas/arm/undefined-insn-thumb.d
+new file mode 100644
+index 0000000000..cee74e0651
+--- /dev/null
++++ b/gas/testsuite/gas/arm/undefined-insn-thumb.d
+@@ -0,0 +1,5 @@
++#name: Undefined binary printing in thumb mode
++#skip: *-unknown-pe *-*-vxworks
++#source: undefined-insn.s
++#objdump: -D -b binary -m armv5te -M force-thumb
++#...
+diff --git a/gas/testsuite/gas/arm/undefined-insn.s b/gas/testsuite/gas/arm/undefined-insn.s
+new file mode 100644
+index 0000000000..cf59a03d1d
+--- /dev/null
++++ b/gas/testsuite/gas/arm/undefined-insn.s
+@@ -0,0 +1 @@
++	.inst 0xffffffff
 diff --git a/gas/testsuite/gas/i386/evex-no-scale-32.d b/gas/testsuite/gas/i386/evex-no-scale-32.d
 new file mode 100644
 index 0000000000..0a2860d32e
@@ -18036,10 +18071,16 @@ index cfbefe9028..1095091882 100644
  	    set link_cmd $CXX
  	} else {
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index 62cd075922..bf533f4bd2 100644
+index 62cd075922..8f89565935 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
-@@ -1,9 +1,46 @@
+@@ -1,9 +1,52 @@
++2018-10-19  Tamar Christina  <tamar.christina@arm.com>
++
++	* arm-dis.c (UNKNOWN_INSTRUCTION_32BIT): Format specifier for arm mode.
++	(UNKNOWN_INSTRUCTION_16BIT): Format specifier for thumb mode.
++	(print_insn_arm, print_insn_thumb16, print_insn_thumb32): Use them.
++
 +2018-10-16  Matthew Malcomson  <matthew.malcomson@arm.com>
 +
 +	* aarch64-opc.c (struct operand_qualifier_data): Change qualifier data
@@ -18108,6 +18149,49 @@ index ba2af7bfc2..e59240c98d 100644
  
        /* Index out-of-range.  */
        if (!value_in_range_p (opnd->reglane.index, 0, num))
+diff --git a/opcodes/arm-dis.c b/opcodes/arm-dis.c
+index b6cccc5233..bc97bc2617 100644
+--- a/opcodes/arm-dis.c
++++ b/opcodes/arm-dis.c
+@@ -141,6 +141,8 @@ enum opcode_sentinel_enum
+ } opcode_sentinels;
+ 
+ #define UNDEFINED_INSTRUCTION      "\t\t; <UNDEFINED> instruction: %0-31x"
++#define UNKNOWN_INSTRUCTION_32BIT  "\t\t; <UNDEFINED> instruction: %08x"
++#define UNKNOWN_INSTRUCTION_16BIT  "\t\t; <UNDEFINED> instruction: %04x"
+ #define UNPREDICTABLE_INSTRUCTION  "\t; <UNPREDICTABLE>"
+ 
+ /* Common coprocessor opcodes shared between Arm and Thumb-2.  */
+@@ -5188,7 +5190,8 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
+ 	  return;
+ 	}
+     }
+-  abort ();
++  func (stream, UNKNOWN_INSTRUCTION_32BIT, (unsigned)given);
++  return;
+ }
+ 
+ /* Print one 16-bit Thumb instruction from PC on INFO->STREAM.  */
+@@ -5459,7 +5462,8 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
+       }
+ 
+   /* No match.  */
+-  abort ();
++  func (stream, UNKNOWN_INSTRUCTION_16BIT, (unsigned)given);
++  return;
+ }
+ 
+ /* Return the name of an V7M special register.  */
+@@ -6083,7 +6087,8 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
+       }
+ 
+   /* No match.  */
+-  abort ();
++  func (stream, UNKNOWN_INSTRUCTION_32BIT, (unsigned)given);
++  return;
+ }
+ 
+ /* Print data bytes on INFO->STREAM.  */
 diff --git a/opcodes/configure b/opcodes/configure
 index 4ae67d7693..b7eec77085 100755
 --- a/opcodes/configure
