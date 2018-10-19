@@ -943,10 +943,15 @@ index a7361fc26d..e57e26e9bd 100644
  
  	2.31 Release point.
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c21ac02abe..37088283f4 100644
+index c21ac02abe..3ba6ab0278 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,79 @@
+@@ -1,3 +1,84 @@
++2018-10-19  Tamar Christina  <tamar.christina@arm.com>
++
++	* testsuite/gas/arm/undefined-insn-arm.d: Widen pe skip.
++	* testsuite/gas/arm/undefined-insn-thumb.d: Likewise.
++
 +2018-10-19  Tamar Christina  <tamar.christina@arm.com>
 +
 +	* testsuite/gas/arm/undefined-insn-arm.d: New test.
@@ -1241,23 +1246,23 @@ index 0000000000..9c714ae54d
 +SDOT	V0.2S, V0.8B, V0.4H[4]
 diff --git a/gas/testsuite/gas/arm/undefined-insn-arm.d b/gas/testsuite/gas/arm/undefined-insn-arm.d
 new file mode 100644
-index 0000000000..f779b2a90e
+index 0000000000..175e778b50
 --- /dev/null
 +++ b/gas/testsuite/gas/arm/undefined-insn-arm.d
 @@ -0,0 +1,5 @@
 +#name: Undefined binary printing in arm mode
-+#skip: *-unknown-pe *-*-vxworks
++#skip: *-*-pe *-*-vxworks
 +#source: undefined-insn.s
 +#objdump: -D -b binary -m armv5te
 +#...
 diff --git a/gas/testsuite/gas/arm/undefined-insn-thumb.d b/gas/testsuite/gas/arm/undefined-insn-thumb.d
 new file mode 100644
-index 0000000000..cee74e0651
+index 0000000000..a5b4159f1e
 --- /dev/null
 +++ b/gas/testsuite/gas/arm/undefined-insn-thumb.d
 @@ -0,0 +1,5 @@
 +#name: Undefined binary printing in thumb mode
-+#skip: *-unknown-pe *-*-vxworks
++#skip: *-*-pe *-*-vxworks
 +#source: undefined-insn.s
 +#objdump: -D -b binary -m armv5te -M force-thumb
 +#...
