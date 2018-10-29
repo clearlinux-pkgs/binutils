@@ -749,7 +749,7 @@ index d0d11e2964..dda4c57dd7 100644
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/bfd/version.h b/bfd/version.h
-index 065edb4dee..261179d016 100644
+index 065edb4dee..85a5e2dee8 100644
 --- a/bfd/version.h
 +++ b/bfd/version.h
 @@ -16,7 +16,7 @@
@@ -757,7 +757,7 @@ index 065edb4dee..261179d016 100644
     In releases, the date is not included in either version strings or
     sonames.  */
 -#define BFD_VERSION_DATE 20180714
-+#define BFD_VERSION_DATE 20181028
++#define BFD_VERSION_DATE 20181029
  #define BFD_VERSION @bfd_version@
  #define BFD_VERSION_STRING  @bfd_version_package@ @bfd_version_string@
  #define REPORT_BUGS_TO @report_bugs_to@
