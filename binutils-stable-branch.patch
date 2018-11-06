@@ -970,10 +970,17 @@ index a7361fc26d..e57e26e9bd 100644
  
  	2.31 Release point.
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c21ac02abe..3ba6ab0278 100644
+index c21ac02abe..67e9327ed2 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,84 @@
+@@ -1,3 +1,91 @@
++2018-11-05  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR gas/23854
++	* config/tc-i386.c (output_disp): Disable GOT relaxation with
++	data prefix.
++	* testsuite/gas/i386/mixed-mode-reloc32.d: Updated.
++
 +2018-10-19  Tamar Christina  <tamar.christina@arm.com>
 +
 +	* testsuite/gas/arm/undefined-insn-arm.d: Widen pe skip.
@@ -1133,7 +1140,7 @@ index e69fdb2b39..ccae68cb40 100644
        S_CLEAR_EXTERNAL (symbolP);
        symbol_table_insert (symbolP);
 diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
-index 2d20f1cae9..bd179c13af 100644
+index 2d20f1cae9..a288a31844 100644
 --- a/gas/config/tc-i386.c
 +++ b/gas/config/tc-i386.c
 @@ -7857,7 +7857,8 @@ output_disp (fragS *insn_start_frag, offsetT insn_start_off)
@@ -1146,6 +1153,26 @@ index 2d20f1cae9..bd179c13af 100644
  	      p = frag_more (size);
  	      md_number_to_chars (p, val, size);
  	    }
+@@ -7942,12 +7943,13 @@ output_disp (fragS *insn_start_frag, offsetT insn_start_off)
+ 	      /* Check for "call/jmp *mem", "mov mem, %reg",
+ 		 "test %reg, mem" and "binop mem, %reg" where binop
+ 		 is one of adc, add, and, cmp, or, sbb, sub, xor
+-		 instructions.  Always generate R_386_GOT32X for
+-		 "sym*GOT" operand in 32-bit mode.  */
+-	      if ((generate_relax_relocations
+-		   || (!object_64bit
+-		       && i.rm.mode == 0
+-		       && i.rm.regmem == 5))
++		 instructions without data prefix.  Always generate
++		 R_386_GOT32X for "sym*GOT" operand in 32-bit mode.  */
++	      if (i.prefix[DATA_PREFIX] == 0
++		  && (generate_relax_relocations
++		      || (!object_64bit
++			  && i.rm.mode == 0
++			  && i.rm.regmem == 5))
+ 		  && (i.rm.mode == 2
+ 		      || (i.rm.mode == 0 && i.rm.regmem == 5))
+ 		  && ((i.operands == 1
 diff --git a/gas/configure b/gas/configure
 index 56218b4bc8..8bbf78642c 100755
 --- a/gas/configure
@@ -1388,6 +1415,19 @@ index 9cc927a962..3987862477 100644
      }
  
      set ASFLAGS "$old_ASFLAGS"
+diff --git a/gas/testsuite/gas/i386/mixed-mode-reloc32.d b/gas/testsuite/gas/i386/mixed-mode-reloc32.d
+index a2ef6a0b85..59234bc9be 100644
+--- a/gas/testsuite/gas/i386/mixed-mode-reloc32.d
++++ b/gas/testsuite/gas/i386/mixed-mode-reloc32.d
+@@ -7,7 +7,7 @@
+ 
+ RELOCATION RECORDS FOR \[.text\]:
+ OFFSET[ 	]+TYPE[ 	]+VALUE[ 	]*
+-[0-9a-f]+[ 	]+R_386_GOT32X[ 	]+xtrn[ 	]*
++[0-9a-f]+[ 	]+R_386_GOT32[ 	]+xtrn[ 	]*
+ [0-9a-f]+[ 	]+R_386_PLT32[ 	]+xtrn[ 	]*
+ [0-9a-f]+[ 	]+R_386_GOT32X[ 	]+xtrn[ 	]*
+ [0-9a-f]+[ 	]+R_386_PLT32[ 	]+xtrn[ 	]*
 diff --git a/gas/testsuite/gas/i386/se1.d b/gas/testsuite/gas/i386/se1.d
 index ff2685c781..d7800ab885 100644
 --- a/gas/testsuite/gas/i386/se1.d
@@ -6897,10 +6937,21 @@ index 18655f0bf7..7decb4fd7b 100644
  
  	2.31 Release point.
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4827678159..326f716304 100644
+index 4827678159..457d53b20f 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,124 @@
+@@ -1,3 +1,135 @@
++2018-11-06  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR gas/23854
++	* testsuite/ld-i386/i386.exp: Run pr23854.
++	* testsuite/ld-x86-64/x86-64.exp: Likewwise.
++	* testsuite/ld-i386/pr23854.d: New file.
++	* testsuite/ld-i386/pr23854.s: Likewwise.
++	* testsuite/ld-i386/pr23854.d: Likewwise.
++	* testsuite/ld-x86-64/pr23854.d: Likewwise.
++	* testsuite/ld-x86-64/pr23854.s: Likewwise.
++
 +2018-11-06  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR ld/23818
@@ -17434,15 +17485,16 @@ index e660aca524..191ee4456a 100644
  
  .*:     file format .*
 diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
-index 6d794fe653..78dad02579 100644
+index 6d794fe653..56c95367e1 100644
 --- a/ld/testsuite/ld-i386/i386.exp
 +++ b/ld/testsuite/ld-i386/i386.exp
-@@ -462,6 +462,8 @@ run_dump_test "pr23189"
+@@ -462,6 +462,9 @@ run_dump_test "pr23189"
  run_dump_test "pr23194"
  run_dump_test "pr23372a"
  run_dump_test "pr23372b"
 +run_dump_test "pr23486a"
 +run_dump_test "pr23486b"
++run_dump_test "pr23854"
  
  if { !([istarget "i?86-*-linux*"]
         || [istarget "i?86-*-gnu*"]
@@ -17502,6 +17554,79 @@ index 0000000000..08019b7274
 +  Owner                 Data size	Description
 +  GNU                  0x0000000c	NT_GNU_PROPERTY_TYPE_0
 +      Properties: x86 ISA needed: i486, 586
+diff --git a/ld/testsuite/ld-i386/pr23854.d b/ld/testsuite/ld-i386/pr23854.d
+new file mode 100644
+index 0000000000..3ed9c206e5
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr23854.d
+@@ -0,0 +1,28 @@
++#as: --32 -mrelax-relocations=yes
++#ld: -melf_i386
++#objdump: -dw
++
++.*: +file format .*
++
++Disassembly of section .text:
++
++[a-f0-9]+ <_start>:
++ +[a-f0-9]+:	66 13 81 f8 ff ff ff 	adc    -0x8\(%ecx\),%ax
++ +[a-f0-9]+:	66 03 99 f8 ff ff ff 	add    -0x8\(%ecx\),%bx
++ +[a-f0-9]+:	66 23 89 f8 ff ff ff 	and    -0x8\(%ecx\),%cx
++ +[a-f0-9]+:	66 3b 91 f8 ff ff ff 	cmp    -0x8\(%ecx\),%dx
++ +[a-f0-9]+:	66 0b b9 f8 ff ff ff 	or     -0x8\(%ecx\),%di
++ +[a-f0-9]+:	66 1b b1 f8 ff ff ff 	sbb    -0x8\(%ecx\),%si
++ +[a-f0-9]+:	66 2b a9 f8 ff ff ff 	sub    -0x8\(%ecx\),%bp
++ +[a-f0-9]+:	66 33 a1 f8 ff ff ff 	xor    -0x8\(%ecx\),%sp
++ +[a-f0-9]+:	66 85 89 f8 ff ff ff 	test   %cx,-0x8\(%ecx\)
++ +[a-f0-9]+:	66 13 81 fc ff ff ff 	adc    -0x4\(%ecx\),%ax
++ +[a-f0-9]+:	66 03 99 fc ff ff ff 	add    -0x4\(%ecx\),%bx
++ +[a-f0-9]+:	66 23 89 fc ff ff ff 	and    -0x4\(%ecx\),%cx
++ +[a-f0-9]+:	66 3b 91 fc ff ff ff 	cmp    -0x4\(%ecx\),%dx
++ +[a-f0-9]+:	66 0b b9 fc ff ff ff 	or     -0x4\(%ecx\),%di
++ +[a-f0-9]+:	66 1b b1 fc ff ff ff 	sbb    -0x4\(%ecx\),%si
++ +[a-f0-9]+:	66 2b a9 fc ff ff ff 	sub    -0x4\(%ecx\),%bp
++ +[a-f0-9]+:	66 33 a1 fc ff ff ff 	xor    -0x4\(%ecx\),%sp
++ +[a-f0-9]+:	66 85 89 fc ff ff ff 	test   %cx,-0x4\(%ecx\)
++#pass
+diff --git a/ld/testsuite/ld-i386/pr23854.s b/ld/testsuite/ld-i386/pr23854.s
+new file mode 100644
+index 0000000000..565e747be0
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr23854.s
+@@ -0,0 +1,33 @@
++	.data
++	.type	bar, @object
++bar:
++	.byte	1
++	.size	bar, .-bar
++	.globl	foo
++	.type	foo, @object
++foo:
++	.byte	1
++	.size	foo, .-foo
++	.text
++	.globl	_start
++	.type	_start, @function
++_start:
++	adcw	bar@GOT(%ecx), %ax
++	addw	bar@GOT(%ecx), %bx
++	andw	bar@GOT(%ecx), %cx
++	cmpw	bar@GOT(%ecx), %dx
++	orw	bar@GOT(%ecx), %di
++	sbbw	bar@GOT(%ecx), %si
++	subw	bar@GOT(%ecx), %bp
++	xorw	bar@GOT(%ecx), %sp
++	testw	%cx, bar@GOT(%ecx)
++	adcw	foo@GOT(%ecx), %ax
++	addw	foo@GOT(%ecx), %bx
++	andw	foo@GOT(%ecx), %cx
++	cmpw	foo@GOT(%ecx), %dx
++	orw	foo@GOT(%ecx), %di
++	sbbw	foo@GOT(%ecx), %si
++	subw	foo@GOT(%ecx), %bp
++	xorw	foo@GOT(%ecx), %sp
++	testw	%cx, foo@GOT(%ecx)
++	.size	_start, .-_start
 diff --git a/ld/testsuite/ld-i386/property-3.r b/ld/testsuite/ld-i386/property-3.r
 index 0ed91f5922..d03203c1e5 100644
 --- a/ld/testsuite/ld-i386/property-3.r
@@ -17987,6 +18112,79 @@ index 0000000000..c5167eeb65
 +	.p2align 2
 +.endif
 +4:
+diff --git a/ld/testsuite/ld-x86-64/pr23854.d b/ld/testsuite/ld-x86-64/pr23854.d
+new file mode 100644
+index 0000000000..95770d3cef
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr23854.d
+@@ -0,0 +1,28 @@
++#as: --64 -mrelax-relocations=yes
++#ld: -melf_x86_64
++#objdump: -dw
++
++.*: +file format .*
++
++Disassembly of section .text:
++
++[a-f0-9]+ <_start>:
++ +[a-f0-9]+:	66 13 05 ([0-9a-f]{2} ){4} *	adc    0x[a-f0-9]+\(%rip\),%ax        # [a-f0-9]+ <.got>
++ +[a-f0-9]+:	66 03 1d ([0-9a-f]{2} ){4} *	add    0x[a-f0-9]+\(%rip\),%bx        # [a-f0-9]+ <.got>
++ +[a-f0-9]+:	66 23 0d ([0-9a-f]{2} ){4} *	and    0x[a-f0-9]+\(%rip\),%cx        # [a-f0-9]+ <.got>
++ +[a-f0-9]+:	66 3b 15 ([0-9a-f]{2} ){4} *	cmp    0x[a-f0-9]+\(%rip\),%dx        # [a-f0-9]+ <.got>
++ +[a-f0-9]+:	66 0b 3d ([0-9a-f]{2} ){4} *	or     0x[a-f0-9]+\(%rip\),%di        # [a-f0-9]+ <.got>
++ +[a-f0-9]+:	66 1b 35 ([0-9a-f]{2} ){4} *	sbb    0x[a-f0-9]+\(%rip\),%si        # [a-f0-9]+ <.got>
++ +[a-f0-9]+:	66 2b 2d ([0-9a-f]{2} ){4} *	sub    0x[a-f0-9]+\(%rip\),%bp        # [a-f0-9]+ <.got>
++ +[a-f0-9]+:	66 44 33 05 ([0-9a-f]{2} ){4} *	xor    0x[a-f0-9]+\(%rip\),%r8w        # [a-f0-9]+ <.got>
++ +[a-f0-9]+:	66 85 0d ([0-9a-f]{2} ){4} *	test   %cx,0x[a-f0-9]+\(%rip\)        # [a-f0-9]+ <.got>
++ +[a-f0-9]+:	66 13 05 ([0-9a-f]{2} ){4} *	adc    0x[a-f0-9]+\(%rip\),%ax        # [a-f0-9]+ <.got\+0x8>
++ +[a-f0-9]+:	66 03 1d ([0-9a-f]{2} ){4} *	add    0x[a-f0-9]+\(%rip\),%bx        # [a-f0-9]+ <.got\+0x8>
++ +[a-f0-9]+:	66 23 0d ([0-9a-f]{2} ){4} *	and    0x[a-f0-9]+\(%rip\),%cx        # [a-f0-9]+ <.got\+0x8>
++ +[a-f0-9]+:	66 3b 15 ([0-9a-f]{2} ){4} *	cmp    0x[a-f0-9]+\(%rip\),%dx        # [a-f0-9]+ <.got\+0x8>
++ +[a-f0-9]+:	66 0b 3d ([0-9a-f]{2} ){4} *	or     0x[a-f0-9]+\(%rip\),%di        # [a-f0-9]+ <.got\+0x8>
++ +[a-f0-9]+:	66 1b 35 ([0-9a-f]{2} ){4} *	sbb    0x[a-f0-9]+\(%rip\),%si        # [a-f0-9]+ <.got\+0x8>
++ +[a-f0-9]+:	66 2b 2d ([0-9a-f]{2} ){4} *	sub    0x[a-f0-9]+\(%rip\),%bp        # [a-f0-9]+ <.got\+0x8>
++ +[a-f0-9]+:	66 44 33 05 ([0-9a-f]{2} ){4} *	xor    0x[a-f0-9]+\(%rip\),%r8w        # [a-f0-9]+ <.got\+0x8>
++ +[a-f0-9]+:	66 85 0d ([0-9a-f]{2} ){4} *	test   %cx,0x[a-f0-9]+\(%rip\)        # [a-f0-9]+ <.got\+0x8>
++#pass
+diff --git a/ld/testsuite/ld-x86-64/pr23854.s b/ld/testsuite/ld-x86-64/pr23854.s
+new file mode 100644
+index 0000000000..b720154fb2
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr23854.s
+@@ -0,0 +1,33 @@
++	.data
++	.type	bar, @object
++bar:
++	.byte	1
++	.size	bar, .-bar
++	.globl	foo
++	.type	foo, @object
++foo:
++	.byte	1
++	.size	foo, .-foo
++	.text
++	.globl	_start
++	.type	_start, @function
++_start:
++	adcw	bar@GOTPCREL(%rip), %ax
++	addw	bar@GOTPCREL(%rip), %bx
++	andw	bar@GOTPCREL(%rip), %cx
++	cmpw	bar@GOTPCREL(%rip), %dx
++	orw	bar@GOTPCREL(%rip), %di
++	sbbw	bar@GOTPCREL(%rip), %si
++	subw	bar@GOTPCREL(%rip), %bp
++	xorw	bar@GOTPCREL(%rip), %r8w
++	testw	%cx, bar@GOTPCREL(%rip)
++	adcw	foo@GOTPCREL(%rip), %ax
++	addw	foo@GOTPCREL(%rip), %bx
++	andw	foo@GOTPCREL(%rip), %cx
++	cmpw	foo@GOTPCREL(%rip), %dx
++	orw	foo@GOTPCREL(%rip), %di
++	sbbw	foo@GOTPCREL(%rip), %si
++	subw	foo@GOTPCREL(%rip), %bp
++	xorw	foo@GOTPCREL(%rip), %r8w
++	testw	%cx, foo@GOTPCREL(%rip)
++	.size	_start, .-_start
 diff --git a/ld/testsuite/ld-x86-64/property-3.r b/ld/testsuite/ld-x86-64/property-3.r
 index 0ed91f5922..d03203c1e5 100644
 --- a/ld/testsuite/ld-x86-64/property-3.r
@@ -18141,10 +18339,10 @@ index 5216f385dd..f66a40e449 100644
 +  GNU                  0x00000010	NT_GNU_PROPERTY_TYPE_0
 +      Properties: x86 ISA needed: i486, 586, SSE2, SSE3
 diff --git a/ld/testsuite/ld-x86-64/x86-64.exp b/ld/testsuite/ld-x86-64/x86-64.exp
-index 6edb9e86f4..ae21e554ad 100644
+index 6edb9e86f4..9abafd2765 100644
 --- a/ld/testsuite/ld-x86-64/x86-64.exp
 +++ b/ld/testsuite/ld-x86-64/x86-64.exp
-@@ -403,6 +403,10 @@ run_dump_test "pr23372a"
+@@ -403,6 +403,11 @@ run_dump_test "pr23372a"
  run_dump_test "pr23372a-x32"
  run_dump_test "pr23372b"
  run_dump_test "pr23372b-x32"
@@ -18152,6 +18350,7 @@ index 6edb9e86f4..ae21e554ad 100644
 +run_dump_test "pr23486a-x32"
 +run_dump_test "pr23486b"
 +run_dump_test "pr23486b-x32"
++run_dump_test "pr23854"
  
  if { ![istarget "x86_64-*-linux*"] && ![istarget "x86_64-*-nacl*"]} {
      return
