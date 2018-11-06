@@ -73,6 +73,17 @@ Group:          libs
 %description -n binutils-locale
 GNU binary utilities.
 
+
+%package extras
+License:        GPL-3.0
+Summary:        GNU binary utilities
+Group:          libs
+
+%description extras
+GNU binary utilities.
+
+
+
 %prep
 %setup -q -n binutils-2.31
 
@@ -169,12 +180,14 @@ cat *.lang > %{name}.lang
 /usr/lib64/libopcodes-*.*.so
 /usr/lib64/libbfd-*.*.so
 /usr/bin/dwp
-/usr/bin/ld.gold
 /usr/lib/ldscripts
 /usr/bin/dlltool
 /usr/bin/dllwrap
 /usr/bin/windmc
 /usr/bin/windres
+
+%files extras
+/usr/bin/ld.gold
 
 %files -n binutils-dev
 /usr/include/libiberty.h
