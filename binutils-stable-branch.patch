@@ -20,10 +20,16 @@ index f64f1d8403..5add1e2c76 100644
  
  	* config.sub: Sync with upstream version 2018-07-03.
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index f05251acad..401b7f1339 100644
+index f05251acad..273fbc8b23 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,76 @@
+@@ -1,3 +1,82 @@
++2018-11-06  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/23818
++	* elflink.c (_bfd_elf_link_assign_sym_version): Hide symbols
++	defined in discarded input sections.
++
 +2018-09-12  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR ld/23499
@@ -557,7 +563,7 @@ index 45d81777eb..139ed1abcd 100644
  		  && rel[1].r_offset == rel->r_offset + 4
  		  && ELF64_R_TYPE (rel[1].r_info) == R_PPC64_TOCSAVE)
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index b24fb95848..02618bed8f 100644
+index b24fb95848..46091b6341 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -686,13 +686,11 @@ bfd_elf_record_link_assignment (bfd *output_bfd,
@@ -579,6 +585,27 @@ index b24fb95848..02618bed8f 100644
      h->verinfo.verdef = NULL;
  
    /* Make sure this symbol is not garbage collected.  */
+@@ -2360,10 +2358,19 @@ _bfd_elf_link_assign_sym_version (struct elf_link_hash_entry *h, void *data)
+       return FALSE;
+     }
+ 
++  bed = get_elf_backend_data (info->output_bfd);
++
+   /* We only need version numbers for symbols defined in regular
+      objects.  */
+   if (!h->def_regular)
+-    return TRUE;
++    {
++      /* Hide symbols defined in discarded input sections.  */
++      if ((h->root.type == bfd_link_hash_defined
++	   || h->root.type == bfd_link_hash_defweak)
++	  && discarded_section (h->root.u.def.section))
++	(*bed->elf_backend_hide_symbol) (info, h, TRUE);
++      return TRUE;
++    }
+ 
+   hide = FALSE;
+   bed = get_elf_backend_data (info->output_bfd);
 diff --git a/bfd/elfxx-x86.c b/bfd/elfxx-x86.c
 index a2497aab86..2d8f7b640b 100644
 --- a/bfd/elfxx-x86.c
@@ -6870,10 +6897,19 @@ index 18655f0bf7..7decb4fd7b 100644
  
  	2.31 Release point.
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4827678159..fb979d737d 100644
+index 4827678159..326f716304 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,115 @@
+@@ -1,3 +1,124 @@
++2018-11-06  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/23818
++	* testsuite/ld-plugin/lto.exp: Run PR ld/23818 test.
++	* testsuite/ld-plugin/pr23818.d: New file.
++	* testsuite/ld-plugin/pr23818.t: Likewise.
++	* testsuite/ld-plugin/pr23818a.c: Likewise.
++	* testsuite/ld-plugin/pr23818b.c: Likewise.
++
 +2018-08-12  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	* testsuite/ld-x86-64/pr23486b.d: Swap pr23486a.s and pr23486a.s.
@@ -17574,6 +17610,66 @@ index b22eaa12c9..f89855a08f 100644
   .eh_frame 0x4000 : { *(.eh_frame) }
 +  /DISCARD/ : { *(.note.gnu.property) }
  }
+diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
+index 7c50b0f102..4ce74f2587 100644
+--- a/ld/testsuite/ld-plugin/lto.exp
++++ b/ld/testsuite/ld-plugin/lto.exp
+@@ -219,6 +219,12 @@ set lto_link_tests [list \
+   [list "Build pr22751.a" \
+    "$plug_opt" "-flto $lto_no_fat $INT128_CFLAGS" \
+    {pr22751.c} {} "pr22751.a"] \
++  [list "Build libpr23818.so" \
++   "-shared -flto -g -Wl,-version-script,pr23818.t" \
++   "-g -flto $lto_fat" \
++   {pr23818a.c pr23818b.c} \
++   {{"readelf" {-s --wide} "pr23818.d"}} \
++   "libpr23818.so"] \
+ ]
+ 
+ if { [at_least_gcc_version 4 7] } {
+diff --git a/ld/testsuite/ld-plugin/pr23818.d b/ld/testsuite/ld-plugin/pr23818.d
+new file mode 100644
+index 0000000000..5753cd64fd
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr23818.d
+@@ -0,0 +1,4 @@
++#failif
++#...
++.*0+ +[A-Z]+ +GLOBAL +DEFAULT +ABS foo
++#...
+diff --git a/ld/testsuite/ld-plugin/pr23818.t b/ld/testsuite/ld-plugin/pr23818.t
+new file mode 100644
+index 0000000000..45bca5580e
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr23818.t
+@@ -0,0 +1,4 @@
++{
++  global: bar;
++  local: *;
++};
+diff --git a/ld/testsuite/ld-plugin/pr23818a.c b/ld/testsuite/ld-plugin/pr23818a.c
+new file mode 100644
+index 0000000000..5b5ccbf7cb
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr23818a.c
+@@ -0,0 +1,4 @@
++void
++foo ()
++{
++}
+diff --git a/ld/testsuite/ld-plugin/pr23818b.c b/ld/testsuite/ld-plugin/pr23818b.c
+new file mode 100644
+index 0000000000..d4be333a39
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr23818b.c
+@@ -0,0 +1,7 @@
++void foo (void);
++
++void
++bar (void)
++{
++  foo ();
++}
 diff --git a/ld/testsuite/ld-powerpc/powerpc.exp b/ld/testsuite/ld-powerpc/powerpc.exp
 index 0359ba28cb..de762966e5 100644
 --- a/ld/testsuite/ld-powerpc/powerpc.exp
