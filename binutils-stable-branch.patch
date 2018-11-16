@@ -20,10 +20,81 @@ index f64f1d8403..5add1e2c76 100644
  
  	* config.sub: Sync with upstream version 2018-07-03.
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index f05251acad..273fbc8b23 100644
+index f05251acad..53bb9ebca1 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,82 @@
+@@ -1,3 +1,153 @@
++2018-11-15  Claudiu Zissulescu  <claziss@synopsys.com>
++
++	Backport from mainline
++	2018-11-09  Cupertino Miranda  <cmiranda@synopsys.com>
++	* arc-got.h (arc_got_entry_type_for_reloc): Changed to
++	  correct static TLS relocs.
++	* elf32-arc.c (elf_arc_check_relocs): Introduced warning to
++	  TLS relocs which require -fPIC.
++	  (arc_create_forced_local_got_entries_for_tls): Created.
++	  Traverses list of GOT entries to be resolved statically
++	  when needed.
++	  (elf_arc_finish_dynamic_sections): Changed. Calls
++	  arc_create_forced_local_got_entries_for_tls for each known
++	  possibly GOT symbol.
++
++2018-11-15  Claudiu Zissulescu  <claziss@synopsys.com>
++
++	Backport from mainline
++	2018-11-09  Claudiu Zissulescu  <claziss@synopsys.com>
++	* arc-got.h (arc_get_local_got_ents): Revamp it; use
++	elf_local_got_ents to store the local got list.
++	(get_got_entry_list_for_symbo): Restructure it.
++	* elf32-arc.c (elf_arc_relocate_section): Correct the call to
++	get_got_entry_list_for_symbol.
++
++2018-11-15  Claudiu Zissulescu  <claziss@synopsys.com>
++
++	Backport from mainline
++	2018-09-06  Cupertino Miranda <cmiranda@synopsys.com>
++	* arc-got.h (relocate_fix_got_relocs_for_got_info): Changed. Take
++	TLS section alignment in consideration for this relocation.
++	* elf32-arc.c (FINAL_SECTSTART): Added this formula macro.
++	(ARC_TLS_DTPOFF) Updated reloc to use new created macro instead.
++
++2018-11-15  Claudiu Zissulescu  <claziss@synopsys.com>
++
++	Backport from mainline
++	2018-08-01  Cupertino Miranda <cmiranda@synopsys.com>
++	* arc-got.h (relocate_fix_got_relocs_for_got_info): Changed, fixed
++	TCB_SIZE offsize to include section alignment.
++	* elf32-arc.c (arc_special_overflow_checks): Likewise.
++
++2018-11-15  Claudiu Zissulescu  <claziss@synopsys.com>
++
++	Backport from mainline
++	2018-03-02  Cupertino Miranda <cmiranda@synopsys.com>
++	* elf32-arc.c (elf_arc_check_relocs): Changed.
++
++2018-11-15  Claudiu Zissulescu  <claziss@synopsys.com>
++
++	Backport from mainline
++	2018-03-02  Cupertino Miranda <cmiranda@synopsys.com>
++	* elf32-arc.c (elf_arc_check_relocs): Changed.
++
++2018-11-15  Claudiu Zissulescu  <claziss@synopsys.com>
++
++	Backport from mainline
++	2018-03-02  Cupertino Miranda <cmiranda@synopsys.com>
++	* elf32-arc.c (elf_arc_finish_dynamic_symbol) Return FALSE in case
++	arc_htab is NULL.
++
++2018-11-15  Claudiu Zissulescu  <claziss@synopsys.com>
++
++	Backport from mainline
++	2018-03-02  Cupertino Miranda  <cmiranda@synopsys.com>a
++	* arc-got.h (get_got_entry_list_for_symbol): Changed.
++	* ef32-arc.c (struct elf_arc_link_hash_entry): Moved and changed.
++	(elf_arc_link_hash_newfunc): Changed.
++	(arc_elf_link_hash_table_create): Removed old initializations.
++	(elf_arc_relocate_section, elf_arc_finish_dynamic_symbol): Changed.
++
 +2018-11-06  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR ld/23818
@@ -106,6 +177,166 @@ index f05251acad..273fbc8b23 100644
  2018-07-14  Nick Clifton  <nickc@redhat.com>
  
  	2.31 Release point.
+diff --git a/bfd/arc-got.h b/bfd/arc-got.h
+index a86061bcb3..253578b90c 100644
+--- a/bfd/arc-got.h
++++ b/bfd/arc-got.h
+@@ -24,6 +24,9 @@
+ 
+ #define TCB_SIZE (8)
+ 
++#define	align_power(addr, align)	\
++  (((addr) + ((bfd_vma) 1 << (align)) - 1) & (-((bfd_vma) 1 << (align))))
++
+ enum tls_type_e
+ {
+   GOT_UNKNOWN = 0,
+@@ -51,27 +54,26 @@ struct got_entry
+   enum tls_got_entries existing_entries;
+ };
+ 
++/* Return the local got list, if not defined, create an empty one.  */
++
+ static struct got_entry **
+ arc_get_local_got_ents (bfd * abfd)
+ {
+-  static struct got_entry **local_got_ents = NULL;
+-
+-  if (local_got_ents == NULL)
++  if (elf_local_got_ents (abfd) == NULL)
+     {
+-      size_t	   size;
+-      Elf_Internal_Shdr *symtab_hdr = &((elf_tdata (abfd))->symtab_hdr);
+-
+-      size = symtab_hdr->sh_info * sizeof (bfd_vma);
+-      local_got_ents = (struct got_entry **)
+-	bfd_alloc (abfd, sizeof (struct got_entry *) * size);
+-      if (local_got_ents == NULL)
+-	return FALSE;
+-
+-      memset (local_got_ents, 0, sizeof (struct got_entry *) * size);
+-      elf_local_got_ents (abfd) = local_got_ents;
++      bfd_size_type amt = (elf_tdata (abfd)->symtab_hdr.sh_info
++			   * sizeof (*elf_local_got_ents (abfd)));
++      elf_local_got_ents (abfd) = bfd_zmalloc (amt);
++      if (elf_local_got_ents (abfd) == NULL)
++	{
++	  _bfd_error_handler (_("%pB: cannot allocate memory for local "
++				"GOT entries"), abfd);
++	  bfd_set_error (bfd_error_bad_value);
++	  return NULL;
++	}
+     }
+ 
+-  return local_got_ents;
++  return elf_local_got_ents (abfd);
+ }
+ 
+ static struct got_entry *
+@@ -156,15 +158,15 @@ get_got_entry_list_for_symbol (bfd *abfd,
+ 			       unsigned long r_symndx,
+ 			       struct elf_link_hash_entry *h)
+ {
+-  if (h != NULL)
++  struct elf_arc_link_hash_entry *h1 =
++    ((struct elf_arc_link_hash_entry *) h);
++  if (h1 != NULL)
+     {
+-      return &h->got.glist;
++      return &h1->got_ents;
+     }
+   else
+     {
+-      struct got_entry **local_got_ents
+-	= arc_get_local_got_ents (abfd);
+-      return &local_got_ents[r_symndx];
++      return arc_get_local_got_ents (abfd) + r_symndx;
+     }
+ }
+ 
+@@ -206,7 +208,7 @@ arc_got_entry_type_for_reloc (reloc_howto_type *howto)
+ 		     __LINE__, name_for_global_symbol (H));		\
+       }									\
+     if (H)								\
+-      if (h->dynindx == -1 && !h->forced_local)				\
++      if (H->dynindx == -1 && !H->forced_local)				\
+ 	if (! bfd_elf_link_record_dynamic_symbol (info, H))		\
+ 	  return FALSE;							\
+      htab->s##SECNAME->size += 4;					\
+@@ -282,6 +284,7 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **	   list_p,
+   BFD_ASSERT (entry);
+ 
+   if (h == NULL
++      || h->forced_local == TRUE
+       || (! elf_hash_table (info)->dynamic_sections_created
+ 	  || (bfd_link_pic (info)
+ 	      && SYMBOL_REFERENCES_LOCAL (info, h))))
+@@ -329,23 +332,31 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **	   list_p,
+ 		BFD_ASSERT (tls_sec && tls_sec->output_section);
+ 		bfd_vma sec_vma = tls_sec->output_section->vma;
+ 
+-		bfd_put_32 (output_bfd,
+-			    sym_value - sec_vma,
++		if (h == NULL || h->forced_local
++		   || !elf_hash_table (info)->dynamic_sections_created)
++		  {
++		    bfd_put_32 (output_bfd,
++			    sym_value - sec_vma
++			    + (elf_hash_table (info)->dynamic_sections_created
++			       ? 0
++			       : (align_power (0,
++					       tls_sec->alignment_power))),
+ 			    htab->sgot->contents + entry->offset
+ 			    + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
+ 			       ? 4 : 0));
+ 
+-		ARC_DEBUG ("arc_info: FIXED -> %s value = %#lx "
+-			   "@ %lx, for symbol %s\n",
+-			   (entry->type == GOT_TLS_GD ? "GOT_TLS_GD" :
+-			    "GOT_TLS_IE"),
+-			   (long) (sym_value - sec_vma),
+-			   (long) (htab->sgot->output_section->vma
+-			      + htab->sgot->output_offset->vma
+-			      + entry->offset
+-			      + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
+-				 ? 4 : 0)),
+-			   symbol_name);
++		    ARC_DEBUG ("arc_info: FIXED -> %s value = %#lx "
++			  "@ %lx, for symbol %s\n",
++			  (entry->type == GOT_TLS_GD ? "GOT_TLS_GD" :
++			   "GOT_TLS_IE"),
++			  (long) (sym_value - sec_vma),
++			  (long) (htab->sgot->output_section->vma
++			     + htab->sgot->output_offset
++			     + entry->offset
++			     + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
++				? 4 : 0)),
++			  symbol_name);
++		  }
+ 	      }
+ 	      break;
+ 
+@@ -357,7 +368,10 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **	   list_p,
+ 
+ 		bfd_put_32 (output_bfd,
+ 			    sym_value - sec_vma
+-			    + (elf_hash_table (info)->dynamic_sections_created ? 0 : TCB_SIZE),
++			    + (elf_hash_table (info)->dynamic_sections_created
++			       ? 0
++			       : (align_power (TCB_SIZE,
++					       tls_sec->alignment_power))),
+ 			    htab->sgot->contents + entry->offset
+ 			    + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
+ 			       ? 4 : 0));
+@@ -368,7 +382,7 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **	   list_p,
+ 			    "GOT_TLS_IE"),
+ 			   (long) (sym_value - sec_vma),
+ 			   (long) (htab->sgot->output_section->vma
+-			      + htab->sgot->output_offset->vma
++			      + htab->sgot->output_offset
+ 			      + entry->offset
+ 			      + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
+ 				 ? 4 : 0)),
 diff --git a/bfd/configure b/bfd/configure
 index 3c32a83ca3..0fc84148ab 100755
 --- a/bfd/configure
@@ -215,6 +446,350 @@ index 0f75375128..80410575b0 100644
  	  for (t = elf_tdata (abfd)->verref;
  	       t != NULL;
  	       t = t->vn_nextref)
+diff --git a/bfd/elf32-arc.c b/bfd/elf32-arc.c
+index a48ef0ca15..495fa342d3 100644
+--- a/bfd/elf32-arc.c
++++ b/bfd/elf32-arc.c
+@@ -160,6 +160,18 @@ struct arc_relocation_data
+   const char *    symbol_name;
+ };
+ 
++/* ARC ELF linker hash entry.  */
++struct elf_arc_link_hash_entry
++{
++  struct elf_link_hash_entry root;
++
++  /* Track dynamic relocs copied for this symbol.  */
++  struct elf_dyn_relocs *dyn_relocs;
++
++  struct got_entry *got_ents;
++};
++
++
+ /* Should be included at this location due to static declarations
+    defined before this point.  */
+ #include "arc-got.h"
+@@ -281,15 +293,6 @@ struct arc_reloc_map
+   unsigned char		    elf_reloc_val;
+ };
+ 
+-/* ARC ELF linker hash entry.  */
+-struct elf_arc_link_hash_entry
+-{
+-  struct elf_link_hash_entry root;
+-
+-  /* Track dynamic relocs copied for this symbol.  */
+-  struct elf_dyn_relocs *dyn_relocs;
+-};
+-
+ /* ARC ELF linker hash table.  */
+ struct elf_arc_link_hash_table
+ {
+@@ -301,28 +304,28 @@ elf_arc_link_hash_newfunc (struct bfd_hash_entry *entry,
+ 			   struct bfd_hash_table *table,
+ 			   const char *string)
+ {
++  struct elf_arc_link_hash_entry * ret =
++    (struct elf_arc_link_hash_entry *) entry;
++
+   /* Allocate the structure if it has not already been allocated by a
+      subclass.  */
+-  if (entry == NULL)
+-    {
+-      entry = (struct bfd_hash_entry *)
+-	  bfd_hash_allocate (table,
+-			     sizeof (struct elf_arc_link_hash_entry));
+-      if (entry == NULL)
+-	return entry;
+-    }
++  if (ret == NULL)
++    ret = (struct elf_arc_link_hash_entry *)
++	bfd_hash_allocate (table, sizeof (struct elf_arc_link_hash_entry));
++  if (ret == NULL)
++    return (struct bfd_hash_entry *) ret;
+ 
+   /* Call the allocation method of the superclass.  */
+-  entry = _bfd_elf_link_hash_newfunc (entry, table, string);
+-  if (entry != NULL)
++  ret = ((struct elf_arc_link_hash_entry *)
++	 _bfd_elf_link_hash_newfunc ((struct bfd_hash_entry *) ret,
++				     table, string));
++  if (ret != NULL)
+     {
+-      struct elf_arc_link_hash_entry *eh;
+-
+-      eh = (struct elf_arc_link_hash_entry *) entry;
+-      eh->dyn_relocs = NULL;
++      ret->dyn_relocs = NULL;
++      ret->got_ents = NULL;
+     }
+ 
+-  return entry;
++  return (struct bfd_hash_entry *) ret;
+ }
+ 
+ /* Destroy an ARC ELF linker hash table.  */
+@@ -352,11 +355,6 @@ arc_elf_link_hash_table_create (bfd *abfd)
+       return NULL;
+     }
+ 
+-  ret->elf.init_got_refcount.refcount = 0;
+-  ret->elf.init_got_refcount.glist = NULL;
+-  ret->elf.init_got_offset.offset = 0;
+-  ret->elf.init_got_offset.glist = NULL;
+-
+   ret->elf.root.hash_table_free = elf_arc_link_hash_table_free;
+ 
+   return &ret->elf.root;
+@@ -1200,11 +1198,14 @@ arc_special_overflow_checks (const struct arc_relocation_data reloc_data,
+ 	     + (reloc_data.reloc_offset))))
+ #define SECTSTART (bfd_signed_vma) (reloc_data.sym_section->output_section->vma \
+ 				    + reloc_data.sym_section->output_offset)
++#define FINAL_SECTSTART \
++  (bfd_signed_vma) (reloc_data.sym_section->output_section->vma)
+ #define JLI (bfd_signed_vma) (reloc_data.sym_section->output_section->vma)
+ #define _SDA_BASE_ (bfd_signed_vma) (reloc_data.sdata_begin_symbol_vma)
+ #define TLS_REL (bfd_signed_vma) \
+   ((elf_hash_table (info))->tls_sec->output_section->vma)
+-#define TLS_TBSS (8)
++#define TLS_TBSS (align_power(TCB_SIZE, \
++		  reloc_data.sym_section->alignment_power))
+ 
+ #define none (0)
+ 
+@@ -1615,10 +1616,14 @@ elf_arc_relocate_section (bfd *			  output_bfd,
+ 	  while (h->root.type == bfd_link_hash_indirect
+ 		 || h->root.type == bfd_link_hash_warning)
+ 	  {
+-	    struct elf_link_hash_entry *h_old = h;
++	    struct elf_arc_link_hash_entry *ah_old =
++	      (struct elf_arc_link_hash_entry *) h;
+ 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+-	    if (h->got.glist == 0 && h_old->got.glist != h->got.glist)
+-	      h->got.glist = h_old->got.glist;
++	    struct elf_arc_link_hash_entry *ah =
++	      (struct elf_arc_link_hash_entry *) h;
++
++	    if (ah->got_ents == 0 && ah_old->got_ents != ah->got_ents)
++	      ah->got_ents = ah_old->got_ents;
+ 	  }
+ 
+ 	  /* TODO: Need to validate what was the intention.  */
+@@ -1636,6 +1641,8 @@ elf_arc_relocate_section (bfd *			  output_bfd,
+ 
+ 	      if (is_reloc_for_GOT (howto) && !bfd_link_pic (info))
+ 		{
++		  struct elf_arc_link_hash_entry *ah =
++		    (struct elf_arc_link_hash_entry *) h;
+ 		  /* TODO: Change it to use arc_do_relocation with
+ 		    ARC_32 reloc.  Try to use ADD_RELA macro.  */
+ 		  bfd_vma relocation =
+@@ -1645,8 +1652,8 @@ elf_arc_relocate_section (bfd *			  output_bfd,
+ 			 + reloc_data.sym_section->output_section->vma)
+ 		      : 0);
+ 
+-		  BFD_ASSERT (h->got.glist);
+-		  bfd_vma got_offset = h->got.glist->offset;
++		  BFD_ASSERT (ah->got_ents);
++		  bfd_vma got_offset = ah->got_ents->offset;
+ 		  bfd_put_32 (output_bfd, relocation,
+ 			      htab->sgot->contents + got_offset);
+ 		}
+@@ -1717,7 +1724,7 @@ elf_arc_relocate_section (bfd *			  output_bfd,
+ 	  reloc_data.should_relocate = TRUE;
+ 
+ 	  struct got_entry **list
+-	    = get_got_entry_list_for_symbol (output_bfd, r_symndx, h);
++	    = get_got_entry_list_for_symbol (input_bfd, r_symndx, h);
+ 
+ 	  reloc_data.got_offset_value
+ 	    = relocate_fix_got_relocs_for_got_info (list,
+@@ -1956,40 +1963,45 @@ elf_arc_check_relocs (bfd *			 abfd,
+       if (r_symndx < symtab_hdr->sh_info) /* Is a local symbol.  */
+ 	h = NULL;
+       else /* Global one.  */
+-	h = sym_hashes[r_symndx - symtab_hdr->sh_info];
++	{
++	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
++	  while (h->root.type == bfd_link_hash_indirect
++		 || h->root.type == bfd_link_hash_warning)
++	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
++	}
++
+ 
+       switch (r_type)
+ 	{
+-	  case R_ARC_32:
+-	  case R_ARC_32_ME:
+-	    /* During shared library creation, these relocs should not
+-	       appear in a shared library (as memory will be read only
+-	       and the dynamic linker can not resolve these.  However
+-	       the error should not occur for e.g. debugging or
+-	       non-readonly sections.  */
+-	    if (h != NULL
+-		&& (bfd_link_dll (info) && !bfd_link_pie (info))
+-		&& (sec->flags & SEC_ALLOC) != 0
+-		&& (sec->flags & SEC_READONLY) != 0
+-		&& ((sec->flags & SEC_CODE) != 0
+-		    || (sec->flags & SEC_DEBUGGING) != 0))
+-	      {
+-		const char *name;
+-		if (h)
+-		  name = h->root.root.string;
+-		else
+-		  /* bfd_elf_sym_name (abfd, symtab_hdr, isym, NULL);  */
+-		  name = "UNKNOWN";
+-		_bfd_error_handler
+-		  /* xgettext:c-format */
+-		  (_("%pB: relocation %s against `%s' can not be used"
+-		     " when making a shared object; recompile with -fPIC"),
+-		   abfd,
+-		   arc_elf_howto (r_type)->name,
+-		   name);
+-		bfd_set_error (bfd_error_bad_value);
+-		return FALSE;
+-	      }
++	case R_ARC_32:
++	case R_ARC_32_ME:
++	  /* During shared library creation, these relocs should not
++	     appear in a shared library (as memory will be read only
++	     and the dynamic linker can not resolve these.  However
++	     the error should not occur for e.g. debugging or
++	     non-readonly sections.  */
++	  if (h != NULL
++	      && (bfd_link_dll (info) && !bfd_link_pie (info))
++	      && (sec->flags & SEC_ALLOC) != 0
++	      && (sec->flags & SEC_READONLY) != 0
++	      && ((sec->flags & SEC_CODE) != 0
++		  || (sec->flags & SEC_DEBUGGING) != 0))
++	    {
++	      const char *name;
++	      if (h)
++		name = h->root.root.string;
++	      else
++		name = "UNKNOWN";
++	      _bfd_error_handler
++	      /* xgettext:c-format */
++	      (_("%pB: relocation %s against `%s' can not be used"
++		 " when making a shared object; recompile with -fPIC"),
++		 abfd,
++		 arc_elf_howto (r_type)->name,
++		 name);
++	      bfd_set_error (bfd_error_bad_value);
++	      return FALSE;
++	    }
+ 
+ 	    /* In some cases we are not setting the 'non_got_ref'
+ 	       flag, even though the relocations don't require a GOT
+@@ -2031,13 +2043,33 @@ elf_arc_check_relocs (bfd *			 abfd,
+ 	  if (h == NULL)
+ 	    continue;
+ 	  else
+-	    h->needs_plt = 1;
++	    if (h->forced_local == 0)
++	      h->needs_plt = 1;
+ 	}
+ 
+       /* Add info to the symbol got_entry_list.  */
+       if (is_reloc_for_GOT (howto)
+ 	  || is_reloc_for_TLS (howto))
+ 	{
++	  if (bfd_link_dll (info) && !bfd_link_pie (info)
++	      && (r_type == R_ARC_TLS_LE_32 || r_type == R_ARC_TLS_LE_S9))
++	    {
++	      const char *name;
++	      if (h)
++		name = h->root.root.string;
++	      else
++		/* bfd_elf_sym_name (abfd, symtab_hdr, isym, NULL);  */
++		name = "UNKNOWN";
++	      _bfd_error_handler
++		/* xgettext:c-format */
++		(_("%pB: relocation %s against `%s' can not be used"
++		   " when making a shared object; recompile with -fPIC"),
++		   abfd,
++		   arc_elf_howto (r_type)->name,
++		   name);
++	      bfd_set_error (bfd_error_bad_value);
++	      return FALSE;
++	    }
+ 	  if (! _bfd_elf_create_got_section (dynobj, info))
+ 	    return FALSE;
+ 
+@@ -2404,7 +2436,9 @@ elf_arc_finish_dynamic_symbol (bfd * output_bfd,
+      create respective dynamic relocs.  */
+   /* TODO: Make function to get list and not access the list directly.  */
+   /* TODO: Move function to relocate_section create this relocs eagerly.  */
+-  create_got_dynrelocs_for_got_info (&h->got.glist,
++  struct elf_arc_link_hash_entry *ah =
++    (struct elf_arc_link_hash_entry *) h;
++  create_got_dynrelocs_for_got_info (&ah->got_ents,
+ 				     output_bfd,
+ 				     info,
+ 				     h);
+@@ -2413,6 +2447,9 @@ elf_arc_finish_dynamic_symbol (bfd * output_bfd,
+     {
+       struct elf_arc_link_hash_table *arc_htab = elf_arc_hash_table (info);
+ 
++      if (arc_htab == NULL)
++	return FALSE;
++
+       if (h->dynindx == -1
+ 	  || (h->root.type != bfd_link_hash_defined
+ 	      && h->root.type != bfd_link_hash_defweak)
+@@ -2455,6 +2492,39 @@ elf_arc_finish_dynamic_symbol (bfd * output_bfd,
+     s = bfd_get_linker_section (dynobj, SECTION);		\
+   break;
+ 
++
++struct obfd_info_group {
++  bfd *output_bfd;
++  struct bfd_link_info *info;
++};
++
++static bfd_boolean
++arc_create_forced_local_got_entries_for_tls (struct bfd_hash_entry *bh,
++					     void *data)
++{
++  struct elf_arc_link_hash_entry * h =
++    (struct elf_arc_link_hash_entry *) bh;
++  struct obfd_info_group *tmp = (struct obfd_info_group *) data;
++
++  if (h->got_ents != NULL)
++    {
++      BFD_ASSERT (h);
++
++      struct got_entry *list = h->got_ents;
++
++      while (list != NULL)
++	{
++	  create_got_dynrelocs_for_single_entry (list, tmp->output_bfd,
++	    tmp->info,
++	    (struct elf_link_hash_entry *) h);
++	  list = list->next;
++	}
++    }
++
++  return TRUE;
++}
++
++
+ /* Function :  elf_arc_finish_dynamic_sections
+    Brief    :  Finish up the dynamic sections handling.
+    Args     :  output_bfd :
+@@ -2588,6 +2658,12 @@ elf_arc_finish_dynamic_sections (bfd * output_bfd,
+ 	}
+     }
+ 
++  struct obfd_info_group group;
++  group.output_bfd = output_bfd;
++  group.info = info;
++  bfd_hash_traverse (&info->hash->table,
++		     arc_create_forced_local_got_entries_for_tls, &group);
++
+   return TRUE;
+ }
+ 
 diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
 index 45d81777eb..139ed1abcd 100644
 --- a/bfd/elf64-ppc.c
@@ -776,7 +1351,7 @@ index d0d11e2964..dda4c57dd7 100644
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/bfd/version.h b/bfd/version.h
-index 065edb4dee..7964950aff 100644
+index 065edb4dee..aa3f62b991 100644
 --- a/bfd/version.h
 +++ b/bfd/version.h
 @@ -16,7 +16,7 @@
@@ -784,7 +1359,7 @@ index 065edb4dee..7964950aff 100644
     In releases, the date is not included in either version strings or
     sonames.  */
 -#define BFD_VERSION_DATE 20180714
-+#define BFD_VERSION_DATE 20181115
++#define BFD_VERSION_DATE 20181116
  #define BFD_VERSION @bfd_version@
  #define BFD_VERSION_STRING  @bfd_version_package@ @bfd_version_string@
  #define REPORT_BUGS_TO @report_bugs_to@
@@ -6925,10 +7500,16 @@ index 527203ea38..0a0a2dafed 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/include/ChangeLog b/include/ChangeLog
-index 18655f0bf7..7decb4fd7b 100644
+index 18655f0bf7..e0b82bc338 100644
 --- a/include/ChangeLog
 +++ b/include/ChangeLog
-@@ -1,3 +1,7 @@
+@@ -1,3 +1,13 @@
++2018-11-15  Claudiu Zissulescu  <claziss@synopsys.com>
++
++	Backport from mainline
++	2018-08-01  Cupertino Miranda <cmiranda@synopsys.com>
++	* arc-reloc.def (ARC_TLS_LE_32): Updated reloc formula.
++
 +2018-07-18  Nick Clifton  <nickc@redhat.com>
 +
 +	2.31.1 Release point.
@@ -6936,6 +7517,28 @@ index 18655f0bf7..7decb4fd7b 100644
  2018-07-14  Nick Clifton  <nickc@redhat.com>
  
  	2.31 Release point.
+diff --git a/include/elf/arc-reloc.def b/include/elf/arc-reloc.def
+index a6db724da9..61edd6e67a 100644
+--- a/include/elf/arc-reloc.def
++++ b/include/elf/arc-reloc.def
+@@ -468,7 +468,7 @@ ARC_RELOC_HOWTO(ARC_TLS_DTPOFF, 67, \
+                 32, \
+                 replace_word32, \
+                 dont, \
+-                ( ME ( S - SECTSTART ) + A ))
++		( ME ( S - FINAL_SECTSTART ) + A ))
+ 
+ ARC_RELOC_HOWTO(ARC_TLS_DTPOFF_S9, 73, \
+                 2, \
+@@ -489,7 +489,7 @@ ARC_RELOC_HOWTO(ARC_TLS_LE_32, 75, \
+                 32, \
+                 replace_word32, \
+                 dont, \
+-                ( ME ( ( ( ( S + A ) + TCB_SIZE ) - TLS_REL ) ) ))
++		( ME ( ( ( ( S + A ) + TLS_TBSS ) - TLS_REL ) ) ))
+ 
+ ARC_RELOC_HOWTO(ARC_S25W_PCREL_PLT, 76, \
+                 2, \
 diff --git a/ld/ChangeLog b/ld/ChangeLog
 index 4827678159..457d53b20f 100644
 --- a/ld/ChangeLog
