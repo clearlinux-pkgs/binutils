@@ -20,10 +20,23 @@ index f64f1d8403..5add1e2c76 100644
  
  	* config.sub: Sync with upstream version 2018-07-03.
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index f05251acad..53bb9ebca1 100644
+index f05251acad..2cdb83480e 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,153 @@
+@@ -1,3 +1,166 @@
++2018-11-27  Tamar Christina  <tamar.christina@arm.com>
++
++	Backport from mainline
++	PR ld/23904
++	* elfnn-aarch64.c (_bfd_aarch64_adrp_p): Use existing constants.
++	(_bfd_aarch64_erratum_843419_branch_to_stub): Use _bfd_aarch64_adrp_p.
++	(struct erratum_835769_branch_to_stub_clear_data): New.
++	(_bfd_aarch64_erratum_843419_clear_stub): New.
++	(clear_erratum_843419_entry): New.
++	(elfNN_aarch64_tls_relax): Use it.
++	(elfNN_aarch64_relocate_section): Pass input_section.
++	(aarch64_map_one_stub): Handle branch type none as valid.
++
 +2018-11-15  Claudiu Zissulescu  <claziss@synopsys.com>
 +
 +	Backport from mainline
@@ -1181,6 +1194,144 @@ index b24fb95848..46091b6341 100644
  
    hide = FALSE;
    bed = get_elf_backend_data (info->output_bfd);
+diff --git a/bfd/elfnn-aarch64.c b/bfd/elfnn-aarch64.c
+index cf321f32c2..d4964b1b11 100644
+--- a/bfd/elfnn-aarch64.c
++++ b/bfd/elfnn-aarch64.c
+@@ -3845,7 +3845,7 @@ _bfd_aarch64_erratum_835769_scan (bfd *input_bfd,
+ static bfd_boolean
+ _bfd_aarch64_adrp_p (uint32_t insn)
+ {
+-  return ((insn & 0x9f000000) == 0x90000000);
++  return ((insn & AARCH64_ADRP_OP_MASK) == AARCH64_ADRP_OP);
+ }
+ 
+ 
+@@ -5074,7 +5074,7 @@ _bfd_aarch64_erratum_843419_branch_to_stub (struct bfd_hash_entry *gen_entry,
+ 	   + stub_entry->adrp_offset);
+   insn = bfd_getl32 (contents + stub_entry->adrp_offset);
+ 
+-  if ((insn & AARCH64_ADRP_OP_MASK) !=  AARCH64_ADRP_OP)
++  if (!_bfd_aarch64_adrp_p (insn))
+     abort ();
+ 
+   bfd_signed_vma imm =
+@@ -5939,6 +5939,64 @@ bad_ifunc_reloc:
+ # define movz_hw_R0	(0x52c00000)
+ #endif
+ 
++/* Structure to hold payload for _bfd_aarch64_erratum_843419_clear_stub,
++   it is used to identify the stub information to reset.  */
++
++struct erratum_843419_branch_to_stub_clear_data
++{
++  bfd_vma adrp_offset;
++  asection *output_section;
++};
++
++/* Clear the erratum information for GEN_ENTRY if the ADRP_OFFSET and
++   section inside IN_ARG matches.  The clearing is done by setting the
++   stub_type to none.  */
++
++static bfd_boolean
++_bfd_aarch64_erratum_843419_clear_stub (struct bfd_hash_entry *gen_entry,
++					void *in_arg)
++{
++  struct elf_aarch64_stub_hash_entry *stub_entry
++    = (struct elf_aarch64_stub_hash_entry *) gen_entry;
++  struct erratum_843419_branch_to_stub_clear_data *data
++    = (struct erratum_843419_branch_to_stub_clear_data *) in_arg;
++
++  if (stub_entry->target_section != data->output_section
++      || stub_entry->stub_type != aarch64_stub_erratum_843419_veneer
++      || stub_entry->adrp_offset != data->adrp_offset)
++    return TRUE;
++
++  /* Change the stub type instead of removing the entry, removing from the hash
++     table would be slower and we have already reserved the memory for the entry
++     so there wouldn't be much gain.  Changing the stub also keeps around a
++     record of what was there before.  */
++  stub_entry->stub_type = aarch64_stub_none;
++
++  /* We're done and there could have been only one matching stub at that
++     particular offset, so abort further traversal.  */
++  return FALSE;
++}
++
++/* TLS Relaxations may relax an adrp sequence that matches the erratum 843419
++   sequence.  In this case the erratum no longer applies and we need to remove
++   the entry from the pending stub generation.  This clears matching adrp insn
++   at ADRP_OFFSET in INPUT_SECTION in the stub table defined in GLOBALS.  */
++
++static void
++clear_erratum_843419_entry (struct elf_aarch64_link_hash_table *globals,
++			    bfd_vma adrp_offset, asection *input_section)
++{
++  if (globals->fix_erratum_843419)
++    {
++      struct erratum_843419_branch_to_stub_clear_data data;
++      data.adrp_offset = adrp_offset;
++      data.output_section = input_section;
++
++      bfd_hash_traverse (&globals->stub_hash_table,
++			 _bfd_aarch64_erratum_843419_clear_stub, &data);
++    }
++}
++
+ /* Handle TLS relaxations.  Relaxing is possible for symbols that use
+    R_AARCH64_TLSDESC_ADR_{PAGE, LD64_LO12_NC, ADD_LO12_NC} during a static
+    link.
+@@ -5949,8 +6007,9 @@ bad_ifunc_reloc:
+ 
+ static bfd_reloc_status_type
+ elfNN_aarch64_tls_relax (struct elf_aarch64_link_hash_table *globals,
+-			 bfd *input_bfd, bfd_byte *contents,
+-			 Elf_Internal_Rela *rel, struct elf_link_hash_entry *h)
++			 bfd *input_bfd, asection *input_section,
++			 bfd_byte *contents, Elf_Internal_Rela *rel,
++			 struct elf_link_hash_entry *h)
+ {
+   bfd_boolean is_local = h == NULL;
+   unsigned int r_type = ELFNN_R_TYPE (rel->r_info);
+@@ -5971,6 +6030,9 @@ elfNN_aarch64_tls_relax (struct elf_aarch64_link_hash_table *globals,
+ 
+ 	     Where R is x for LP64, and w for ILP32.  */
+ 	  bfd_putl32 (movz_R0, contents + rel->r_offset);
++	  /* We have relaxed the adrp into a mov, we may have to clear any
++	     pending erratum fixes.  */
++	  clear_erratum_843419_entry (globals, rel->r_offset, input_section);
+ 	  return bfd_reloc_continue;
+ 	}
+       else
+@@ -6261,6 +6323,9 @@ elfNN_aarch64_tls_relax (struct elf_aarch64_link_hash_table *globals,
+ 	{
+ 	  insn = bfd_getl32 (contents + rel->r_offset);
+ 	  bfd_putl32 (movz_R0 | (insn & 0x1f), contents + rel->r_offset);
++	  /* We have relaxed the adrp into a mov, we may have to clear any
++	     pending erratum fixes.  */
++	  clear_erratum_843419_entry (globals, rel->r_offset, input_section);
+ 	}
+       return bfd_reloc_continue;
+ 
+@@ -6485,7 +6550,8 @@ elfNN_aarch64_relocate_section (bfd *output_bfd,
+ 	  howto = elfNN_aarch64_howto_from_bfd_reloc (bfd_r_type);
+ 	  BFD_ASSERT (howto != NULL);
+ 	  r_type = howto->type;
+-	  r = elfNN_aarch64_tls_relax (globals, input_bfd, contents, rel, h);
++	  r = elfNN_aarch64_tls_relax (globals, input_bfd, input_section,
++				       contents, rel, h);
+ 	  unresolved_reloc = 0;
+ 	}
+       else
+@@ -8076,6 +8142,8 @@ aarch64_map_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
+       if (!elfNN_aarch64_output_map_sym (osi, AARCH64_MAP_INSN, addr))
+ 	return FALSE;
+       break;
++    case aarch64_stub_none:
++      break;
+ 
+     default:
+       abort ();
 diff --git a/bfd/elfxx-x86.c b/bfd/elfxx-x86.c
 index a2497aab86..2d8f7b640b 100644
 --- a/bfd/elfxx-x86.c
@@ -1351,7 +1502,7 @@ index d0d11e2964..dda4c57dd7 100644
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/bfd/version.h b/bfd/version.h
-index 065edb4dee..813e298e8f 100644
+index 065edb4dee..57d388ab8b 100644
 --- a/bfd/version.h
 +++ b/bfd/version.h
 @@ -16,7 +16,7 @@
@@ -1359,7 +1510,7 @@ index 065edb4dee..813e298e8f 100644
     In releases, the date is not included in either version strings or
     sonames.  */
 -#define BFD_VERSION_DATE 20180714
-+#define BFD_VERSION_DATE 20181127
++#define BFD_VERSION_DATE 20181128
  #define BFD_VERSION @bfd_version@
  #define BFD_VERSION_STRING  @bfd_version_package@ @bfd_version_string@
  #define REPORT_BUGS_TO @report_bugs_to@
@@ -7540,10 +7691,17 @@ index a6db724da9..61edd6e67a 100644
  ARC_RELOC_HOWTO(ARC_S25W_PCREL_PLT, 76, \
                  2, \
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4827678159..457d53b20f 100644
+index 4827678159..8806a7db98 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,135 @@
+@@ -1,3 +1,142 @@
++2018-11-27  Tamar Christina  <tamar.christina@arm.com>
++
++	PR ld/23904
++	* testsuite/ld-aarch64/aarch64-elf.exp: Add erratum843419_tls_ie.
++	* testsuite/ld-aarch64/erratum843419_tls_ie.d: New test.
++	* testsuite/ld-aarch64/erratum843419_tls_ie.s: New test.
++
 +2018-11-06  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR gas/23854
@@ -17735,6 +17893,122 @@ index fac507ad20..88a9b06582 100644
  "address\n"
  "                                <val>.  Supported values: 8k, 16k, 32k and "
  "64k.\n"
+diff --git a/ld/testsuite/ld-aarch64/aarch64-elf.exp b/ld/testsuite/ld-aarch64/aarch64-elf.exp
+index 1bbc064857..3912ef1cdd 100644
+--- a/ld/testsuite/ld-aarch64/aarch64-elf.exp
++++ b/ld/testsuite/ld-aarch64/aarch64-elf.exp
+@@ -86,6 +86,7 @@ run_ld_link_tests $aarch64elftests
+ run_ld_link_tests eh-frame-merge-lp64
+ 
+ run_dump_test "erratum843419"
++run_dump_test "erratum843419_tls_ie"
+ 
+ # Relocation Tests
+ run_dump_test_lp64 "weak-undefined"
+diff --git a/ld/testsuite/ld-aarch64/erratum843419_tls_ie.d b/ld/testsuite/ld-aarch64/erratum843419_tls_ie.d
+new file mode 100644
+index 0000000000..eba5a20217
+--- /dev/null
++++ b/ld/testsuite/ld-aarch64/erratum843419_tls_ie.d
+@@ -0,0 +1,49 @@
++#source: erratum843419_tls_ie.s
++#as:
++#ld: --fix-cortex-a53-843419 -e0 --section-start .e843419=0x20000000 -Ttext=0x400000 -Tdata=0x40000000
++#objdump: -dr
++#...
++
++Disassembly of section .e843419:
++
++0*20000000 <farbranch>:
++[ ]*20000000:	d10043ff 	sub	sp, sp, #0x10
++[ ]*20000004:	d28001a7 	mov	x7, #0xd                   	// #13
++[ ]*20000008:	b9000fe7 	str	w7, \[sp, #12\]
++[ ]*2000000c:	140003fb 	b	20000ff8 <e843419>
++	...
++
++0*20000ff8 <e843419>:
++[ ]*20000ff8:	d2a00000 	movz	x0, #0x0, lsl #16
++[ ]*20000ffc:	f800c007 	stur	x7, \[x0, #12\]
++[ ]*20001000:	d2800128 	mov	x8, #0x9                   	// #9
++[ ]*20001004:	f2800208 	movk	x8, #0x10
++[ ]*20001008:	8b050020 	add	x0, x1, x5
++[ ]*2000100c:	b9400fe7 	ldr	w7, \[sp, #12\]
++[ ]*20001010:	0b0700e0 	add	w0, w7, w7
++[ ]*20001014:	910043ff 	add	sp, sp, #0x10
++[ ]*20001018:	d65f03c0 	ret
++[ ]*2000101c:	00000000 	.inst	0x00000000 ; undefined
++[ ]*20001020:	14000400 	b	20002020 <e843419\+0x1028>
++[ ]*20001024:	d503201f 	nop
++[ ]*20001028:	00000000 	.inst	0x00000000 ; undefined
++[ ]*2000102c:	17fffff7 	b	20001008 <e843419\+0x10>
++	...
++
++Disassembly of section .text:
++
++0*400000 <main>:
++[ ]*400000:	d10043ff 	sub	sp, sp, #0x10
++[ ]*400004:	d28001a7 	mov	x7, #0xd                   	// #13
++[ ]*400008:	b9000fe7 	str	w7, \[sp, #12\]
++[ ]*40000c:	14000005 	b	400020 <__farbranch_veneer>
++[ ]*400010:	d65f03c0 	ret
++[ ]*400014:	d503201f 	nop
++[ ]*400018:	14000400 	b	401018 <__farbranch_veneer\+0xff8>
++[ ]*40001c:	d503201f 	nop
++
++0*400020 <__farbranch_veneer>:
++[ ]*400020:	900fe010 	adrp	x16, 20000000 <farbranch>
++[ ]*400024:	91000210 	add	x16, x16, #0x0
++[ ]*400028:	d61f0200 	br	x16
++	...
+diff --git a/ld/testsuite/ld-aarch64/erratum843419_tls_ie.s b/ld/testsuite/ld-aarch64/erratum843419_tls_ie.s
+new file mode 100644
+index 0000000000..60322445c5
+--- /dev/null
++++ b/ld/testsuite/ld-aarch64/erratum843419_tls_ie.s
+@@ -0,0 +1,43 @@
++	.text
++	.align  2
++	.global main
++	.type   main, %function
++main:
++	sub     sp, sp, #16
++	mov     x7, 13
++	str     w7, [sp,12]
++	b       farbranch
++	ret
++	.size   main, .-main
++
++	.section .e843419, "xa"
++	.align  2
++	.global farbranch
++	.type   farbranch, %function
++farbranch:
++	sub     sp, sp, #16
++	mov     x7, 13
++	str     w7, [sp,12]
++	b       e843419
++	 .fill 4072,1,0
++e843419:
++	adrp x0, :gottprel:l_tlsievar
++	str x7, [x0,12]
++	mov	x8, 9
++	str x8, [x0, :gottprel_lo12:l_tlsievar]
++
++	add x0, x1, x5
++	ldr     w7, [sp,12]
++	add     w0, w7, w7
++	add     sp, sp, 16
++	ret
++	.size   farbranch, .-farbranch
++
++# ---
++
++	.section	.tbss,"awT",%nobits
++	.align  2
++	.type   l_tlsievar, %object
++	.size   l_tlsievar, 4
++l_tlsievar:
++	.zero   4
 diff --git a/ld/testsuite/ld-aarch64/ifunc-1-local.d b/ld/testsuite/ld-aarch64/ifunc-1-local.d
 index bcba0aa025..1783637865 100644
 --- a/ld/testsuite/ld-aarch64/ifunc-1-local.d
