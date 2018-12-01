@@ -20,10 +20,16 @@ index f64f1d8403..5add1e2c76 100644
  
  	* config.sub: Sync with upstream version 2018-07-03.
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index f05251acad..2cdb83480e 100644
+index f05251acad..fa4173da3a 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,166 @@
+@@ -1,3 +1,172 @@
++2018-11-30  Alan Modra  <amodra@gmail.com>
++
++	PR 23937
++	* elf64-ppc.c (write_plt_relocs_for_local_syms): Don't add local
++	entry offset for ifuncs.
++
 +2018-11-27  Tamar Christina  <tamar.christina@arm.com>
 +
 +	Backport from mainline
@@ -804,7 +810,7 @@ index a48ef0ca15..495fa342d3 100644
  }
  
 diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
-index 45d81777eb..139ed1abcd 100644
+index 45d81777eb..746506ef09 100644
 --- a/bfd/elf64-ppc.c
 +++ b/bfd/elf64-ppc.c
 @@ -10810,8 +10810,7 @@ plt_stub_size (struct ppc_link_hash_table *htab,
@@ -1133,7 +1139,17 @@ index 45d81777eb..139ed1abcd 100644
  
  	  if (info->emitrelocations)
  	    {
-@@ -14877,10 +14877,13 @@ ppc64_elf_relocate_section (bfd *output_bfd,
+@@ -13530,7 +13530,8 @@ write_plt_relocs_for_local_syms (struct bfd_link_info *info)
+ 		}
+ 
+ 	      val = sym->st_value + ent->addend;
+-	      val += PPC64_LOCAL_ENTRY_OFFSET (sym->st_other);
++	      if (ELF_ST_TYPE (sym->st_info) != STT_GNU_IFUNC)
++		val += PPC64_LOCAL_ENTRY_OFFSET (sym->st_other);
+ 	      if (sym_sec != NULL && sym_sec->output_section != NULL)
+ 		val += sym_sec->output_offset + sym_sec->output_section->vma;
+ 
+@@ -14877,10 +14878,13 @@ ppc64_elf_relocate_section (bfd *output_bfd,
  	      addend = 0;
  	      reloc_dest = DEST_STUB;
  
@@ -1502,7 +1518,7 @@ index d0d11e2964..dda4c57dd7 100644
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/bfd/version.h b/bfd/version.h
-index 065edb4dee..4231ce5f23 100644
+index 065edb4dee..716d09f2b0 100644
 --- a/bfd/version.h
 +++ b/bfd/version.h
 @@ -16,7 +16,7 @@
@@ -1510,7 +1526,7 @@ index 065edb4dee..4231ce5f23 100644
     In releases, the date is not included in either version strings or
     sonames.  */
 -#define BFD_VERSION_DATE 20180714
-+#define BFD_VERSION_DATE 20181129
++#define BFD_VERSION_DATE 20181201
  #define BFD_VERSION @bfd_version@
  #define BFD_VERSION_STRING  @bfd_version_package@ @bfd_version_string@
  #define REPORT_BUGS_TO @report_bugs_to@
@@ -7691,10 +7707,16 @@ index a6db724da9..61edd6e67a 100644
  ARC_RELOC_HOWTO(ARC_S25W_PCREL_PLT, 76, \
                  2, \
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4827678159..8806a7db98 100644
+index 4827678159..38963b90cf 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,142 @@
+@@ -1,3 +1,148 @@
++2018-11-30  Alan Modra  <amodra@gmail.com>
++
++	* testsuite/ld-powerpc/pr23937.d,
++	* testsuite/ld-powerpc/pr23937.s: New test.
++	* testsuite/ld-powerpc/powerpc.exp: Run it.
++
 +2018-11-27  Tamar Christina  <tamar.christina@arm.com>
 +
 +	PR ld/23904
@@ -18673,7 +18695,7 @@ index 0000000000..d4be333a39
 +  foo ();
 +}
 diff --git a/ld/testsuite/ld-powerpc/powerpc.exp b/ld/testsuite/ld-powerpc/powerpc.exp
-index 0359ba28cb..de762966e5 100644
+index 0359ba28cb..5ec3850787 100644
 --- a/ld/testsuite/ld-powerpc/powerpc.exp
 +++ b/ld/testsuite/ld-powerpc/powerpc.exp
 @@ -221,7 +221,7 @@ set ppc64elftests {
@@ -18685,6 +18707,101 @@ index 0359ba28cb..de762966e5 100644
       {{objdump -dr tlsopt5.d} {readelf -wf tlsopt5.wf}}
       "tlsopt5"}
      {"sym@tocbase" "-shared -melf64ppc" "" "-a64" {symtocbase-1.s symtocbase-2.s}
+@@ -328,6 +328,7 @@ if [ supports_ppc64 ] then {
+     run_dump_test "dotsym2"
+     run_dump_test "dotsym3"
+     run_dump_test "dotsym4"
++    run_dump_test "pr23937"
+ }
+ 
+ run_dump_test "tlsld32"
+diff --git a/ld/testsuite/ld-powerpc/pr23937.d b/ld/testsuite/ld-powerpc/pr23937.d
+new file mode 100644
+index 0000000000..6ef79e81cf
+--- /dev/null
++++ b/ld/testsuite/ld-powerpc/pr23937.d
+@@ -0,0 +1,10 @@
++#as: -a64
++#ld: -melf64ppc --defsym puts=0 --defsym _start=0
++#readelf: -srW
++# Check that the IRELATIVE addend is magic+0, not magic+8
++
++#...
++.* R_PPC64_IRELATIVE +10000180
++#...
++.*: 0+10000180 +20 IFUNC +LOCAL +DEFAULT .* magic
++#pass
+diff --git a/ld/testsuite/ld-powerpc/pr23937.s b/ld/testsuite/ld-powerpc/pr23937.s
+new file mode 100644
+index 0000000000..155e53adb7
+--- /dev/null
++++ b/ld/testsuite/ld-powerpc/pr23937.s
+@@ -0,0 +1,65 @@
++	.abiversion 2
++	.text
++	.p2align 4,,15
++	.type	implementation, @function
++implementation:
++.LCF0:
++	addis 2,12,.TOC.-.LCF0@ha
++	addi 2,2,.TOC.-.LCF0@l
++	.localentry	implementation,.-implementation
++	mflr 0
++	addis 3,2,.LC0@toc@ha
++	addi 3,3,.LC0@toc@l
++	std 0,16(1)
++	stdu 1,-32(1)
++	bl puts
++	nop
++	addi 1,1,32
++	li 3,0
++	ld 0,16(1)
++	mtlr 0
++	blr
++	.size	implementation,.-implementation
++
++	.p2align 4,,15
++	.type	resolver, @function
++resolver:
++.LCF1:
++	addis 2,12,.TOC.-.LCF1@ha
++	addi 2,2,.TOC.-.LCF1@l
++	.localentry	resolver,.-resolver
++	addis 3,2,implementation@toc@ha
++	addi 3,3,implementation@toc@l
++	blr
++	.size	resolver,.-resolver
++
++	.type	magic, @gnu_indirect_function
++	.set	magic,resolver
++
++	.section	.text.startup,"ax",@progbits
++	.p2align 4,,15
++	.globl main
++	.type	main, @function
++main:
++.LCF2:
++	addis 2,12,.TOC.-.LCF2@ha
++	addi 2,2,.TOC.-.LCF2@l
++	.localentry	main,.-main
++	mflr 0
++	std 0,16(1)
++	stdu 1,-32(1)
++	bl magic
++	nop
++	addi 1,1,32
++	cntlzw 3,3
++	ld 0,16(1)
++	srwi 3,3,5
++	mtlr 0
++	xori 3,3,0x1
++	blr
++	.size	main,.-main
++
++	.section	.rodata.str1.8,"aMS",@progbits,1
++	.p2align 3
++.LC0:
++	.string	"'ere I am JH"
 diff --git a/ld/testsuite/ld-powerpc/tlsopt5.d b/ld/testsuite/ld-powerpc/tlsopt5.d
 index 4521a9b427..4caf1832ea 100644
 --- a/ld/testsuite/ld-powerpc/tlsopt5.d
