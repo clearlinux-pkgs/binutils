@@ -1538,7 +1538,7 @@ index d0d11e2964..dda4c57dd7 100644
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/bfd/version.h b/bfd/version.h
-index 065edb4dee..a8f491847e 100644
+index 065edb4dee..e369701256 100644
 --- a/bfd/version.h
 +++ b/bfd/version.h
 @@ -16,7 +16,7 @@
@@ -1546,7 +1546,7 @@ index 065edb4dee..a8f491847e 100644
     In releases, the date is not included in either version strings or
     sonames.  */
 -#define BFD_VERSION_DATE 20180714
-+#define BFD_VERSION_DATE 20181208
++#define BFD_VERSION_DATE 20181210
  #define BFD_VERSION @bfd_version@
  #define BFD_VERSION_STRING  @bfd_version_package@ @bfd_version_string@
  #define REPORT_BUGS_TO @report_bugs_to@
@@ -1732,10 +1732,20 @@ index a7361fc26d..e57e26e9bd 100644
  
  	2.31 Release point.
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c21ac02abe..67e9327ed2 100644
+index c21ac02abe..d923a2c9d5 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,91 @@
+@@ -1,3 +1,101 @@
++2018-12-09  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR gas/23968
++	* config/tc-i386.h (TC_FORCE_RELOCATION_LOCAL): Put back
++	BFD_RELOC_X86_64_GOTPCREL.
++	* testsuite/gas/i386/i386.exp: Run x86-64-gotpcrel-2.
++	* testsuite/gas/i386/x86-64-gotpcrel-2.d: New file.
++	* testsuite/gas/i386/x86-64-gotpcrel-2.s: Likewise.
++	* testsuite/gas/i386/ilp32/x86-64-gotpcrel-2.d: Likewise.
++
 +2018-11-05  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR gas/23854
@@ -1935,6 +1945,18 @@ index 2d20f1cae9..a288a31844 100644
  		  && (i.rm.mode == 2
  		      || (i.rm.mode == 0 && i.rm.regmem == 5))
  		  && ((i.operands == 1
+diff --git a/gas/config/tc-i386.h b/gas/config/tc-i386.h
+index 833047980b..830ac5724f 100644
+--- a/gas/config/tc-i386.h
++++ b/gas/config/tc-i386.h
+@@ -174,6 +174,7 @@ extern int tc_i386_fix_adjustable (struct fix *);
+   (GENERIC_FORCE_RELOCATION_LOCAL (FIX)				\
+    || (FIX)->fx_r_type == BFD_RELOC_386_PLT32			\
+    || (FIX)->fx_r_type == BFD_RELOC_386_GOTPC			\
++   || (FIX)->fx_r_type == BFD_RELOC_X86_64_GOTPCREL		\
+    || (FIX)->fx_r_type == BFD_RELOC_X86_64_GOTPCRELX		\
+    || (FIX)->fx_r_type == BFD_RELOC_X86_64_REX_GOTPCRELX)
+ 
 diff --git a/gas/configure b/gas/configure
 index 56218b4bc8..8bbf78642c 100755
 --- a/gas/configure
@@ -2156,7 +2178,7 @@ index 0000000000..bc3749cc0c
 +	vmovaps	64(,%eiz), %zmm0
 +	vmovaps	64, %zmm0
 diff --git a/gas/testsuite/gas/i386/i386.exp b/gas/testsuite/gas/i386/i386.exp
-index 9cc927a962..3987862477 100644
+index 9cc927a962..952902cbb6 100644
 --- a/gas/testsuite/gas/i386/i386.exp
 +++ b/gas/testsuite/gas/i386/i386.exp
 @@ -525,6 +525,8 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]]
@@ -2168,7 +2190,14 @@ index 9cc927a962..3987862477 100644
  	if { [gas_64_check] } then {
  	    run_dump_test "att-regs"
  	    run_dump_test "intel-regs"
-@@ -1017,6 +1019,8 @@ if [expr ([istarget "i*86-*-*"] || [istarget "x86_64-*-*"]) && [gas_64_check]] t
+@@ -1011,12 +1013,15 @@ if [expr ([istarget "i*86-*-*"] || [istarget "x86_64-*-*"]) && [gas_64_check]] t
+ 
+ 	run_dump_test "x86-64-gotpcrel"
+ 	run_dump_test "x86-64-gotpcrel-no-relax"
++	run_dump_test "x86-64-gotpcrel-2"
+ 
+ 	run_dump_test "x86-64-addend"
+ 	run_dump_test "x86-64-nop-3"
  	run_dump_test "x86-64-nop-4"
  	run_dump_test "x86-64-nop-5"
  	run_dump_test "x86-64-nop-6"
@@ -2177,6 +2206,25 @@ index 9cc927a962..3987862477 100644
      }
  
      set ASFLAGS "$old_ASFLAGS"
+diff --git a/gas/testsuite/gas/i386/ilp32/x86-64-gotpcrel-2.d b/gas/testsuite/gas/i386/ilp32/x86-64-gotpcrel-2.d
+new file mode 100644
+index 0000000000..41b9ac2cc3
+--- /dev/null
++++ b/gas/testsuite/gas/i386/ilp32/x86-64-gotpcrel-2.d
+@@ -0,0 +1,13 @@
++#source: ../x86-64-gotpcrel-2.s
++#as: --x32 -mrelax-relocations=no
++#objdump: -dwr
++#name: x86-64 (ILP32) gotpcrel (2)
++
++.*: +file format .*
++
++
++Disassembly of section .text:
++
++0+ <foo>:
++ +[a-f0-9]+:	48 8b 05 00 00 00 00 	mov    0x0\(%rip\),%rax        # 7 <foo\+0x7>	3: R_X86_64_GOTPCREL	foo-0x4
++#pass
 diff --git a/gas/testsuite/gas/i386/mixed-mode-reloc32.d b/gas/testsuite/gas/i386/mixed-mode-reloc32.d
 index a2ef6a0b85..59234bc9be 100644
 --- a/gas/testsuite/gas/i386/mixed-mode-reloc32.d
@@ -2209,6 +2257,32 @@ index 1b57ac87fe..92d57952c0 100644
  	encls
  	enclu
 +	enclv
+diff --git a/gas/testsuite/gas/i386/x86-64-gotpcrel-2.d b/gas/testsuite/gas/i386/x86-64-gotpcrel-2.d
+new file mode 100644
+index 0000000000..3d07631bd6
+--- /dev/null
++++ b/gas/testsuite/gas/i386/x86-64-gotpcrel-2.d
+@@ -0,0 +1,11 @@
++#as: -mrelax-relocations=no
++#objdump: -dwr
++
++.*: +file format .*
++
++
++Disassembly of section .text:
++
++0+ <foo>:
++ +[a-f0-9]+:	48 8b 05 00 00 00 00 	mov    0x0\(%rip\),%rax        # 7 <foo\+0x7>	3: R_X86_64_GOTPCREL	foo-0x4
++#pass
+diff --git a/gas/testsuite/gas/i386/x86-64-gotpcrel-2.s b/gas/testsuite/gas/i386/x86-64-gotpcrel-2.s
+new file mode 100644
+index 0000000000..db5ddf579a
+--- /dev/null
++++ b/gas/testsuite/gas/i386/x86-64-gotpcrel-2.s
+@@ -0,0 +1,3 @@
++	.text
++foo:
++	movq	foo@GOTPCREL(%rip), %rax
 diff --git a/gas/testsuite/gas/i386/x86-64-se1.d b/gas/testsuite/gas/i386/x86-64-se1.d
 index 29494f0090..a515219406 100644
 --- a/gas/testsuite/gas/i386/x86-64-se1.d
