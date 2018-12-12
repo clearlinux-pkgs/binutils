@@ -25,6 +25,9 @@ Requires:	binutils-doc
 
 Patch1:		binutils-stable-branch.patch
 Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
+Patch3:		handle-elf-compressed-align.patch
+Patch4:		initialize-uncompressed_align_pow_p-to-0.patch
+Patch5:		gold-get-alignment-of-uncompressed-section.patch
 
 # CVEs
 Patch101:       CVE-2018-20002.patch
@@ -74,6 +77,9 @@ GNU binary utilities.
 
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
 
 # CVEs
 %patch101 -p1
