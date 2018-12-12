@@ -1,0 +1,31 @@
+From 131a5a648d314cd15811158150573cb40eb3abd0 Mon Sep 17 00:00:00 2001
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Tue, 27 Nov 2018 06:02:36 -0800
+Subject: [PATCH] Initialize *uncompressed_align_pow_p to 0
+
+Initialize *uncompressed_align_pow_p to 0 since *uncompressed_align_pow_p
+is passed to bfd_is_section_compressed_with_header as uninitialized,
+
+	PR binutils/23919
+	* compress.c (bfd_is_section_compressed_with_header): Initialize
+	*uncompressed_align_pow_p to 0.
+---
+ bfd/compress.c | 2 ++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/bfd/compress.c b/bfd/compress.c
+index 97ea624..18a7597 100644
+--- a/bfd/compress.c
++++ b/bfd/compress.c
+@@ -394,6 +394,8 @@ bfd_is_section_compressed_with_header (bfd *abfd, sec_ptr sec,
+   unsigned int saved = sec->compress_status;
+   bfd_boolean compressed;
+ 
++  *uncompressed_align_pow_p = 0;
++
+   compression_header_size = bfd_get_compression_header_size (abfd, sec);
+   if (compression_header_size > MAX_COMPRESSION_HEADER_SIZE)
+     abort ();
+-- 
+2.9.3
+
