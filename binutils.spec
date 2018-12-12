@@ -26,9 +26,15 @@ Requires:	binutils-doc
 Patch1:		binutils-stable-branch.patch
 Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
 
+
 # CVEs
 Patch101:       CVE-2018-20002.patch
 Patch102:       CVE-2018-19932.patch
+
+
+# backports
+
+Patch201: 	0001-bfd-doesn-t-handle-ELF-compressed-data-alignment.patch
 
 %description
 GNU binary utilities.
@@ -78,6 +84,10 @@ GNU binary utilities.
 # CVEs
 %patch101 -p1
 %patch102 -p1
+
+
+# backport
+%patch201 -p1
 
 rm -rf gdb libdecnumber readline sim
 
