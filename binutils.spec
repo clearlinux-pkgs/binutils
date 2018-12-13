@@ -30,8 +30,13 @@ Patch4:		initialize-uncompressed_align_pow_p-to-0.patch
 Patch5:		gold-get-alignment-of-uncompressed-section.patch
 
 # CVEs
-Patch101:       CVE-2018-20002.patch
-Patch102:       CVE-2018-19932.patch
+
+Patch101:      Add-recursion-limit-to-libiberty.patch
+Patch102:      CVE-2018-18605.patch
+Patch103:      CVE-2018-18606.patch
+Patch104:      CVE-2018-18607.patch
+Patch105:      CVE-2018-19932.patch
+Patch106:      CVE-2018-20002.patch
 
 %description
 GNU binary utilities.
@@ -84,6 +89,10 @@ GNU binary utilities.
 # CVEs
 %patch101 -p1
 %patch102 -p1
+%patch103 -p1
+%patch104 -p1
+%patch105 -p1
+%patch106 -p1
 
 rm -rf gdb libdecnumber readline sim
 
