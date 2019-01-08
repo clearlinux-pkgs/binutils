@@ -6,7 +6,7 @@
 
 Name:           binutils
 Version:        2.31
-Release:        121
+Release:        122
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Url:            http://www.gnu.org/software/binutils/
@@ -39,6 +39,7 @@ Patch105:      CVE-2018-19932.patch
 Patch106:      CVE-2018-20002.patch
 Patch107:      CVE-2018-1000876.patch
 Patch108:      CVE-2018-20651.patch
+Patch109:      CVE-2018-20671.patch
 
 %description
 GNU binary utilities.
@@ -97,6 +98,7 @@ GNU binary utilities.
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
+%patch109 -p1
 
 rm -rf gdb libdecnumber readline sim
 
