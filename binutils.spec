@@ -5,13 +5,13 @@
 %define binutils_target %{_arch}-generic-linux
 
 Name:           binutils
-Version:        2.31
-Release:        133
+Version:        2.31.1
+Release:        134
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Url:            http://www.gnu.org/software/binutils/
 Group:          devel
-Source0:        https://mirrors.kernel.org/gnu/binutils/binutils-2.31.tar.xz
+Source0:        https://mirrors.kernel.org/gnu/binutils/binutils-2.31.1.tar.xz
 BuildRequires:  flex
 BuildRequires:  libstdc++-dev
 BuildRequires:  dejagnu
@@ -21,13 +21,13 @@ BuildRequires:  glibc-staticdev
 BuildRequires:  zlib-dev
 BuildRequires:  texinfo
 BuildRequires:  bison
-Requires:	binutils-doc
+Requires:       binutils-doc
 
-Patch1:		binutils-stable-branch.patch
+Patch1:         binutils-stable-branch.patch
 Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
-Patch3:		handle-elf-compressed-align.patch
-Patch4:		initialize-uncompressed_align_pow_p-to-0.patch
-Patch5:		gold-get-alignment-of-uncompressed-section.patch
+Patch3:         handle-elf-compressed-align.patch
+Patch4:         initialize-uncompressed_align_pow_p-to-0.patch
+Patch5:         gold-get-alignment-of-uncompressed-section.patch
 
 # CVEs
 
@@ -84,7 +84,7 @@ GNU binary utilities.
 
 
 %prep
-%setup -q -n binutils-2.31
+%setup -q -n binutils-2.31.1
 
 %patch1 -p1
 %patch2 -p1
