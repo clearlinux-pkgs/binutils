@@ -1442,7 +1442,7 @@ index a2497aab86..2d8f7b640b 100644
    htab->r_sym = init_table->r_sym;
  
 diff --git a/bfd/version.h b/bfd/version.h
-index 222d2e62c3..bf457170d6 100644
+index 222d2e62c3..a9d8ce48da 100644
 --- a/bfd/version.h
 +++ b/bfd/version.h
 @@ -16,7 +16,7 @@
@@ -1450,7 +1450,7 @@ index 222d2e62c3..bf457170d6 100644
     In releases, the date is not included in either version strings or
     sonames.  */
 -#define BFD_VERSION_DATE 20180718
-+#define BFD_VERSION_DATE 20190118
++#define BFD_VERSION_DATE 20190119
  #define BFD_VERSION @bfd_version@
  #define BFD_VERSION_STRING  @bfd_version_package@ @bfd_version_string@
  #define REPORT_BUGS_TO @report_bugs_to@
