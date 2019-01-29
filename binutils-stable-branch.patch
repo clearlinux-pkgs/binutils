@@ -2141,10 +2141,14 @@ index a6db724da9..61edd6e67a 100644
  ARC_RELOC_HOWTO(ARC_S25W_PCREL_PLT, 76, \
                  2, \
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index c07e442c84..38963b90cf 100644
+index c07e442c84..fcc8aedb7c 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,134 @@
+@@ -1,3 +1,138 @@
++2019-01-29  Eric Botcazou  <ebotcazou@adacore.com>
++
++	* testsuite/ld-ifunc/ifunc.exp: Skip pr23169 on SPARC.
++
 +2018-11-30  Alan Modra  <amodra@gmail.com>
 +
 +	* testsuite/ld-powerpc/pr23937.d,
@@ -3422,15 +3426,17 @@ index 25f3d2361e..e770ecffa5 100644
 +  GNU                  0x0000000c	NT_GNU_PROPERTY_TYPE_0
 +      Properties: x86 ISA needed: 586, SSE, SSE3, SSE4_1
 diff --git a/ld/testsuite/ld-ifunc/ifunc.exp b/ld/testsuite/ld-ifunc/ifunc.exp
-index 612d91402f..86892b96b5 100644
+index 612d91402f..2b97af79e5 100644
 --- a/ld/testsuite/ld-ifunc/ifunc.exp
 +++ b/ld/testsuite/ld-ifunc/ifunc.exp
-@@ -713,7 +713,7 @@ run_ld_link_exec_tests [list \
+@@ -713,7 +713,9 @@ run_ld_link_exec_tests [list \
  # That does not happen for the pr23169 testcase where the resolver is
  # in the executable (which is relocated last by ld.so).
  if { [isnative]
 -     && ![istarget "powerpc-*-*"] } {
-+     && !([istarget "powerpc-*-*"] || [istarget "aarch64*-*-*"]) } {
++     && !([istarget "powerpc-*-*"]
++           || [istarget "aarch64*-*-*"]
++           || [istarget "sparc*-*-*"]) } {
  run_ld_link_exec_tests [list \
      [list \
  	"Run pr23169a" \
