@@ -5,13 +5,13 @@
 %define binutils_target %{_arch}-generic-linux
 
 Name:           binutils
-Version:        2.31.1
+Version:        2.32
 Release:        143
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Url:            http://www.gnu.org/software/binutils/
 Group:          devel
-Source0:        https://mirrors.kernel.org/gnu/binutils/binutils-2.31.1.tar.xz
+Source0:        https://mirrors.kernel.org/gnu/binutils/binutils-2.32.tar.xz
 BuildRequires:  flex
 BuildRequires:  libstdc++-dev
 BuildRequires:  dejagnu
@@ -25,53 +25,36 @@ Requires:       binutils-doc
 
 Patch1:         binutils-stable-branch.patch
 Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
-Patch3:         handle-elf-compressed-align.patch
-Patch4:         initialize-uncompressed_align_pow_p-to-0.patch
-Patch5:         gold-get-alignment-of-uncompressed-section.patch
 
 # CVEs
 
-Patch101:      Add-recursion-limit-to-libiberty.patch
-Patch102:      CVE-2018-18605.patch
-Patch103:      CVE-2018-18606.patch
-Patch104:      CVE-2018-18607.patch
-Patch105:      CVE-2018-19932.patch
-Patch106:      CVE-2018-20002.patch
-Patch107:      CVE-2018-1000876.patch
-Patch108:      CVE-2018-20651.patch
-Patch109:      CVE-2018-20671.patch
-Patch110:      CVE-2018-19931.patch
-Patch111:      CVE-2018-20623.patch
-Patch112:      CVE-2018-18309.patch
-Patch113:      CVE-2018-17359.patch
-Patch114:      CVE-2018-17360.patch
 
 %description
 GNU binary utilities.
 
-%package -n binutils-dev
+%package dev
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Group:          devel
 Provides: binutils-devel
 
-%description -n binutils-dev
+%description dev
 GNU binary utilities.
 
-%package -n binutils-doc
+%package doc
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Group:          doc
 
-%description -n binutils-doc
+%description doc
 GNU binary utilities.
 
-%package -n binutils-locale
+%package locale
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Group:          libs
 
-%description -n binutils-locale
+%description locale
 GNU binary utilities.
 
 
@@ -86,35 +69,18 @@ GNU binary utilities.
 
 
 %prep
-%setup -q -n binutils-2.31.1
+%setup -q -n binutils-2.32
 
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
 
 # CVEs
-%patch101 -p1
-%patch102 -p1
-%patch103 -p1
-%patch104 -p1
-%patch105 -p1
-%patch106 -p1
-%patch107 -p1
-%patch108 -p1
-%patch109 -p1
-%patch110 -p1
-%patch111 -p1
-%patch112 -p1
-%patch113 -p1
-%patch114 -p1
 
 rm -rf gdb libdecnumber readline sim
 
 %build
-export SOURCE_DATE_EPOCH=1502738392
-sed -i -e "s/#define BFD_VERSION_DATE.*/#define BFD_VERSION_DATE 20180922/g" bfd/version.h
+export SOURCE_DATE_EPOCH=1549215809 
+sed -i -e "s/#define BFD_VERSION_DATE.*/#define BFD_VERSION_DATE 20190203/g" bfd/version.h
 # Do not use a macro - breaks toolchain
 ./configure --prefix=/usr \
     --enable-shared --disable-static \
@@ -136,7 +102,7 @@ make %{?_smp_flags} tooldir=/usr
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1502738392
+export SOURCE_DATE_EPOCH=1549215809 
 make %{?_smp_flags} tooldir=/usr DESTDIR=%{buildroot} install
 install -d %{buildroot}%{_prefix}/include
 
@@ -192,7 +158,7 @@ cat *.lang > %{name}.lang
 %files extras
 /usr/bin/ld.gold
 
-%files -n binutils-dev
+%files dev
 /usr/include/libiberty.h
 /usr/include/ansidecl.h
 /usr/include/dis-asm.h
@@ -202,11 +168,12 @@ cat *.lang > %{name}.lang
 /usr/include/plugin-api.h
 /usr/include/libiberty/
 /usr/include/diagnostics.h
+/usr/include/bfd_stdint.h
 /usr/lib64/libiberty.a
 /usr/lib64/libbfd.so
 /usr/lib64/libopcodes.so
 
-%files -n binutils-doc
+%files doc
 /usr/share/man/man1/objdump.1
 /usr/share/man/man1/gprof.1
 /usr/share/man/man1/as.1
@@ -231,4 +198,4 @@ cat *.lang > %{name}.lang
 /usr/share/info/ld.info
 /usr/share/info/gprof.info
 
-%files -n binutils-locale -f %{name}.lang
+%files locale -f %{name}.lang
