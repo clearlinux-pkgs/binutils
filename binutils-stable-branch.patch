@@ -1,8 +1,20 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 8248394eb2..dd2c7410b5 100644
+index 8248394eb2..3faecb87f1 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,15 @@
+@@ -1,3 +1,27 @@
++2019-02-07  Eric Botcazou  <ebotcazou@adacore.com>
++
++	PR ld/18841
++	* elf32-sparc.c (elf32_sparc_reloc_type_class): Return
++	reloc_class_ifunc for ifunc symbols.
++	* elf64-sparc.c (elf64_sparc_reloc_type_class): Likewise.
++
++2019-02-07  Eric Botcazou  <ebotcazou@adacore.com>
++
++	* elf32-visium.c (visium_elf_howto_parity_reloc): Minor tweak.
++	<R_VISIUM_PC16>: Use explicit range test to detect an overflow.
++
 +2019-02-04  Nick Clifton  <nickc@redhat.com>
 +
 +	* development.sh (experimental) Set to false.
@@ -117,6 +129,144 @@ index eb0e7b6da1..54d494c105 100644
  
  # Indicate whether this is a release branch.
  experimental=false
+diff --git a/bfd/elf32-sparc.c b/bfd/elf32-sparc.c
+index 1873b1ae7c..f5c5863068 100644
+--- a/bfd/elf32-sparc.c
++++ b/bfd/elf32-sparc.c
+@@ -157,13 +157,44 @@ elf32_sparc_final_write_processing (bfd *abfd,
+     }
+ }
+ 
++/* Used to decide how to sort relocs in an optimal manner for the
++   dynamic linker, before writing them out.  */
++
+ static enum elf_reloc_type_class
+-elf32_sparc_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
++elf32_sparc_reloc_type_class (const struct bfd_link_info *info,
+ 			      const asection *rel_sec ATTRIBUTE_UNUSED,
+ 			      const Elf_Internal_Rela *rela)
+ {
++  bfd *abfd = info->output_bfd;
++  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
++  struct _bfd_sparc_elf_link_hash_table *htab
++    = _bfd_sparc_elf_hash_table (info);
++  BFD_ASSERT (htab != NULL);
++
++  if (htab->elf.dynsym != NULL
++      && htab->elf.dynsym->contents != NULL)
++    {
++      /* Check relocation against STT_GNU_IFUNC symbol if there are
++	 dynamic symbols.  */
++      unsigned long r_symndx = htab->r_symndx (rela->r_info);
++      if (r_symndx != STN_UNDEF)
++	{
++	  Elf_Internal_Sym sym;
++	  if (!bed->s->swap_symbol_in (abfd,
++				       (htab->elf.dynsym->contents
++					+ r_symndx * bed->s->sizeof_sym),
++				       0, &sym))
++	    abort ();
++
++	  if (ELF_ST_TYPE (sym.st_info) == STT_GNU_IFUNC)
++	    return reloc_class_ifunc;
++	}
++    }
++
+   switch ((int) ELF32_R_TYPE (rela->r_info))
+     {
++    case R_SPARC_IRELATIVE:
++      return reloc_class_ifunc;
+     case R_SPARC_RELATIVE:
+       return reloc_class_relative;
+     case R_SPARC_JMP_SLOT:
+diff --git a/bfd/elf32-visium.c b/bfd/elf32-visium.c
+index 316eb39a9c..de81fdca63 100644
+--- a/bfd/elf32-visium.c
++++ b/bfd/elf32-visium.c
+@@ -312,7 +312,6 @@ visium_elf_howto_parity_reloc (bfd * input_bfd, arelent *reloc_entry,
+   bfd_vma relocation;
+   bfd_byte *inplace_address;
+   bfd_vma insn;
+-  const bfd_vma signmask = 0xffff8000;
+ 
+   /* This part is from bfd_elf_generic_reloc.
+      If we're relocating, and this an external symbol, we don't want
+@@ -351,19 +350,19 @@ visium_elf_howto_parity_reloc (bfd * input_bfd, arelent *reloc_entry,
+ 
+   if (reloc_entry->howto->pc_relative)
+     {
+-      relocation -= input_section->output_section->vma
+-	+ input_section->output_offset;
++      relocation -= input_section->output_section->vma;
++      relocation -= input_section->output_offset;
+       relocation -= reloc_entry->address;
+     }
+ 
+   switch (reloc_entry->howto->type)
+     {
+     case R_VISIUM_PC16:
+-      relocation >>= 2;
+-      if (ret == bfd_reloc_ok && (relocation & signmask) != 0
+-	  && (relocation & signmask) != signmask)
++      if (ret == bfd_reloc_ok
++	  && ((bfd_signed_vma) relocation < -0x20000
++	      || (bfd_signed_vma) relocation > 0x1ffff))
+ 	ret = bfd_reloc_overflow;
+-      relocation &= 0xffff;
++      relocation = (relocation >> 2) & 0xffff;
+       break;
+     case R_VISIUM_HI16:
+     case R_VISIUM_HI16_PCREL:
+diff --git a/bfd/elf64-sparc.c b/bfd/elf64-sparc.c
+index 7de32c9192..bd29be3a93 100644
+--- a/bfd/elf64-sparc.c
++++ b/bfd/elf64-sparc.c
+@@ -769,13 +769,44 @@ elf64_sparc_print_symbol_all (bfd *abfd ATTRIBUTE_UNUSED, void * filep,
+     return symbol->name;
+ }
+ 
++/* Used to decide how to sort relocs in an optimal manner for the
++   dynamic linker, before writing them out.  */
++
+ static enum elf_reloc_type_class
+-elf64_sparc_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
++elf64_sparc_reloc_type_class (const struct bfd_link_info *info,
+ 			      const asection *rel_sec ATTRIBUTE_UNUSED,
+ 			      const Elf_Internal_Rela *rela)
+ {
++  bfd *abfd = info->output_bfd;
++  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
++  struct _bfd_sparc_elf_link_hash_table *htab
++    = _bfd_sparc_elf_hash_table (info);
++  BFD_ASSERT (htab != NULL);
++
++  if (htab->elf.dynsym != NULL
++      && htab->elf.dynsym->contents != NULL)
++    {
++      /* Check relocation against STT_GNU_IFUNC symbol if there are
++	 dynamic symbols.  */
++      unsigned long r_symndx = htab->r_symndx (rela->r_info);
++      if (r_symndx != STN_UNDEF)
++	{
++	  Elf_Internal_Sym sym;
++	  if (!bed->s->swap_symbol_in (abfd,
++				       (htab->elf.dynsym->contents
++					+ r_symndx * bed->s->sizeof_sym),
++				       0, &sym))
++	    abort ();
++
++	  if (ELF_ST_TYPE (sym.st_info) == STT_GNU_IFUNC)
++	    return reloc_class_ifunc;
++	}
++    }
++
+   switch ((int) ELF64_R_TYPE (rela->r_info))
+     {
++    case R_SPARC_IRELATIVE:
++      return reloc_class_ifunc;
+     case R_SPARC_RELATIVE:
+       return reloc_class_relative;
+     case R_SPARC_JMP_SLOT:
 diff --git a/bfd/po/bfd.pot b/bfd/po/bfd.pot
 index 3d26acc5bb..5f0ccd0ab6 100644
 --- a/bfd/po/bfd.pot
@@ -249,10 +399,20 @@ index 051db4baa2..edf1c18b9d 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index d023975fe8..84f7a7dc2f 100644
+index d023975fe8..6ec14ac687 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,7 @@
+@@ -1,3 +1,17 @@
++2019-02-07  Eric Botcazou  <ebotcazou@adacore.com>
++
++	* config/tc-visium.c (md_assemble) <mode_cad>: Align instruction on
++	64-bit boundaries for the GR6.
++	* testsuite/gas/visium/allinsn_gr6.s: Tweak.
++	* testsuite/gas/visium/allinsn_gr6.d: Likewise.
++	* testsuite/gas/visium/bra-1.d: New test.
++	* testsuite/gas/visium/bra-1.s: Likewise.
++	* testsuite/gas/visium/visium.exp: Run bra-1 test.
++
 +2019-02-02  Nick Clifton  <nickc@redhat.com>
 +
 +	* configure: Regenerate.
@@ -260,6 +420,21 @@ index d023975fe8..84f7a7dc2f 100644
  2019-02-02  Nick Clifton  <nickc@redhat.com>
  
  	2.32 Release
+diff --git a/gas/config/tc-visium.c b/gas/config/tc-visium.c
+index 36a682c408..bbd320e5ed 100644
+--- a/gas/config/tc-visium.c
++++ b/gas/config/tc-visium.c
+@@ -1368,6 +1368,10 @@ md_assemble (char *str0)
+       if (previous_mode == mode_cad || previous_mode == mode_ci)
+ 	as_bad ("branch instruction in delay slot");
+ 
++      /* For the GR6, BRA insns must be aligned on 64-bit boundaries.  */
++      if (visium_arch == VISIUM_ARCH_GR6)
++	do_align (3, NULL, 0, 0);
++
+       this_dest = r3;
+       condition_code = cc;
+       break;
 diff --git a/gas/configure b/gas/configure
 index 2c0dc012ae..3cb0c2cb11 100755
 --- a/gas/configure
@@ -346,6 +521,105 @@ index 2c0dc012ae..3cb0c2cb11 100755
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
+diff --git a/gas/testsuite/gas/visium/allinsn_gr6.d b/gas/testsuite/gas/visium/allinsn_gr6.d
+index bb198eca8e..c7f627bb34 100644
+--- a/gas/testsuite/gas/visium/allinsn_gr6.d
++++ b/gas/testsuite/gas/visium/allinsn_gr6.d
+@@ -86,10 +86,10 @@ Disassembly of section .text:
+  120:	06 a5 1a 02 	asr.w   r6,r5,0
+  124:	86 a5 1a 12 	asr.w   r6,r5,1
+  128:	86 a7 23 f1 	asr.b   r8,r7,31
+- 12c:	0f 89 28 04 	bra     eq,r9,r10
+- 130:	07 a0 00 04 	rflag   r0
+- 134:	af 87 04 04 	bra     ne,r7,r1
+- 138:	07 e0 ae 04 	readmda r11
++ 12c:	07 a0 00 04 	rflag   r0
++ 130:	0f 89 28 04 	bra     eq,r9,r10
++ 134:	07 e0 ae 04 	readmda r11
++ 138:	af 87 04 04 	bra     ne,r7,r1
+  13c:	07 e0 b3 f4 	eamread r12,31
+  140:	87 cd 30 04 	extb.l  r12,r13
+  144:	87 cf 38 02 	extb.w  r14,r15
+@@ -130,8 +130,8 @@ Disassembly of section .text:
+  1d0:	84 a7 7f ff 	moviu   r7,0x7FFF
+  1d4:	04 c6 00 01 	moviq   r6,1
+  1d8:	84 47 ff ff 	subi    r7,65535
+- 1dc:	ff 86 00 04 	bra     tr,r6,r0
+- 1e0:	86 00 00 04 	add.l   r0,r0,r0
++ 1dc:	86 00 00 04 	add.l   r0,r0,r0
++ 1e0:	ff 86 00 04 	bra     tr,r6,r0
+  1e4:	d3 e3 84 5c 	fpinst  10,f1,f3,f5
+  1e8:	db e4 88 6c 	fpinst  11,f2,f4,f6
+  1ec:	7b ed ac fc 	fpinst  15,f11,f13,f15
+diff --git a/gas/testsuite/gas/visium/allinsn_gr6.s b/gas/testsuite/gas/visium/allinsn_gr6.s
+index 32953fbfb8..11006b836b 100644
+--- a/gas/testsuite/gas/visium/allinsn_gr6.s
++++ b/gas/testsuite/gas/visium/allinsn_gr6.s
+@@ -93,11 +93,10 @@ sreg:
+ 	asr.w	r6,r5,1
+ 	asr.b	r8,r7,31
+ 
+-	bra	eq,r9,r10
+ 	rflag	r0
+-	bra	ne,r7,r1
+-
++	bra	eq,r9,r10
+ 	eamread	r11,0
++	bra	ne,r7,r1
+ 	eamread	r12,31
+ 
+ 	extb.l	r12,r13
+@@ -151,8 +150,8 @@ sreg:
+ 	moviq	r6,1
+ 	subi	r7,65535
+ 
+-	bra	tr,r6,r0
+ 	add.l	r0,r0,r0
++	bra	tr,r6,r0
+ 
+ 
+ 	fpinst	10,f1,f3,f5
+diff --git a/gas/testsuite/gas/visium/bra-1.d b/gas/testsuite/gas/visium/bra-1.d
+new file mode 100644
+index 0000000000..483b36bc8f
+--- /dev/null
++++ b/gas/testsuite/gas/visium/bra-1.d
+@@ -0,0 +1,12 @@
++#as: -mtune=gr6
++#objdump: -d
++#name: bra-1
++
++.*: +file format .*
++
++Disassembly of section .text:
++
++00000000 <foo>:
++	...
++   8:	ff 95 54 04 	bra     tr,r21,r21
++   c:	00 00 00 00 	nop
+diff --git a/gas/testsuite/gas/visium/bra-1.s b/gas/testsuite/gas/visium/bra-1.s
+new file mode 100644
+index 0000000000..11544b887d
+--- /dev/null
++++ b/gas/testsuite/gas/visium/bra-1.s
+@@ -0,0 +1,5 @@
++        .text
++foo:
++	nop
++	bra tr,r21,r21
++	 nop
+diff --git a/gas/testsuite/gas/visium/visium.exp b/gas/testsuite/gas/visium/visium.exp
+index eabe1b0aa3..4c1ac2c7e7 100644
+--- a/gas/testsuite/gas/visium/visium.exp
++++ b/gas/testsuite/gas/visium/visium.exp
+@@ -24,6 +24,7 @@ if [istarget visium-*-*] {
+     run_dump_test "allinsn_def"
+     run_dump_test "allinsn_gr5"
+     run_dump_test "allinsn_gr6"
++    run_dump_test "bra-1"
+     run_dump_test "brr-1"
+     run_dump_test "brr-2"
+     run_dump_test "high-1"
 diff --git a/gprof/ChangeLog b/gprof/ChangeLog
 index efb5f144a9..4e46f4a066 100644
 --- a/gprof/ChangeLog
