@@ -6,7 +6,7 @@
 
 Name:           binutils
 Version:        2.32
-Release:        174
+Release:        175
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Url:            http://www.gnu.org/software/binutils/
@@ -27,6 +27,10 @@ Patch1:         binutils-stable-branch.patch
 Patch2:         binutils-add-LD_AS_NEEDED-global-env.patch
 
 # CVEs
+Patch3: CVE-2019-9077.patch
+Patch4: CVE-2019-9076.patch
+Patch5: CVE-2019-9075.patch
+Patch6: CVE-2019-9074.patch
 
 
 %description
@@ -73,6 +77,10 @@ GNU binary utilities.
 
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
 
 # CVEs
 
