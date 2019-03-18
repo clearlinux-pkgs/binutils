@@ -1,8 +1,15 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 8248394eb2..358b001fc3 100644
+index 8248394eb2..6f39735d7b 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,53 @@
+@@ -1,3 +1,60 @@
++2019-03-18  Alan Modra  <amodra@gmail.com>
++
++	PR 24355
++	* elf32-ppc.c (ppc_finish_symbols): Don't call write_glink_stub
++	for local iplt syms with ent->plt.offset == -1.  Remove ineffective
++	attempt at writing glink stubs only once.
++
 +2019-03-01  Andreas Krebbel  <krebbel@linux.ibm.com>
 +
 +	Backport from mainline
@@ -156,7 +163,7 @@ index eb0e7b6da1..54d494c105 100644
  # Indicate whether this is a release branch.
  experimental=false
 diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
-index 10c04b997f..593ef47592 100644
+index 10c04b997f..6991e8ddc1 100644
 --- a/bfd/elf32-ppc.c
 +++ b/bfd/elf32-ppc.c
 @@ -8852,7 +8852,7 @@ ppc_elf_relocate_section (bfd *output_bfd,
@@ -177,6 +184,30 @@ index 10c04b997f..593ef47592 100644
  	       input_bfd, input_section, rel->r_offset,
  	       howto->name);
  	  break;
+@@ -9704,6 +9704,7 @@ ppc_finish_symbols (struct bfd_link_info *info)
+ 		bfd_byte *loc;
+ 		bfd_vma val;
+ 		Elf_Internal_Rela rela;
++		unsigned char *p;
+ 
+ 		if (!get_sym_h (NULL, &sym, &sym_sec, NULL, &local_syms,
+ 				lplt - local_plt, ibfd))
+@@ -9748,14 +9749,9 @@ ppc_finish_symbols (struct bfd_link_info *info)
+ 		loc = relplt->contents + (relplt->reloc_count++
+ 					  * sizeof (Elf32_External_Rela));
+ 		bfd_elf32_swap_reloca_out (info->output_bfd, &rela, loc);
+-	      }
+-	    if ((ent->glink_offset & 1) == 0)
+-	      {
+-		unsigned char *p = ((unsigned char *) htab->glink->contents
+-				    + ent->glink_offset);
+ 
++		p = (unsigned char *) htab->glink->contents + ent->glink_offset;
+ 		write_glink_stub (NULL, ent, htab->elf.iplt, p, info);
+-		ent->glink_offset |= 1;
+ 	      }
+ 	  }
+ 
 diff --git a/bfd/elf32-s390.c b/bfd/elf32-s390.c
 index 1bf8cc2760..49a301f062 100644
 --- a/bfd/elf32-s390.c
@@ -552,7 +583,7 @@ index 3d26acc5bb..5f0ccd0ab6 100644
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/bfd/version.h b/bfd/version.h
-index 8be2dca799..efb5f9b6a2 100644
+index 8be2dca799..cafb0ad559 100644
 --- a/bfd/version.h
 +++ b/bfd/version.h
 @@ -16,7 +16,7 @@
@@ -560,7 +591,7 @@ index 8be2dca799..efb5f9b6a2 100644
     In releases, the date is not included in either version strings or
     sonames.  */
 -#define BFD_VERSION_DATE 20190202
-+#define BFD_VERSION_DATE 20190317
++#define BFD_VERSION_DATE 20190318
  #define BFD_VERSION @bfd_version@
  #define BFD_VERSION_STRING  @bfd_version_package@ @bfd_version_string@
  #define REPORT_BUGS_TO @report_bugs_to@
