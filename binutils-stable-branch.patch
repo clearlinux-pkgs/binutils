@@ -1,8 +1,17 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 8248394eb2..6f39735d7b 100644
+index 8248394eb2..6433e46e42 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,60 @@
+@@ -1,3 +1,69 @@
++2019-03-25  Claudiu Zissulescu  <claziss@synopsys.com>
++
++	Backport from mainline
++	2019-02-09  Vineet Gupta  <vgupta@synopsys.com>
++	* elf32-arc (INIT_SYM_STRING): Delete.
++	(FINI_SYM_STRING): Likewise.
++	(init_str): Likewise.
++	(fini_str): Likewise.
++
 +2019-03-18  Alan Modra  <amodra@gmail.com>
 +
 +	PR 24355
@@ -162,6 +171,27 @@ index eb0e7b6da1..54d494c105 100644
  
  # Indicate whether this is a release branch.
  experimental=false
+diff --git a/bfd/elf32-arc.c b/bfd/elf32-arc.c
+index c7469ded8a..b86dd59a3b 100644
+--- a/bfd/elf32-arc.c
++++ b/bfd/elf32-arc.c
+@@ -71,16 +71,6 @@ name_for_global_symbol (struct elf_link_hash_entry *h)
+       }									\
+   }
+ 
+-
+-/* The default symbols representing the init and fini dyn values.
+-   TODO: Check what is the relation of those strings with arclinux.em
+-   and DT_INIT.  */
+-#define INIT_SYM_STRING "_init"
+-#define FINI_SYM_STRING "_fini"
+-
+-char * init_str = INIT_SYM_STRING;
+-char * fini_str = FINI_SYM_STRING;
+-
+ #define ARC_RELOC_HOWTO(TYPE, VALUE, SIZE, BITSIZE, RELOC_FUNCTION, OVERFLOW, FORMULA) \
+       case VALUE: \
+ 	return "R_" #TYPE; \
 diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
 index 10c04b997f..6991e8ddc1 100644
 --- a/bfd/elf32-ppc.c
@@ -2880,10 +2910,14 @@ index f0de0966b5..161ede8f80 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 84673af576..0f2af45c11 100644
+index 84673af576..d719425ee6 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,44 @@
+@@ -1,3 +1,48 @@
++2019-02-09  Vineet Gupta  <vgupta@synopsys.com>
++
++	* emultempl/arclinux.em: Delete special INIT/FINI handling.
++
 +2019-03-01  Andreas Krebbel  <krebbel@linux.ibm.com>
 +
 +	Backport from mainline
@@ -3036,6 +3070,50 @@ index 39c746c866..f2286ecc16 100644
  NO_SMALL_DATA=yes
 -SEPARATE_GOTPLT=12
  IREL_IN_PLT=
+diff --git a/ld/emultempl/arclinux.em b/ld/emultempl/arclinux.em
+index 3163712fbd..48b6a616db 100644
+--- a/ld/emultempl/arclinux.em
++++ b/ld/emultempl/arclinux.em
+@@ -1,7 +1,7 @@
+ # This shell script emits a C file. -*- C -*-
+ # Copyright (C) 2007-2019 Free Software Foundation, Inc.
+ #
+-# Copyright 2008-2012 Synopsys Inc.
++# Copyright 2008-2019 Synopsys Inc.
+ #
+ # This file is part of GLD, the Gnu Linker.
+ #
+@@ -23,30 +23,3 @@
+ # This file is sourced from elf32.em, and defines extra arc-linux
+ # specific routines.
+ #
+-cat >>e${EMULATION_NAME}.c <<EOF
+-extern char * init_str;
+-extern char * fini_str;
+-EOF
+-
+-PARSE_AND_LIST_PROLOGUE='
+-#define OPTION_INIT 300+1
+-#define OPTION_FINI (OPTION_INIT+1)
+-'
+-PARSE_AND_LIST_LONGOPTS='
+-  /* PE options */
+-  { "init", required_argument, NULL, OPTION_INIT },
+-  { "fini", required_argument, NULL, OPTION_FINI },
+-'
+-
+-# FIXME: Should set PARSE_AND_LIST_OPTIONS to provide a short description
+-# of the options.
+-
+-PARSE_AND_LIST_ARGS_CASES='
+-    case OPTION_FINI:
+-      fini_str = optarg;
+-      break;
+-
+-    case OPTION_INIT:
+-      init_str = optarg;
+-      break;
+-'
 diff --git a/ld/po/fr.po b/ld/po/fr.po
 index bebaccec1d..c8c0b148fa 100644
 --- a/ld/po/fr.po
