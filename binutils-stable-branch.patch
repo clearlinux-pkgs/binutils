@@ -1,8 +1,14 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 8248394eb2..6433e46e42 100644
+index 8248394eb2..45255c0168 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,69 @@
+@@ -1,3 +1,75 @@
++2019-04-17  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/24458
++	* elfxx-x86.h (SYMBOL_DEFINED_NON_SHARED_P): Also check x86
++	linker_def.
++
 +2019-03-25  Claudiu Zissulescu  <claziss@synopsys.com>
 +
 +	Backport from mainline
@@ -582,10 +588,10 @@ index c7d8bca710..6a4b366fdd 100644
  	  BFD_ASSERT((h->got.offset & 1) != 0);
  	  rela.r_info = htab->r_info (0, R_X86_64_RELATIVE);
 diff --git a/bfd/elfxx-x86.h b/bfd/elfxx-x86.h
-index dce24dc106..28d540b83b 100644
+index dce24dc106..610b2f3a68 100644
 --- a/bfd/elfxx-x86.h
 +++ b/bfd/elfxx-x86.h
-@@ -161,6 +161,13 @@
+@@ -161,6 +161,14 @@
         || (ELF_ST_VISIBILITY ((H)->other) \
  	   && (H)->root.type == bfd_link_hash_undefweak))
  
@@ -594,6 +600,7 @@ index dce24dc106..28d540b83b 100644
 +  ((H)->def_regular \
 +   || (H)->root.linker_def \
 +   || (H)->root.ldscript_def \
++   || ((struct elf_x86_link_hash_entry *) (H))->linker_def \
 +   || ELF_COMMON_DEF_P (H))
 +
  /* TRUE if relative relocation should be generated.  GOT reference to
@@ -3754,10 +3761,22 @@ index 0c0234ab20..5dc5fb750a 100644
    AARCH64_OPND_Ra,	/* Integer register used in ddp_3src instructions.  */
    AARCH64_OPND_Rt_SYS,	/* Integer register used in system instructions.  */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 84673af576..192599f71d 100644
+index 84673af576..f4b12a2f0a 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,53 @@
+@@ -1,3 +1,65 @@
++2019-04-17  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/24458
++	* testsuite/ld-x86-64/x86-64.exp: Run PR ld/24458 tests.
++	* testsuite/ld-x86-64/pr24458.s: New file.
++	* testsuite/ld-x86-64/pr24458a-x32.d: Likewise.
++	* testsuite/ld-x86-64/pr24458a.d: Likewise.
++	* testsuite/ld-x86-64/pr24458b-x32.d: Likewise.
++	* testsuite/ld-x86-64/pr24458b.d: Likewise.
++	* testsuite/ld-x86-64/pr24458c-x32.d: Likewise.
++	* testsuite/ld-x86-64/pr24458c.d: Likewise.
++
 +2019-04-01  Tamar Christina  <tamar.christina@arm.com>
 +
 +	* testsuite/ld-arm/jump-reloc-veneers-cond-long.d: Update disassembly.
@@ -10976,16 +10995,129 @@ index 0000000000..e4ec7c8ce4
 +	.protected foo
 +	.type	foo,@object
 +	.comm	foo,4,4
+diff --git a/ld/testsuite/ld-x86-64/pr24458.s b/ld/testsuite/ld-x86-64/pr24458.s
+new file mode 100644
+index 0000000000..7dbd47af63
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24458.s
+@@ -0,0 +1,5 @@
++	.text
++	.globl	_start
++	.type	_start, @function
++_start:
++	movq	__ehdr_start(%rip), %rax
+diff --git a/ld/testsuite/ld-x86-64/pr24458a-x32.d b/ld/testsuite/ld-x86-64/pr24458a-x32.d
+new file mode 100644
+index 0000000000..ae3994a557
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24458a-x32.d
+@@ -0,0 +1,10 @@
++#source: pr24458.s
++#as: --x32 -mx86-used-note=yes
++#ld: -m elf32_x86_64
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++  Owner                 Data size	Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 ISA used: <None>
++	x86 feature used: x86
+diff --git a/ld/testsuite/ld-x86-64/pr24458a.d b/ld/testsuite/ld-x86-64/pr24458a.d
+new file mode 100644
+index 0000000000..9e2e8b0979
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24458a.d
+@@ -0,0 +1,10 @@
++#source: pr24458.s
++#as: --64 -mx86-used-note=yes
++#ld: -m elf_x86_64
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++  Owner                 Data size	Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 ISA used: <None>
++	x86 feature used: x86
+diff --git a/ld/testsuite/ld-x86-64/pr24458b-x32.d b/ld/testsuite/ld-x86-64/pr24458b-x32.d
+new file mode 100644
+index 0000000000..57d10ab11e
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24458b-x32.d
+@@ -0,0 +1,10 @@
++#source: pr24458.s
++#as: --x32 -mx86-used-note=yes
++#ld: -pie -m elf32_x86_64
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++  Owner                 Data size	Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 ISA used: <None>
++	x86 feature used: x86
+diff --git a/ld/testsuite/ld-x86-64/pr24458b.d b/ld/testsuite/ld-x86-64/pr24458b.d
+new file mode 100644
+index 0000000000..bdcc79a341
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24458b.d
+@@ -0,0 +1,10 @@
++#source: pr24458.s
++#as: --64 -mx86-used-note=yes
++#ld: -pie -m elf_x86_64
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++  Owner                 Data size	Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 ISA used: <None>
++	x86 feature used: x86
+diff --git a/ld/testsuite/ld-x86-64/pr24458c-x32.d b/ld/testsuite/ld-x86-64/pr24458c-x32.d
+new file mode 100644
+index 0000000000..4d76636404
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24458c-x32.d
+@@ -0,0 +1,10 @@
++#source: pr24458.s
++#as: --x32 -mx86-used-note=yes
++#ld: -shared -m elf32_x86_64
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++  Owner                 Data size	Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 ISA used: <None>
++	x86 feature used: x86
+diff --git a/ld/testsuite/ld-x86-64/pr24458c.d b/ld/testsuite/ld-x86-64/pr24458c.d
+new file mode 100644
+index 0000000000..e299831681
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24458c.d
+@@ -0,0 +1,10 @@
++#source: pr24458.s
++#as: --64 -mx86-used-note=yes
++#ld: -shared -m elf_x86_64
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++  Owner                 Data size	Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 ISA used: <None>
++	x86 feature used: x86
 diff --git a/ld/testsuite/ld-x86-64/x86-64.exp b/ld/testsuite/ld-x86-64/x86-64.exp
-index 86b163fc7a..5eb556515f 100644
+index 86b163fc7a..9a76486fbc 100644
 --- a/ld/testsuite/ld-x86-64/x86-64.exp
 +++ b/ld/testsuite/ld-x86-64/x86-64.exp
-@@ -424,6 +424,8 @@ run_dump_test "pr23486d-x32"
+@@ -424,6 +424,14 @@ run_dump_test "pr23486d-x32"
  run_dump_test "pr23854"
  run_dump_test "pr23930"
  run_dump_test "pr23930-x32"
 +run_dump_test "pr24151a"
 +run_dump_test "pr24151a-x32"
++run_dump_test "pr24458a"
++run_dump_test "pr24458a-x32"
++run_dump_test "pr24458b"
++run_dump_test "pr24458b-x32"
++run_dump_test "pr24458c"
++run_dump_test "pr24458c-x32"
  
  if { ![istarget "x86_64-*-linux*"] && ![istarget "x86_64-*-nacl*"]} {
      return
