@@ -1,8 +1,18 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 8248394eb2..45255c0168 100644
+index 8248394eb2..e6979c1a44 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,75 @@
+@@ -1,3 +1,85 @@
++2019-04-18  Tamar Christina  <tamar.christina@arm.com>
++
++	Backport from mainline.
++	2019-04-11  Tamar Christina  <tamar.christina@arm.com>
++
++	PR ld/24302
++	* elfnn-aarch64.c (elfNN_aarch64_size_dynamic_sections): Don't emit
++	DT_TLSDESC_GOT and DT_TLSDESC_PLT when DF_BIND_NOW.
++	(elfNN_aarch64_finish_dynamic_sections): Don't write PLT if DF_BIND_NOW.
++
 +2019-04-17  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR ld/24458
@@ -587,6 +597,55 @@ index c7d8bca710..6a4b366fdd 100644
  	    return FALSE;
  	  BFD_ASSERT((h->got.offset & 1) != 0);
  	  rela.r_info = htab->r_info (0, R_X86_64_RELATIVE);
+diff --git a/bfd/elfnn-aarch64.c b/bfd/elfnn-aarch64.c
+index faa27611d4..9652cf3878 100644
+--- a/bfd/elfnn-aarch64.c
++++ b/bfd/elfnn-aarch64.c
+@@ -8848,13 +8848,14 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+       if (htab->root.splt->size == 0)
+ 	htab->root.splt->size += PLT_ENTRY_SIZE;
+ 
+-      htab->tlsdesc_plt = htab->root.splt->size;
+-      htab->root.splt->size += PLT_TLSDESC_ENTRY_SIZE;
+ 
+       /* If we're not using lazy TLS relocations, don't generate the
+-	 GOT entry required.  */
++	 GOT and PLT entry required.  */
+       if (!(info->flags & DF_BIND_NOW))
+ 	{
++	  htab->tlsdesc_plt = htab->root.splt->size;
++	  htab->root.splt->size += PLT_TLSDESC_ENTRY_SIZE;
++
+ 	  htab->dt_tlsdesc_got = htab->root.sgot->size;
+ 	  htab->root.sgot->size += GOT_ENTRY_SIZE;
+ 	}
+@@ -8958,6 +8959,7 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+ 	    return FALSE;
+ 
+ 	  if (htab->tlsdesc_plt
++	      && !(info->flags & DF_BIND_NOW)
+ 	      && (!add_dynamic_entry (DT_TLSDESC_PLT, 0)
+ 		  || !add_dynamic_entry (DT_TLSDESC_GOT, 0)))
+ 	    return FALSE;
+@@ -9445,6 +9447,7 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
+ 
+ 	    case DT_TLSDESC_GOT:
+ 	      s = htab->root.sgot;
++	      BFD_ASSERT (htab->dt_tlsdesc_got != (bfd_vma)-1);
+ 	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset
+ 		+ htab->dt_tlsdesc_got;
+ 	      break;
+@@ -9464,8 +9467,9 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
+ 	this_hdr.sh_entsize = htab->plt_entry_size;
+ 
+ 
+-      if (htab->tlsdesc_plt)
++      if (htab->tlsdesc_plt && !(info->flags & DF_BIND_NOW))
+ 	{
++	  BFD_ASSERT (htab->dt_tlsdesc_got != (bfd_vma)-1);
+ 	  bfd_put_NN (output_bfd, (bfd_vma) 0,
+ 		      htab->root.sgot->contents + htab->dt_tlsdesc_got);
+ 
 diff --git a/bfd/elfxx-x86.h b/bfd/elfxx-x86.h
 index dce24dc106..610b2f3a68 100644
 --- a/bfd/elfxx-x86.h
@@ -3761,10 +3820,20 @@ index 0c0234ab20..5dc5fb750a 100644
    AARCH64_OPND_Ra,	/* Integer register used in ddp_3src instructions.  */
    AARCH64_OPND_Rt_SYS,	/* Integer register used in system instructions.  */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 84673af576..f4b12a2f0a 100644
+index 84673af576..6add6bb031 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,65 @@
+@@ -1,3 +1,75 @@
++2019-04-18  Tamar Christina  <tamar.christina@arm.com>
++
++	Backport from mainline.
++	2019-04-11  Tamar Christina  <tamar.christina@arm.com>
++
++	PR ld/24302
++	* testsuite/ld-aarch64/aarch64-elf.exp: Add new test.
++	* testsuite/ld-aarch64/tls-relax-gdesc-le-now.d: New test.
++
++
 +2019-04-17  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR ld/24458
@@ -10333,6 +10402,43 @@ index 6ceb974810..c9a1c4bcae 100644
  "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/ld/testsuite/ld-aarch64/aarch64-elf.exp b/ld/testsuite/ld-aarch64/aarch64-elf.exp
+index 2b9fad5604..ad0f8d9081 100644
+--- a/ld/testsuite/ld-aarch64/aarch64-elf.exp
++++ b/ld/testsuite/ld-aarch64/aarch64-elf.exp
+@@ -256,6 +256,7 @@ run_dump_test "tls-relax-all-ilp32"
+ run_dump_test "tls-relax-gd-le"
+ run_dump_test "tls-relax-gd-le-ilp32"
+ run_dump_test "tls-relax-gdesc-le"
++run_dump_test "tls-relax-gdesc-le-now"
+ run_dump_test "tls-relax-gdesc-le-ilp32"
+ run_dump_test "tls-relax-gd-ie"
+ run_dump_test "tls-relax-gd-ie-ilp32"
+diff --git a/ld/testsuite/ld-aarch64/tls-relax-gdesc-le-now.d b/ld/testsuite/ld-aarch64/tls-relax-gdesc-le-now.d
+new file mode 100644
+index 0000000000..f1565e9c11
+--- /dev/null
++++ b/ld/testsuite/ld-aarch64/tls-relax-gdesc-le-now.d
+@@ -0,0 +1,19 @@
++#source: tls-relax-gdesc-le.s
++#ld: -shared -z now
++#readelf: -dr
++#...
++ 0x.+ \(STRTAB\)   \s+0x.+
++ 0x.+ \(SYMTAB\)   \s+0x.+
++ 0x.+ \(STRSZ\)    \s+.+ \(bytes\)
++ 0x.+ \(SYMENT\)   \s+.+ \(bytes\)
++ 0x.+ \(PLTGOT\)   \s+0x.+
++ 0x.+ \(PLTRELSZ\) \s+.+ \(bytes\)
++ 0x.+ \(PLTREL\)   \s+RELA
++ 0x.+ \(JMPREL\)   \s+0x.+
++ 0x.+ \(BIND_NOW\) \s+
++ 0x.+ \(FLAGS_1\)  \s+   Flags: NOW
++ 0x.+ \(NULL\)     \s+   0x0
++
++Relocation section '\.rela\.plt' at offset .+ contains 1 entry:
++  Offset          Info           Type           Sym\. Value    Sym\. Name \+ Addend
++.+  .+ R_AARCH64_TLSDESC                    0
 diff --git a/ld/testsuite/ld-arm/jump-reloc-veneers-cond-long.d b/ld/testsuite/ld-arm/jump-reloc-veneers-cond-long.d
 index d818cf579e..88481f0e92 100644
 --- a/ld/testsuite/ld-arm/jump-reloc-veneers-cond-long.d
