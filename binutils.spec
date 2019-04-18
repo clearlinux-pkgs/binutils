@@ -6,7 +6,7 @@
 
 Name:           binutils
 Version:        2.32
-Release:        233
+Release:        234
 License:        GPL-3.0
 Summary:        GNU binary utilities
 Url:            http://www.gnu.org/software/binutils/
@@ -31,7 +31,7 @@ Patch3: CVE-2019-9077.patch
 Patch4: CVE-2019-9076.patch
 Patch5: CVE-2019-9075.patch
 Patch6: CVE-2019-9074.patch
-
+Patch7: CVE-2019-9071.patch
 
 %description
 GNU binary utilities.
@@ -77,12 +77,14 @@ GNU binary utilities.
 
 %patch1 -p1
 %patch2 -p1
+
+# CVEs
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
 
-# CVEs
 
 rm -rf gdb libdecnumber readline sim
 
