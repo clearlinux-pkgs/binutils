@@ -679,7 +679,7 @@ index 3d26acc5bb..5f0ccd0ab6 100644
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/bfd/version.h b/bfd/version.h
-index 8be2dca799..29bbe943b2 100644
+index 8be2dca799..ff93b8754c 100644
 --- a/bfd/version.h
 +++ b/bfd/version.h
 @@ -16,7 +16,7 @@
@@ -687,7 +687,7 @@ index 8be2dca799..29bbe943b2 100644
     In releases, the date is not included in either version strings or
     sonames.  */
 -#define BFD_VERSION_DATE 20190202
-+#define BFD_VERSION_DATE 20190517
++#define BFD_VERSION_DATE 20190518
  #define BFD_VERSION @bfd_version@
  #define BFD_VERSION_STRING  @bfd_version_package@ @bfd_version_string@
  #define REPORT_BUGS_TO @report_bugs_to@
@@ -3877,10 +3877,16 @@ index 0c0234ab20..5dc5fb750a 100644
    AARCH64_OPND_Ra,	/* Integer register used in ddp_3src instructions.  */
    AARCH64_OPND_Rt_SYS,	/* Integer register used in system instructions.  */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 84673af576..6add6bb031 100644
+index 84673af576..5ac2362e1b 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,75 @@
+@@ -1,3 +1,81 @@
++2019-05-17  Alan Modra  <amodra@gmail.com>
++
++	PR 24567
++	* plugin.c (plugin_notice): Do not let a common symbol override
++	a non-common definition in IR.
++
 +2019-04-18  Tamar Christina  <tamar.christina@arm.com>
 +
 +	Backport from mainline.
@@ -4108,6 +4114,65 @@ index 3163712fbd..48b6a616db 100644
 -      init_str = optarg;
 -      break;
 -'
+diff --git a/ld/plugin.c b/ld/plugin.c
+index ea1a7f7064..e4e781c2a8 100644
+--- a/ld/plugin.c
++++ b/ld/plugin.c
+@@ -1316,30 +1316,36 @@ plugin_notice (struct bfd_link_info *info,
+ 	  ref = TRUE;
+ 	}
+ 
+-      /* Otherwise, it must be a new def.  */
+-      else
++
++      /* A common symbol should be merged with other commons or
++	 defs with the same name.  In particular, a common ought
++	 to be overridden by a def in a -flto object.  In that
++	 sense a common is also a ref.  */
++      else if (bfd_is_com_section (section))
+ 	{
+-	  /* Ensure any symbol defined in an IR dummy BFD takes on a
+-	     new value from a real BFD.  Weak symbols are not normally
+-	     overridden by a new weak definition, and strong symbols
+-	     will normally cause multiple definition errors.  Avoid
+-	     this by making the symbol appear to be undefined.  */
+-	  if (((h->type == bfd_link_hash_defweak
+-		|| h->type == bfd_link_hash_defined)
+-	       && is_ir_dummy_bfd (sym_bfd = h->u.def.section->owner))
+-	      || (h->type == bfd_link_hash_common
+-		  && is_ir_dummy_bfd (sym_bfd = h->u.c.p->section->owner)))
++	  if (h->type == bfd_link_hash_common
++	      && is_ir_dummy_bfd (sym_bfd = h->u.c.p->section->owner))
+ 	    {
+ 	      h->type = bfd_link_hash_undefweak;
+ 	      h->u.undef.abfd = sym_bfd;
+ 	    }
++	  ref = TRUE;
++	}
+ 
+-	  /* A common symbol should be merged with other commons or
+-	     defs with the same name.  In particular, a common ought
+-	     to be overridden by a def in a -flto object.  In that
+-	     sense a common is also a ref.  */
+-	  if (bfd_is_com_section (section))
+-	    ref = TRUE;
++      /* Otherwise, it must be a new def.
++	 Ensure any symbol defined in an IR dummy BFD takes on a
++	 new value from a real BFD.  Weak symbols are not normally
++	 overridden by a new weak definition, and strong symbols
++	 will normally cause multiple definition errors.  Avoid
++	 this by making the symbol appear to be undefined.  */
++      else if (((h->type == bfd_link_hash_defweak
++		 || h->type == bfd_link_hash_defined)
++		&& is_ir_dummy_bfd (sym_bfd = h->u.def.section->owner))
++	       || (h->type == bfd_link_hash_common
++		   && is_ir_dummy_bfd (sym_bfd = h->u.c.p->section->owner)))
++	{
++	  h->type = bfd_link_hash_undefweak;
++	  h->u.undef.abfd = sym_bfd;
+ 	}
+ 
+       if (ref)
 diff --git a/ld/po/fr.po b/ld/po/fr.po
 index bebaccec1d..c8c0b148fa 100644
 --- a/ld/po/fr.po
