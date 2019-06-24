@@ -1,8 +1,14 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 8248394eb2..e6979c1a44 100644
+index 8248394eb2..b0167fe25f 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,85 @@
+@@ -1,3 +1,91 @@
++2019-06-24  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/24721
++	* elf-properties.c (elf_merge_gnu_property_list): Remove the
++	property after reporting property removal.
++
 +2019-04-18  Tamar Christina  <tamar.christina@arm.com>
 +
 +	Backport from mainline.
@@ -187,6 +193,27 @@ index eb0e7b6da1..54d494c105 100644
  
  # Indicate whether this is a release branch.
  experimental=false
+diff --git a/bfd/elf-properties.c b/bfd/elf-properties.c
+index 5e48d75faa..4a9907ff7e 100644
+--- a/bfd/elf-properties.c
++++ b/bfd/elf-properties.c
+@@ -322,12 +322,10 @@ elf_merge_gnu_property_list (struct bfd_link_info *info, bfd *first_pbfd,
+ 			 (bfd_vma) p->property.pr_type, first_pbfd, abfd);
+ 		  }
+ 	      }
+-	    else
+-	      {
+-		/* Remove this property.  */
+-		*lastp = p->next;
+-		continue;
+-	      }
++
++	    /* Remove this property.  */
++	    *lastp = p->next;
++	    continue;
+ 	  }
+ 	else if (number_p)
+ 	  {
 diff --git a/bfd/elf32-arc.c b/bfd/elf32-arc.c
 index c7469ded8a..b86dd59a3b 100644
 --- a/bfd/elf32-arc.c
@@ -4029,10 +4056,20 @@ index 0c0234ab20..5dc5fb750a 100644
    AARCH64_OPND_Ra,	/* Integer register used in ddp_3src instructions.  */
    AARCH64_OPND_Rt_SYS,	/* Integer register used in system instructions.  */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 84673af576..5ac2362e1b 100644
+index 84673af576..73bee92dab 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,81 @@
+@@ -1,3 +1,91 @@
++2019-06-24  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/24721
++	* testsuite/ld-x86-64/x86-64.exp: Run PR ld/24721 tests.
++	* testsuite/ld-x86-64/pr24721-x32.d: New file.
++	* testsuite/ld-x86-64/pr24721.d: Likewise.
++	* testsuite/ld-x86-64/pr24721.map: Likewise.
++	* testsuite/ld-x86-64/pr24721a.s: Likewise.
++	* testsuite/ld-x86-64/pr24721b.s: Likewise.
++
 +2019-05-17  Alan Modra  <amodra@gmail.com>
 +
 +	PR 24567
@@ -11482,11 +11519,96 @@ index 0000000000..e299831681
 +  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
 +      Properties: x86 ISA used: <None>
 +	x86 feature used: x86
+diff --git a/ld/testsuite/ld-x86-64/pr24721-x32.d b/ld/testsuite/ld-x86-64/pr24721-x32.d
+new file mode 100644
+index 0000000000..9b067efdc1
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24721-x32.d
+@@ -0,0 +1,6 @@
++#source: pr24721a.s
++#source: pr24721b.s
++#as: --x32 -mx86-used-note=no
++#ld: -r -m elf32_x86_64 -Map tmpdir/pr24721.map
++#readelf: -n
++#map: pr24721.map
+diff --git a/ld/testsuite/ld-x86-64/pr24721.d b/ld/testsuite/ld-x86-64/pr24721.d
+new file mode 100644
+index 0000000000..efa88db2b3
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24721.d
+@@ -0,0 +1,6 @@
++#source: pr24721a.s
++#source: pr24721b.s
++#as: --64 -defsym __64_bit__=1 -mx86-used-note=no
++#ld: -r -melf_x86_64 -Map tmpdir/pr24721.map
++#readelf: -n
++#map: pr24721.map
+diff --git a/ld/testsuite/ld-x86-64/pr24721.map b/ld/testsuite/ld-x86-64/pr24721.map
+new file mode 100644
+index 0000000000..9e63fff275
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24721.map
+@@ -0,0 +1,3 @@
++#...
++Removed property 0xc0000002 to merge tmpdir/pr24721a.o \(0x1\) and tmpdir/pr24721b.o \(not found\)
++#pass
+diff --git a/ld/testsuite/ld-x86-64/pr24721a.s b/ld/testsuite/ld-x86-64/pr24721a.s
+new file mode 100644
+index 0000000000..b229d19b02
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24721a.s
+@@ -0,0 +1,34 @@
++	.text
++	.globl foo
++	.type foo,@function
++	.p2align 4
++foo:
++	ret
++
++	.section ".note.gnu.property", "a"
++.ifdef __64_bit__
++	.p2align 3
++.else
++	.p2align 2
++.endif
++	.long 1f - 0f		/* name length */
++	.long 5f - 2f		/* data length */
++	.long 5			/* note type */
++0:	.asciz "GNU"		/* vendor name */
++1:
++.ifdef __64_bit__
++	.p2align 3
++.else
++	.p2align 2
++.endif
++2:	.long 0xc0000002	/* pr_type.  */
++	.long 4f - 3f		/* pr_datasz.  */
++3:
++	.long 0x1
++4:
++.ifdef __64_bit__
++	.p2align 3
++.else
++	.p2align 2
++.endif
++5:
+diff --git a/ld/testsuite/ld-x86-64/pr24721b.s b/ld/testsuite/ld-x86-64/pr24721b.s
+new file mode 100644
+index 0000000000..3d11691166
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr24721b.s
+@@ -0,0 +1,6 @@
++	.text
++	.globl bar
++	.type bar,@function
++	.p2align 4
++bar:
++	ret
 diff --git a/ld/testsuite/ld-x86-64/x86-64.exp b/ld/testsuite/ld-x86-64/x86-64.exp
-index 86b163fc7a..9a76486fbc 100644
+index 86b163fc7a..707ab89f8e 100644
 --- a/ld/testsuite/ld-x86-64/x86-64.exp
 +++ b/ld/testsuite/ld-x86-64/x86-64.exp
-@@ -424,6 +424,14 @@ run_dump_test "pr23486d-x32"
+@@ -424,6 +424,16 @@ run_dump_test "pr23486d-x32"
  run_dump_test "pr23854"
  run_dump_test "pr23930"
  run_dump_test "pr23930-x32"
@@ -11498,6 +11620,8 @@ index 86b163fc7a..9a76486fbc 100644
 +run_dump_test "pr24458b-x32"
 +run_dump_test "pr24458c"
 +run_dump_test "pr24458c-x32"
++run_dump_test "pr24721"
++run_dump_test "pr24721-x32"
  
  if { ![istarget "x86_64-*-linux*"] && ![istarget "x86_64-*-nacl*"]} {
      return
