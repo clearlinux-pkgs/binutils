@@ -1,8 +1,14 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 8248394eb2..b0167fe25f 100644
+index 8248394eb2..c8f87ba8d2 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,91 @@
+@@ -1,3 +1,97 @@
++2019-07-02  Srinath Parvathaneni  <srinath.parvathaneni@arm.com>
++
++	* elf32-arm.c (elf32_arm_gc_mark_extra_sections): Mark debug
++	sections when .text section contain secure entry functions
++	is marked.
++
 +2019-06-24  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR ld/24721
@@ -235,6 +241,44 @@ index c7469ded8a..b86dd59a3b 100644
  #define ARC_RELOC_HOWTO(TYPE, VALUE, SIZE, BITSIZE, RELOC_FUNCTION, OVERFLOW, FORMULA) \
        case VALUE: \
  	return "R_" #TYPE; \
+diff --git a/bfd/elf32-arm.c b/bfd/elf32-arm.c
+index 28ee9d55a8..f558d81829 100644
+--- a/bfd/elf32-arm.c
++++ b/bfd/elf32-arm.c
+@@ -15698,6 +15698,8 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
+   struct elf_link_hash_entry **sym_hashes;
+   struct elf32_arm_link_hash_entry *cmse_hash;
+   bfd_boolean again, is_v8m, first_bfd_browse = TRUE;
++  bfd_boolean debug_sec_need_to_be_marked = FALSE;
++  asection *isec;
+ 
+   _bfd_elf_gc_mark_extra_sections (info, gc_mark_hook);
+ 
+@@ -15759,8 +15761,24 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
+ 		      if (!cmse_sec->gc_mark
+ 			  && !_bfd_elf_gc_mark (info, cmse_sec, gc_mark_hook))
+ 			return FALSE;
++		      /* The debug sections related to these secure entry
++			 functions are marked on enabling below flag.  */
++		      debug_sec_need_to_be_marked = TRUE;
+ 		    }
+ 		}
++	      if (debug_sec_need_to_be_marked)
++		{
++		  /* Looping over all the sections of the object file containing
++		     Armv8-M secure entry functions and marking all the debug
++		     sections.  */
++		  for (isec = sub->sections; isec != NULL; isec = isec->next)
++		    {
++		      /* If not a debug sections, skip it.  */
++		      if (!isec->gc_mark && (isec->flags & SEC_DEBUGGING))
++			isec->gc_mark = 1 ;
++		    }
++		  debug_sec_need_to_be_marked = FALSE;
++		}
+ 	    }
+ 	}
+       first_bfd_browse = FALSE;
 diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
 index 10c04b997f..6991e8ddc1 100644
 --- a/bfd/elf32-ppc.c
@@ -1478,10 +1522,29 @@ index 3d1839f131..3e941dcefd 100644
  }
  
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index d023975fe8..72fac52963 100644
+index d023975fe8..24c6c2cdf1 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,79 @@
+@@ -1,3 +1,98 @@
++2019-07-02  Richard Sandiford  <richard.sandiford@arm.com>
++
++	* testsuite/gas/aarch64/sve-movprfx_27.s,
++	* testsuite/gas/aarch64/sve-movprfx_27.d: New test.
++
++2019-07-02  Richard Sandiford  <richard.sandiford@arm.com>
++
++	* testsuite/gas/aarch64/sve-movprfx_26.s: Also test FCVTZS, FCVTZU,
++	SCVTF, UCVTF, LSR and ASR.
++	* testsuite/gas/aarch64/sve-movprfx_26.d: Update accordingly.
++	* testsuite/gas/aarch64/sve-movprfx_26.l: Likewise.
++
++2019-07-02  Richard Sandiford  <richard.sandiford@arm.com>
++
++	* testsuite/gas/aarch64/sve-movprfx_25.s: Allow CPY Z1.D.P1/M,X1
++	to be prefixed by MOVPRFX.
++	* testsuite/gas/aarch64/sve-movprfx_25.d: Update accordingly.
++	* testsuite/gas/aarch64/sve-movprfx_25.l: Likewise.
++
 +2019-05-21  Andre Vieira  <andre.simoesdiasvieira@arm.com>
 +
 +	Backport from mainline
@@ -1986,6 +2049,208 @@ index 9c9c48b3bd..aa574f40f4 100644
 +	ldgm sp, [x3]
 +	stgm x0, [xzr]
 +	stgm sp, [x3]
+diff --git a/gas/testsuite/gas/aarch64/sve-movprfx_25.d b/gas/testsuite/gas/aarch64/sve-movprfx_25.d
+index 1573856462..2b4f654823 100644
+--- a/gas/testsuite/gas/aarch64/sve-movprfx_25.d
++++ b/gas/testsuite/gas/aarch64/sve-movprfx_25.d
+@@ -21,7 +21,7 @@ Disassembly of section .*:
+ [^:]+:	04d12461 	movprfx	z1.d, p1/m, z3.d
+ [^:]+:	05e8a441 	mov	z1.d, p1/m, x2
+ [^:]+:	04d12461 	movprfx	z1.d, p1/m, z3.d
+-[^:]+:	05e8a421 	mov	z1.d, p1/m, x1  // note: output register of preceding `movprfx' used as input at operand 3
++[^:]+:	05e8a421 	mov	z1.d, p1/m, x1
+ [^:]+:	04d12461 	movprfx	z1.d, p1/m, z3.d
+ [^:]+:	05e08441 	mov	z1.d, p1/m, d2
+ [^:]+:	04d12461 	movprfx	z1.d, p1/m, z3.d
+diff --git a/gas/testsuite/gas/aarch64/sve-movprfx_25.l b/gas/testsuite/gas/aarch64/sve-movprfx_25.l
+index ec7e2dbd60..259ad55547 100644
+--- a/gas/testsuite/gas/aarch64/sve-movprfx_25.l
++++ b/gas/testsuite/gas/aarch64/sve-movprfx_25.l
+@@ -1,5 +1,4 @@
+ [^:]*: Assembler messages:
+ .*: Warning: predicate register differs from that in preceding `movprfx' at operand 2 -- `cpy z1.d,p9/m,#12'
+ .*: Warning: merging predicate expected due to preceding `movprfx' at operand 2 -- `cpy z1.d,p1/z,#12'
+-.*: Warning: output register of preceding `movprfx' used as input at operand 3 -- `cpy z1.d,p1/m,x1'
+ .*: Warning: output register of preceding `movprfx' used as input at operand 3 -- `cpy z1.d,p1/m,d1'
+diff --git a/gas/testsuite/gas/aarch64/sve-movprfx_25.s b/gas/testsuite/gas/aarch64/sve-movprfx_25.s
+index 58124cee1c..0e64763de1 100644
+--- a/gas/testsuite/gas/aarch64/sve-movprfx_25.s
++++ b/gas/testsuite/gas/aarch64/sve-movprfx_25.s
+@@ -29,7 +29,7 @@ f:
+    movprfx z1.d, p1/m, z3.d
+    cpy z1.d, p1/m, x2
+ 
+-   /* Not OK, scalar but register z1 and x1 are architecturally the same.  */
++   /* OK, scalar predicated, alias mov.  */
+    movprfx z1.d, p1/m, z3.d
+    cpy z1.d, p1/m, x1
+ 
+diff --git a/gas/testsuite/gas/aarch64/sve-movprfx_26.d b/gas/testsuite/gas/aarch64/sve-movprfx_26.d
+index 00bafdc830..1f7a85d4e8 100644
+--- a/gas/testsuite/gas/aarch64/sve-movprfx_26.d
++++ b/gas/testsuite/gas/aarch64/sve-movprfx_26.d
+@@ -16,8 +16,48 @@ Disassembly of section .*:
+ [^:]+:	65cba440 	fcvt	z0.d, p1/m, z2.s  // note: register size not compatible with previous `movprfx' at operand 1
+ [^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
+ [^:]+:	65cba440 	fcvt	z0.d, p1/m, z2.s
++[^:]+:	04912420 	movprfx	z0.s, p1/m, z1.s
++[^:]+:	65d8a440 	fcvtzs	z0.s, p1/m, z2.d  // note: register size not compatible with previous `movprfx' at operand 1
++[^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
++[^:]+:	65d8a440 	fcvtzs	z0.s, p1/m, z2.d
++[^:]+:	04912420 	movprfx	z0.s, p1/m, z1.s
++[^:]+:	65dca440 	fcvtzs	z0.d, p1/m, z2.s  // note: register size not compatible with previous `movprfx' at operand 1
++[^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
++[^:]+:	65dca440 	fcvtzs	z0.d, p1/m, z2.s
++[^:]+:	04912420 	movprfx	z0.s, p1/m, z1.s
++[^:]+:	65d9a440 	fcvtzu	z0.s, p1/m, z2.d  // note: register size not compatible with previous `movprfx' at operand 1
++[^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
++[^:]+:	65d9a440 	fcvtzu	z0.s, p1/m, z2.d
++[^:]+:	04912420 	movprfx	z0.s, p1/m, z1.s
++[^:]+:	65dda440 	fcvtzu	z0.d, p1/m, z2.s  // note: register size not compatible with previous `movprfx' at operand 1
++[^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
++[^:]+:	65dda440 	fcvtzu	z0.d, p1/m, z2.s
++[^:]+:	04912420 	movprfx	z0.s, p1/m, z1.s
++[^:]+:	65d4a440 	scvtf	z0.s, p1/m, z2.d  // note: register size not compatible with previous `movprfx' at operand 1
++[^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
++[^:]+:	65d4a440 	scvtf	z0.s, p1/m, z2.d
++[^:]+:	04912420 	movprfx	z0.s, p1/m, z1.s
++[^:]+:	65d0a440 	scvtf	z0.d, p1/m, z2.s  // note: register size not compatible with previous `movprfx' at operand 1
++[^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
++[^:]+:	65d0a440 	scvtf	z0.d, p1/m, z2.s
++[^:]+:	04912420 	movprfx	z0.s, p1/m, z1.s
++[^:]+:	65d5a440 	ucvtf	z0.s, p1/m, z2.d  // note: register size not compatible with previous `movprfx' at operand 1
++[^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
++[^:]+:	65d5a440 	ucvtf	z0.s, p1/m, z2.d
++[^:]+:	04912420 	movprfx	z0.s, p1/m, z1.s
++[^:]+:	65d1a440 	ucvtf	z0.d, p1/m, z2.s  // note: register size not compatible with previous `movprfx' at operand 1
++[^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
++[^:]+:	65d1a440 	ucvtf	z0.d, p1/m, z2.s
+ [^:]+:	04112420 	movprfx	z0.b, p1/m, z1.b
+ [^:]+:	041b8440 	lsl	z0.b, p1/m, z0.b, z2.d
+ [^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
+ [^:]+:	041b8440 	lsl	z0.b, p1/m, z0.b, z2.d  // note: register size not compatible with previous `movprfx' at operand 1
++[^:]+:	04112420 	movprfx	z0.b, p1/m, z1.b
++[^:]+:	04198440 	lsr	z0.b, p1/m, z0.b, z2.d
++[^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
++[^:]+:	04198440 	lsr	z0.b, p1/m, z0.b, z2.d  // note: register size not compatible with previous `movprfx' at operand 1
++[^:]+:	04112420 	movprfx	z0.b, p1/m, z1.b
++[^:]+:	04188440 	asr	z0.b, p1/m, z0.b, z2.d
++[^:]+:	04d12420 	movprfx	z0.d, p1/m, z1.d
++[^:]+:	04188440 	asr	z0.b, p1/m, z0.b, z2.d  // note: register size not compatible with previous `movprfx' at operand 1
+ [^:]+:	d65f03c0 	ret
+diff --git a/gas/testsuite/gas/aarch64/sve-movprfx_26.l b/gas/testsuite/gas/aarch64/sve-movprfx_26.l
+index 695f90fde0..3595566318 100644
+--- a/gas/testsuite/gas/aarch64/sve-movprfx_26.l
++++ b/gas/testsuite/gas/aarch64/sve-movprfx_26.l
+@@ -1,4 +1,14 @@
+ [^:]*: Assembler messages:
+ .*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `fcvt Z0.S,P1/M,Z2.D'
+ .*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `fcvt Z0.D,P1/M,Z2.S'
+-.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `lsl Z0.B,P1/M,Z0.B,Z2.D'
+\ No newline at end of file
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `fcvtzs Z0.S,P1/M,Z2.D'
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `fcvtzs Z0.D,P1/M,Z2.S'
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `fcvtzu Z0.S,P1/M,Z2.D'
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `fcvtzu Z0.D,P1/M,Z2.S'
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `scvtf Z0.S,P1/M,Z2.D'
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `scvtf Z0.D,P1/M,Z2.S'
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `ucvtf Z0.S,P1/M,Z2.D'
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `ucvtf Z0.D,P1/M,Z2.S'
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `lsl Z0.B,P1/M,Z0.B,Z2.D'
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `lsr Z0.B,P1/M,Z0.B,Z2.D'
++.*: Warning: register size not compatible with previous `movprfx' at operand 1 -- `asr Z0.B,P1/M,Z0.B,Z2.D'
+diff --git a/gas/testsuite/gas/aarch64/sve-movprfx_26.s b/gas/testsuite/gas/aarch64/sve-movprfx_26.s
+index 15f52db144..859a0e20bd 100644
+--- a/gas/testsuite/gas/aarch64/sve-movprfx_26.s
++++ b/gas/testsuite/gas/aarch64/sve-movprfx_26.s
+@@ -4,28 +4,44 @@
+   .arch armv8-a+sve
+ 
+ f:
++  .macro test_cvt, insn
++
+   /* Not OK, 64-bit operation, upper 32-bits cleared.  */
+   movprfx Z0.S, P1/M, Z1.S
+-  fcvt Z0.S, P1/M, Z2.D
++  \insn Z0.S, P1/M, Z2.D
+ 
+   /* OK, 64-bit operation, upper 32-bits cleared.  */
+   movprfx Z0.D, P1/M, Z1.D
+-  fcvt Z0.S, P1/M, Z2.D
++  \insn Z0.S, P1/M, Z2.D
+ 
+   /* Not OK, 64-bit operation ignoring 32-bits.  */
+   movprfx Z0.S, P1/M, Z1.S
+-  fcvt Z0.D, P1/M, Z2.S
++  \insn Z0.D, P1/M, Z2.S
+ 
+   /* OK, 64-bit operation ignoring 32-bits.  */
+   movprfx Z0.D, P1/M, Z1.D
+-  fcvt Z0.D, P1/M, Z2.S
++  \insn Z0.D, P1/M, Z2.S
++  .endm test_cvt
+ 
++  .macro test_shift, insn
+   /* OK, 8-bit operation.  */
+   movprfx Z0.B, P1/M, Z1.B
+-  lsl Z0.B, P1/M, Z0.B, Z2.D
++  \insn Z0.B, P1/M, Z0.B, Z2.D
+ 
+   /* Not Ok, destination register sizes don't match.  */
+   movprfx Z0.D, P1/M, Z1.D
+-  lsl Z0.B, P1/M, Z0.B, Z2.D
++  \insn Z0.B, P1/M, Z0.B, Z2.D
++  .endm test_shift
++
++  test_cvt fcvt
++  test_cvt fcvtzs
++  test_cvt fcvtzu
++  test_cvt scvtf
++  test_cvt ucvtf
++
++  test_shift lsl
++  test_shift lsr
++  test_shift asr
++
+   ret
+ 
+diff --git a/gas/testsuite/gas/aarch64/sve-movprfx_27.d b/gas/testsuite/gas/aarch64/sve-movprfx_27.d
+new file mode 100644
+index 0000000000..ef0bc9ad00
+--- /dev/null
++++ b/gas/testsuite/gas/aarch64/sve-movprfx_27.d
+@@ -0,0 +1,14 @@
++#source: sve-movprfx_27.s
++#as: -march=armv8-a+sve -I$srcdir/$subdir
++#objdump: -Dr -M notes
++
++.* file format .*
++
++Disassembly of section .*:
++
++0+ <.*>:
++[^:]+:	0420bc20 	movprfx	z0, z1
++[^:]+:	0590ce00 	fmov	z0.s, p0/m, #1.0+(e\+00)?
++[^:]+:	0420bc20 	movprfx	z0, z1
++[^:]+:	0590ce00 	fmov	z0.s, p0/m, #1.0+(e\+00)?
++[^:]+:	d65f03c0 	ret
+diff --git a/gas/testsuite/gas/aarch64/sve-movprfx_27.s b/gas/testsuite/gas/aarch64/sve-movprfx_27.s
+new file mode 100644
+index 0000000000..bb4d3a70b6
+--- /dev/null
++++ b/gas/testsuite/gas/aarch64/sve-movprfx_27.s
+@@ -0,0 +1,11 @@
++	.text
++	.arch armv8-a+sve
++
++f:
++	movprfx z0, z1
++	fmov z0.s, p0/m, #1.0
++
++	movprfx z0, z1
++	fcpy z0.s, p0/m, #1.0
++
++	ret
 diff --git a/gas/testsuite/gas/arm/armv8a-automatic-hlt.d b/gas/testsuite/gas/arm/armv8a-automatic-hlt.d
 index ee6c428538..9ce94d36c9 100644
 --- a/gas/testsuite/gas/arm/armv8a-automatic-hlt.d
@@ -4056,10 +4321,17 @@ index 0c0234ab20..5dc5fb750a 100644
    AARCH64_OPND_Ra,	/* Integer register used in ddp_3src instructions.  */
    AARCH64_OPND_Rt_SYS,	/* Integer register used in system instructions.  */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 84673af576..73bee92dab 100644
+index 84673af576..95e6cf7fda 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,91 @@
+@@ -1,3 +1,98 @@
++2019-07-02  Srinath Parvathaneni  <srinath.parvathaneni@arm.com>
++
++	* testsuite/ld-arm/arm-elf.exp: Add tests.
++	* testsuite/ld-arm/cmse_main.s: New test.
++	* testsuite/ld-arm/cmse_main_sec_debug.d: Likewise.
++	* testsuite/ld-arm/cmse_sec_debug.s: Likewise.
++
 +2019-06-24  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR ld/24721
@@ -10750,6 +11022,233 @@ index 0000000000..f1565e9c11
 +Relocation section '\.rela\.plt' at offset .+ contains 1 entry:
 +  Offset          Info           Type           Sym\. Value    Sym\. Name \+ Addend
 +.+  .+ R_AARCH64_TLSDESC                    0
+diff --git a/ld/testsuite/ld-arm/arm-elf.exp b/ld/testsuite/ld-arm/arm-elf.exp
+index 450a76b708..440a1568c2 100644
+--- a/ld/testsuite/ld-arm/arm-elf.exp
++++ b/ld/testsuite/ld-arm/arm-elf.exp
+@@ -768,6 +768,12 @@ set armeabitests_nonacl {
+      {cmse-implib.s}
+      {{ld cmse-new-wrong-implib.out}}
+      "cmse-new-wrong-implib"}
++    {"Secure gateway veneers:cmse functions debug information missing"
++      "--section-start .gnu.sgstubs=0x190000 --gc-sections -e0" ""
++      "-march=armv8-m.main -mthumb"
++      {cmse_main.s cmse_sec_debug.s}
++      {{objdump --dwarf=info cmse_main_sec_debug.d}}
++      "cmse_main_sec_debug"}
+ 
+     {"R_ARM_THM_JUMP19 Relocation veneers: Short"
+      "--section-start destsect=0x000108002 --section-start .text=0x8000" ""
+diff --git a/ld/testsuite/ld-arm/cmse_main.s b/ld/testsuite/ld-arm/cmse_main.s
+new file mode 100644
+index 0000000000..5047c02f46
+--- /dev/null
++++ b/ld/testsuite/ld-arm/cmse_main.s
+@@ -0,0 +1,21 @@
++	.arch armv8-m.main
++	.file	"cmse_main.c"
++	.text
++.Ltext0:
++	.cfi_sections	.debug_frame
++	.section	.text.main,"ax",%progbits
++	.align	1
++	.global	main
++	.arch armv8-m.main
++	.syntax unified
++	.thumb
++	.thumb_func
++	.fpu fpv5-sp-d16
++	.type	main, %function
++main:
++.LFB0:
++	.file 1 "cmse_main.c"
++	.loc 1 2 1
++	.cfi_startproc
++	.cfi_endproc
++.LFE0:
+diff --git a/ld/testsuite/ld-arm/cmse_main_sec_debug.d b/ld/testsuite/ld-arm/cmse_main_sec_debug.d
+new file mode 100644
+index 0000000000..61280b769c
+--- /dev/null
++++ b/ld/testsuite/ld-arm/cmse_main_sec_debug.d
+@@ -0,0 +1,29 @@
++
++tmpdir/cmse_main_sec_debug:     .*
++
++Contents of the \.debug_info section:
++
++  Compilation Unit @ offset 0x0:
++   Length:        0x34 \(32-bit\)
++   Version:       4
++   Abbrev Offset: 0x0
++   Pointer Size:  4
++ <0><b>: Abbrev Number: 1 \(DW_TAG_compile_unit\)
++    <c>   DW_AT_producer    : \(indirect string, offset: 0x6\): GNU C17 10.0.0 20190617
++    <10>   DW_AT_language    : 12	\(ANSI C99\)
++    <11>   DW_AT_name        : \(indirect string, offset: 0x0\): sec.c
++    <15>   DW_AT_comp_dir    : \(indirect string, offset: 0x2b\): Blinky
++    <19>   DW_AT_ranges      : 0x0
++    <1d>   DW_AT_low_pc      : 0x0
++    <21>   DW_AT_stmt_list   : 0x0
++ <1><25>: Abbrev Number: 2 \(DW_TAG_subprogram\)
++    <26>   DW_AT_external    : 1
++    <26>   DW_AT_name        : \(indirect string, offset: 0x1e\): SecureLED_On
++    <2a>   DW_AT_decl_file   : 1
++    <2b>   DW_AT_decl_line   : 2
++    <2c>   DW_AT_decl_column : 1
++    <2d>   DW_AT_low_pc      : 0x8000
++    <31>   DW_AT_high_pc     : 0xc
++    <35>   DW_AT_frame_base  : 1 byte block: 9c 	\(DW_OP_call_frame_cfa\)
++    <37>   DW_AT_GNU_all_call_sites: 1
++ <1><37>: Abbrev Number: 0
+diff --git a/ld/testsuite/ld-arm/cmse_sec_debug.s b/ld/testsuite/ld-arm/cmse_sec_debug.s
+new file mode 100644
+index 0000000000..0ca949e3e5
+--- /dev/null
++++ b/ld/testsuite/ld-arm/cmse_sec_debug.s
+@@ -0,0 +1,142 @@
++	.arch armv8-m.main
++	.file	"sec.c"
++	.text
++.Ltext0:
++	.cfi_sections	.debug_frame
++	.section	.text.SecureLED_On,"ax",%progbits
++	.align	1
++	.global	SecureLED_On
++	.global	__acle_se_SecureLED_On
++	.arch armv8-m.main
++	.syntax unified
++	.thumb
++	.thumb_func
++	.fpu fpv5-sp-d16
++	.type	__acle_se_SecureLED_On, %function
++	.syntax unified
++	.thumb
++	.thumb_func
++	.fpu fpv5-sp-d16
++	.type	SecureLED_On, %function
++SecureLED_On:
++__acle_se_SecureLED_On:
++.LFB0:
++	.file 1 "sec.c"
++	.loc 1 3 1
++	.cfi_startproc
++	push	{r7}
++	.cfi_def_cfa_offset 4
++	.cfi_offset 7, -4
++	add	r7, sp, #0
++	.cfi_def_cfa_register 7
++	.loc 1 4 1
++	mov	sp, r7
++	.cfi_def_cfa_register 13
++	ldr	r7, [sp], #4
++	.cfi_restore 7
++	.cfi_def_cfa_offset 0
++	bxns	lr
++	.cfi_endproc
++.LFE0:
++	.size	SecureLED_On, .-SecureLED_On
++	.text
++.Letext0:
++	.section	.debug_info,"",%progbits
++.Ldebug_info0:
++	.4byte	0x34
++	.2byte	0x4
++	.4byte	.Ldebug_abbrev0
++	.byte	0x4
++	.uleb128 0x1
++	.4byte	.LASF0
++	.byte	0xc
++	.4byte	.LASF1
++	.4byte	.LASF2
++	.4byte	.Ldebug_ranges0+0
++	.4byte	0
++	.4byte	.Ldebug_line0
++	.uleb128 0x2
++	.4byte	.LASF3
++	.byte	0x1
++	.byte	0x2
++	.byte	0x1
++	.4byte	.LFB0
++	.4byte	.LFE0-.LFB0
++	.uleb128 0x1
++	.byte	0x9c
++	.byte	0
++	.section	.debug_abbrev,"",%progbits
++.Ldebug_abbrev0:
++	.uleb128 0x1
++	.uleb128 0x11
++	.byte	0x1
++	.uleb128 0x25
++	.uleb128 0xe
++	.uleb128 0x13
++	.uleb128 0xb
++	.uleb128 0x3
++	.uleb128 0xe
++	.uleb128 0x1b
++	.uleb128 0xe
++	.uleb128 0x55
++	.uleb128 0x17
++	.uleb128 0x11
++	.uleb128 0x1
++	.uleb128 0x10
++	.uleb128 0x17
++	.byte	0
++	.byte	0
++	.uleb128 0x2
++	.uleb128 0x2e
++	.byte	0
++	.uleb128 0x3f
++	.uleb128 0x19
++	.uleb128 0x3
++	.uleb128 0xe
++	.uleb128 0x3a
++	.uleb128 0xb
++	.uleb128 0x3b
++	.uleb128 0xb
++	.uleb128 0x39
++	.uleb128 0xb
++	.uleb128 0x11
++	.uleb128 0x1
++	.uleb128 0x12
++	.uleb128 0x6
++	.uleb128 0x40
++	.uleb128 0x18
++	.uleb128 0x2117
++	.uleb128 0x19
++	.byte	0
++	.byte	0
++	.byte	0
++	.section	.debug_aranges,"",%progbits
++	.4byte	0x1c
++	.2byte	0x2
++	.4byte	.Ldebug_info0
++	.byte	0x4
++	.byte	0
++	.2byte	0
++	.2byte	0
++	.4byte	.LFB0
++	.4byte	.LFE0-.LFB0
++	.4byte	0
++	.4byte	0
++	.section	.debug_ranges,"",%progbits
++.Ldebug_ranges0:
++	.4byte	.LFB0
++	.4byte	.LFE0
++	.4byte	0
++	.4byte	0
++	.section	.debug_line,"",%progbits
++.Ldebug_line0:
++	.section	.debug_str,"MS",%progbits,1
++.LASF1:
++	.ascii	"sec.c\000"
++.LASF0:
++	.ascii	"GNU C17 10.0.0 20190617\000"
++.LASF3:
++	.ascii	"SecureLED_On\000"
++.LASF2:
++	.ascii	"Blinky\000"
++	.ident	"GCC: (GNU) 10.0.0 20190617 (experimental)"
 diff --git a/ld/testsuite/ld-arm/jump-reloc-veneers-cond-long.d b/ld/testsuite/ld-arm/jump-reloc-veneers-cond-long.d
 index d818cf579e..88481f0e92 100644
 --- a/ld/testsuite/ld-arm/jump-reloc-veneers-cond-long.d
@@ -11626,10 +12125,25 @@ index 86b163fc7a..707ab89f8e 100644
  if { ![istarget "x86_64-*-linux*"] && ![istarget "x86_64-*-nacl*"]} {
      return
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index 63226c6a27..66a8fa3110 100644
+index 63226c6a27..68c82a9077 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
-@@ -1,3 +1,90 @@
+@@ -1,3 +1,105 @@
++2019-07-02  Richard Sandiford  <richard.sandiford@arm.com>
++
++	* aarch64-tbl.h (aarch64_opcode): Set C_SCAN_MOVPRFX for the
++	SVE FMOV alias of FCPY.
++
++2019-07-02  Richard Sandiford  <richard.sandiford@arm.com>
++
++	* aarch64-tbl.h (aarch64_opcode_table): Add C_MAX_ELEM flags
++	to SVE fcvtzs, fcvtzu, scvtf and ucvtf entries.
++
++2019-07-02  Richard Sandiford  <richard.sandiford@arm.com>
++
++	* aarch64-opc.c (verify_constraints): Skip GPRs when scanning the
++	registers in an instruction prefixed by MOVPRFX.
++
 +2019-04-16  Sudakshina Das  <sudi.das@arm.com>
 +
 +	Backport from mainline.
@@ -22494,7 +23008,7 @@ index 15f2b9ff5d..6902136e14 100644
  };
  
 diff --git a/opcodes/aarch64-opc.c b/opcodes/aarch64-opc.c
-index 22839ca724..519bcb0596 100644
+index 22839ca724..2d2752fd59 100644
 --- a/opcodes/aarch64-opc.c
 +++ b/opcodes/aarch64-opc.c
 @@ -3155,6 +3155,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
@@ -22505,16 +23019,19 @@ index 22839ca724..519bcb0596 100644
      case AARCH64_OPND_SVE_Rn_SP:
      case AARCH64_OPND_Rm_SP:
        assert (opnd->qualifier == AARCH64_OPND_QLF_W
-@@ -4904,6 +4905,7 @@ verify_constraints (const struct aarch64_inst *inst,
- 		  case AARCH64_OPND_Rn:
- 		  case AARCH64_OPND_Rm:
- 		  case AARCH64_OPND_Rn_SP:
-+		  case AARCH64_OPND_Rt_SP:
- 		  case AARCH64_OPND_Rm_SP:
+@@ -4901,10 +4902,6 @@ verify_constraints (const struct aarch64_inst *inst,
+ 		  case AARCH64_OPND_Vm:
+ 		  case AARCH64_OPND_Sn:
+ 		  case AARCH64_OPND_Sm:
+-		  case AARCH64_OPND_Rn:
+-		  case AARCH64_OPND_Rm:
+-		  case AARCH64_OPND_Rn_SP:
+-		  case AARCH64_OPND_Rm_SP:
  		    if (inst_op.reg.regno == blk_dest.reg.regno)
  		      {
+ 			num_op_used++;
 diff --git a/opcodes/aarch64-tbl.h b/opcodes/aarch64-tbl.h
-index ac05aae582..253c1fddb2 100644
+index ac05aae582..bc2f64fc15 100644
 --- a/opcodes/aarch64-tbl.h
 +++ b/opcodes/aarch64-tbl.h
 @@ -125,10 +125,11 @@
@@ -22562,6 +23079,92 @@ index ac05aae582..253c1fddb2 100644
    MEMTAG_INSN ("stzgm", 0xd9200000, 0xfffffc00, ldstexcl, OP2 (Rt, ADDR_SIMPLE), QL_X1NIL, 0),
    /* Limited Ordering Regions load/store instructions.  */
    _LOR_INSN ("ldlar",  0x88df7c00, 0xbfe08000, ldstexcl, OP2 (Rt, ADDR_SIMPLE), QL_R1NIL,       F_GPRSIZE_IN_Q),
+@@ -3625,7 +3628,7 @@ struct aarch64_opcode aarch64_opcode_table[] =
+   CORE_INSN ("ble", 0x5400000d, 0xff00001f, condbranch, 0, OP1 (ADDR_PCREL19), QL_PCREL_NIL, F_ALIAS | F_PSEUDO),
+   /* SVE instructions.  */
+   _SVE_INSN ("fmov", 0x2539c000, 0xff3fe000, sve_size_hsd, 0, OP2 (SVE_Zd, SVE_FPIMM8), OP_SVE_VU_HSD, F_ALIAS, 0),
+-  _SVE_INSN ("fmov", 0x0510c000, 0xff30e000, sve_size_hsd, 0, OP3 (SVE_Zd, SVE_Pg4_16, SVE_FPIMM8), OP_SVE_VMU_HSD, F_ALIAS, 0),
++  _SVE_INSNC ("fmov", 0x0510c000, 0xff30e000, sve_size_hsd, 0, OP3 (SVE_Zd, SVE_Pg4_16, SVE_FPIMM8), OP_SVE_VMU_HSD, F_ALIAS, C_SCAN_MOVPRFX, 0),
+   _SVE_INSN ("mov", 0x04603000, 0xffe0fc00, sve_misc, OP_MOV_Z_Z, OP2 (SVE_Zd, SVE_Zn), OP_SVE_DD, F_ALIAS | F_MISC, 0),
+   _SVE_INSN ("mov", 0x05202000, 0xff20fc00, sve_index, OP_MOV_Z_V, OP2 (SVE_Zd, SVE_VZn), OP_SVE_VV_BHSDQ, F_ALIAS | F_MISC, 0),
+   _SVE_INSN ("mov", 0x05203800, 0xff3ffc00, sve_size_bhsd, 0, OP2 (SVE_Zd, Rn_SP), OP_SVE_VR_BHSD, F_ALIAS, 0),
+@@ -3777,20 +3780,20 @@ struct aarch64_opcode aarch64_opcode_table[] =
+   _SVE_INSNC ("fcvt", 0x65c9a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMH, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
+   _SVE_INSNC ("fcvt", 0x65caa000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
+   _SVE_INSNC ("fcvt", 0x65cba000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
+-  _SVE_INSNC ("fcvtzs", 0x655aa000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMH, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzs", 0x655ca000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMH, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzs", 0x655ea000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMH, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzs", 0x659ca000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMS, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzs", 0x65d8a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMD, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzs", 0x65dca000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMS, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzs", 0x65dea000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMD, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzu", 0x655ba000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMH, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzu", 0x655da000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMH, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzu", 0x655fa000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMH, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzu", 0x659da000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMS, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzu", 0x65d9a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMD, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzu", 0x65dda000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMS, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("fcvtzu", 0x65dfa000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMD, 0, C_SCAN_MOVPRFX, 0),
++  _SVE_INSNC ("fcvtzs", 0x655aa000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMH, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzs", 0x655ca000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMH, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzs", 0x655ea000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMH, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzs", 0x659ca000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzs", 0x65d8a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzs", 0x65dca000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzs", 0x65dea000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzu", 0x655ba000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMH, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzu", 0x655da000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMH, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzu", 0x655fa000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMH, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzu", 0x659da000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzu", 0x65d9a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzu", 0x65dda000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("fcvtzu", 0x65dfa000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
+   _SVE_INSNC ("fdiv", 0x650d8000, 0xff3fe000, sve_size_hsd, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_HSD, 0, C_SCAN_MOVPRFX, 2),
+   _SVE_INSNC ("fdivr", 0x650c8000, 0xff3fe000, sve_size_hsd, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_HSD, 0, C_SCAN_MOVPRFX, 2),
+   _SVE_INSN ("fdup", 0x2539c000, 0xff3fe000, sve_size_hsd, 0, OP2 (SVE_Zd, SVE_FPIMM8), OP_SVE_VU_HSD, F_HAS_ALIAS, 0),
+@@ -4186,13 +4189,13 @@ struct aarch64_opcode aarch64_opcode_table[] =
+   _SVE_INSNC ("revw", 0x05e68000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMD, 0, C_SCAN_MOVPRFX, 0),
+   _SVE_INSNC ("sabd", 0x040c0000, 0xff3fe000, sve_size_bhsd, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_BHSD, 0, C_SCAN_MOVPRFX, 2),
+   _SVE_INSN ("saddv", 0x04002000, 0xff3fe000, sve_size_bhs, 0, OP3 (SVE_Vd, SVE_Pg3, SVE_Zn), OP_SVE_DUV_BHS, 0, 0),
+-  _SVE_INSNC ("scvtf", 0x6552a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMH, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("scvtf", 0x6554a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMS, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("scvtf", 0x6594a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMS, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("scvtf", 0x65d0a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMS, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("scvtf", 0x6556a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMD, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("scvtf", 0x65d4a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMD, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("scvtf", 0x65d6a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMD, 0, C_SCAN_MOVPRFX, 0),
++  _SVE_INSNC ("scvtf", 0x6552a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMH, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("scvtf", 0x6554a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("scvtf", 0x6594a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("scvtf", 0x65d0a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("scvtf", 0x6556a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("scvtf", 0x65d4a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("scvtf", 0x65d6a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
+   _SVE_INSNC ("sdiv", 0x04940000, 0xffbfe000, sve_size_sd, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_SD, 0, C_SCAN_MOVPRFX, 2),
+   _SVE_INSNC ("sdivr", 0x04960000, 0xffbfe000, sve_size_sd, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_SD, 0, C_SCAN_MOVPRFX, 2),
+   _SVE_INSNC ("sdot", 0x44800000, 0xffa0fc00, sve_size_sd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_SD_BH, 0, C_SCAN_MOVPRFX, 0),
+@@ -4338,13 +4341,13 @@ struct aarch64_opcode aarch64_opcode_table[] =
+   _SVE_INSN ("trn2", 0x05207400, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
+   _SVE_INSNC ("uabd", 0x040d0000, 0xff3fe000, sve_size_bhsd, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_BHSD, 0, C_SCAN_MOVPRFX, 2),
+   _SVE_INSN ("uaddv", 0x04012000, 0xff3fe000, sve_size_bhsd, 0, OP3 (SVE_Vd, SVE_Pg3, SVE_Zn), OP_SVE_DUV_BHSD, 0, 0),
+-  _SVE_INSNC ("ucvtf", 0x6553a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMH, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("ucvtf", 0x6555a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMS, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("ucvtf", 0x6595a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMS, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("ucvtf", 0x65d1a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMS, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("ucvtf", 0x6557a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMD, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("ucvtf", 0x65d5a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMD, 0, C_SCAN_MOVPRFX, 0),
+-  _SVE_INSNC ("ucvtf", 0x65d7a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMD, 0, C_SCAN_MOVPRFX, 0),
++  _SVE_INSNC ("ucvtf", 0x6553a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMH, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("ucvtf", 0x6555a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("ucvtf", 0x6595a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("ucvtf", 0x65d1a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMS, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("ucvtf", 0x6557a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("ucvtf", 0x65d5a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
++  _SVE_INSNC ("ucvtf", 0x65d7a000, 0xffffe000, sve_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DMD, 0, C_SCAN_MOVPRFX | C_MAX_ELEM, 0),
+   _SVE_INSNC ("udiv", 0x04950000, 0xffbfe000, sve_size_sd, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_SD, 0, C_SCAN_MOVPRFX, 2),
+   _SVE_INSNC ("udivr", 0x04970000, 0xffbfe000, sve_size_sd, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_SD, 0, C_SCAN_MOVPRFX, 2),
+   _SVE_INSNC ("udot", 0x44800400, 0xffa0fc00, sve_size_sd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_SD_BH, 0, C_SCAN_MOVPRFX, 0),
 @@ -4516,6 +4519,8 @@ struct aarch64_opcode aarch64_opcode_table[] =
      Y(INT_REG, regno, "Rm", 0, F(FLD_Rm), "an integer register")	\
      Y(INT_REG, regno, "Rt", 0, F(FLD_Rt), "an integer register")	\
