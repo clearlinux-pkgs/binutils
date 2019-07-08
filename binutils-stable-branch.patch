@@ -1073,7 +1073,7 @@ index 872539068c..4b98e7b690 100644
  
  	      inf->stop_vma = 0;
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index b13eb6a43b..28466e0cd7 100644
+index b13eb6a43b..6b4eb41aee 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
 @@ -1796,6 +1796,17 @@ dump_relocations (Filedata *          filedata,
@@ -1094,7 +1094,17 @@ index b13eb6a43b..28466e0cd7 100644
  static const char *
  get_mips_dynamic_type (unsigned long type)
  {
-@@ -11053,6 +11064,22 @@ get_solaris_symbol_visibility (unsigned int visibility)
+@@ -2169,6 +2180,9 @@ get_dynamic_type (Filedata * filedata, unsigned long type)
+ 
+ 	  switch (filedata->file_header.e_machine)
+ 	    {
++	    case EM_AARCH64:
++	      result = get_aarch64_dynamic_type (type);
++	      break;
+ 	    case EM_MIPS:
+ 	    case EM_MIPS_RS3_LE:
+ 	      result = get_mips_dynamic_type (type);
+@@ -11053,6 +11067,22 @@ get_solaris_symbol_visibility (unsigned int visibility)
      }
  }
  
@@ -1117,7 +1127,7 @@ index b13eb6a43b..28466e0cd7 100644
  static const char *
  get_mips_symbol_other (unsigned int other)
  {
-@@ -11164,6 +11191,9 @@ get_symbol_other (Filedata * filedata, unsigned int other)
+@@ -11164,6 +11194,9 @@ get_symbol_other (Filedata * filedata, unsigned int other)
  
    switch (filedata->file_header.e_machine)
      {
