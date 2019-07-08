@@ -1,8 +1,14 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 8248394eb2..d92a6eee80 100644
+index 8248394eb2..d21a1a6180 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,108 @@
+@@ -1,3 +1,114 @@
++2019-07-08  Alan Modra  <amodra@gmail.com>
++
++	PR 24785
++	* elf32-ppc.c (_bfd_elf_ppc_set_arch): Sanity check .PPC.EMB.apuinfo
++	size before reading first word.
++
 +2019-07-05  Szabolcs Nagy  <szabolcs.nagy@arm.com>
 +
 +	Backport from mainline.
@@ -291,10 +297,21 @@ index 28ee9d55a8..f558d81829 100644
  	}
        first_bfd_browse = FALSE;
 diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
-index 10c04b997f..6991e8ddc1 100644
+index 10c04b997f..2349402d8c 100644
 --- a/bfd/elf32-ppc.c
 +++ b/bfd/elf32-ppc.c
-@@ -8852,7 +8852,7 @@ ppc_elf_relocate_section (bfd *output_bfd,
+@@ -1077,7 +1077,9 @@ _bfd_elf_ppc_set_arch (bfd *abfd)
+   if (mach == 0)
+     {
+       s = bfd_get_section_by_name (abfd, APUINFO_SECTION_NAME);
+-      if (s != NULL && bfd_malloc_and_get_section (abfd, s, &contents))
++      if (s != NULL
++	  && s->size >= 24
++	  && bfd_malloc_and_get_section (abfd, s, &contents))
+ 	{
+ 	  unsigned int apuinfo_size = bfd_get_32 (abfd, contents + 4);
+ 	  unsigned int i;
+@@ -8852,7 +8854,7 @@ ppc_elf_relocate_section (bfd *output_bfd,
  	    }
  	  else if (htab->plt_type != PLT_NEW)
  	    info->callbacks->einfo
@@ -303,7 +320,7 @@ index 10c04b997f..6991e8ddc1 100644
  	       input_bfd, input_section, rel->r_offset,
  	       howto->name);
  	  break;
-@@ -8870,7 +8870,7 @@ ppc_elf_relocate_section (bfd *output_bfd,
+@@ -8870,7 +8872,7 @@ ppc_elf_relocate_section (bfd *output_bfd,
  	    }
  	  else if (htab->plt_type != PLT_NEW)
  	    info->callbacks->einfo
@@ -312,7 +329,7 @@ index 10c04b997f..6991e8ddc1 100644
  	       input_bfd, input_section, rel->r_offset,
  	       howto->name);
  	  break;
-@@ -9704,6 +9704,7 @@ ppc_finish_symbols (struct bfd_link_info *info)
+@@ -9704,6 +9706,7 @@ ppc_finish_symbols (struct bfd_link_info *info)
  		bfd_byte *loc;
  		bfd_vma val;
  		Elf_Internal_Rela rela;
@@ -320,7 +337,7 @@ index 10c04b997f..6991e8ddc1 100644
  
  		if (!get_sym_h (NULL, &sym, &sym_sec, NULL, &local_syms,
  				lplt - local_plt, ibfd))
-@@ -9748,14 +9749,9 @@ ppc_finish_symbols (struct bfd_link_info *info)
+@@ -9748,14 +9751,9 @@ ppc_finish_symbols (struct bfd_link_info *info)
  		loc = relplt->contents + (relplt->reloc_count++
  					  * sizeof (Elf32_External_Rela));
  		bfd_elf32_swap_reloca_out (info->output_bfd, &rela, loc);
