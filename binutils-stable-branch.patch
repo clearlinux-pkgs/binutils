@@ -1694,10 +1694,17 @@ index 3d1839f131..3e941dcefd 100644
  }
  
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index d023975fe8..321e243a87 100644
+index d023975fe8..46b58d2a30 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,130 @@
+@@ -1,3 +1,137 @@
++2019-08-02  Alan Modra  <amodra@gmail.com>
++
++	Backport from master
++	2019-01-25  Wu Heng  <wu.heng@zte.com.cn>
++	PR gas/23940
++	* macro.c (getstring): Check array bound before accessing.
++
 +2019-07-24  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
 +
 +	Backport from mainline
@@ -2142,6 +2149,21 @@ index 7451f2f795..f754538a06 100644
  @c WWWWWWWWWWWWWWWWWWWWWWWWWW
  @c XXXXXXXXXXXXXXXXXXXXXXXXXX
  
+diff --git a/gas/macro.c b/gas/macro.c
+index 68ae04b010..5f41c13cb8 100644
+--- a/gas/macro.c
++++ b/gas/macro.c
+@@ -285,8 +285,8 @@ getstring (size_t idx, sb *in, sb *acc)
+ 	{
+ 	  int nest = 0;
+ 	  idx++;
+-	  while ((in->ptr[idx] != '>' || nest)
+-		 && idx < in->len)
++	  while (idx < in->len
++		 && (in->ptr[idx] != '>' || nest))
+ 	    {
+ 	      if (in->ptr[idx] == '!')
+ 		{
 diff --git a/gas/testsuite/gas/aarch64/armv8_5-a-memtag.d b/gas/testsuite/gas/aarch64/armv8_5-a-memtag.d
 index 53a95fb302..37981bc14d 100644
 --- a/gas/testsuite/gas/aarch64/armv8_5-a-memtag.d
