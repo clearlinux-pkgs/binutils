@@ -33,6 +33,7 @@ Patch5: CVE-2019-9075.patch
 Patch6: CVE-2019-9074.patch
 Patch7: CVE-2019-9071.patch
 Patch8: CVE-2019-12972.patch
+Patch9: CVE-2019-14250.patch
 
 %description
 GNU binary utilities.
@@ -86,6 +87,7 @@ GNU binary utilities.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
 
 
 rm -rf gdb libdecnumber readline sim
