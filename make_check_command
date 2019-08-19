@@ -1,0 +1,1 @@
+make %{?_smp_flags} check tooldir=/usr || :

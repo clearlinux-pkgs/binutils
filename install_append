@@ -1,0 +1,12 @@
+install -d %{buildroot}/usr/include
+
+# Manually install libiberty - can be fixed post glibc/gcc fixups
+install -m 0644 libiberty/libiberty.a %{buildroot}/usr/lib64
+
+# Find out who is using these headers and reduce their usage.
+install -m 644 include/ansidecl.h %{buildroot}/usr/include/
+install -m 644 include/libiberty.h %{buildroot}/usr/include/
+install -m 644 include/plugin-api.h %{buildroot}/usr/include/
+
+install -d %{buildroot}/usr/include/libiberty
+install -m 644 include/*.h %{buildroot}/usr/include/libiberty/

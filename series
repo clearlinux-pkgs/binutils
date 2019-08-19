@@ -1,0 +1,10 @@
+binutils-stable-branch.patch
+binutils-add-LD_AS_NEEDED-global-env.patch
+CVE-2019-9077.patch
+CVE-2019-9076.patch
+CVE-2019-9075.patch
+CVE-2019-9074.patch
+CVE-2019-9071.patch
+CVE-2019-12972.patch
+CVE-2019-14250.patch
+CVE-2019-14444.patch

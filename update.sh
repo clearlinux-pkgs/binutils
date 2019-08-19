@@ -1,13 +1,12 @@
-#!/usr/bin/bash
-git commit -m "stable branch update" binutils-stable-branch.patch
-make bump
+#!/bin/bash
+
+git commit -m "Stable branch update" binutils-stable-branch.patch
+make autospec
 make koji
 sleep 120
-pushd ../linux-tools
-make bump
-make koji-nowait
-popd
-pushd ../gdb
-make bump
-make koji-nowait
-popd
+
+make -C ../linux-tools bump
+make -C ../linux-tools koji
+
+make -C ../gdb bump
+make -C ../gdb koji-nowait
