@@ -855,10 +855,21 @@ index e062a8b6f0..8aec6807c9 100644
 -m4_define([BFD_VERSION], [2.32])
 +m4_define([BFD_VERSION], [2.32.0])
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index e5acf6e2c7..0112181890 100644
+index e5acf6e2c7..a80a1fd470 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
-@@ -1,3 +1,90 @@
+@@ -1,3 +1,101 @@
++2019-08-17  Alan Modra  <amodra@gmail.com>
++
++	PR 24911
++	* dwarf.c (comp_addr_base): Dereference args.
++
++2019-08-16  Alan Modra  <amodra@gmail.com>
++
++	PR 24909
++	PR 23499
++	* readelf.c (get_symbol_version_string): Set sym_info earlier.
++
 +2019-07-05  Szabolcs Nagy  <szabolcs.nagy@arm.com>
 +
 +	Backport from mainline.
@@ -1036,9 +1047,20 @@ index 051db4baa2..edf1c18b9d 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/binutils/dwarf.c b/binutils/dwarf.c
-index 60e0ef8935..36fa68004c 100644
+index 60e0ef8935..d465b42366 100644
 --- a/binutils/dwarf.c
 +++ b/binutils/dwarf.c
+@@ -6470,8 +6470,8 @@ display_debug_aranges (struct dwarf_section *section,
+ static int
+ comp_addr_base (const void * v0, const void * v1)
+ {
+-  debug_info * info0 = (debug_info *) v0;
+-  debug_info * info1 = (debug_info *) v1;
++  debug_info *info0 = *(debug_info **) v0;
++  debug_info *info1 = *(debug_info **) v1;
+   return info0->addr_base - info1->addr_base;
+ }
+ 
 @@ -7099,13 +7099,17 @@ static const char *const dwarf_regnames_aarch64[] =
    "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",
    "x24", "x25", "x26", "x27", "x28", "x29", "x30", "sp",
@@ -1073,7 +1095,7 @@ index 872539068c..4b98e7b690 100644
  
  	      inf->stop_vma = 0;
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index b13eb6a43b..6b4eb41aee 100644
+index b13eb6a43b..ef294e18dd 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
 @@ -1796,6 +1796,17 @@ dump_relocations (Filedata *          filedata,
@@ -1137,6 +1159,29 @@ index b13eb6a43b..6b4eb41aee 100644
      case EM_MIPS:
        result = get_mips_symbol_other (other);
        break;
+@@ -11368,6 +11401,7 @@ get_symbol_version_string (Filedata *                   filedata,
+   if ((vers_data & VERSYM_HIDDEN) == 0 && vers_data == 0)
+     return NULL;
+ 
++  *sym_info = (vers_data & VERSYM_HIDDEN) != 0 ? symbol_hidden : symbol_public;
+   max_vd_ndx = 0;
+ 
+   /* Usually we'd only see verdef for defined symbols, and verneed for
+@@ -11433,12 +11467,8 @@ get_symbol_version_string (Filedata *                   filedata,
+ 	      ivda.vda_name = BYTE_GET (evda.vda_name);
+ 
+ 	      if (psym->st_name != ivda.vda_name)
+-		{
+-		  *sym_info = ((vers_data & VERSYM_HIDDEN) != 0
+-			       ? symbol_hidden : symbol_public);
+-		  return (ivda.vda_name < strtab_size
+-			  ? strtab + ivda.vda_name : _("<corrupt>"));
+-		}
++		return (ivda.vda_name < strtab_size
++			? strtab + ivda.vda_name : _("<corrupt>"));
+ 	    }
+ 	}
+     }
 diff --git a/binutils/testsuite/binutils-all/aarch64/in-order-all.d b/binutils/testsuite/binutils-all/aarch64/in-order-all.d
 new file mode 100644
 index 0000000000..a484ca7d17
@@ -4814,10 +4859,16 @@ index 0c0234ab20..5dc5fb750a 100644
    AARCH64_OPND_Ra,	/* Integer register used in ddp_3src instructions.  */
    AARCH64_OPND_Rt_SYS,	/* Integer register used in system instructions.  */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 84673af576..0704764dd2 100644
+index 84673af576..a05684b00d 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,124 @@
+@@ -1,3 +1,130 @@
++2019-08-16  Alan Modra  <amodra@gmail.com>
++
++	* emultempl/ppc32elf.em (ppc_before_allocation): Force running
++	prelim_size_sections before deciding whether branch trampolines
++	might be needed.
++
 +2019-07-25  Srinath Parvathaneni  <srinath.parvathaneni@arm.com>
 +
 +	Backport from mainline
@@ -5094,6 +5145,24 @@ index 3163712fbd..48b6a616db 100644
 -      init_str = optarg;
 -      break;
 -'
+diff --git a/ld/emultempl/ppc32elf.em b/ld/emultempl/ppc32elf.em
+index 77143e753e..2e79175a1c 100644
+--- a/ld/emultempl/ppc32elf.em
++++ b/ld/emultempl/ppc32elf.em
+@@ -171,7 +171,12 @@ ppc_before_allocation (void)
+       bfd_vma high = 0;
+       asection *o;
+ 
+-      /* Run lang_size_sections (if not already done).  */
++      /* Run lang_size_sections even if already done, so as to pick
++	 up gld${EMULATION_NAME}_before_allocation sizing.  This
++	 matters when we have an executable bss plt which will
++	 typically be laid out near the end of the image, ie. worst
++	 case for branches at the start of .text.  */
++      expld.phase = lang_first_phase_enum;
+       prelim_size_sections ();
+ 
+       for (o = link_info.output_bfd->sections; o != NULL; o = o->next)
 diff --git a/ld/plugin.c b/ld/plugin.c
 index ea1a7f7064..e4e781c2a8 100644
 --- a/ld/plugin.c
