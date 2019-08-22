@@ -1739,10 +1739,18 @@ index 3d1839f131..3e941dcefd 100644
  }
  
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index d023975fe8..46b58d2a30 100644
+index d023975fe8..b794290213 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,137 @@
+@@ -1,3 +1,145 @@
++2019-08-22  Kyrylo Tkachov <kyrylo.tkachov@arm.com>
++
++	Backport from mainline
++	2019-08-22  Kyrylo Tkachov <kyrylo.tkachov@arm.com>
++
++	* testsuite/gas/aarch64/sysreg-4.d: Update expected disassembly for
++	tfsre0_el1, tfsr_el1, tfsr_el2, tfsr_el3, tfsr_el12 system registers.
++
 +2019-08-02  Alan Modra  <amodra@gmail.com>
 +
 +	Backport from master
@@ -2741,17 +2749,41 @@ index 0000000000..9960831682
 +.set alias_base, foo_vpcs
 +.set alias_vpcs, foo_base
 diff --git a/gas/testsuite/gas/aarch64/sysreg-4.d b/gas/testsuite/gas/aarch64/sysreg-4.d
-index ab6e217fc1..bc3d0bdb7f 100644
+index ab6e217fc1..c25536d6ca 100644
 --- a/gas/testsuite/gas/aarch64/sysreg-4.d
 +++ b/gas/testsuite/gas/aarch64/sysreg-4.d
-@@ -28,6 +28,7 @@ Disassembly of section \.text:
- .*:	d53d660c 	mrs	x12, tfsr_el12
+@@ -21,20 +21,21 @@ Disassembly of section \.text:
+ .*:	d5380388 	mrs	x8, id_pfr2_el1
+ .*:	d53b42e1 	mrs	x1, tco
+ .*:	d53b42e2 	mrs	x2, tco
+-.*:	d5386621 	mrs	x1, tfsre0_el1
+-.*:	d5386501 	mrs	x1, tfsr_el1
+-.*:	d53c6502 	mrs	x2, tfsr_el2
+-.*:	d53e6603 	mrs	x3, tfsr_el3
+-.*:	d53d660c 	mrs	x12, tfsr_el12
++.*:	d5385621 	mrs	x1, tfsre0_el1
++.*:	d5385601 	mrs	x1, tfsr_el1
++.*:	d53c5602 	mrs	x2, tfsr_el2
++.*:	d53e5603 	mrs	x3, tfsr_el3
++.*:	d53d560c 	mrs	x12, tfsr_el12
  .*:	d53810a1 	mrs	x1, rgsr_el1
  .*:	d53810c3 	mrs	x3, gcr_el1
 +.*:	d5390084 	mrs	x4, gmid_el1
  .*:	d51b42e1 	msr	tco, x1
  .*:	d51b42e2 	msr	tco, x2
- .*:	d5186621 	msr	tfsre0_el1, x1
+-.*:	d5186621 	msr	tfsre0_el1, x1
+-.*:	d5186501 	msr	tfsr_el1, x1
+-.*:	d51c6502 	msr	tfsr_el2, x2
+-.*:	d51e6603 	msr	tfsr_el3, x3
+-.*:	d51d660c 	msr	tfsr_el12, x12
++.*:	d5185621 	msr	tfsre0_el1, x1
++.*:	d5185601 	msr	tfsr_el1, x1
++.*:	d51c5602 	msr	tfsr_el2, x2
++.*:	d51e5603 	msr	tfsr_el3, x3
++.*:	d51d560c 	msr	tfsr_el12, x12
+ .*:	d51810a1 	msr	rgsr_el1, x1
+ .*:	d51810c3 	msr	gcr_el1, x3
+ .*:	d503489f 	msr	tco, #0x8
 diff --git a/gas/testsuite/gas/aarch64/sysreg-4.s b/gas/testsuite/gas/aarch64/sysreg-4.s
 index 6c18b4a4e4..ace9803081 100644
 --- a/gas/testsuite/gas/aarch64/sysreg-4.s
@@ -13083,10 +13115,19 @@ index 86b163fc7a..707ab89f8e 100644
  if { ![istarget "x86_64-*-linux*"] && ![istarget "x86_64-*-nacl*"]} {
      return
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index 63226c6a27..86d4cc3bd2 100644
+index 63226c6a27..0b7a51a0b6 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
-@@ -1,3 +1,113 @@
+@@ -1,3 +1,122 @@
++2019-08-22  Kyrylo Tkachov <kyrylo.tkachov@arm.com>
++
++	Backport from mainline
++	2019-08-22  Kyrylo Tkachov <kyrylo.tkachov@arm.com>
++
++	* aarch64-opc.c (aarch64_sys_regs): Update encoding of tfsre0_el1,
++	tfsr_el1, tfsr_el2, tfsr_el3, tfsr_el12.
++	(aarch64_sys_reg_supported_p): Update checks for the above.
++
 +2019-07-24  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
 +
 +	Backport from mainline
@@ -23974,7 +24015,7 @@ index 15f2b9ff5d..6902136e14 100644
  };
  
 diff --git a/opcodes/aarch64-opc.c b/opcodes/aarch64-opc.c
-index 22839ca724..32ab2e2ac4 100644
+index 22839ca724..2b4c14e9a1 100644
 --- a/opcodes/aarch64-opc.c
 +++ b/opcodes/aarch64-opc.c
 @@ -3155,6 +3155,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
@@ -23985,17 +24026,40 @@ index 22839ca724..32ab2e2ac4 100644
      case AARCH64_OPND_SVE_Rn_SP:
      case AARCH64_OPND_Rm_SP:
        assert (opnd->qualifier == AARCH64_OPND_QLF_W
-@@ -3931,6 +3932,7 @@ const aarch64_sys_reg aarch64_sys_regs [] =
-   { "tfsr_el12",	CPENC(3,5,C6,C6,0), F_ARCHEXT },
+@@ -3924,13 +3925,14 @@ const aarch64_sys_reg aarch64_sys_regs [] =
+   { "rndr",		CPENC(3,3,C2,C4,0), F_ARCHEXT | F_REG_READ }, /* RO */
+   { "rndrrs",		CPENC(3,3,C2,C4,1), F_ARCHEXT | F_REG_READ }, /* RO */
+   { "tco",		CPENC(3,3,C4,C2,7), F_ARCHEXT },
+-  { "tfsre0_el1",	CPENC(3,0,C6,C6,1), F_ARCHEXT },
+-  { "tfsr_el1",		CPENC(3,0,C6,C5,0), F_ARCHEXT },
+-  { "tfsr_el2",		CPENC(3,4,C6,C5,0), F_ARCHEXT },
+-  { "tfsr_el3",		CPENC(3,6,C6,C6,0), F_ARCHEXT },
+-  { "tfsr_el12",	CPENC(3,5,C6,C6,0), F_ARCHEXT },
++  { "tfsre0_el1",	CPENC(3,0,C5,C6,1), F_ARCHEXT },
++  { "tfsr_el1",		CPENC(3,0,C5,C6,0), F_ARCHEXT },
++  { "tfsr_el2",		CPENC(3,4,C5,C6,0), F_ARCHEXT },
++  { "tfsr_el3",		CPENC(3,6,C5,C6,0), F_ARCHEXT },
++  { "tfsr_el12",	CPENC(3,5,C5,C6,0), F_ARCHEXT },
    { "rgsr_el1",		CPENC(3,0,C1,C0,5), F_ARCHEXT },
    { "gcr_el1",		CPENC(3,0,C1,C0,6), F_ARCHEXT },
 +  { "gmid_el1",		CPENC(3,1,C0,C0,4), F_ARCHEXT | F_REG_READ }, /* RO */
    { "tpidr_el0",        CPENC(3,3,C13,C0,2),	0 },
    { "tpidrro_el0",      CPENC(3,3,C13,C0,3),	0 }, /* RW */
    { "tpidr_el1",        CPENC(3,0,C13,C0,4),	0 },
-@@ -4402,7 +4404,8 @@ aarch64_sys_reg_supported_p (const aarch64_feature_set features,
-        || reg->value == CPENC (3, 6, C6, C6, 0)
-        || reg->value == CPENC (3, 5, C6, C6, 0)
+@@ -4396,13 +4398,14 @@ aarch64_sys_reg_supported_p (const aarch64_feature_set features,
+ 
+   /* System Registers in ARMv8.5-A with AARCH64_FEATURE_MEMTAG.  */
+   if ((reg->value == CPENC (3, 3, C4, C2, 7)
+-       || reg->value == CPENC (3, 0, C6, C6, 1)
+-       || reg->value == CPENC (3, 0, C6, C5, 0)
+-       || reg->value == CPENC (3, 4, C6, C5, 0)
+-       || reg->value == CPENC (3, 6, C6, C6, 0)
+-       || reg->value == CPENC (3, 5, C6, C6, 0)
++       || reg->value == CPENC (3, 0, C5, C6, 1)
++       || reg->value == CPENC (3, 0, C5, C6, 0)
++       || reg->value == CPENC (3, 4, C5, C6, 0)
++       || reg->value == CPENC (3, 6, C5, C6, 0)
++       || reg->value == CPENC (3, 5, C5, C6, 0)
         || reg->value == CPENC (3, 0, C1, C0, 5)
 -       || reg->value == CPENC (3, 0, C1, C0, 6))
 +       || reg->value == CPENC (3, 0, C1, C0, 6)
