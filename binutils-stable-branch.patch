@@ -1,8 +1,34 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 8248394eb2..d21a1a6180 100644
+index 8248394eb2..0b24aaee62 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,114 @@
+@@ -1,3 +1,140 @@
++2019-08-28  Tamar Christina  <tamar.christina@arm.com>
++
++	Backported from mainline.
++	2019-08-20  Tamar Christina  <tamar.christina@arm.com>
++
++	* elf32-arm.c (elf32_thumb2_plt_entry, elf32_arm_plt_thumb_stub,
++	elf32_arm_stub_long_branch_v4t_thumb_thumb,
++	elf32_arm_stub_long_branch_v4t_thumb_arm,
++	elf32_arm_stub_short_branch_v4t_thumb_arm,
++	elf32_arm_stub_long_branch_v4t_thumb_arm_pic,
++	elf32_arm_stub_long_branch_v4t_thumb_thumb_pic,
++	elf32_arm_stub_long_branch_v4t_thumb_tls_pic): Change nop to branch to
++	previous instruction.
++
++2019-08-28  Tamar Christina  <tamar.christina@arm.com>
++
++	Backport from mainline.
++	2019-08-22  Tamar Christina  <tamar.christina@arm.com>
++
++	PR ld/24601
++	* elfnn-aarch64.c (aarch64_relocate): Handle weak TLS and undefined TLS.
++	Also Pass input_bfd to _bfd_aarch64_elf_resolve_relocation.
++	* elfxx-aarch64.c (_bfd_aarch64_elf_resolve_relocation): Use it.
++	* elfxx-aarch64.h (_bfd_aarch64_elf_resolve_relocation): Emit warning
++	for weak TLS.
++
 +2019-07-08  Alan Modra  <amodra@gmail.com>
 +
 +	PR 24785
@@ -259,10 +285,105 @@ index c7469ded8a..b86dd59a3b 100644
        case VALUE: \
  	return "R_" #TYPE; \
 diff --git a/bfd/elf32-arm.c b/bfd/elf32-arm.c
-index 28ee9d55a8..f558d81829 100644
+index 28ee9d55a8..0210ee11fb 100644
 --- a/bfd/elf32-arm.c
 +++ b/bfd/elf32-arm.c
-@@ -15698,6 +15698,8 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
+@@ -2284,6 +2284,11 @@ static const unsigned long dl_tlsdesc_lazy_trampoline [] =
+   0x00000018, /* 4:   .word  _GLOBAL_OFFSET_TABLE_ - 2b - 8 */
+ };
+ 
++/* NOTE: [Thumb nop sequence]
++   When adding code that transitions from Thumb to Arm the instruction that
++   should be used for the alignment padding should be 0xe7fd (b .-2) instead of
++   a nop for performance reasons.  */
++
+ /* ARM FDPIC PLT entry.  */
+ /* The last 5 words contain PLT lazy fragment code and data.  */
+ static const bfd_vma elf32_arm_fdpic_plt_entry [] =
+@@ -2401,8 +2406,8 @@ static const bfd_vma elf32_thumb2_plt_entry [] =
+   0x0c00f240,		/* movw	   ip, #0xNNNN	  */
+   0x0c00f2c0,		/* movt	   ip, #0xNNNN	  */
+   0xf8dc44fc,		/* add	   ip, pc	  */
+-  0xbf00f000		/* ldr.w   pc, [ip]	  */
+-			/* nop			  */
++  0xe7fdf000		/* ldr.w   pc, [ip]	  */
++			/* b      .-2		  */
+ };
+ 
+ /* The format of the first entry in the procedure linkage table
+@@ -2442,7 +2447,7 @@ static const bfd_vma elf32_arm_vxworks_shared_plt_entry[] =
+ static const bfd_vma elf32_arm_plt_thumb_stub [] =
+ {
+   0x4778,		/* bx pc */
+-  0x46c0		/* nop   */
++  0xe7fd		/* b .-2 */
+ };
+ 
+ /* The entries in a PLT when using a DLL-based target with multiple
+@@ -2529,6 +2534,8 @@ typedef struct
+   int		       reloc_addend;
+ }  insn_sequence;
+ 
++/* See note [Thumb nop sequence] when adding a veneer.  */
++
+ /* Arm/Thumb -> Arm/Thumb long branch stub. On V5T and above, use blx
+    to reach the stub if necessary.  */
+ static const insn_sequence elf32_arm_stub_long_branch_any_any[] =
+@@ -2579,7 +2586,7 @@ static const insn_sequence elf32_arm_stub_long_branch_thumb2_only_pure[] =
+ static const insn_sequence elf32_arm_stub_long_branch_v4t_thumb_thumb[] =
+ {
+   THUMB16_INSN (0x4778),	     /* bx   pc */
+-  THUMB16_INSN (0x46c0),	     /* nop */
++  THUMB16_INSN (0xe7fd),	     /* b   .-2 */
+   ARM_INSN (0xe59fc000),	     /* ldr  ip, [pc, #0] */
+   ARM_INSN (0xe12fff1c),	     /* bx   ip */
+   DATA_WORD (0, R_ARM_ABS32, 0),     /* dcd  R_ARM_ABS32(X) */
+@@ -2590,7 +2597,7 @@ static const insn_sequence elf32_arm_stub_long_branch_v4t_thumb_thumb[] =
+ static const insn_sequence elf32_arm_stub_long_branch_v4t_thumb_arm[] =
+ {
+   THUMB16_INSN (0x4778),	     /* bx   pc */
+-  THUMB16_INSN (0x46c0),	     /* nop   */
++  THUMB16_INSN (0xe7fd),	     /* b   .-2 */
+   ARM_INSN (0xe51ff004),	     /* ldr   pc, [pc, #-4] */
+   DATA_WORD (0, R_ARM_ABS32, 0),     /* dcd   R_ARM_ABS32(X) */
+ };
+@@ -2600,7 +2607,7 @@ static const insn_sequence elf32_arm_stub_long_branch_v4t_thumb_arm[] =
+ static const insn_sequence elf32_arm_stub_short_branch_v4t_thumb_arm[] =
+ {
+   THUMB16_INSN (0x4778),	     /* bx   pc */
+-  THUMB16_INSN (0x46c0),	     /* nop   */
++  THUMB16_INSN (0xe7fd),	     /* b   .-2 */
+   ARM_REL_INSN (0xea000000, -8),     /* b    (X-8) */
+ };
+ 
+@@ -2638,7 +2645,7 @@ static const insn_sequence elf32_arm_stub_long_branch_v4t_arm_thumb_pic[] =
+ static const insn_sequence elf32_arm_stub_long_branch_v4t_thumb_arm_pic[] =
+ {
+   THUMB16_INSN (0x4778),	     /* bx   pc */
+-  THUMB16_INSN (0x46c0),	     /* nop  */
++  THUMB16_INSN (0xe7fd),	     /* b   .-2 */
+   ARM_INSN (0xe59fc000),	     /* ldr  ip, [pc, #0] */
+   ARM_INSN (0xe08cf00f),	     /* add  pc, ip, pc */
+   DATA_WORD (0, R_ARM_REL32, -4),     /* dcd  R_ARM_REL32(X) */
+@@ -2662,7 +2669,7 @@ static const insn_sequence elf32_arm_stub_long_branch_thumb_only_pic[] =
+ static const insn_sequence elf32_arm_stub_long_branch_v4t_thumb_thumb_pic[] =
+ {
+   THUMB16_INSN (0x4778),	     /* bx   pc */
+-  THUMB16_INSN (0x46c0),	     /* nop */
++  THUMB16_INSN (0xe7fd),	     /* b   .-2 */
+   ARM_INSN (0xe59fc004),	     /* ldr  ip, [pc, #4] */
+   ARM_INSN (0xe08fc00c),	     /* add   ip, pc, ip */
+   ARM_INSN (0xe12fff1c),	     /* bx   ip */
+@@ -2683,7 +2690,7 @@ static const insn_sequence elf32_arm_stub_long_branch_any_tls_pic[] =
+ static const insn_sequence elf32_arm_stub_long_branch_v4t_thumb_tls_pic[] =
+ {
+   THUMB16_INSN (0x4778),	     /* bx   pc */
+-  THUMB16_INSN (0x46c0),	     /* nop */
++  THUMB16_INSN (0xe7fd),	     /* b   .-2 */
+   ARM_INSN (0xe59f1000),	     /* ldr  r1, [pc, #0] */
+   ARM_INSN (0xe081f00f),	     /* add  pc, r1, pc */
+   DATA_WORD (0, R_ARM_REL32, -4),    /* dcd  R_ARM_REL32(X) */
+@@ -15698,6 +15705,8 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
    struct elf_link_hash_entry **sym_hashes;
    struct elf32_arm_link_hash_entry *cmse_hash;
    bfd_boolean again, is_v8m, first_bfd_browse = TRUE;
@@ -271,15 +392,15 @@ index 28ee9d55a8..f558d81829 100644
  
    _bfd_elf_gc_mark_extra_sections (info, gc_mark_hook);
  
-@@ -15759,8 +15761,24 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
+@@ -15759,7 +15768,23 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
  		      if (!cmse_sec->gc_mark
  			  && !_bfd_elf_gc_mark (info, cmse_sec, gc_mark_hook))
  			return FALSE;
 +		      /* The debug sections related to these secure entry
 +			 functions are marked on enabling below flag.  */
 +		      debug_sec_need_to_be_marked = TRUE;
- 		    }
- 		}
++		    }
++		}
 +	      if (debug_sec_need_to_be_marked)
 +		{
 +		  /* Looping over all the sections of the object file containing
@@ -290,12 +411,11 @@ index 28ee9d55a8..f558d81829 100644
 +		      /* If not a debug sections, skip it.  */
 +		      if (!isec->gc_mark && (isec->flags & SEC_DEBUGGING))
 +			isec->gc_mark = 1 ;
-+		    }
+ 		    }
 +		  debug_sec_need_to_be_marked = FALSE;
-+		}
+ 		}
  	    }
  	}
-       first_bfd_browse = FALSE;
 diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
 index 10c04b997f..2349402d8c 100644
 --- a/bfd/elf32-ppc.c
@@ -697,7 +817,7 @@ index c7d8bca710..6a4b366fdd 100644
  	  BFD_ASSERT((h->got.offset & 1) != 0);
  	  rela.r_info = htab->r_info (0, R_X86_64_RELATIVE);
 diff --git a/bfd/elfnn-aarch64.c b/bfd/elfnn-aarch64.c
-index faa27611d4..1dbd0184ce 100644
+index faa27611d4..af53d3a508 100644
 --- a/bfd/elfnn-aarch64.c
 +++ b/bfd/elfnn-aarch64.c
 @@ -2579,6 +2579,9 @@ struct elf_aarch64_link_hash_table
@@ -742,7 +862,181 @@ index faa27611d4..1dbd0184ce 100644
  /* Destroy an AArch64 elf linker hash table.  */
  
  static void
-@@ -8369,6 +8397,12 @@ elfNN_aarch64_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
+@@ -2868,7 +2896,8 @@ aarch64_relocate (unsigned int r_type, bfd *input_bfd, asection *input_section,
+ 	   + offset);
+ 
+   r_type = elfNN_aarch64_bfd_reloc_from_type (input_bfd, r_type);
+-  value = _bfd_aarch64_elf_resolve_relocation (r_type, place, value, 0, FALSE);
++  value = _bfd_aarch64_elf_resolve_relocation (input_bfd, r_type, place,
++					       value, 0, FALSE);
+   return _bfd_aarch64_elf_put_addend (input_bfd,
+ 				      input_section->contents + offset, r_type,
+ 				      howto, value) == bfd_reloc_ok;
+@@ -5355,7 +5384,8 @@ bad_ifunc_reloc:
+ 	  /* FALLTHROUGH */
+ 	case BFD_RELOC_AARCH64_CALL26:
+ 	case BFD_RELOC_AARCH64_JUMP26:
+-	  value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
++	  value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						       place, value,
+ 						       signed_addend,
+ 						       weak_undef_p);
+ 	  return _bfd_aarch64_elf_put_addend (input_bfd, hit_data, bfd_r_type,
+@@ -5432,7 +5462,8 @@ bad_ifunc_reloc:
+ 	    addend = (globals->root.sgot->output_section->vma
+ 		      + globals->root.sgot->output_offset);
+ 
+-	  value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
++	  value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						       place, value,
+ 						       addend, weak_undef_p);
+ 	  return _bfd_aarch64_elf_put_addend (input_bfd, hit_data, bfd_r_type, howto, value);
+ 	case BFD_RELOC_AARCH64_ADD_LO12:
+@@ -5610,7 +5641,8 @@ bad_ifunc_reloc:
+ 	    signed_addend = 0;
+ 	  }
+       }
+-      value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
++      value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						   place, value,
+ 						   signed_addend, weak_undef_p);
+       *unresolved_reloc_p = FALSE;
+       break;
+@@ -5670,7 +5702,8 @@ bad_ifunc_reloc:
+     case BFD_RELOC_AARCH64_MOVW_G2_S:
+     case BFD_RELOC_AARCH64_MOVW_G3:
+     case BFD_RELOC_AARCH64_TSTBR14:
+-      value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
++      value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						   place, value,
+ 						   signed_addend, weak_undef_p);
+       break;
+ 
+@@ -5715,7 +5748,8 @@ bad_ifunc_reloc:
+ 	  if (aarch64_relocation_aginst_gp_p (bfd_r_type))
+ 	    addend = (globals->root.sgot->output_section->vma
+ 		      + globals->root.sgot->output_offset);
+-	  value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
++	  value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						       place, value,
+ 						       addend, weak_undef_p);
+ 	}
+       else
+@@ -5762,7 +5796,8 @@ bad_ifunc_reloc:
+ 	if (aarch64_relocation_aginst_gp_p (bfd_r_type))
+ 	  addend = base_got->output_section->vma + base_got->output_offset;
+ 
+-	value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
++	value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						     place, value,
+ 						     addend, weak_undef_p);
+       }
+ 
+@@ -5799,7 +5834,8 @@ bad_ifunc_reloc:
+ 	       + globals->root.sgot->output_section->vma
+ 	       + globals->root.sgot->output_offset);
+ 
+-      value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
++      value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						   place, value,
+ 						   0, weak_undef_p);
+       *unresolved_reloc_p = FALSE;
+       break;
+@@ -5812,7 +5848,8 @@ bad_ifunc_reloc:
+ 	return bfd_reloc_notsupported;
+ 
+       value = symbol_got_offset (input_bfd, h, r_symndx);
+-      value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
++      value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						   place, value,
+ 						   0, weak_undef_p);
+       *unresolved_reloc_p = FALSE;
+       break;
+@@ -5833,10 +5870,26 @@ bad_ifunc_reloc:
+     case BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G1:
+     case BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G1_NC:
+     case BFD_RELOC_AARCH64_TLSLD_MOVW_DTPREL_G2:
+-      value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
+-						   signed_addend - dtpoff_base (info),
+-						   weak_undef_p);
+-      break;
++      {
++	if (!(weak_undef_p || elf_hash_table (info)->tls_sec))
++	  {
++	    int howto_index = bfd_r_type - BFD_RELOC_AARCH64_RELOC_START;
++	    _bfd_error_handler
++	      /* xgettext:c-format */
++	      (_("%pB: TLS relocation %s against undefined symbol `%s'"),
++		 input_bfd, elfNN_aarch64_howto_table[howto_index].name,
++		 h->root.root.string);
++	    bfd_set_error (bfd_error_bad_value);
++	    return bfd_reloc_notsupported;
++	  }
++
++	bfd_vma def_value
++	  = weak_undef_p ? 0 : signed_addend - dtpoff_base (info);
++	value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						     place, value,
++						     def_value, weak_undef_p);
++	break;
++      }
+ 
+     case BFD_RELOC_AARCH64_TLSLE_ADD_TPREL_HI12:
+     case BFD_RELOC_AARCH64_TLSLE_ADD_TPREL_LO12:
+@@ -5854,11 +5907,27 @@ bad_ifunc_reloc:
+     case BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G1:
+     case BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G1_NC:
+     case BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G2:
+-      value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
+-						   signed_addend - tpoff_base (info),
+-						   weak_undef_p);
+-      *unresolved_reloc_p = FALSE;
+-      break;
++      {
++	if (!(weak_undef_p || elf_hash_table (info)->tls_sec))
++	  {
++	    int howto_index = bfd_r_type - BFD_RELOC_AARCH64_RELOC_START;
++	    _bfd_error_handler
++	      /* xgettext:c-format */
++	      (_("%pB: TLS relocation %s against undefined symbol `%s'"),
++		 input_bfd, elfNN_aarch64_howto_table[howto_index].name,
++		 h->root.root.string);
++	    bfd_set_error (bfd_error_bad_value);
++	    return bfd_reloc_notsupported;
++	  }
++
++	bfd_vma def_value
++	  = weak_undef_p ? 0 : signed_addend - tpoff_base (info);
++	value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						     place, value,
++						     def_value, weak_undef_p);
++        *unresolved_reloc_p = FALSE;
++	break;
++      }
+ 
+     case BFD_RELOC_AARCH64_TLSDESC_ADD_LO12:
+     case BFD_RELOC_AARCH64_TLSDESC_ADR_PAGE21:
+@@ -5873,7 +5942,8 @@ bad_ifunc_reloc:
+ 	       + globals->root.sgotplt->output_offset
+ 	       + globals->sgotplt_jump_table_size);
+ 
+-      value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
++      value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						   place, value,
+ 						   0, weak_undef_p);
+       *unresolved_reloc_p = FALSE;
+       break;
+@@ -5891,7 +5961,8 @@ bad_ifunc_reloc:
+       value -= (globals->root.sgot->output_section->vma
+ 		+ globals->root.sgot->output_offset);
+ 
+-      value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
++      value = _bfd_aarch64_elf_resolve_relocation (input_bfd, bfd_r_type,
++						   place, value,
+ 						   0, weak_undef_p);
+       *unresolved_reloc_p = FALSE;
+       break;
+@@ -8369,6 +8440,12 @@ elfNN_aarch64_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
  	     updated.  */
  
  	  htab->root.srelplt->reloc_count++;
@@ -755,7 +1049,7 @@ index faa27611d4..1dbd0184ce 100644
  	}
        else
  	{
-@@ -8848,13 +8882,14 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+@@ -8848,13 +8925,14 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
        if (htab->root.splt->size == 0)
  	htab->root.splt->size += PLT_ENTRY_SIZE;
  
@@ -773,7 +1067,7 @@ index faa27611d4..1dbd0184ce 100644
  	  htab->dt_tlsdesc_got = htab->root.sgot->size;
  	  htab->root.sgot->size += GOT_ENTRY_SIZE;
  	}
-@@ -8957,7 +8992,12 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+@@ -8957,7 +9035,12 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
  	      || !add_dynamic_entry (DT_JMPREL, 0))
  	    return FALSE;
  
@@ -786,7 +1080,7 @@ index faa27611d4..1dbd0184ce 100644
  	      && (!add_dynamic_entry (DT_TLSDESC_PLT, 0)
  		  || !add_dynamic_entry (DT_TLSDESC_GOT, 0)))
  	    return FALSE;
-@@ -9445,6 +9485,7 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
+@@ -9445,6 +9528,7 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
  
  	    case DT_TLSDESC_GOT:
  	      s = htab->root.sgot;
@@ -794,7 +1088,7 @@ index faa27611d4..1dbd0184ce 100644
  	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset
  		+ htab->dt_tlsdesc_got;
  	      break;
-@@ -9464,8 +9505,9 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
+@@ -9464,8 +9548,9 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
  	this_hdr.sh_entsize = htab->plt_entry_size;
  
  
@@ -805,7 +1099,7 @@ index faa27611d4..1dbd0184ce 100644
  	  bfd_put_NN (output_bfd, (bfd_vma) 0,
  		      htab->root.sgot->contents + htab->dt_tlsdesc_got);
  
-@@ -9707,6 +9749,9 @@ const struct elf_size_info elfNN_aarch64_size_info =
+@@ -9707,6 +9792,9 @@ const struct elf_size_info elfNN_aarch64_size_info =
  #define elf_backend_copy_indirect_symbol	\
    elfNN_aarch64_copy_indirect_symbol
  
@@ -815,6 +1109,64 @@ index faa27611d4..1dbd0184ce 100644
  /* Create .dynbss, and .rela.bss sections in DYNOBJ, and set up shortcuts
     to them in our hash.  */
  #define elf_backend_create_dynamic_sections	\
+diff --git a/bfd/elfxx-aarch64.c b/bfd/elfxx-aarch64.c
+index 32a9d97282..0bda59e380 100644
+--- a/bfd/elfxx-aarch64.c
++++ b/bfd/elfxx-aarch64.c
+@@ -395,10 +395,12 @@ _bfd_aarch64_elf_put_addend (bfd *abfd,
+ }
+ 
+ bfd_vma
+-_bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
++_bfd_aarch64_elf_resolve_relocation (bfd *input_bfd,
++				     bfd_reloc_code_real_type r_type,
+ 				     bfd_vma place, bfd_vma value,
+ 				     bfd_vma addend, bfd_boolean weak_undef_p)
+ {
++  bfd_boolean tls_reloc = TRUE;
+   switch (r_type)
+     {
+     case BFD_RELOC_AARCH64_NONE:
+@@ -446,6 +448,8 @@ _bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
+     case BFD_RELOC_AARCH64_MOVW_G2_NC:
+     case BFD_RELOC_AARCH64_MOVW_G2_S:
+     case BFD_RELOC_AARCH64_MOVW_G3:
++      tls_reloc = FALSE;
++      /* fall-through.  */
+     case BFD_RELOC_AARCH64_TLSDESC_OFF_G0_NC:
+     case BFD_RELOC_AARCH64_TLSDESC_OFF_G1:
+     case BFD_RELOC_AARCH64_TLSGD_MOVW_G0_NC:
+@@ -466,6 +470,15 @@ _bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
+     case BFD_RELOC_AARCH64_TLSLE_LDST32_TPREL_LO12:
+     case BFD_RELOC_AARCH64_TLSLE_LDST64_TPREL_LO12:
+     case BFD_RELOC_AARCH64_TLSLE_LDST8_TPREL_LO12:
++      /* Weak Symbols and TLS relocations are implementation defined.  For this
++	 case we choose to emit 0.  */
++      if (weak_undef_p && tls_reloc)
++	{
++	  _bfd_error_handler (_("%pB: warning: Weak TLS is implementation "
++				"defined and may not work as expected"),
++				input_bfd);
++	  value = place;
++	}
+       value = value + addend;
+       break;
+ 
+diff --git a/bfd/elfxx-aarch64.h b/bfd/elfxx-aarch64.h
+index 1f9ce09675..02e91d216f 100644
+--- a/bfd/elfxx-aarch64.h
++++ b/bfd/elfxx-aarch64.h
+@@ -40,8 +40,8 @@ _bfd_aarch64_elf_put_addend (bfd *, bfd_byte *, bfd_reloc_code_real_type,
+ 			     reloc_howto_type *, bfd_signed_vma);
+ 
+ extern bfd_vma
+-_bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type, bfd_vma, bfd_vma,
+-				     bfd_vma, bfd_boolean);
++_bfd_aarch64_elf_resolve_relocation (bfd *, bfd_reloc_code_real_type, bfd_vma,
++				     bfd_vma, bfd_vma, bfd_boolean);
+ 
+ extern bfd_boolean
+ _bfd_aarch64_elf_grok_prstatus (bfd *, Elf_Internal_Note *);
 diff --git a/bfd/elfxx-x86.h b/bfd/elfxx-x86.h
 index dce24dc106..610b2f3a68 100644
 --- a/bfd/elfxx-x86.h
@@ -855,10 +1207,20 @@ index e062a8b6f0..8aec6807c9 100644
 -m4_define([BFD_VERSION], [2.32])
 +m4_define([BFD_VERSION], [2.32.0])
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index e5acf6e2c7..a80a1fd470 100644
+index e5acf6e2c7..646921db0a 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
-@@ -1,3 +1,101 @@
+@@ -1,3 +1,111 @@
++2019-08-28  Tamar Christina  <tamar.christina@arm.com>
++
++	Backported from mainline.
++	2019-08-07  Tamar Christina  <tamar.christina@arm.com>
++
++	* testsuite/binutils-all/arm/in-order-all.d: Skip on pe, wince, coff.
++	* testsuite/binutils-all/arm/in-order.d: Likewise.
++	* testsuite/binutils-all/arm/out-of-order-all.d: Likewise.
++	* testsuite/binutils-all/arm/out-of-order.d: Likewise.
++
 +2019-08-17  Alan Modra  <amodra@gmail.com>
 +
 +	PR 24911
@@ -1437,14 +1799,15 @@ index 0000000000..69f17f5eb3
 +	.cfi_endproc
 diff --git a/binutils/testsuite/binutils-all/arm/in-order-all.d b/binutils/testsuite/binutils-all/arm/in-order-all.d
 new file mode 100644
-index 0000000000..5e51ca187a
+index 0000000000..22b104527a
 --- /dev/null
 +++ b/binutils/testsuite/binutils-all/arm/in-order-all.d
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,49 @@
 +#PROG: objcopy
 +#source: out-of-order.s
 +#ld: -e v1 -Ttext-segment=0x400000
 +#objdump: -D
++#skip: *-*-pe *-wince-* *-*-coff
 +#name: Check if disassembler can handle all sections in default order
 +
 +.*: +file format .*arm.*
@@ -1491,14 +1854,15 @@ index 0000000000..5e51ca187a
 +
 diff --git a/binutils/testsuite/binutils-all/arm/in-order.d b/binutils/testsuite/binutils-all/arm/in-order.d
 new file mode 100644
-index 0000000000..a2c9b9ed9b
+index 0000000000..81e296df0f
 --- /dev/null
 +++ b/binutils/testsuite/binutils-all/arm/in-order.d
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,29 @@
 +#PROG: objcopy
 +#source: out-of-order.s
 +#ld: -e v1 -Ttext-segment=0x400000
 +#objdump: -d
++#skip: *-*-pe *-wince-* *-*-coff
 +#name: Check if disassembler can handle sections in default order
 +
 +.*: +file format .*arm.*
@@ -1547,14 +1911,15 @@ index 5013b18bd6..33e3fd1437 100644
 +}
 diff --git a/binutils/testsuite/binutils-all/arm/out-of-order-all.d b/binutils/testsuite/binutils-all/arm/out-of-order-all.d
 new file mode 100644
-index 0000000000..c1df003455
+index 0000000000..7138ccc2df
 --- /dev/null
 +++ b/binutils/testsuite/binutils-all/arm/out-of-order-all.d
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,49 @@
 +#PROG: objcopy
 +#source: out-of-order.s
 +#ld: -T out-of-order.T
 +#objdump: -D
++#skip: *-*-pe *-wince-* *-*-coff
 +#name: Check if disassembler can handle all sections in different order than header
 +
 +.*: +file format .*arm.*
@@ -1622,13 +1987,14 @@ index 0000000000..489ae80190
 \ No newline at end of file
 diff --git a/binutils/testsuite/binutils-all/arm/out-of-order.d b/binutils/testsuite/binutils-all/arm/out-of-order.d
 new file mode 100644
-index 0000000000..f880cbcb91
+index 0000000000..4daabb594d
 --- /dev/null
 +++ b/binutils/testsuite/binutils-all/arm/out-of-order.d
-@@ -0,0 +1,27 @@
+@@ -0,0 +1,28 @@
 +#PROG: objcopy
 +#ld: -T out-of-order.T
 +#objdump: -d
++#skip: *-*-pe *-wince-* *-*-coff
 +#name: Check if disassembler can handle sections in different order than header
 +
 +.*: +file format .*arm.*
@@ -4891,10 +5257,51 @@ index 0c0234ab20..5dc5fb750a 100644
    AARCH64_OPND_Ra,	/* Integer register used in ddp_3src instructions.  */
    AARCH64_OPND_Rt_SYS,	/* Integer register used in system instructions.  */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 84673af576..a05684b00d 100644
+index 84673af576..9f7771d884 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,130 @@
+@@ -1,3 +1,171 @@
++2019-08-28  Tamar Christina  <tamar.christina@arm.com>
++
++	Backported from mainline.
++	2019-08-20  Tamar Christina  <tamar.christina@arm.com>
++
++	* testsuite/ld-arm/cortex-a8-fix-b-plt.d: Update Testcase.
++	* testsuite/ld-arm/cortex-a8-fix-b-rel-arm.d: Likewise.
++	* testsuite/ld-arm/cortex-a8-fix-bcc-plt.d: Likewise.
++	* testsuite/ld-arm/farcall-cond-thumb-arm.d: Likewise.
++	* testsuite/ld-arm/farcall-mixed-app.d: Likewise.
++	* testsuite/ld-arm/farcall-mixed-app2.d: Likewise.
++	* testsuite/ld-arm/farcall-mixed-lib-v4t.d: Likewise.
++	* testsuite/ld-arm/farcall-thumb-arm-pic-veneer.d: Likewise.
++	* testsuite/ld-arm/farcall-thumb-arm-short.d: Likewise.
++	* testsuite/ld-arm/farcall-thumb-arm.d: Likewise.
++	* testsuite/ld-arm/farcall-thumb-thumb-pic-veneer.d: Likewise.
++	* testsuite/ld-arm/farcall-thumb-thumb.d: Likewise.
++	* testsuite/ld-arm/fix-arm1176-on.d: Likewise.
++	* testsuite/ld-arm/ifunc-10.dd: Likewise.
++	* testsuite/ld-arm/ifunc-2.dd: Likewise.
++	* testsuite/ld-arm/ifunc-4.dd: Likewise.
++	* testsuite/ld-arm/ifunc-6.dd: Likewise.
++	* testsuite/ld-arm/ifunc-8.dd: Likewise.
++	* testsuite/ld-arm/jump-reloc-veneers-long.d: Likewise.
++	* testsuite/ld-arm/mixed-app.d: Likewise.
++	* testsuite/ld-arm/thumb2-b-interwork.d: Likewise.
++	* testsuite/ld-arm/tls-longplt.d: Likewise.
++	* testsuite/ld-arm/tls-thumb1.d: Likewise.
++
++2019-08-28  Tamar Christina  <tamar.christina@arm.com>
++
++	Backport from mainline.
++	2019-08-22  Tamar Christina  <tamar.christina@arm.com>
++
++	PR ld/24601
++	* testsuite/ld-aarch64/aarch64-elf.exp (undef-tls, weak-tls): New.
++	* testsuite/ld-aarch64/undef-tls.d: New test.
++	* testsuite/ld-aarch64/undef-tls.s: New test.
++	* testsuite/ld-aarch64/weak-tls.d: New test.
++	* testsuite/ld-aarch64/weak-tls.s: New test.
++
 +2019-08-16  Alan Modra  <amodra@gmail.com>
 +
 +	* emultempl/ppc32elf.em (ppc_before_allocation): Force running
@@ -11606,7 +12013,7 @@ index 6ceb974810..c9a1c4bcae 100644
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/ld/testsuite/ld-aarch64/aarch64-elf.exp b/ld/testsuite/ld-aarch64/aarch64-elf.exp
-index 2b9fad5604..cac44585c0 100644
+index 2b9fad5604..f9d6d3cbd7 100644
 --- a/ld/testsuite/ld-aarch64/aarch64-elf.exp
 +++ b/ld/testsuite/ld-aarch64/aarch64-elf.exp
 @@ -256,6 +256,7 @@ run_dump_test "tls-relax-all-ilp32"
@@ -11628,6 +12035,13 @@ index 2b9fad5604..cac44585c0 100644
  set aarch64elflinktests {
    {"ld-aarch64/so with global symbol" "-shared" "" "" {copy-reloc-so.s}
      {} "copy-reloc-so.so"}
+@@ -388,3 +393,6 @@ set aarch64elflinktests {
+ }
+ 
+ run_ld_link_tests $aarch64elflinktests
++
++run_dump_test "weak-tls"
++run_dump_test "undef-tls"
 diff --git a/ld/testsuite/ld-aarch64/tls-relax-gdesc-le-now.d b/ld/testsuite/ld-aarch64/tls-relax-gdesc-le-now.d
 new file mode 100644
 index 0000000000..f1565e9c11
@@ -11653,6 +12067,48 @@ index 0000000000..f1565e9c11
 +Relocation section '\.rela\.plt' at offset .+ contains 1 entry:
 +  Offset          Info           Type           Sym\. Value    Sym\. Name \+ Addend
 +.+  .+ R_AARCH64_TLSDESC                    0
+diff --git a/ld/testsuite/ld-aarch64/undef-tls.d b/ld/testsuite/ld-aarch64/undef-tls.d
+new file mode 100644
+index 0000000000..8b43ca4c1d
+--- /dev/null
++++ b/ld/testsuite/ld-aarch64/undef-tls.d
+@@ -0,0 +1,17 @@
++#source: undef-tls.s
++#ld: -e0 --emit-relocs
++#objdump: -dr
++#...
++#error:.*: in function `get':.*
++#error:.*: undefined reference to `tls'.*
++#error:.*: TLS relocation R_AARCH64_TLSLE_ADD_TPREL_HI12 against undefined symbol `tls'.*
++#error:.*: dangerous relocation: unsupported relocation.*
++#error:.*: undefined reference to `tls'.*
++#error:.*: TLS relocation R_AARCH64_TLSLE_ADD_TPREL_LO12_NC against undefined symbol `tls'.*
++#error:.*: dangerous relocation: unsupported relocation.*
++#error:.*: undefined reference to `dtl'.*
++#error:.*: TLS relocation R_AARCH64_TLSLD_ADD_DTPREL_HI12 against undefined symbol `dtl'.*
++#error:.*: dangerous relocation: unsupported relocation.*
++#error:.*: undefined reference to `dtl'.*
++#error:.*: TLS relocation R_AARCH64_TLSLD_ADD_DTPREL_LO12 against undefined symbol `dtl'.*
++#error:.*: dangerous relocation: unsupported relocation.*
+diff --git a/ld/testsuite/ld-aarch64/undef-tls.s b/ld/testsuite/ld-aarch64/undef-tls.s
+new file mode 100644
+index 0000000000..6d57afbb54
+--- /dev/null
++++ b/ld/testsuite/ld-aarch64/undef-tls.s
+@@ -0,0 +1,13 @@
++        .global get
++        .type   get, %function
++get:
++.LFB0:
++        mrs     x0, tpidr_el0
++        add     x0, x0, #:tprel_hi12:tls, lsl #12
++        add     x0, x0, #:tprel_lo12_nc:tls
++	add	x0, x0, #:dtprel_hi12:dtl
++	add	x0, x0, #:dtprel_lo12:dtl
++        ret
++.LFE0:
++        .size   get, .-get
++
 diff --git a/ld/testsuite/ld-aarch64/variant_pcs-1.s b/ld/testsuite/ld-aarch64/variant_pcs-1.s
 new file mode 100644
 index 0000000000..8461e8ff5e
@@ -12012,6 +12468,42 @@ index 0000000000..a66a9343a7
 +  .far : { *(.far) }
 +  .ARM.attributes 0 : { *(.ARM.atttributes) }
 +}
+diff --git a/ld/testsuite/ld-aarch64/weak-tls.d b/ld/testsuite/ld-aarch64/weak-tls.d
+new file mode 100644
+index 0000000000..a826940689
+--- /dev/null
++++ b/ld/testsuite/ld-aarch64/weak-tls.d
+@@ -0,0 +1,8 @@
++#source: weak-tls.s
++#ld: -e0 --emit-relocs
++#objdump: -dr
++#...
++#error:.*: warning: Weak TLS is implementation defined and may not work as expected.*
++#error:.*: warning: Weak TLS is implementation defined and may not work as expected.*
++#error:.*: in function `get':.*
++#error:.*: relocation truncated to fit: R_AARCH64_TLSLD_ADD_DTPREL_LO12 against undefined symbol `dtl'.*
+diff --git a/ld/testsuite/ld-aarch64/weak-tls.s b/ld/testsuite/ld-aarch64/weak-tls.s
+new file mode 100644
+index 0000000000..3520a85589
+--- /dev/null
++++ b/ld/testsuite/ld-aarch64/weak-tls.s
+@@ -0,0 +1,16 @@
++        .global get
++        .type   get, %function
++	.global dtl
++	.weak dtl
++get:
++.LFB0:
++        mrs     x0, tpidr_el0
++        add     x0, x0, #:tprel_hi12:tls, lsl #12
++        add     x0, x0, #:tprel_lo12_nc:tls
++	add	x0, x0, #:dtprel_hi12:dtl
++	add	x0, x0, #:dtprel_lo12:dtl
++        ret
++.LFE0:
++        .size   get, .-get
++        .weak   tls
++
 diff --git a/ld/testsuite/ld-arm/arm-elf.exp b/ld/testsuite/ld-arm/arm-elf.exp
 index 450a76b708..440a1568c2 100644
 --- a/ld/testsuite/ld-arm/arm-elf.exp
@@ -12239,6 +12731,703 @@ index 0000000000..0ca949e3e5
 +.LASF2:
 +	.ascii	"Blinky\000"
 +	.ident	"GCC: (GNU) 10.0.0 20190617 (experimental)"
+diff --git a/ld/testsuite/ld-arm/cortex-a8-fix-b-plt.d b/ld/testsuite/ld-arm/cortex-a8-fix-b-plt.d
+index bbf68398d6..54f56e4ccb 100644
+--- a/ld/testsuite/ld-arm/cortex-a8-fix-b-plt.d
++++ b/ld/testsuite/ld-arm/cortex-a8-fix-b-plt.d
+@@ -12,7 +12,7 @@ Disassembly of section \.plt:
+     8010:	00000ffc 	\.word	0x00000ffc
+ 00008014 <bar@plt>:
+     8014:	4778      	bx	pc
+-    8016:	46c0      	nop			; \(mov r8, r8\)
++    8016:	e7fd      	b.n	.+ <.+>
+     8018:	e28fc600 	add	ip, pc, #0, 12
+     801c:	e28cca00 	add	ip, ip, #0, 20
+     8020:	e5bcfff8 	ldr	pc, \[ip, #4088\]!	; 0xff8
+diff --git a/ld/testsuite/ld-arm/cortex-a8-fix-b-rel-arm.d b/ld/testsuite/ld-arm/cortex-a8-fix-b-rel-arm.d
+index 3e52a49556..afa1e4897a 100644
+--- a/ld/testsuite/ld-arm/cortex-a8-fix-b-rel-arm.d
++++ b/ld/testsuite/ld-arm/cortex-a8-fix-b-rel-arm.d
+@@ -79,5 +79,5 @@ Disassembly of section \.text:
+ 
+ 00009010 <__targetfn_from_thumb>:
+     9010:	4778      	bx	pc
+-    9012:	46c0      	nop			; \(mov r8, r8\)
++    9012:	e7fd      	b.n	.+ <.+>
+     9014:	eaffffb9 	b	8f00 <targetfn>
+diff --git a/ld/testsuite/ld-arm/cortex-a8-fix-bcc-plt.d b/ld/testsuite/ld-arm/cortex-a8-fix-bcc-plt.d
+index 079c928ea0..425c10207f 100644
+--- a/ld/testsuite/ld-arm/cortex-a8-fix-bcc-plt.d
++++ b/ld/testsuite/ld-arm/cortex-a8-fix-bcc-plt.d
+@@ -12,7 +12,7 @@ Disassembly of section \.plt:
+     8010:	00001004 	\.word	0x00001004
+ 00008014 <bar@plt>:
+     8014:	4778      	bx	pc
+-    8016:	46c0      	nop			; \(mov r8, r8\)
++    8016:	e7fd      	b.n	.+ <.+>
+     8018:	e28fc600 	add	ip, pc, #0, 12
+     801c:	e28cca01 	add	ip, ip, #4096	; 0x1000
+     8020:	e5bcf000 	ldr	pc, \[ip, #0\]!
+diff --git a/ld/testsuite/ld-arm/farcall-cond-thumb-arm.d b/ld/testsuite/ld-arm/farcall-cond-thumb-arm.d
+index 0b0172b75e..c0d96523f4 100644
+--- a/ld/testsuite/ld-arm/farcall-cond-thumb-arm.d
++++ b/ld/testsuite/ld-arm/farcall-cond-thumb-arm.d
+@@ -9,7 +9,7 @@ Disassembly of section .text:
+ 
+ 00058008 <__bar_from_thumb>:
+    58008:	4778      	bx	pc
+-   5800a:	46c0      	nop			; \(mov r8, r8\)
++   5800a:	e7fd      	b.n	.+ <.+>
+    5800c:	ea02fffb 	b	118000 <bar>
+ 
+ Disassembly of section .foo:
+diff --git a/ld/testsuite/ld-arm/farcall-mixed-app.d b/ld/testsuite/ld-arm/farcall-mixed-app.d
+index f3be54f134..0160f46d3a 100644
+--- a/ld/testsuite/ld-arm/farcall-mixed-app.d
++++ b/ld/testsuite/ld-arm/farcall-mixed-app.d
+@@ -14,7 +14,7 @@ Disassembly of section .plt:
+  .*:	.*
+ .* <lib_func2@plt>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e28fc6.* 	add	ip, pc, #.*
+  .*:	e28cca.* 	add	ip, ip, #.*	; 0x.*
+  .*:	e5bcf.* 	ldr	pc, \[ip, #.*\]!.*
+@@ -82,7 +82,7 @@ Disassembly of section .far_thumb:
+ 
+ .* <__lib_func2_from_thumb>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e51ff004 	ldr	pc, \[pc, #-4\]	; 2200018 <__lib_func2_from_thumb\+0x8>
+  .*:	000081e0 	.word	0x000081e0
+  .*:	00000000 	.word	0x00000000
+diff --git a/ld/testsuite/ld-arm/farcall-mixed-app2.d b/ld/testsuite/ld-arm/farcall-mixed-app2.d
+index 535710d0bd..0c70148515 100644
+--- a/ld/testsuite/ld-arm/farcall-mixed-app2.d
++++ b/ld/testsuite/ld-arm/farcall-mixed-app2.d
+@@ -14,7 +14,7 @@ Disassembly of section .plt:
+  .*:	.*
+ .* <lib_func2@plt>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e28fc6.* 	add	ip, pc, #.*
+  .*:	e28cca.* 	add	ip, ip, #.*	; 0x.*
+  .*:	e5bcf.* 	ldr	pc, \[ip, #.*\]!.*
+@@ -56,7 +56,7 @@ Disassembly of section .mid_thumb:
+ 
+ .* <__lib_func2_from_thumb>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e51ff004 	ldr	pc, \[pc, #-4\]	; 10081e8 <__lib_func2_from_thumb\+0x8>
+  .*:	000081e0 	.word	0x000081e0
+  .*:	00000000 	.word	0x00000000
+diff --git a/ld/testsuite/ld-arm/farcall-mixed-lib-v4t.d b/ld/testsuite/ld-arm/farcall-mixed-lib-v4t.d
+index 3d12e0ae64..1b15879b25 100644
+--- a/ld/testsuite/ld-arm/farcall-mixed-lib-v4t.d
++++ b/ld/testsuite/ld-arm/farcall-mixed-lib-v4t.d
+@@ -13,25 +13,25 @@ Disassembly of section .plt:
+  .*:	.* 	.word	.*
+ .* <app_func@plt>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e28fc6.* 	add	ip, pc, #.*
+  .*:	e28cca.* 	add	ip, ip, #.*	; 0x.*
+  .*:	e5bcf.* 	ldr	pc, \[ip, #.*\]!	; .*
+ .* <app_func_weak@plt>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e28fc6.* 	add	ip, pc, #.*
+  .*:	e28cca.* 	add	ip, ip, #.*	; 0x.*
+  .*:	e5bcf.* 	ldr	pc, \[ip, #.*\]!	; 0x.*
+ .* <lib_func3@plt>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e28fc6.* 	add	ip, pc, #.*
+  .*:	e28cca.* 	add	ip, ip, #.*	; 0x.*
+  .*:	e5bcf.* 	ldr	pc, \[ip, #.*\]!	; 0x.*
+ .* <lib_func4@plt>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e28fc6.* 	add	ip, pc, #.*
+  .*:	e28cca.* 	add	ip, ip, #.*	; 0x.*
+  .*:	e5bcf.* 	ldr	pc, \[ip, #.*\]!	; 0x.*
+@@ -59,28 +59,28 @@ Disassembly of section .text:
+ 
+ .* <__app_func_from_thumb>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e59fc000 	ldr	ip, \[pc\]	; .* <__app_func_from_thumb\+0xc>
+  .*:	e08cf00f 	add	pc, ip, pc
+  .*:	feffff.. 	.word	0xfeffff..
+ 
+ .* <__lib_func4_from_thumb>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e59fc000 	ldr	ip, \[pc\]	; .* <__lib_func4_from_thumb\+0xc>
+  .*:	e08cf00f 	add	pc, ip, pc
+  .*:	feffff.. 	.word	0xfeffff..
+ 
+ .* <__app_func_weak_from_thumb>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e59fc000 	ldr	ip, \[pc\]	; .* <__app_func_weak_from_thumb\+0xc>
+  .*:	e08cf00f 	add	pc, ip, pc
+  .*:	feffff.. 	.word	0xfeffff..
+ 
+ .* <__lib_func3_from_thumb>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e59fc000 	ldr	ip, \[pc\]	; .* <__lib_func3_from_thumb\+0xc>
+  .*:	e08cf00f 	add	pc, ip, pc
+  .*:	feffff.. 	.word	0xfeffff..
+@@ -94,14 +94,14 @@ Disassembly of section .text:
+ 
+ .* <__app_func_weak_from_thumb>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e59fc000 	ldr	ip, \[pc\]	; .* <__app_func_weak_from_thumb\+0xc>
+  .*:	e08cf00f 	add	pc, ip, pc
+  .*:	fdffff34 	.word	0xfdffff34
+ 
+ .* <__app_func_from_thumb>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e59fc000 	ldr	ip, \[pc\]	; .* <__app_func_from_thumb\+0xc>
+  .*:	e08cf00f 	add	pc, ip, pc
+  .*:	fdffff14 	.word	0xfdffff14
+diff --git a/ld/testsuite/ld-arm/farcall-thumb-arm-pic-veneer.d b/ld/testsuite/ld-arm/farcall-thumb-arm-pic-veneer.d
+index aff4df79bc..f96d467cea 100644
+--- a/ld/testsuite/ld-arm/farcall-thumb-arm-pic-veneer.d
++++ b/ld/testsuite/ld-arm/farcall-thumb-arm-pic-veneer.d
+@@ -9,7 +9,7 @@ Disassembly of section .text:
+ 
+ 01f01018 <__bar_from_thumb>:
+  1f01018:	4778      	bx	pc
+- 1f0101a:	46c0      	nop			; \(mov r8, r8\)
++ 1f0101a:	e7fd      	b.n	.+ <.+>
+  1f0101c:	e59fc000 	ldr	ip, \[pc\]	; 1f01024 <__bar_from_thumb\+0xc>
+  1f01020:	e08cf00f 	add	pc, ip, pc
+  1f01024:	000fffec 	.word	0x000fffec
+diff --git a/ld/testsuite/ld-arm/farcall-thumb-arm-short.d b/ld/testsuite/ld-arm/farcall-thumb-arm-short.d
+index 4e19039433..b74f385c96 100644
+--- a/ld/testsuite/ld-arm/farcall-thumb-arm-short.d
++++ b/ld/testsuite/ld-arm/farcall-thumb-arm-short.d
+@@ -9,7 +9,7 @@ Disassembly of section .text:
+ 
+ 00001008 <__bar_from_thumb>:
+     1008:	4778      	bx	pc
+-    100a:	46c0      	nop			; \(mov r8, r8\)
++    100a:	e7fd      	b.n	.+ <.+>
+     100c:	ea000400 	b	2014 <bar>
+ Disassembly of section .foo:
+ 
+diff --git a/ld/testsuite/ld-arm/farcall-thumb-arm.d b/ld/testsuite/ld-arm/farcall-thumb-arm.d
+index 5dc377a0b0..d62649d838 100644
+--- a/ld/testsuite/ld-arm/farcall-thumb-arm.d
++++ b/ld/testsuite/ld-arm/farcall-thumb-arm.d
+@@ -9,13 +9,13 @@ Disassembly of section .text:
+ 
+ 01f01018 <__bar_from_thumb>:
+  1f01018:	4778      	bx	pc
+- 1f0101a:	46c0      	nop			; \(mov r8, r8\)
++ 1f0101a:	e7fd      	b.n	.+ <.+>
+  1f0101c:	e51ff004 	ldr	pc, \[pc, #-4\]	; 1f01020 <__bar_from_thumb\+0x8>
+  1f01020:	02001014 	.word	0x02001014
+ 
+ 01f01024 <__bar_from_thumb>:
+  1f01024:	4778      	bx	pc
+- 1f01026:	46c0      	nop			; \(mov r8, r8\)
++ 1f01026:	e7fd      	b.n	.+ <.+>
+  1f01028:	ea03fff9 	b	2001014 <bar>
+  1f0102c:	00000000 	andeq	r0, r0, r0
+ 
+diff --git a/ld/testsuite/ld-arm/farcall-thumb-thumb-pic-veneer.d b/ld/testsuite/ld-arm/farcall-thumb-thumb-pic-veneer.d
+index 8b14599a53..0b7184bba2 100644
+--- a/ld/testsuite/ld-arm/farcall-thumb-thumb-pic-veneer.d
++++ b/ld/testsuite/ld-arm/farcall-thumb-thumb-pic-veneer.d
+@@ -9,7 +9,7 @@ Disassembly of section .text:
+ 
+ 00001008 <__bar_veneer>:
+     1008:	4778      	bx	pc
+-    100a:	46c0      	nop			; \(mov r8, r8\)
++    100a:	e7fd      	b.n	.+ <.+>
+     100c:	e59fc004 	ldr	ip, \[pc, #4\]	; 1018 <__bar_veneer\+0x10>
+     1010:	e08fc00c 	add	ip, pc, ip
+     1014:	e12fff1c 	bx	ip
+diff --git a/ld/testsuite/ld-arm/farcall-thumb-thumb.d b/ld/testsuite/ld-arm/farcall-thumb-thumb.d
+index 4f4c2c9bd6..0d9a898eff 100644
+--- a/ld/testsuite/ld-arm/farcall-thumb-thumb.d
++++ b/ld/testsuite/ld-arm/farcall-thumb-thumb.d
+@@ -9,7 +9,7 @@ Disassembly of section .text:
+ 
+ 00001008 <__bar_veneer>:
+     1008:	4778      	bx	pc
+-    100a:	46c0      	nop			; \(mov r8, r8\)
++    100a:	e7fd      	b.n	.+ <.+>
+     100c:	e59fc000 	ldr	ip, \[pc\]	; 1014 <__bar_veneer\+0xc>
+     1010:	e12fff1c 	bx	ip
+     1014:	02001015 	.word	0x02001015
+diff --git a/ld/testsuite/ld-arm/fix-arm1176-on.d b/ld/testsuite/ld-arm/fix-arm1176-on.d
+index 834618e89c..46510dc73d 100644
+--- a/ld/testsuite/ld-arm/fix-arm1176-on.d
++++ b/ld/testsuite/ld-arm/fix-arm1176-on.d
+@@ -9,7 +9,7 @@ Disassembly of section .foo:
+ 
+ [0-9a-f]+ <__func_to_branch_to_veneer>:
+  +[0-9a-f]+:	4778      	bx	pc
+- +[0-9a-f]+:	46c0      	nop			; \(mov r8, r8\)
++ +[0-9a-f]+:	e7fd      	b.n	.+ <.+>
+  +[0-9a-f]+:	e51ff004 	ldr	pc, \[pc, #-4\]	; 2001020 <__func_to_branch_to_veneer\+0x8>
+  +[0-9a-f]+:	........ 	.word	0x........
+  +[0-9a-f]+:	00000000 	.word	0x00000000
+diff --git a/ld/testsuite/ld-arm/ifunc-10.dd b/ld/testsuite/ld-arm/ifunc-10.dd
+index 05e4be5b59..6b9771f6c0 100644
+--- a/ld/testsuite/ld-arm/ifunc-10.dd
++++ b/ld/testsuite/ld-arm/ifunc-10.dd
+@@ -18,7 +18,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 00009014 <atf2@plt>:
+     9014:	4778      	bx	pc
+-    9016:	46c0      	nop			; \(mov r8, r8\)
++    9016:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ atf2's .plt entry
+ #------------------------------------------------------------------------------
+@@ -37,7 +37,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 00009030 <ttf2@plt>:
+     9030:	4778      	bx	pc
+-    9032:	46c0      	nop			; \(mov r8, r8\)
++    9032:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ ttf2's .plt entry
+ #------------------------------------------------------------------------------
+@@ -49,7 +49,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 00009040 <tbf2@plt>:
+     9040:	4778      	bx	pc
+-    9042:	46c0      	nop			; \(mov r8, r8\)
++    9042:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ tbf2's .plt entry
+ #------------------------------------------------------------------------------
+@@ -75,7 +75,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 00009068 <abf4@plt>:
+     9068:	4778      	bx	pc
+-    906a:	46c0      	nop			; \(mov r8, r8\)
++    906a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ abf4's .plt entry
+ #------------------------------------------------------------------------------
+@@ -87,7 +87,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 00009078 <tbf4@plt>:
+     9078:	4778      	bx	pc
+-    907a:	46c0      	nop			; \(mov r8, r8\)
++    907a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ tbf4's .plt entry
+ #------------------------------------------------------------------------------
+@@ -99,7 +99,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 00009088 <ttf4@plt>:
+     9088:	4778      	bx	pc
+-    908a:	46c0      	nop			; \(mov r8, r8\)
++    908a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ ttf4's .plt entry
+ #------------------------------------------------------------------------------
+@@ -111,7 +111,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 00009098 <atf4@plt>:
+     9098:	4778      	bx	pc
+-    909a:	46c0      	nop			; \(mov r8, r8\)
++    909a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ atf4's .plt entry
+ #------------------------------------------------------------------------------
+@@ -130,7 +130,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 000090b4 <abf2@plt>:
+     90b4:	4778      	bx	pc
+-    90b6:	46c0      	nop			; \(mov r8, r8\)
++    90b6:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ abf2's .plt entry
+ #------------------------------------------------------------------------------
+@@ -151,7 +151,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to atf1's .iplt entry
+ #------------------------------------------------------------------------------
+     90d0:	4778      	bx	pc
+-    90d2:	46c0      	nop			; \(mov r8, r8\)
++    90d2:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ atf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -162,7 +162,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to abf1's .iplt entry
+ #------------------------------------------------------------------------------
+     90e0:	4778      	bx	pc
+-    90e2:	46c0      	nop			; \(mov r8, r8\)
++    90e2:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ abf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -179,7 +179,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to ttf1's .iplt entry
+ #------------------------------------------------------------------------------
+     90fc:	4778      	bx	pc
+-    90fe:	46c0      	nop			; \(mov r8, r8\)
++    90fe:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ ttf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -190,7 +190,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to tbf1's .iplt entry
+ #------------------------------------------------------------------------------
+     910c:	4778      	bx	pc
+-    910e:	46c0      	nop			; \(mov r8, r8\)
++    910e:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ tbf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -201,7 +201,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to atf3
+ #------------------------------------------------------------------------------
+     911c:	4778      	bx	pc
+-    911e:	46c0      	nop			; \(mov r8, r8\)
++    911e:	e7fd      	b.n	.+ <.+>
+ 
+ 00009120 <atf3>:
+     9120:	e28fc600 	add	ip, pc, #0, 12
+@@ -211,7 +211,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to abf3
+ #------------------------------------------------------------------------------
+     912c:	4778      	bx	pc
+-    912e:	46c0      	nop			; \(mov r8, r8\)
++    912e:	e7fd      	b.n	.+ <.+>
+ 
+ 00009130 <abf3>:
+     9130:	e28fc600 	add	ip, pc, #0, 12
+@@ -221,7 +221,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to ttf3
+ #------------------------------------------------------------------------------
+     913c:	4778      	bx	pc
+-    913e:	46c0      	nop			; \(mov r8, r8\)
++    913e:	e7fd      	b.n	.+ <.+>
+ 
+ 00009140 <ttf3>:
+     9140:	e28fc600 	add	ip, pc, #0, 12
+@@ -231,7 +231,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to tbf3
+ #------------------------------------------------------------------------------
+     914c:	4778      	bx	pc
+-    914e:	46c0      	nop			; \(mov r8, r8\)
++    914e:	e7fd      	b.n	.+ <.+>
+ 
+ 00009150 <tbf3>:
+     9150:	e28fc600 	add	ip, pc, #0, 12
+diff --git a/ld/testsuite/ld-arm/ifunc-2.dd b/ld/testsuite/ld-arm/ifunc-2.dd
+index 91eab540d2..a60ef2b027 100644
+--- a/ld/testsuite/ld-arm/ifunc-2.dd
++++ b/ld/testsuite/ld-arm/ifunc-2.dd
+@@ -21,7 +21,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to f3's .iplt entry
+ #------------------------------------------------------------------------------
+     9018:	4778      	bx	pc
+-    901a:	46c0      	nop			; \(mov r8, r8\)
++    901a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ f3's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -32,7 +32,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to f4's .iplt entry
+ #------------------------------------------------------------------------------
+     9028:	4778      	bx	pc
+-    902a:	46c0      	nop			; \(mov r8, r8\)
++    902a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ f4's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -43,7 +43,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to f7
+ #------------------------------------------------------------------------------
+     9038:	4778      	bx	pc
+-    903a:	46c0      	nop			; \(mov r8, r8\)
++    903a:	e7fd      	b.n	.+ <.+>
+ 
+ 0000903c <f7>:
+     903c:	e28fc600 	add	ip, pc, #0, 12
+@@ -58,7 +58,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to f8
+ #------------------------------------------------------------------------------
+     9054:	4778      	bx	pc
+-    9056:	46c0      	nop			; \(mov r8, r8\)
++    9056:	e7fd      	b.n	.+ <.+>
+ 
+ 00009058 <f8>:
+     9058:	e28fc600 	add	ip, pc, #0, 12
+diff --git a/ld/testsuite/ld-arm/ifunc-4.dd b/ld/testsuite/ld-arm/ifunc-4.dd
+index 647a340855..89fc34b85d 100644
+--- a/ld/testsuite/ld-arm/ifunc-4.dd
++++ b/ld/testsuite/ld-arm/ifunc-4.dd
+@@ -18,7 +18,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 00009014 <atf2@plt>:
+     9014:	4778      	bx	pc
+-    9016:	46c0      	nop			; \(mov r8, r8\)
++    9016:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ atf2's .plt entry
+ #------------------------------------------------------------------------------
+@@ -30,7 +30,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 00009024 <ttf2@plt>:
+     9024:	4778      	bx	pc
+-    9026:	46c0      	nop			; \(mov r8, r8\)
++    9026:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ ttf2's .plt entry
+ #------------------------------------------------------------------------------
+@@ -42,7 +42,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 00009034 <tbf2@plt>:
+     9034:	4778      	bx	pc
+-    9036:	46c0      	nop			; \(mov r8, r8\)
++    9036:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ tbf2's .plt entry
+ #------------------------------------------------------------------------------
+@@ -68,7 +68,7 @@ Disassembly of section \.plt:
+ #------------------------------------------------------------------------------
+ 0000905c <abf2@plt>:
+     905c:	4778      	bx	pc
+-    905e:	46c0      	nop			; \(mov r8, r8\)
++    905e:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ abf2's .plt entry
+ #------------------------------------------------------------------------------
+@@ -89,7 +89,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to atf1's .iplt entry
+ #------------------------------------------------------------------------------
+     9078:	4778      	bx	pc
+-    907a:	46c0      	nop			; \(mov r8, r8\)
++    907a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ atf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -100,7 +100,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to abf1's .iplt entry
+ #------------------------------------------------------------------------------
+     9088:	4778      	bx	pc
+-    908a:	46c0      	nop			; \(mov r8, r8\)
++    908a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ abf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -117,7 +117,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to ttf1's .iplt entry
+ #------------------------------------------------------------------------------
+     90a4:	4778      	bx	pc
+-    90a6:	46c0      	nop			; \(mov r8, r8\)
++    90a6:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ ttf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -128,7 +128,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to tbf1's .iplt entry
+ #------------------------------------------------------------------------------
+     90b4:	4778      	bx	pc
+-    90b6:	46c0      	nop			; \(mov r8, r8\)
++    90b6:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ tbf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -145,7 +145,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to atf3's .iplt entry
+ #------------------------------------------------------------------------------
+     90d0:	4778      	bx	pc
+-    90d2:	46c0      	nop			; \(mov r8, r8\)
++    90d2:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ atf3's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -156,7 +156,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to abf3's .iplt entry
+ #------------------------------------------------------------------------------
+     90e0:	4778      	bx	pc
+-    90e2:	46c0      	nop			; \(mov r8, r8\)
++    90e2:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ abf3's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -167,7 +167,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to ttf3's .iplt entry
+ #------------------------------------------------------------------------------
+     90f0:	4778      	bx	pc
+-    90f2:	46c0      	nop			; \(mov r8, r8\)
++    90f2:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ ttf3's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -178,7 +178,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to tbf3's .iplt entry
+ #------------------------------------------------------------------------------
+     9100:	4778      	bx	pc
+-    9102:	46c0      	nop			; \(mov r8, r8\)
++    9102:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ tbf3's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -195,7 +195,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to abf4's .iplt entry
+ #------------------------------------------------------------------------------
+     911c:	4778      	bx	pc
+-    911e:	46c0      	nop			; \(mov r8, r8\)
++    911e:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ abf4's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -206,7 +206,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to tbf4's .iplt entry
+ #------------------------------------------------------------------------------
+     912c:	4778      	bx	pc
+-    912e:	46c0      	nop			; \(mov r8, r8\)
++    912e:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ tbf4's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -217,7 +217,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to ttf4's .iplt entry
+ #------------------------------------------------------------------------------
+     913c:	4778      	bx	pc
+-    913e:	46c0      	nop			; \(mov r8, r8\)
++    913e:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ ttf4's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -234,7 +234,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to atf4's .iplt entry
+ #------------------------------------------------------------------------------
+     9158:	4778      	bx	pc
+-    915a:	46c0      	nop			; \(mov r8, r8\)
++    915a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ atf4's .iplt entry
+ #------------------------------------------------------------------------------
+diff --git a/ld/testsuite/ld-arm/ifunc-6.dd b/ld/testsuite/ld-arm/ifunc-6.dd
+index 3c9cbd5351..c060cb2051 100644
+--- a/ld/testsuite/ld-arm/ifunc-6.dd
++++ b/ld/testsuite/ld-arm/ifunc-6.dd
+@@ -9,7 +9,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to f3's .iplt entry
+ #------------------------------------------------------------------------------
+     9000:	4778      	bx	pc
+-    9002:	46c0      	nop			; \(mov r8, r8\)
++    9002:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ f3's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -26,7 +26,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to f4's .iplt entry
+ #------------------------------------------------------------------------------
+     901c:	4778      	bx	pc
+-    901e:	46c0      	nop			; \(mov r8, r8\)
++    901e:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ f4's .iplt entry
+ #------------------------------------------------------------------------------
+diff --git a/ld/testsuite/ld-arm/ifunc-8.dd b/ld/testsuite/ld-arm/ifunc-8.dd
+index 50a9177092..8216eb148d 100644
+--- a/ld/testsuite/ld-arm/ifunc-8.dd
++++ b/ld/testsuite/ld-arm/ifunc-8.dd
+@@ -15,7 +15,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to atf1's .iplt entry
+ #------------------------------------------------------------------------------
+     900c:	4778      	bx	pc
+-    900e:	46c0      	nop			; \(mov r8, r8\)
++    900e:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ atf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -26,7 +26,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to abf1's .iplt entry
+ #------------------------------------------------------------------------------
+     901c:	4778      	bx	pc
+-    901e:	46c0      	nop			; \(mov r8, r8\)
++    901e:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ abf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -43,7 +43,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to ttf1's .iplt entry
+ #------------------------------------------------------------------------------
+     9038:	4778      	bx	pc
+-    903a:	46c0      	nop			; \(mov r8, r8\)
++    903a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ ttf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -54,7 +54,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to tbf1's .iplt entry
+ #------------------------------------------------------------------------------
+     9048:	4778      	bx	pc
+-    904a:	46c0      	nop			; \(mov r8, r8\)
++    904a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ tbf1's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -65,7 +65,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to atf3's .iplt entry
+ #------------------------------------------------------------------------------
+     9058:	4778      	bx	pc
+-    905a:	46c0      	nop			; \(mov r8, r8\)
++    905a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ atf3's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -76,7 +76,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to abf3's .iplt entry
+ #------------------------------------------------------------------------------
+     9068:	4778      	bx	pc
+-    906a:	46c0      	nop			; \(mov r8, r8\)
++    906a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ abf3's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -87,7 +87,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to ttf3's .iplt entry
+ #------------------------------------------------------------------------------
+     9078:	4778      	bx	pc
+-    907a:	46c0      	nop			; \(mov r8, r8\)
++    907a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ ttf3's .iplt entry
+ #------------------------------------------------------------------------------
+@@ -98,7 +98,7 @@ Disassembly of section \.iplt:
+ #------ thumb entry to tbf3's .iplt entry
+ #------------------------------------------------------------------------------
+     9088:	4778      	bx	pc
+-    908a:	46c0      	nop			; \(mov r8, r8\)
++    908a:	e7fd      	b.n	.+ <.+>
+ #------------------------------------------------------------------------------
+ #------ tbf3's .iplt entry
+ #------------------------------------------------------------------------------
 diff --git a/ld/testsuite/ld-arm/jump-reloc-veneers-cond-long.d b/ld/testsuite/ld-arm/jump-reloc-veneers-cond-long.d
 index d818cf579e..88481f0e92 100644
 --- a/ld/testsuite/ld-arm/jump-reloc-veneers-cond-long.d
@@ -12253,10 +13442,10 @@ index d818cf579e..88481f0e92 100644
  	...
  
 diff --git a/ld/testsuite/ld-arm/jump-reloc-veneers-long.d b/ld/testsuite/ld-arm/jump-reloc-veneers-long.d
-index 6bd5652de3..ae176bed8a 100644
+index 6bd5652de3..1edb1b3772 100644
 --- a/ld/testsuite/ld-arm/jump-reloc-veneers-long.d
 +++ b/ld/testsuite/ld-arm/jump-reloc-veneers-long.d
-@@ -10,8 +10,9 @@ Disassembly of section destsect:
+@@ -10,12 +10,13 @@ Disassembly of section destsect:
  Disassembly of section .text:
  
  000080.. <[^>]*>:
@@ -12268,6 +13457,71 @@ index 6bd5652de3..ae176bed8a 100644
  
  000080.. <[^>]*>:
      80..:	4778      	bx	pc
+-    80..:	46c0      	nop			; \(mov r8, r8\)
++    80..:	e7fd      	b.n	.+ <.+>
+     80..:	e59fc000 	ldr	ip, \[pc\]	; 80.. <__dest_veneer\+0xc>
+     80..:	e12fff1c 	bx	ip
+     80..:	09000001 	.word	0x09000001
+diff --git a/ld/testsuite/ld-arm/mixed-app.d b/ld/testsuite/ld-arm/mixed-app.d
+index 4bcbdad8de..99c6e5dcf6 100644
+--- a/ld/testsuite/ld-arm/mixed-app.d
++++ b/ld/testsuite/ld-arm/mixed-app.d
+@@ -14,7 +14,7 @@ Disassembly of section .plt:
+  .*:	.*
+ .* <lib_func2@plt>:
+  .*:	4778      	bx	pc
+- .*:	46c0      	nop			; \(mov r8, r8\)
++ .*:	e7fd      	b.n	.+ <.+>
+  .*:	e28fc6.* 	add	ip, pc, #.*
+  .*:	e28cca.* 	add	ip, ip, #.*	; 0x.*
+  .*:	e5bcf.* 	ldr	pc, \[ip, #.*\]!.*
+diff --git a/ld/testsuite/ld-arm/thumb2-b-interwork.d b/ld/testsuite/ld-arm/thumb2-b-interwork.d
+index 67cb8638ec..e01ef50541 100644
+--- a/ld/testsuite/ld-arm/thumb2-b-interwork.d
++++ b/ld/testsuite/ld-arm/thumb2-b-interwork.d
+@@ -11,6 +11,6 @@ Disassembly of section .text:
+ 
+ [0-9a-f]+ <__bar_from_thumb>:
+  +[0-9a-f]+:	4778      	bx	pc
+- +[0-9a-f]+:	46c0      	nop			; \(mov r8, r8\)
++ +[0-9a-f]+:	e7fd      	b.n	.+ <.+>
+  +[0-9a-f]+:	eafffffc 	b	[0-9a-f]+ <bar>
+ 
+diff --git a/ld/testsuite/ld-arm/tls-longplt.d b/ld/testsuite/ld-arm/tls-longplt.d
+index 066467228b..c7fad34025 100644
+--- a/ld/testsuite/ld-arm/tls-longplt.d
++++ b/ld/testsuite/ld-arm/tls-longplt.d
+@@ -58,7 +58,7 @@ Disassembly of section .foo:
+ 
+ 04001038 <__unnamed_veneer>:
+  4001038:	4778      	bx	pc
+- 400103a:	46c0      	nop			; .*
++ 400103a:	e7fd      	b.n	.+ <.+>
+  400103c:	e51ff004 	ldr	pc, \[pc, #-4\]	; .*
+  4001040:	000081b0 	.word	0x000081b0
+  4001044:	00000000 	.word	0x00000000
+diff --git a/ld/testsuite/ld-arm/tls-thumb1.d b/ld/testsuite/ld-arm/tls-thumb1.d
+index 3b39f65604..41d5f8c1b8 100644
+--- a/ld/testsuite/ld-arm/tls-thumb1.d
++++ b/ld/testsuite/ld-arm/tls-thumb1.d
+@@ -38,7 +38,7 @@ Disassembly of section .text:
+ 
+ 000081a0 <__unnamed_veneer>:
+ .*:	4778      	bx	pc
+-.*:	46c0      	nop			; .*
++.*:	e7fd      	b.n	.+ <.+>
+ .*:	e59f1000 	ldr	r1, \[pc\]	; .*
+ .*:	e081f00f 	add	pc, r1, pc
+ .*:	ffffffa0 	.word	0xffffffa0
+@@ -67,7 +67,7 @@ Disassembly of section .foo:
+ 
+ 0400103c <__unnamed_veneer>:
+ .*:	4778      	bx	pc
+-.*:	46c0      	nop			; .*
++.*:	e7fd      	b.n	.+ <.+>
+ .*:	e59f1000 	ldr	r1, \[pc\]	; .*
+ .*:	e081f00f 	add	pc, r1, pc
+ .*:	fc007104 	.word	0xfc007104
 diff --git a/ld/testsuite/ld-s390/gotreloc_31-1.dd b/ld/testsuite/ld-s390/gotreloc_31-1.dd
 index d6dd86162d..b1cf37c54d 100644
 --- a/ld/testsuite/ld-s390/gotreloc_31-1.dd
