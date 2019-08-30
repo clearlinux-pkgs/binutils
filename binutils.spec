@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.32
-Release  : 310
+Release  : 311
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.32.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.32.tar.xz
 Source1 : https://mirrors.kernel.org/gnu/binutils/binutils-2.32.tar.xz.sig
@@ -171,7 +171,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1567188601
+export SOURCE_DATE_EPOCH=1567200320
 # -Werror is for werrorists
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
@@ -192,7 +192,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1567188601
+export SOURCE_DATE_EPOCH=1567200320
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp COPYING %{buildroot}/usr/share/package-licenses/binutils/COPYING
