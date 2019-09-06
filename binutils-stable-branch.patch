@@ -5257,10 +5257,16 @@ index 0c0234ab20..5dc5fb750a 100644
    AARCH64_OPND_Ra,	/* Integer register used in ddp_3src instructions.  */
    AARCH64_OPND_Rt_SYS,	/* Integer register used in system instructions.  */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 84673af576..9f7771d884 100644
+index 84673af576..ef1f5446c0 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,171 @@
+@@ -1,3 +1,177 @@
++2019-09-05  Eric Botcazou  <ebotcazou@adacore.com>
++
++	PR ld/24574
++	* pe-dll.c (pe_find_data_imports): Replace again the original name of
++	the undefined symbol with the __imp_ prefixed one after it is resolved.
++
 +2019-08-28  Tamar Christina  <tamar.christina@arm.com>
 +
 +	Backported from mainline.
@@ -5602,6 +5608,22 @@ index 77143e753e..2e79175a1c 100644
        prelim_size_sections ();
  
        for (o = link_info.output_bfd->sections; o != NULL; o = o->next)
+diff --git a/ld/pe-dll.c b/ld/pe-dll.c
+index 81ab116c46..577b911da8 100644
+--- a/ld/pe-dll.c
++++ b/ld/pe-dll.c
+@@ -1445,6 +1445,11 @@ pe_find_data_imports (const char *symhead,
+ 	    undef->u.def.value = sym->u.def.value;
+ 	    undef->u.def.section = sym->u.def.section;
+ 
++	    /* We replace the original name with the __imp_ prefixed one, this
++	       1) may trash memory 2) leads to duplicate symbols.  But this is
++	       better than having a misleading name that can confuse GDB.  */
++	    undef->root.string = sym->root.string;
++
+ 	    if (link_info.pei386_auto_import == -1)
+ 	      {
+ 		static bfd_boolean warned = FALSE;
 diff --git a/ld/plugin.c b/ld/plugin.c
 index ea1a7f7064..e4e781c2a8 100644
 --- a/ld/plugin.c
