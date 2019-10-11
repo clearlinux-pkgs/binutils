@@ -7,5 +7,6 @@ following packages at a minimum:
 4. clr-systemd-config (build twice)
 5. systemd-bootchart
 6. cairo
+7. dropwatch
 
 And any other package that links against libbfd
