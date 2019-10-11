@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.32
-Release  : 312
+Release  : 313
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.32.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.32.tar.xz
 Source1 : https://mirrors.kernel.org/gnu/binutils/binutils-2.32.tar.xz.sig
@@ -38,16 +38,12 @@ Patch7: CVE-2019-9071.patch
 Patch8: CVE-2019-12972.patch
 Patch9: CVE-2019-14250.patch
 Patch10: CVE-2019-14444.patch
+Patch11: CVE-2019-17450.patch
+Patch12: CVE-2019-17454.patch
 
 %description
-These are the GNU binutils.  These are utilities of use when dealing
-with binary files, either object files or executables.  These tools
-consist of the linker (ld), the assembler (gas), and the profiler
-(gprof) each of which have their own sub-directory named after them.
-There is also a collection of other binary tools, including the
-disassembler (objdump) in this directory.  These tools make use of a
-pair of libraries (bfd and opcodes) and a common set of header files
-(include).
+This directory contains various GNU compilers, assemblers, linkers,
+debuggers, etc., plus their support routines, definitions, and documentation.
 
 %package bin
 Summary: bin components for the binutils package.
@@ -64,7 +60,6 @@ Group: Development
 Requires: binutils-lib = %{version}-%{release}
 Requires: binutils-bin = %{version}-%{release}
 Provides: binutils-devel = %{version}-%{release}
-Requires: binutils = %{version}-%{release}
 Requires: binutils = %{version}-%{release}
 
 %description dev
@@ -125,7 +120,6 @@ man components for the binutils package.
 Summary: staticdev components for the binutils package.
 Group: Default
 Requires: binutils-dev = %{version}-%{release}
-Requires: binutils-dev = %{version}-%{release}
 
 %description staticdev
 staticdev components for the binutils package.
@@ -143,6 +137,8 @@ staticdev components for the binutils package.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%patch11 -p1
+%patch12 -p1
 
 %build
 ## build_prepend content
@@ -171,17 +167,16 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1567732109
-# -Werror is for werrorists
+export SOURCE_DATE_EPOCH=1570753875
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
 export NM=gcc-nm
-export CFLAGS="$CFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
-export FCFLAGS="$CFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
-export FFLAGS="$CFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
-export CXXFLAGS="$CXXFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
-make  %{?_smp_mflags} tooldir=/usr
+export CFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
+export FCFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
+export FFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
+export CXXFLAGS="$CXXFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
+make  %{?_smp_mflags}  tooldir=/usr
 
 
 %check
@@ -192,7 +187,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1567732109
+export SOURCE_DATE_EPOCH=1570753875
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp COPYING %{buildroot}/usr/share/package-licenses/binutils/COPYING
@@ -381,7 +376,13 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 
 %files dev
 %defattr(-,root,root,-)
-/usr/include/*.h
+/usr/include/ansidecl.h
+/usr/include/bfd.h
+/usr/include/bfd_stdint.h
+/usr/include/bfdlink.h
+/usr/include/diagnostics.h
+/usr/include/dis-asm.h
+/usr/include/libiberty.h
 /usr/include/libiberty/alloca-conf.h
 /usr/include/libiberty/ansidecl.h
 /usr/include/libiberty/bfdlink.h
@@ -431,6 +432,8 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/include/libiberty/xtensa-config.h
 /usr/include/libiberty/xtensa-isa-internal.h
 /usr/include/libiberty/xtensa-isa.h
+/usr/include/plugin-api.h
+/usr/include/symcat.h
 
 %files doc
 %defattr(0644,root,root,0755)
