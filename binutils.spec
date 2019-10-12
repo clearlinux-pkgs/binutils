@@ -5,11 +5,11 @@
 # Source0 file verified with key 0x13FCEF89DD9E3C4F (nickc@redhat.com)
 #
 Name     : binutils
-Version  : 2.32
-Release  : 313
-URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.32.tar.xz
-Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.32.tar.xz
-Source1 : https://mirrors.kernel.org/gnu/binutils/binutils-2.32.tar.xz.sig
+Version  : 2.33.1
+Release  : 314
+URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
+Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
+Source1 : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz.sig
 Summary  : zlib compression library
 Group    : Development/Tools
 License  : BSL-1.0 GPL-2.0 GPL-3.0 GPL-3.0+ LGPL-2.0 LGPL-2.1 LGPL-3.0
@@ -28,22 +28,19 @@ BuildRequires : sed
 BuildRequires : texinfo
 BuildRequires : util-linux
 BuildRequires : zlib-dev
-Patch1: binutils-stable-branch.patch
-Patch2: binutils-add-LD_AS_NEEDED-global-env.patch
-Patch3: CVE-2019-9077.patch
-Patch4: CVE-2019-9076.patch
-Patch5: CVE-2019-9075.patch
-Patch6: CVE-2019-9074.patch
-Patch7: CVE-2019-9071.patch
-Patch8: CVE-2019-12972.patch
-Patch9: CVE-2019-14250.patch
-Patch10: CVE-2019-14444.patch
-Patch11: CVE-2019-17450.patch
-Patch12: CVE-2019-17454.patch
+Patch1: binutils-add-LD_AS_NEEDED-global-env.patch
+Patch2: CVE-2019-17450.patch
+Patch3: CVE-2019-17451.patch
 
 %description
-This directory contains various GNU compilers, assemblers, linkers,
-debuggers, etc., plus their support routines, definitions, and documentation.
+These are the GNU binutils.  These are utilities of use when dealing
+with binary files, either object files or executables.  These tools
+consist of the linker (ld), the assembler (gas), and the profiler
+(gprof) each of which have their own sub-directory named after them.
+There is also a collection of other binary tools, including the
+disassembler (objdump) in this directory.  These tools make use of a
+pair of libraries (bfd and opcodes) and a common set of header files
+(include).
 
 %package bin
 Summary: bin components for the binutils package.
@@ -60,6 +57,7 @@ Group: Development
 Requires: binutils-lib = %{version}-%{release}
 Requires: binutils-bin = %{version}-%{release}
 Provides: binutils-devel = %{version}-%{release}
+Requires: binutils = %{version}-%{release}
 Requires: binutils = %{version}-%{release}
 
 %description dev
@@ -120,25 +118,17 @@ man components for the binutils package.
 Summary: staticdev components for the binutils package.
 Group: Default
 Requires: binutils-dev = %{version}-%{release}
+Requires: binutils-dev = %{version}-%{release}
 
 %description staticdev
 staticdev components for the binutils package.
 
 
 %prep
-%setup -q -n binutils-2.32
+%setup -q -n binutils-2.33.1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
 
 %build
 ## build_prepend content
@@ -167,15 +157,16 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1570753875
+export SOURCE_DATE_EPOCH=1570901965
+# -Werror is for werrorists
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
 export NM=gcc-nm
-export CFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
-export FCFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
-export FFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
-export CXXFLAGS="$CXXFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
+export CFLAGS="$CFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
+export FCFLAGS="$CFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
+export FFLAGS="$CFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
+export CXXFLAGS="$CXXFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
 make  %{?_smp_mflags}  tooldir=/usr
 
 
@@ -187,7 +178,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1570753875
+export SOURCE_DATE_EPOCH=1570901965
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp COPYING %{buildroot}/usr/share/package-licenses/binutils/COPYING
@@ -388,6 +379,8 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/include/libiberty/bfdlink.h
 /usr/include/libiberty/binary-io.h
 /usr/include/libiberty/bout.h
+/usr/include/libiberty/ctf-api.h
+/usr/include/libiberty/ctf.h
 /usr/include/libiberty/demangle.h
 /usr/include/libiberty/diagnostics.h
 /usr/include/libiberty/dis-asm.h
@@ -445,9 +438,9 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 
 %files lib
 %defattr(-,root,root,-)
-/usr/lib64/libbfd-2.32.0.20190203.so
+/usr/lib64/libbfd-2.33.1.so
 /usr/lib64/libbfd.so
-/usr/lib64/libopcodes-2.32.0.20190203.so
+/usr/lib64/libopcodes-2.33.1.so
 /usr/lib64/libopcodes.so
 
 %files license
