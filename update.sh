@@ -6,7 +6,10 @@ make koji
 sleep 120
 
 make -C ../linux-tools bump
-make -C ../linux-tools koji
+make -C ../linux-tools koji-nowait
 
 make -C ../gdb bump
 make -C ../gdb koji-nowait
+
+make -C ../dropwatch bump
+make -C ../dropwatch koji-nowait
