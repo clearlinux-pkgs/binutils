@@ -2,6 +2,7 @@
 bison
 dejagnu
 flex
+gawk
 gettext
 texinfo
 util-linux

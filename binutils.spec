@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.33.1
-Release  : 314
+Release  : 315
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
 Source1 : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz.sig
@@ -22,15 +22,17 @@ BuildRequires : bison
 BuildRequires : dejagnu
 BuildRequires : expect
 BuildRequires : flex
+BuildRequires : gawk
 BuildRequires : gettext
 BuildRequires : grep
 BuildRequires : sed
 BuildRequires : texinfo
 BuildRequires : util-linux
 BuildRequires : zlib-dev
-Patch1: binutils-add-LD_AS_NEEDED-global-env.patch
-Patch2: CVE-2019-17450.patch
-Patch3: CVE-2019-17451.patch
+Patch1: binutils-stable-branch.patch
+Patch2: binutils-add-LD_AS_NEEDED-global-env.patch
+Patch3: CVE-2019-17450.patch
+Patch4: CVE-2019-17451.patch
 
 %description
 These are the GNU binutils.  These are utilities of use when dealing
@@ -129,6 +131,7 @@ staticdev components for the binutils package.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 %build
 ## build_prepend content
@@ -157,7 +160,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1570901965
+export SOURCE_DATE_EPOCH=1570979821
 # -Werror is for werrorists
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
@@ -178,7 +181,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1570901965
+export SOURCE_DATE_EPOCH=1570979821
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp COPYING %{buildroot}/usr/share/package-licenses/binutils/COPYING
@@ -438,9 +441,9 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 
 %files lib
 %defattr(-,root,root,-)
-/usr/lib64/libbfd-2.33.1.so
+/usr/lib64/libbfd-2.33.1.20190203.so
 /usr/lib64/libbfd.so
-/usr/lib64/libopcodes-2.33.1.so
+/usr/lib64/libopcodes-2.33.1.20190203.so
 /usr/lib64/libopcodes.so
 
 %files license
