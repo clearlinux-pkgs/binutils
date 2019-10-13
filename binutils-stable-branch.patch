@@ -1,0 +1,25 @@
+diff --git a/bfd/ChangeLog b/bfd/ChangeLog
+index aa5a81ffed..ee28eab3ad 100644
+--- a/bfd/ChangeLog
++++ b/bfd/ChangeLog
+@@ -1,3 +1,7 @@
++2019-10-13  Nick Clifton  <nickc@redhat.com>
++
++	* development.sh (development): Reset to true.
++
+ 2019-10-12  Nick Clifton  <nickc@redhat.com>
+ 
+ 	Release 2.33.1
+diff --git a/bfd/development.sh b/bfd/development.sh
+index eb0e7b6da1..54d494c105 100644
+--- a/bfd/development.sh
++++ b/bfd/development.sh
+@@ -16,7 +16,7 @@
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+ # Controls whether to enable development-mode features by default.
+-development=false
++development=true
+ 
+ # Indicate whether this is a release branch.
+ experimental=false
