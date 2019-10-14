@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.33.1
-Release  : 315
+Release  : 316
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
 Source1 : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz.sig
@@ -160,7 +160,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1570979821
+export SOURCE_DATE_EPOCH=1571063226
 # -Werror is for werrorists
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
@@ -181,20 +181,20 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1570979821
+export SOURCE_DATE_EPOCH=1571063226
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
-cp COPYING %{buildroot}/usr/share/package-licenses/binutils/COPYING
-cp COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/COPYING.LIB
-cp COPYING3 %{buildroot}/usr/share/package-licenses/binutils/COPYING3
-cp COPYING3.LIB %{buildroot}/usr/share/package-licenses/binutils/COPYING3.LIB
-cp bfd/COPYING %{buildroot}/usr/share/package-licenses/binutils/bfd_COPYING
-cp gas/COPYING %{buildroot}/usr/share/package-licenses/binutils/gas_COPYING
-cp include/COPYING %{buildroot}/usr/share/package-licenses/binutils/include_COPYING
-cp include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/include_COPYING3
-cp libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/libiberty_COPYING.LIB
-cp libiberty/copying-lib.texi %{buildroot}/usr/share/package-licenses/binutils/libiberty_copying-lib.texi
-cp zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/zlib_contrib_dotzlib_LICENSE_1_0.txt
+cp %{_builddir}/binutils-2.33.1/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
+cp %{_builddir}/binutils-2.33.1/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d
+cp %{_builddir}/binutils-2.33.1/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.33.1/COPYING3.LIB %{buildroot}/usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9
+cp %{_builddir}/binutils-2.33.1/bfd/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.33.1/gas/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.33.1/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
+cp %{_builddir}/binutils-2.33.1/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.33.1/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
+cp %{_builddir}/binutils-2.33.1/libiberty/copying-lib.texi %{buildroot}/usr/share/package-licenses/binutils/cdb23577fa4523cc88845280fd5223270ddb645a
+cp %{_builddir}/binutils-2.33.1/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
 %make_install tooldir=/usr
 %find_lang binutils
 %find_lang gprof
@@ -448,17 +448,13 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 
 %files license
 %defattr(0644,root,root,0755)
-/usr/share/package-licenses/binutils/COPYING
-/usr/share/package-licenses/binutils/COPYING.LIB
-/usr/share/package-licenses/binutils/COPYING3
-/usr/share/package-licenses/binutils/COPYING3.LIB
-/usr/share/package-licenses/binutils/bfd_COPYING
-/usr/share/package-licenses/binutils/gas_COPYING
-/usr/share/package-licenses/binutils/include_COPYING
-/usr/share/package-licenses/binutils/include_COPYING3
-/usr/share/package-licenses/binutils/libiberty_COPYING.LIB
-/usr/share/package-licenses/binutils/libiberty_copying-lib.texi
-/usr/share/package-licenses/binutils/zlib_contrib_dotzlib_LICENSE_1_0.txt
+/usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d
+/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
+/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
+/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
+/usr/share/package-licenses/binutils/cdb23577fa4523cc88845280fd5223270ddb645a
+/usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9
 
 %files man
 %defattr(0644,root,root,0755)
