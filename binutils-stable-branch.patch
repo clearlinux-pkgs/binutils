@@ -23,3 +23,133 @@ index eb0e7b6da1..54d494c105 100644
  
  # Indicate whether this is a release branch.
  experimental=false
+diff --git a/gas/ChangeLog b/gas/ChangeLog
+index 75324bfaac..0955809b5b 100644
+--- a/gas/ChangeLog
++++ b/gas/ChangeLog
+@@ -1,3 +1,17 @@
++2019-10-14  Tamar Christina  <tamar.christina@arm.com>
++
++	Backported from mainline.
++	2019-09-24  Tamar Christina  <tamar.christina@arm.com>
++
++	PR gas/24991
++	* config/tc-arm.c (out_of_range_p): New.
++	(md_apply_fix): Use it in BFD_RELOC_THUMB_PCREL_BRANCH9,
++	BFD_RELOC_THUMB_PCREL_BRANCH12, BFD_RELOC_THUMB_PCREL_BRANCH20,
++	BFD_RELOC_THUMB_PCREL_BRANCH23, BFD_RELOC_THUMB_PCREL_BRANCH25
++	* testsuite/gas/arm/pr24991.d: New test.
++	* testsuite/gas/arm/pr24991.l: New test.
++	* testsuite/gas/arm/pr24991.s: New test.
++
+ 2019-10-12  Nick Clifton  <nickc@redhat.com>
+ 
+ 	Release 2.33.1
+diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
+index 9273bb5783..caabdbba90 100644
+--- a/gas/config/tc-arm.c
++++ b/gas/config/tc-arm.c
+@@ -106,6 +106,15 @@ enum arm_float_abi
+    should define CPU_DEFAULT here.  */
+ #endif
+ 
++/* Perform range checks on positive and negative overflows by checking if the
++   VALUE given fits within the range of an BITS sized immediate.  */
++static bfd_boolean out_of_range_p (offsetT value, offsetT bits)
++ {
++  gas_assert (bits < (offsetT)(sizeof (value) * 8));
++  return (value & ~((1 << bits)-1))
++	  && ((value & ~((1 << bits)-1)) != ~((1 << bits)-1));
++}
++
+ #ifndef FPU_DEFAULT
+ # ifdef TE_LINUX
+ #  define FPU_DEFAULT FPU_ARCH_FPA
+@@ -28047,7 +28056,7 @@ md_apply_fix (fixS *	fixP,
+       break;
+ 
+     case BFD_RELOC_THUMB_PCREL_BRANCH9: /* Conditional branch.	*/
+-      if ((value & ~0xff) && ((value & ~0xff) != ~0xff))
++      if (out_of_range_p (value, 8))
+ 	as_bad_where (fixP->fx_file, fixP->fx_line, BAD_RANGE);
+ 
+       if (fixP->fx_done || !seg->use_rela_p)
+@@ -28059,7 +28068,7 @@ md_apply_fix (fixS *	fixP,
+       break;
+ 
+     case BFD_RELOC_THUMB_PCREL_BRANCH12: /* Unconditional branch.  */
+-      if ((value & ~0x7ff) && ((value & ~0x7ff) != ~0x7ff))
++      if (out_of_range_p (value, 11))
+ 	as_bad_where (fixP->fx_file, fixP->fx_line, BAD_RANGE);
+ 
+       if (fixP->fx_done || !seg->use_rela_p)
+@@ -28070,6 +28079,7 @@ md_apply_fix (fixS *	fixP,
+ 	}
+       break;
+ 
++    /* This relocation is misnamed, it should be BRANCH21.  */
+     case BFD_RELOC_THUMB_PCREL_BRANCH20:
+       if (fixP->fx_addsy
+ 	  && (S_GET_SEGMENT (fixP->fx_addsy) == seg)
+@@ -28080,7 +28090,7 @@ md_apply_fix (fixS *	fixP,
+ 	  /* Force a relocation for a branch 20 bits wide.  */
+ 	  fixP->fx_done = 0;
+ 	}
+-      if ((value & ~0x1fffff) && ((value & ~0x0fffff) != ~0x0fffff))
++      if (out_of_range_p (value, 20))
+ 	as_bad_where (fixP->fx_file, fixP->fx_line,
+ 		      _("conditional branch out of range"));
+ 
+@@ -28159,12 +28169,11 @@ md_apply_fix (fixS *	fixP,
+ 	 fixP->fx_r_type = BFD_RELOC_THUMB_PCREL_BRANCH23;
+ #endif
+ 
+-      if ((value & ~0x3fffff) && ((value & ~0x3fffff) != ~0x3fffff))
++      if (out_of_range_p (value, 22))
+ 	{
+ 	  if (!(ARM_CPU_HAS_FEATURE (cpu_variant, arm_ext_v6t2)))
+ 	    as_bad_where (fixP->fx_file, fixP->fx_line, BAD_RANGE);
+-	  else if ((value & ~0x1ffffff)
+-		   && ((value & ~0x1ffffff) != ~0x1ffffff))
++	  else if (out_of_range_p (value, 24))
+ 	    as_bad_where (fixP->fx_file, fixP->fx_line,
+ 			  _("Thumb2 branch out of range"));
+ 	}
+@@ -28175,7 +28184,7 @@ md_apply_fix (fixS *	fixP,
+       break;
+ 
+     case BFD_RELOC_THUMB_PCREL_BRANCH25:
+-      if ((value & ~0x0ffffff) && ((value & ~0x0ffffff) != ~0x0ffffff))
++      if (out_of_range_p (value, 24))
+ 	as_bad_where (fixP->fx_file, fixP->fx_line, BAD_RANGE);
+ 
+       if (fixP->fx_done || !seg->use_rela_p)
+diff --git a/gas/testsuite/gas/arm/pr24991.d b/gas/testsuite/gas/arm/pr24991.d
+new file mode 100644
+index 0000000000..2acca2d656
+--- /dev/null
++++ b/gas/testsuite/gas/arm/pr24991.d
+@@ -0,0 +1,4 @@
++#as: -march=armv7-a
++#source: pr24991.s
++#error_output: pr24991.l
++
+diff --git a/gas/testsuite/gas/arm/pr24991.l b/gas/testsuite/gas/arm/pr24991.l
+new file mode 100644
+index 0000000000..4fc58751c8
+--- /dev/null
++++ b/gas/testsuite/gas/arm/pr24991.l
+@@ -0,0 +1,2 @@
++[^:]*: Assembler messages:
++[^:]*:4: Error: conditional branch out of range
+diff --git a/gas/testsuite/gas/arm/pr24991.s b/gas/testsuite/gas/arm/pr24991.s
+new file mode 100644
+index 0000000000..27f8daff1c
+--- /dev/null
++++ b/gas/testsuite/gas/arm/pr24991.s
+@@ -0,0 +1,5 @@
++        .arch armv7-a
++        .syntax unified
++        .thumb
++        beq     .+ 0x124f80
++
