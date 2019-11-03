@@ -1,0 +1,34 @@
+From 5dc55db0523764ea08550307aba8a4794bfcc8fa Mon Sep 17 00:00:00 2001
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Sun, 15 Sep 2019 06:48:45 -0700
+Subject: [PATCH 2/5] gas: Add md_generic_table_relax_frag
+
+Add md_generic_table_relax_frag for TC_GENERIC_RELAX_TABLE targets so
+that a backend can extend relax_frag beyond TC_GENERIC_RELAX_TABLE.
+
+	* write.c (relax_segment): Call md_generic_table_relax_frag
+	instead of relax_frag if defined.
+---
+ gas/write.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/gas/write.c b/gas/write.c
+index e9a17e4468..2354d5b7b0 100644
+--- a/gas/write.c
++++ b/gas/write.c
+@@ -3030,7 +3030,12 @@ relax_segment (struct frag *segment_frag_root, segT segment, int pass)
+ #ifdef TC_GENERIC_RELAX_TABLE
+ 		/* The default way to relax a frag is to look through
+ 		   TC_GENERIC_RELAX_TABLE.  */
++#ifdef md_generic_table_relax_frag
++		growth = md_generic_table_relax_frag (segment, fragP,
++						      stretch);
++#else
+ 		growth = relax_frag (segment, fragP, stretch);
++#endif /* md_generic_table_relax_frag */
+ #endif /* TC_GENERIC_RELAX_TABLE  */
+ #endif
+ 		break;
+-- 
+2.21.0
+

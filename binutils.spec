@@ -34,6 +34,13 @@ Patch2: binutils-add-LD_AS_NEEDED-global-env.patch
 Patch3: CVE-2019-17450.patch
 Patch4: CVE-2019-17451.patch
 
+# experiment for optimizations for the DSB
+Patch10: 0001-gas-Add-md_cons_worker.patch
+Patch11: 0002-gas-Add-md_generic_table_relax_frag.patch
+Patch12: 0003-i386-Align-branches-within-a-fixed-boundary.patch
+Patch13: 0004-i386-Add-mbranches-within-32B-boundaries.patch
+
+
 %description
 These are the GNU binutils.  These are utilities of use when dealing
 with binary files, either object files or executables.  These tools
@@ -132,6 +139,16 @@ staticdev components for the binutils package.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+
+
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
+
+
+
+
 
 %build
 ## build_prepend content
