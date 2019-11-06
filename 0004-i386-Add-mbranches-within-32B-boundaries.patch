@@ -22,23 +22,25 @@ diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
 index e5d34b30ff..b9653c7e74 100644
 --- a/gas/config/tc-i386.c
 +++ b/gas/config/tc-i386.c
-@@ -11932,6 +11932,7 @@ const char *md_shortopts = "qnO::";
+@@ -11932,6 +11932,8 @@ const char *md_shortopts = "qnO::";
  #define OPTION_MALIGN_BRANCH_BOUNDARY (OPTION_MD_BASE + 27)
  #define OPTION_MALIGN_BRANCH_PREFIX_SIZE (OPTION_MD_BASE + 28)
  #define OPTION_MALIGN_BRANCH (OPTION_MD_BASE + 29)
 +#define OPTION_MBRANCHES_WITH_32B_BOUNDARIES (OPTION_MD_BASE + 30)
++#define OPTION_MBRANCHES_WITH_NO_BOUNDARIES (OPTION_MD_BASE + 31)
  
  struct option md_longopts[] =
  {
-@@ -11970,6 +11971,7 @@ struct option md_longopts[] =
+@@ -11970,6 +11971,8 @@ struct option md_longopts[] =
    {"malign-branch-boundary", required_argument, NULL, OPTION_MALIGN_BRANCH_BOUNDARY},
    {"malign-branch-prefix-size", required_argument, NULL, OPTION_MALIGN_BRANCH_PREFIX_SIZE},
    {"malign-branch", required_argument, NULL, OPTION_MALIGN_BRANCH},
 +  {"mbranches-within-32B-boundaries", no_argument, NULL, OPTION_MBRANCHES_WITH_32B_BOUNDARIES},
++  {"mbranches-within-no-boundaries", no_argument, NULL, OPTION_MBRANCHES_WITH_NO_BOUNDARIES},
    {"mamd64", no_argument, NULL, OPTION_MAMD64},
    {"mintel64", no_argument, NULL, OPTION_MINTEL64},
    {NULL, no_argument, NULL, 0}
-@@ -12430,6 +12432,14 @@ md_parse_option (int c, const char *arg)
+@@ -12430,6 +12432,16 @@ md_parse_option (int c, const char *arg)
        free (saved);
        break;
  
@@ -49,7 +51,9 @@ index e5d34b30ff..b9653c7e74 100644
 +		      | align_branch_fused
 +		      | align_branch_jmp);
 +      break;
-+
++    case OPTION_MBRANCHES_WITH_NO_BOUNDARIES:
++      align_branch_power = 0;
++      break;
      case OPTION_MAMD64:
        intel64 = 0;
        break;
