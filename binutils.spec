@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.33.1
-Release  : 320
+Release  : 321
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
 Source1 : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz.sig
@@ -33,13 +33,6 @@ Patch1: binutils-stable-branch.patch
 Patch2: binutils-add-LD_AS_NEEDED-global-env.patch
 Patch3: CVE-2019-17450.patch
 Patch4: CVE-2019-17451.patch
-
-# experiment for optimizations for the DSB
-Patch10: 0001-gas-Add-md_cons_worker.patch
-Patch11: 0002-gas-Add-md_generic_table_relax_frag.patch
-Patch12: 0003-i386-Align-branches-within-a-fixed-boundary.patch
-Patch13: 0004-i386-Add-mbranches-within-32B-boundaries.patch
-
 
 %description
 These are the GNU binutils.  These are utilities of use when dealing
@@ -140,16 +133,6 @@ staticdev components for the binutils package.
 %patch3 -p1
 %patch4 -p1
 
-
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-
-
-
-
-
 %build
 ## build_prepend content
 rm -rf gdb libdecnumber readline sim
@@ -177,7 +160,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1571664644
+export SOURCE_DATE_EPOCH=1573093695
 # -Werror is for werrorists
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
@@ -198,7 +181,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1571664644
+export SOURCE_DATE_EPOCH=1573093695
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-2.33.1/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
