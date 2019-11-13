@@ -7,3 +7,4 @@ CVE-2019-17451.patch
 0002-gas-Add-md_generic_table_relax_frag.patch
 0003-i386-Align-branches-within-a-fixed-boundary.patch
 0004-i386-Add-mbranches-within-32B-boundaries.patch
+0005-Don-t-add-prefix-to-instructions-with-TLS-relocation.patch
