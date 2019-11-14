@@ -157,7 +157,7 @@ index cfa2e4d72a..e5d34b30ff 100644
  sse_check, operand_check = check_warning;
  
 +/* Non-zero if branches should be aligned within power of 2 boundary.  */
-+static int align_branch_power = 5;
++static int align_branch_power = 0;
 +
 +/* Types of branches to align.  */
 +enum align_branch_kind
