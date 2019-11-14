@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.33.1
-Release  : 326
+Release  : 327
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
 Source1 : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz.sig
@@ -14,6 +14,7 @@ Summary  : zlib compression library
 Group    : Development/Tools
 License  : BSL-1.0 GPL-2.0 GPL-3.0 GPL-3.0+ LGPL-2.0 LGPL-2.1 LGPL-3.0
 Requires: binutils-bin = %{version}-%{release}
+Requires: binutils-info = %{version}-%{release}
 Requires: binutils-lib = %{version}-%{release}
 Requires: binutils-license = %{version}-%{release}
 Requires: binutils-locales = %{version}-%{release}
@@ -64,21 +65,20 @@ Requires: binutils = %{version}-%{release}
 dev components for the binutils package.
 
 
-%package doc
-Summary: doc components for the binutils package.
-Group: Documentation
-Requires: binutils-man = %{version}-%{release}
-
-%description doc
-doc components for the binutils package.
-
-
 %package extras
 Summary: extras components for the binutils package.
 Group: Default
 
 %description extras
 extras components for the binutils package.
+
+
+%package info
+Summary: info components for the binutils package.
+Group: Default
+
+%description info
+info components for the binutils package.
 
 
 %package lib
@@ -163,7 +163,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1573668620
+export SOURCE_DATE_EPOCH=1573770737
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -183,7 +183,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1573668620
+export SOURCE_DATE_EPOCH=1573770737
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-2.33.1/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
@@ -433,13 +433,17 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/include/plugin-api.h
 /usr/include/symcat.h
 
-%files doc
-%defattr(0644,root,root,0755)
-%doc /usr/share/info/*
-
 %files extras
 %defattr(-,root,root,-)
 /usr/bin/ld.gold
+
+%files info
+%defattr(0644,root,root,0755)
+/usr/share/info/as.info
+/usr/share/info/bfd.info
+/usr/share/info/binutils.info
+/usr/share/info/gprof.info
+/usr/share/info/ld.info
 
 %files lib
 %defattr(-,root,root,-)
