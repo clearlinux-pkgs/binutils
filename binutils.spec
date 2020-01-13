@@ -6,10 +6,10 @@
 #
 Name     : binutils
 Version  : 2.33.1
-Release  : 328
+Release  : 329
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
-Source1 : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz.sig
+Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz.sig
 Summary  : zlib compression library
 Group    : Development/Tools
 License  : BSL-1.0 GPL-2.0 GPL-3.0 GPL-3.0+ LGPL-2.0 LGPL-2.1 LGPL-3.0
@@ -173,7 +173,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1575784153
+export SOURCE_DATE_EPOCH=1578940944
 # -Werror is for werrorists
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
@@ -194,7 +194,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1575784153
+export SOURCE_DATE_EPOCH=1578940944
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-2.33.1/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
