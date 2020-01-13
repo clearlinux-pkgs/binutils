@@ -1,8 +1,18 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index aa5a81ffed..86ce07a1c1 100644
+index aa5a81ffed..198abd027f 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,25 @@
+@@ -1,3 +1,35 @@
++2020-01-13  Szabolcs Nagy  <szabolcs.nagy@arm.com>
++
++	Backported from master
++	2020-01-10  Szabolcs Nagy  <szabolcs.nagy@arm.com>
++
++	PR ld/22269
++	* elf32-arm.c (elf32_arm_final_link_relocate): Use
++	UNDEFWEAK_NO_DYNAMIC_RELOC.
++	(allocate_dynrelocs_for_symbol): Likewise.
++
 +2019-10-20  John David Anglin  <danglin@gcc.gnu.org>
 +
 +	* elf32-hppa.c (elf32_hppa_size_dynamic_sections): Provide 8-byte
@@ -41,6 +51,30 @@ index eb0e7b6da1..54d494c105 100644
  
  # Indicate whether this is a release branch.
  experimental=false
+diff --git a/bfd/elf32-arm.c b/bfd/elf32-arm.c
+index cce796dafd..21cf4b08fd 100644
+--- a/bfd/elf32-arm.c
++++ b/bfd/elf32-arm.c
+@@ -11572,8 +11572,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *	    howto,
+ 		  if (dynreloc_st_type == STT_GNU_IFUNC)
+ 		    outrel.r_info = ELF32_R_INFO (0, R_ARM_IRELATIVE);
+ 		  else if (bfd_link_pic (info)
+-			   && (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+-			       || h->root.type != bfd_link_hash_undefweak))
++			   && !UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
+ 		    outrel.r_info = ELF32_R_INFO (0, R_ARM_RELATIVE);
+ 		  else
+ 		    {
+@@ -16527,8 +16526,7 @@ allocate_dynrelocs_for_symbol (struct elf_link_hash_entry *h, void * inf)
+ 	       GOT entry's R_ARM_IRELATIVE relocation.  */
+ 	    elf32_arm_allocate_irelocs (info, htab->root.srelgot, 1);
+ 	  else if (bfd_link_pic (info)
+-		   && (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+-		       || h->root.type != bfd_link_hash_undefweak))
++		   && !UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
+ 	    /* Reserve room for the GOT entry's R_ARM_RELATIVE relocation.  */
+ 	    elf32_arm_allocate_dynrelocs (info, htab->root.srelgot, 1);
+ 	  else if (htab->fdpic_p && tls_type == GOT_NORMAL)
 diff --git a/bfd/elf32-hppa.c b/bfd/elf32-hppa.c
 index a61adbc3c8..cd99584f27 100644
 --- a/bfd/elf32-hppa.c
@@ -249,10 +283,18 @@ index a61adbc3c8..cd99584f27 100644
  	      sec->size = (sec->size + sizeof (plt_stub) + mask) & ~mask;
  	    }
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 75324bfaac..fcb5592f9f 100644
+index 75324bfaac..81f066d6d7 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,26 @@
+@@ -1,3 +1,34 @@
++2020-01-13  Szabolcs Nagy  <szabolcs.nagy@arm.com>
++
++	Backported from mainline.
++	2020-01-02  Szabolcs Nagy  <szabolcs.nagy@arm.com>
++
++	* config/tc-arm.c (parse_reg_list): Use REG_TYPE_RN instead of
++	REGLIST_RN.
++
 +2019-12-06  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
 +
 +	Backported from mainline.
@@ -280,7 +322,7 @@ index 75324bfaac..fcb5592f9f 100644
  
  	Release 2.33.1
 diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
-index 9273bb5783..caabdbba90 100644
+index 9273bb5783..9910572fd9 100644
 --- a/gas/config/tc-arm.c
 +++ b/gas/config/tc-arm.c
 @@ -106,6 +106,15 @@ enum arm_float_abi
@@ -299,6 +341,15 @@ index 9273bb5783..caabdbba90 100644
  #ifndef FPU_DEFAULT
  # ifdef TE_LINUX
  #  define FPU_DEFAULT FPU_ARCH_FPA
+@@ -1859,7 +1868,7 @@ parse_reg_list (char ** strp, enum reg_list_els etype)
+ 	      const char apsr_str[] = "apsr";
+ 	      int apsr_str_len = strlen (apsr_str);
+ 
+-	      reg = arm_reg_parse (&str, REGLIST_RN);
++	      reg = arm_reg_parse (&str, REG_TYPE_RN);
+ 	      if (etype == REGLIST_CLRM)
+ 		{
+ 		  if (reg == REG_SP || reg == REG_PC)
 @@ -28047,7 +28056,7 @@ md_apply_fix (fixS *	fixP,
        break;
  
