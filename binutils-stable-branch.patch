@@ -1,8 +1,17 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index aa5a81ffed..198abd027f 100644
+index aa5a81ffed..67342f1e98 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,35 @@
+@@ -1,3 +1,44 @@
++2020-01-15  Alan Modra  <amodra@gmail.com>
++
++	PR 25384
++	* elf64-ppc.c (ELIMINATE_COPY_RELOCS): Update comment.
++	(ppc64_elf_adjust_dynamic_symbol): Don't allow .dynbss copies
++	of function symbols unless dot symbols are present.  Do warn
++	whenever one is created, regardles of whether a PLT entry is
++	also emitted for the function symbol.
++
 +2020-01-13  Szabolcs Nagy  <szabolcs.nagy@arm.com>
 +
 +	Backported from master
@@ -282,11 +291,83 @@ index a61adbc3c8..cd99584f27 100644
  	      mask = ((bfd_size_type) 1 << gotalign) - 1;
  	      sec->size = (sec->size + sizeof (plt_stub) + mask) & ~mask;
  	    }
+diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
+index 731f1ca657..c093612d08 100644
+--- a/bfd/elf64-ppc.c
++++ b/bfd/elf64-ppc.c
+@@ -2768,20 +2768,20 @@ must_be_dyn_reloc (struct bfd_link_info *info,
+ }
+ 
+ /* If ELIMINATE_COPY_RELOCS is non-zero, the linker will try to avoid
+-   copying dynamic variables from a shared lib into an app's dynbss
++   copying dynamic variables from a shared lib into an app's .dynbss
+    section, and instead use a dynamic relocation to point into the
+-   shared lib.  With code that gcc generates, it's vital that this be
+-   enabled;  In the PowerPC64 ABI, the address of a function is actually
+-   the address of a function descriptor, which resides in the .opd
+-   section.  gcc uses the descriptor directly rather than going via the
+-   GOT as some other ABI's do, which means that initialized function
+-   pointers must reference the descriptor.  Thus, a function pointer
+-   initialized to the address of a function in a shared library will
+-   either require a copy reloc, or a dynamic reloc.  Using a copy reloc
+-   redefines the function descriptor symbol to point to the copy.  This
+-   presents a problem as a plt entry for that function is also
+-   initialized from the function descriptor symbol and the copy reloc
+-   may not be initialized first.  */
++   shared lib.  With code that gcc generates it is vital that this be
++   enabled;  In the PowerPC64 ELFv1 ABI the address of a function is
++   actually the address of a function descriptor which resides in the
++   .opd section.  gcc uses the descriptor directly rather than going
++   via the GOT as some other ABIs do, which means that initialized
++   function pointers reference the descriptor.  Thus, a function
++   pointer initialized to the address of a function in a shared
++   library will either require a .dynbss copy and a copy reloc, or a
++   dynamic reloc.  Using a .dynbss copy redefines the function
++   descriptor symbol to point to the copy.  This presents a problem as
++   a PLT entry for that function is also initialized from the function
++   descriptor symbol and the copy may not be initialized first.  */
+ #define ELIMINATE_COPY_RELOCS 1
+ 
+ /* Section name for stubs is the associated section name plus this
+@@ -6435,13 +6435,23 @@ ppc64_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
+       || h->protected_def)
+     return TRUE;
+ 
+-  if (h->plt.plist != NULL)
++  if (h->type == STT_FUNC
++      || h->type == STT_GNU_IFUNC)
+     {
+-      /* We should never get here, but unfortunately there are versions
+-	 of gcc out there that improperly (for this ABI) put initialized
+-	 function pointers, vtable refs and suchlike in read-only
+-	 sections.  Allow them to proceed, but warn that this might
+-	 break at runtime.  */
++      /* .dynbss copies of function symbols only work if we have
++	 ELFv1 dot-symbols.  ELFv1 compilers since 2004 default to not
++	 use dot-symbols and set the function symbol size to the text
++	 size of the function rather than the size of the descriptor.
++	 That's wrong for copying a descriptor.  */
++      if (((struct ppc_link_hash_entry *) h)->oh == NULL
++	  || !(h->size == 24 || h->size == 16))
++	return TRUE;
++
++      /* We should never get here, but unfortunately there are old
++	 versions of gcc (circa gcc-3.2) that improperly for the
++	 ELFv1 ABI put initialized function pointers, vtable refs and
++	 suchlike in read-only sections.  Allow them to proceed, but
++	 warn that this might break at runtime.  */
+       info->callbacks->einfo
+ 	(_("%P: copy reloc against `%pT' requires lazy plt linking; "
+ 	   "avoid setting LD_BIND_NOW=1 or upgrade gcc\n"),
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 75324bfaac..81f066d6d7 100644
+index 75324bfaac..e9a9b22407 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,34 @@
+@@ -1,3 +1,38 @@
++2020-01-15  Alan Modra  <amodra@gmail.com>
++
++	* configure.tgt: Add sparc-*-freebsd case.
++
 +2020-01-13  Szabolcs Nagy  <szabolcs.nagy@arm.com>
 +
 +	Backported from mainline.
@@ -409,6 +490,18 @@ index 9273bb5783..9910572fd9 100644
  	as_bad_where (fixP->fx_file, fixP->fx_line, BAD_RANGE);
  
        if (fixP->fx_done || !seg->use_rela_p)
+diff --git a/gas/configure.tgt b/gas/configure.tgt
+index a4828c4cae..c0d2fe24a8 100644
+--- a/gas/configure.tgt
++++ b/gas/configure.tgt
+@@ -392,6 +392,7 @@ case ${generic_target} in
+ 
+   sparc-*-linux-*)			fmt=elf em=linux ;;
+   sparc-*-solaris*)			fmt=elf em=solaris ;;
++  sparc-*-freebsd*)			fmt=elf em=freebsd ;;
+   sparc-*-*bsd*)			fmt=elf em=nbsd ;;
+ 
+   spu-*-elf)				fmt=elf ;;
 diff --git a/gas/dw2gencfi.c b/gas/dw2gencfi.c
 index f30734d384..ab97ac4e16 100644
 --- a/gas/dw2gencfi.c
@@ -508,3 +601,85 @@ index 0000000000..27f8daff1c
 +        .thumb
 +        beq     .+ 0x124f80
 +
+diff --git a/ld/ChangeLog b/ld/ChangeLog
+index 9f1179e15e..c4cc2b0542 100644
+--- a/ld/ChangeLog
++++ b/ld/ChangeLog
+@@ -1,3 +1,10 @@
++2020-01-15  Alan Modra  <amodra@gmail.com>
++
++	* testsuite/ld-powerpc/ambiguousv1b.d: Adjust expected output.
++	* testsuite/ld-powerpc/funref.s: Align func_tab.
++	* testsuite/ld-powerpc/funref2.s: Likewise.
++	* testsuite/ld-powerpc/funv1.s: Add dot symbols.
++
+ 2019-10-12  Nick Clifton  <nickc@redhat.com>
+ 
+ 	Release 2.33.1
+diff --git a/ld/testsuite/ld-powerpc/ambiguousv1b.d b/ld/testsuite/ld-powerpc/ambiguousv1b.d
+index 9be1371e5e..205f7ea46f 100644
+--- a/ld/testsuite/ld-powerpc/ambiguousv1b.d
++++ b/ld/testsuite/ld-powerpc/ambiguousv1b.d
+@@ -3,6 +3,7 @@
+ #as: -a64
+ #ld: -melf64ppc --emit-stub-syms
+ #ld_after_inputfiles: tmpdir/funv1.so
++#warning: .*requires lazy plt linking.*
+ #readelf: -rs --wide
+ # Check that we do the right thing with funref2.s that doesn't have
+ # anything to mark it as ELFv1 or ELFv2.  Since my_func address is
+@@ -15,9 +16,9 @@ Relocation section .* contains 1 entry:
+ 
+ Symbol table '\.dynsym' contains 2 entries:
+ #...
+-.*: 0*[1-9a-f][0-9a-f]*     4 FUNC    GLOBAL DEFAULT   1[23] my_func
++.*: 0*[1-9a-f][0-9a-f]* +24 FUNC +GLOBAL DEFAULT +1[23] my_func
+ #...
+ Symbol table '\.symtab' contains .* entries:
+ #...
+-.*: 0*[1-9a-f][0-9a-f]*     4 FUNC    GLOBAL DEFAULT   1[23] my_func
++.*: 0*[1-9a-f][0-9a-f]* +24 FUNC +GLOBAL DEFAULT +1[23] my_func
+ #pass
+diff --git a/ld/testsuite/ld-powerpc/funref.s b/ld/testsuite/ld-powerpc/funref.s
+index 3f7de479ce..27c1bcf6b1 100644
+--- a/ld/testsuite/ld-powerpc/funref.s
++++ b/ld/testsuite/ld-powerpc/funref.s
+@@ -1,4 +1,5 @@
+  .data
+  .globl func_tab
++ .p2align 3
+ func_tab:
+  .dc.a my_func
+diff --git a/ld/testsuite/ld-powerpc/funref2.s b/ld/testsuite/ld-powerpc/funref2.s
+index a2bf949126..14c58f0123 100644
+--- a/ld/testsuite/ld-powerpc/funref2.s
++++ b/ld/testsuite/ld-powerpc/funref2.s
+@@ -1,4 +1,5 @@
+  .section .rodata,"a",@progbits
+  .globl func_tab
++ .p2align 3
+ func_tab:
+  .dc.a my_func
+diff --git a/ld/testsuite/ld-powerpc/funv1.s b/ld/testsuite/ld-powerpc/funv1.s
+index e79009d1d2..988ad0d8c1 100644
+--- a/ld/testsuite/ld-powerpc/funv1.s
++++ b/ld/testsuite/ld-powerpc/funv1.s
+@@ -1,10 +1,12 @@
+- .globl my_func
+- .type my_func,@function
+- .section .opd,"aw",@progbits
++# old style ELFv1, with dot-symbols
++ .globl my_func, .my_func
++ .type .my_func, @function
++ .section .opd, "aw", @progbits
+ my_func:
+- .quad .Lmy_func, .TOC.@tocbase
++ .quad .my_func, .TOC.@tocbase, 0
++ .size my_func, . - my_func
+ 
+  .text
+-.Lmy_func:
++.my_func:
+  blr
+- .size my_func,.-.Lmy_func
++ .size .my_func, . - .my_func
