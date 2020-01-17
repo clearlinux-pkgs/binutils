@@ -602,10 +602,17 @@ index 0000000000..27f8daff1c
 +        beq     .+ 0x124f80
 +
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 9f1179e15e..3d474a866b 100644
+index 9f1179e15e..7a1ccf29a4 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,22 @@
+@@ -1,3 +1,29 @@
++2020-01-17  Szabolcs Nagy  <szabolcs.nagy@arm.com>
++
++	Backport from master.
++	2019-10-07  Alan Modra  <amodra@gmail.com>
++
++	* testsuite/ld-arm/tls-gdesc-neg.d: Relax target match.
++
 +2020-01-15  Tamar Christina  <tamar.christina@arm.com>
 +
 +	Backport from master.
@@ -713,6 +720,17 @@ index 0000000000..728765f61d
 +[ \t0-9a-f]+:[ \t]+9b031845[ \t]+madd[ \t]+x5, x2, x3, x6
 +[ \t0-9a-f]+:[ \t0-9a-z]+[ \t]+b[ \t]+[0-9a-f]+ <a1ldr\+0x[0-9a-f]+>
 +#pass
+diff --git a/ld/testsuite/ld-arm/tls-gdesc-neg.d b/ld/testsuite/ld-arm/tls-gdesc-neg.d
+index 4bbd0124e7..f4debb15c2 100644
+--- a/ld/testsuite/ld-arm/tls-gdesc-neg.d
++++ b/ld/testsuite/ld-arm/tls-gdesc-neg.d
+@@ -1,5 +1,5 @@
+ 
+-tmpdir/tls-lib2-neg.so:     file format elf32-littlearm
++.*:     file format .*
+ architecture: armv.*, flags 0x[0-9a-f]+:
+ HAS_SYMS, DYNAMIC, D_PAGED
+ start address 0x[0-9a-f]+
 diff --git a/ld/testsuite/ld-powerpc/ambiguousv1b.d b/ld/testsuite/ld-powerpc/ambiguousv1b.d
 index 9be1371e5e..205f7ea46f 100644
 --- a/ld/testsuite/ld-powerpc/ambiguousv1b.d
