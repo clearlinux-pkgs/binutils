@@ -602,10 +602,22 @@ index 0000000000..27f8daff1c
 +        beq     .+ 0x124f80
 +
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 9f1179e15e..c4cc2b0542 100644
+index 9f1179e15e..3d474a866b 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,10 @@
+@@ -1,3 +1,22 @@
++2020-01-15  Tamar Christina  <tamar.christina@arm.com>
++
++	Backport from master.
++	2020-01-02  Tamar Christina  <tamar.christina@arm.com>
++
++	PR 25210
++	PR 24753
++	* emultempl/aarch64elf.em (elf${ELFSIZE}_aarch64_add_stub_section):
++	Remove SEC_LINKER_CREATED.
++	* testsuite/ld-aarch64/aarch64-elf.exp: Add erratum835769-843419.
++	* testsuite/ld-aarch64/erratum835769-843419.d: New test.
++
 +2020-01-15  Alan Modra  <amodra@gmail.com>
 +
 +	* testsuite/ld-powerpc/ambiguousv1b.d: Adjust expected output.
@@ -616,6 +628,91 @@ index 9f1179e15e..c4cc2b0542 100644
  2019-10-12  Nick Clifton  <nickc@redhat.com>
  
  	Release 2.33.1
+diff --git a/ld/emultempl/aarch64elf.em b/ld/emultempl/aarch64elf.em
+index 93f60a9b61..4c13f26f4e 100644
+--- a/ld/emultempl/aarch64elf.em
++++ b/ld/emultempl/aarch64elf.em
+@@ -169,7 +169,7 @@ elf${ELFSIZE}_aarch64_add_stub_section (const char *stub_sec_name,
+   lang_output_section_statement_type *os;
+   struct hook_stub_info info;
+ 
+-  flags = (SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE | SEC_LINKER_CREATED
++  flags = (SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE
+ 	   | SEC_HAS_CONTENTS | SEC_RELOC | SEC_IN_MEMORY | SEC_KEEP);
+   stub_sec = bfd_make_section_anyway_with_flags (stub_file->the_bfd,
+ 						 stub_sec_name, flags);
+diff --git a/ld/testsuite/ld-aarch64/aarch64-elf.exp b/ld/testsuite/ld-aarch64/aarch64-elf.exp
+index 631fde0f31..d02bc25091 100644
+--- a/ld/testsuite/ld-aarch64/aarch64-elf.exp
++++ b/ld/testsuite/ld-aarch64/aarch64-elf.exp
+@@ -93,6 +93,7 @@ run_dump_test "erratum843419-far-adr"
+ run_dump_test "erratum843419-far-full"
+ run_dump_test "erratum843419-full"
+ run_dump_test "erratum843419-no-args"
++run_dump_test "erratum835769-843419"
+ 
+ # Relocation Tests
+ run_dump_test_lp64 "weak-undefined"
+diff --git a/ld/testsuite/ld-aarch64/erratum835769-843419.d b/ld/testsuite/ld-aarch64/erratum835769-843419.d
+new file mode 100644
+index 0000000000..728765f61d
+--- /dev/null
++++ b/ld/testsuite/ld-aarch64/erratum835769-843419.d
+@@ -0,0 +1,54 @@
++#source: erratum835769.s
++#as:
++#ld: --fix-cortex-a53-835769 --fix-cortex-a53-843419=full -e0x400000
++#objdump: -dr
++#...
++Disassembly of section .text:
++#...
++[0-9a-f]+ <a1ldr>:
++[ \t0-9a-f]+:[ \t]+b8408c87[ \t]+ldr[ \t]+w7, \[x4, #8\]\!
++[ \t0-9a-f]+:[ \t]+1b017c06[ \t]+mul[ \t]+w6, w0, w1
++[ \t0-9a-f]+:[ \t]+f9400084[ \t]+ldr[ \t]+x4, \[x4\]
++[ \t0-9a-f]+:[ \t0-9a-z]+[ \t]+b[ \t]+[0-9a-f]+ <__erratum_835769_veneer_0>
++[ \t0-9a-f]+:[ \t]+aa0503e0[ \t]+mov[ \t]+x0, x5
++[ \t0-9a-f]+:[ \t]+d65f03c0[ \t]+ret
++
++[0-9a-f]+ <a5ldr>:
++[ \t0-9a-f]+:[ \t]+b8408c87[ \t]+ldr[ \t]+w7, \[x4, #8\]!
++[ \t0-9a-f]+:[ \t]+1b017c06[ \t]+mul[ \t]+w6, w0, w1
++[ \t0-9a-f]+:[ \t]+f9400084[ \t]+ldr[ \t]+x4, \[x4\]
++[ \t0-9a-f]+:[ \t0-9a-z]+[ \t]+b[ \t]+[0-9a-f]+ <__erratum_835769_veneer_1>
++[ \t0-9a-f]+:[ \t]+aa0503e0[ \t]+mov[ \t]+x0, x5
++[ \t0-9a-f]+:[ \t]+d65f03c0[ \t]+ret
++
++[0-9a-f]+ <a6ldr>:
++[ \t0-9a-f]+:[ \t]+b8408c87[ \t]+ldr[ \t]+w7, \[x4, #8\]!
++[ \t0-9a-f]+:[ \t]+1b017c06[ \t]+mul[ \t]+w6, w0, w1
++[ \t0-9a-f]+:[ \t]+f9400084[ \t]+ldr[ \t]+x4, \[x4\]
++[ \t0-9a-f]+:[ \t]+9b031885[ \t]+madd[ \t]+x5, x4, x3, x6
++[ \t0-9a-f]+:[ \t]+aa0503e0[ \t]+mov[ \t]+x0, x5
++[ \t0-9a-f]+:[ \t]+d65f03c0[ \t]+ret
++
++[0-9a-f]+ <a7str>:
++[ \t0-9a-f]+:[ \t]+b8408c87[ \t]+ldr[ \t]+w7, \[x4, #8\]!
++[ \t0-9a-f]+:[ \t]+1b017c06[ \t]+mul[ \t]+w6, w0, w1
++[ \t0-9a-f]+:[ \t]+f9000084[ \t]+str[ \t]+x4, \[x4\]
++[ \t0-9a-f]+:[ \t0-9a-z]+[ \t]+b[ \t]+[0-9a-f]+ <__erratum_835769_veneer_2>
++[ \t0-9a-f]+:[ \t]+aa0503e0[ \t]+mov[ \t]+x0, x5
++[ \t0-9a-f]+:[ \t]+d65f03c0[ \t]+ret
++
++[ \t0-9a-f]+:[ \t]+d503201f[ \t]+nop
++[ \t0-9a-f]+:[ \t]+14000400[ \t]+b[ \t]+[0-9a-f]+ <__erratum_835769_veneer_0\+0xfe8>
++[ \t0-9a-f]+:[ \t]+d503201f[ \t]+nop
++[0-9a-f]+ <__erratum_835769_veneer_2>:
++[ \t0-9a-f]+:[ \t]+9b031885[ \t]+madd[ \t]+x5, x4, x3, x6
++[ \t0-9a-f]+:[ \t0-9a-z]+[ \t]+b[ \t]+[0-9a-f]+ <a7str\+0x[0-9a-f]+>
++
++[0-9a-f]+ <__erratum_835769_veneer_1>:
++[ \t0-9a-f]+:[ \t]+9ba31845[ \t]+umaddl[ \t]+x5, w2, w3, x6
++[ \t0-9a-f]+:[ \t0-9a-z]+[ \t]+b[ \t]+[0-9a-f]+ <a5ldr\+0x[0-9a-f]+>
++
++[0-9a-f]+ <__erratum_835769_veneer_0>:
++[ \t0-9a-f]+:[ \t]+9b031845[ \t]+madd[ \t]+x5, x2, x3, x6
++[ \t0-9a-f]+:[ \t0-9a-z]+[ \t]+b[ \t]+[0-9a-f]+ <a1ldr\+0x[0-9a-f]+>
++#pass
 diff --git a/ld/testsuite/ld-powerpc/ambiguousv1b.d b/ld/testsuite/ld-powerpc/ambiguousv1b.d
 index 9be1371e5e..205f7ea46f 100644
 --- a/ld/testsuite/ld-powerpc/ambiguousv1b.d
