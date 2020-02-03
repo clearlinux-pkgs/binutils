@@ -360,10 +360,21 @@ index 731f1ca657..c093612d08 100644
  	(_("%P: copy reloc against `%pT' requires lazy plt linking; "
  	   "avoid setting LD_BIND_NOW=1 or upgrade gcc\n"),
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 75324bfaac..0753f1a14c 100644
+index 75324bfaac..482c824848 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,97 @@
+@@ -1,3 +1,108 @@
++2020-01-31  Andre Vieira  <andre.simoesdiasvieira@arm.com>
++
++	Backport from mainline.
++	2020-01-31  Andre Vieira  <andre.simoesdiasvieira@arm.com>
++
++	PR gas/25472
++	* config/tc-arm.c (armv8m_main_ext_table): Refactored +dsp adding.
++	(armv8_1m_main_ext_table): Refactored +dsp adding and enabled dsp for
++	+mve.
++	* testsuite/gas/arm/mve_dsp.d: New test.
++
 +2020-01-27  Tamar Christina  <tamar.christina@arm.com>
 +
 +	Backport from mainline.
@@ -462,7 +473,7 @@ index 75324bfaac..0753f1a14c 100644
  
  	Release 2.33.1
 diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
-index 9273bb5783..ee2c46b068 100644
+index 9273bb5783..ca323744dc 100644
 --- a/gas/config/tc-arm.c
 +++ b/gas/config/tc-arm.c
 @@ -106,6 +106,15 @@ enum arm_float_abi
@@ -672,19 +683,43 @@ index 9273bb5783..ee2c46b068 100644
    ARM_ADD ("simd", FPU_ARCH_NEON_VFP_ARMV8),
    ARM_EXT ("crypto", FPU_ARCH_CRYPTO_NEON_VFP_ARMV8,
  	   ARM_FEATURE_COPROC (FPU_CRYPTO_ARMV8)),
-@@ -30906,18 +30914,17 @@ static const struct arm_ext_table armv8_1m_main_ext_table[] =
+@@ -30888,17 +30896,18 @@ static const struct arm_ext_table armv85a_ext_table[] =
+ 
+ static const struct arm_ext_table armv8m_main_ext_table[] =
+ {
+-  ARM_EXT ("dsp", ARM_FEATURE_CORE_LOW (ARM_EXT_V5ExP | ARM_EXT_V6_DSP),
+-		  ARM_FEATURE_CORE_LOW (ARM_EXT_V5ExP | ARM_EXT_V6_DSP)),
++  ARM_EXT ("dsp", ARM_FEATURE_CORE_LOW (ARM_AEXT_V8M_MAIN_DSP),
++		  ARM_FEATURE_CORE_LOW (ARM_AEXT_V8M_MAIN_DSP)),
+   ARM_EXT ("fp", FPU_ARCH_VFP_V5_SP_D16, ALL_FP),
+   ARM_ADD ("fp.dp", FPU_ARCH_VFP_V5D16),
+   { NULL, 0, ARM_ARCH_NONE, ARM_ARCH_NONE }
+ };
+ 
++
+ static const struct arm_ext_table armv8_1m_main_ext_table[] =
+ {
+-  ARM_EXT ("dsp", ARM_FEATURE_CORE_LOW (ARM_EXT_V5ExP | ARM_EXT_V6_DSP),
+-		  ARM_FEATURE_CORE_LOW (ARM_EXT_V5ExP | ARM_EXT_V6_DSP)),
++  ARM_EXT ("dsp", ARM_FEATURE_CORE_LOW (ARM_AEXT_V8M_MAIN_DSP),
++		  ARM_FEATURE_CORE_LOW (ARM_AEXT_V8M_MAIN_DSP)),
+   ARM_EXT ("fp",
+ 	   ARM_FEATURE (0, ARM_EXT2_FP16_INST,
+ 			FPU_VFP_V5_SP_D16 | FPU_VFP_EXT_FP16 | FPU_VFP_EXT_FMA),
+@@ -30906,18 +30915,18 @@ static const struct arm_ext_table armv8_1m_main_ext_table[] =
    ARM_ADD ("fp.dp",
  	   ARM_FEATURE (0, ARM_EXT2_FP16_INST,
  			FPU_VFP_V5D16 | FPU_VFP_EXT_FP16 | FPU_VFP_EXT_FMA)),
 -  ARM_EXT ("mve", ARM_FEATURE_COPROC (FPU_MVE),
 -	   ARM_FEATURE_COPROC (FPU_MVE | FPU_MVE_FP)),
-+  ARM_EXT ("mve", ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
++  ARM_EXT ("mve", ARM_FEATURE (ARM_AEXT_V8M_MAIN_DSP, ARM_EXT2_MVE, 0),
 +	   ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE | ARM_EXT2_MVE_FP)),
    ARM_ADD ("mve.fp",
 -	   ARM_FEATURE (0, ARM_EXT2_FP16_INST,
 -			FPU_MVE | FPU_MVE_FP | FPU_VFP_V5_SP_D16 |
 -			FPU_VFP_EXT_FP16 | FPU_VFP_EXT_FMA)),
-+	   ARM_FEATURE (0, ARM_EXT2_FP16_INST | ARM_EXT2_MVE | ARM_EXT2_MVE_FP,
++	   ARM_FEATURE (ARM_AEXT_V8M_MAIN_DSP,
++			ARM_EXT2_FP16_INST | ARM_EXT2_MVE | ARM_EXT2_MVE_FP,
 +			FPU_VFP_V5_SP_D16 | FPU_VFP_EXT_FP16 | FPU_VFP_EXT_FMA)),
    { NULL, 0, ARM_ARCH_NONE, ARM_ARCH_NONE }
  };
@@ -696,7 +731,7 @@ index 9273bb5783..ee2c46b068 100644
    ARM_ADD ("simd", FPU_ARCH_NEON_VFP_ARMV8),
    ARM_EXT ("crypto", FPU_ARCH_CRYPTO_NEON_VFP_ARMV8,
  	   ARM_FEATURE_COPROC (FPU_CRYPTO_ARMV8)),
-@@ -31021,7 +31028,8 @@ struct arm_option_extension_value_table
+@@ -31021,7 +31030,8 @@ struct arm_option_extension_value_table
     use the context sensitive approach using arm_ext_table's.  */
  static const struct arm_option_extension_value_table arm_extensions[] =
  {
@@ -706,7 +741,7 @@ index 9273bb5783..ee2c46b068 100644
  			 ARM_FEATURE_CORE_LOW (ARM_EXT_V8)),
    ARM_EXT_OPT ("crypto", FPU_ARCH_CRYPTO_NEON_VFP_ARMV8,
  			 ARM_FEATURE_COPROC (FPU_CRYPTO_ARMV8),
-@@ -31452,6 +31460,7 @@ arm_parse_arch (const char *str)
+@@ -31452,6 +31462,7 @@ arm_parse_arch (const char *str)
  	  march_ext_opt = XNEW (arm_feature_set);
  	*march_ext_opt = arm_arch_none;
  	march_fpu_opt = &opt->default_fpu;
@@ -714,7 +749,7 @@ index 9273bb5783..ee2c46b068 100644
  	strcpy (selected_cpu_name, opt->name);
  
  	if (ext != NULL)
-@@ -32244,6 +32253,7 @@ s_arm_arch (int ignored ATTRIBUTE_UNUSED)
+@@ -32244,6 +32255,7 @@ s_arm_arch (int ignored ATTRIBUTE_UNUSED)
      if (streq (opt->name, name))
        {
  	selected_arch = opt->value;
@@ -722,7 +757,7 @@ index 9273bb5783..ee2c46b068 100644
  	selected_ext = arm_arch_none;
  	selected_cpu = selected_arch;
  	strcpy (selected_cpu_name, opt->name);
-@@ -32311,6 +32321,35 @@ s_arm_arch_extension (int ignored ATTRIBUTE_UNUSED)
+@@ -32311,6 +32323,35 @@ s_arm_arch_extension (int ignored ATTRIBUTE_UNUSED)
        name += 2;
      }
  
@@ -758,7 +793,7 @@ index 9273bb5783..ee2c46b068 100644
    for (opt = arm_extensions; opt->name != NULL; opt++)
      if (streq (opt->name, name))
        {
-@@ -32375,6 +32414,7 @@ s_arm_fpu (int ignored ATTRIBUTE_UNUSED)
+@@ -32375,6 +32416,7 @@ s_arm_fpu (int ignored ATTRIBUTE_UNUSED)
      if (streq (opt->name, name))
        {
  	selected_fpu = opt->value;
@@ -1058,6 +1093,152 @@ index 0000000000..8d4c7c68e5
 +.arch_extension mve
 +
 +asrl	r2, r3, #5
+diff --git a/gas/testsuite/gas/arm/mve_dsp.d b/gas/testsuite/gas/arm/mve_dsp.d
+new file mode 100644
+index 0000000000..d76c8b2c99
+--- /dev/null
++++ b/gas/testsuite/gas/arm/mve_dsp.d
+@@ -0,0 +1,140 @@
++# name: 32-bit Thumb DSP instructions (enabled by +mve)
++# as: -march=armv8.1-m.main+mve
++# source: arch7em.s
++# objdump: -dr --prefix-addresses --show-raw-insn
++
++.*: +file format .*arm.*
++
++Disassembly of section .text:
++0[0-9a-f]+ <[^>]+> eac0 0000 	pkhbt	r0, r0, r0
++0[0-9a-f]+ <[^>]+> eac0 0900 	pkhbt	r9, r0, r0
++0[0-9a-f]+ <[^>]+> eac9 0000 	pkhbt	r0, r9, r0
++0[0-9a-f]+ <[^>]+> eac0 0009 	pkhbt	r0, r0, r9
++0[0-9a-f]+ <[^>]+> eac0 5000 	pkhbt	r0, r0, r0, lsl #20
++0[0-9a-f]+ <[^>]+> eac0 00c0 	pkhbt	r0, r0, r0, lsl #3
++0[0-9a-f]+ <[^>]+> eac3 0102 	pkhbt	r1, r3, r2
++0[0-9a-f]+ <[^>]+> eac2 4163 	pkhtb	r1, r2, r3, asr #17
++0[0-9a-f]+ <[^>]+> fa83 f182 	qadd	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa92 f113 	qadd16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa82 f113 	qadd8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f113 	qasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f113 	qasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa83 f192 	qdadd	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa83 f1b2 	qdsub	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa83 f1a2 	qsub	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fad2 f113 	qsub16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fac2 f113 	qsub8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f113 	qsax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f113 	qsax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa92 f103 	sadd16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa82 f103 	sadd8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f103 	sasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f103 	sasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fad2 f103 	ssub16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fac2 f103 	ssub8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f103 	ssax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f103 	ssax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa92 f123 	shadd16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa82 f123 	shadd8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f123 	shasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f123 	shasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fad2 f123 	shsub16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fac2 f123 	shsub8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f123 	shsax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f123 	shsax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa92 f143 	uadd16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa82 f143 	uadd8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f143 	uasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f143 	uasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fad2 f143 	usub16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fac2 f143 	usub8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f143 	usax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f143 	usax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa92 f163 	uhadd16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa82 f163 	uhadd8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f163 	uhasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f163 	uhasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fad2 f163 	uhsub16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fac2 f163 	uhsub8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f163 	uhsax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f163 	uhsax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa92 f153 	uqadd16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa82 f153 	uqadd8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f153 	uqasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f153 	uqasx	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fad2 f153 	uqsub16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fac2 f153 	uqsub8	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f153 	uqsax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fae2 f153 	uqsax	r1, r2, r3
++0[0-9a-f]+ <[^>]+> faa2 f183 	sel	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fb10 0000 	smlabb	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb10 0900 	smlabb	r9, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb19 0000 	smlabb	r0, r9, r0, r0
++0[0-9a-f]+ <[^>]+> fb10 0009 	smlabb	r0, r0, r9, r0
++0[0-9a-f]+ <[^>]+> fb10 9000 	smlabb	r0, r0, r0, r9
++0[0-9a-f]+ <[^>]+> fb10 0020 	smlatb	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb10 0010 	smlabt	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb10 0030 	smlatt	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb30 0000 	smlawb	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb30 0010 	smlawt	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb20 0000 	smlad	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb20 0010 	smladx	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb40 0000 	smlsd	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb40 0010 	smlsdx	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb50 0000 	smmla	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb50 0010 	smmlar	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb60 0000 	smmls	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb60 0010 	smmlsr	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb70 0000 	usada8	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fbc0 0080 	smlalbb	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fbc0 9080 	smlalbb	r9, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fbc0 0980 	smlalbb	r0, r9, r0, r0
++0[0-9a-f]+ <[^>]+> fbc9 0080 	smlalbb	r0, r0, r9, r0
++0[0-9a-f]+ <[^>]+> fbc0 0089 	smlalbb	r0, r0, r0, r9
++0[0-9a-f]+ <[^>]+> fbc0 00a0 	smlaltb	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fbc0 0090 	smlalbt	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fbc0 00b0 	smlaltt	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fbc0 00c0 	smlald	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fbc0 00d0 	smlaldx	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fbd0 00c0 	smlsld	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fbd0 00d0 	smlsldx	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fbe0 0060 	umaal	r0, r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb10 f000 	smulbb	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb10 f900 	smulbb	r9, r0, r0
++0[0-9a-f]+ <[^>]+> fb19 f000 	smulbb	r0, r9, r0
++0[0-9a-f]+ <[^>]+> fb10 f009 	smulbb	r0, r0, r9
++0[0-9a-f]+ <[^>]+> fb10 f020 	smultb	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb10 f010 	smulbt	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb10 f030 	smultt	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb30 f000 	smulwb	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb30 f010 	smulwt	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb50 f000 	smmul	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb50 f010 	smmulr	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb20 f000 	smuad	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb20 f010 	smuadx	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb40 f000 	smusd	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb40 f010 	smusdx	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fb70 f000 	usad8	r0, r0, r0
++0[0-9a-f]+ <[^>]+> f320 0000 	ssat16	r0, #1, r0
++0[0-9a-f]+ <[^>]+> f320 0900 	ssat16	r9, #1, r0
++0[0-9a-f]+ <[^>]+> f320 0009 	ssat16	r0, #10, r0
++0[0-9a-f]+ <[^>]+> f329 0000 	ssat16	r0, #1, r9
++0[0-9a-f]+ <[^>]+> f3a0 0000 	usat16	r0, #0, r0
++0[0-9a-f]+ <[^>]+> f3a0 0900 	usat16	r9, #0, r0
++0[0-9a-f]+ <[^>]+> f3a0 0009 	usat16	r0, #9, r0
++0[0-9a-f]+ <[^>]+> f3a9 0000 	usat16	r0, #0, r9
++0[0-9a-f]+ <[^>]+> fa2f f182 	sxtb16	r1, r2
++0[0-9a-f]+ <[^>]+> fa2f f889 	sxtb16	r8, r9
++0[0-9a-f]+ <[^>]+> fa3f f182 	uxtb16	r1, r2
++0[0-9a-f]+ <[^>]+> fa3f f889 	uxtb16	r8, r9
++0[0-9a-f]+ <[^>]+> fa40 f080 	sxtab	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fa40 f080 	sxtab	r0, r0, r0
++0[0-9a-f]+ <[^>]+> fa40 f990 	sxtab	r9, r0, r0, ror #8
++0[0-9a-f]+ <[^>]+> fa49 f0a0 	sxtab	r0, r9, r0, ror #16
++0[0-9a-f]+ <[^>]+> fa40 f0b9 	sxtab	r0, r0, r9, ror #24
++0[0-9a-f]+ <[^>]+> fa22 f183 	sxtab16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa02 f183 	sxtah	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa52 f183 	uxtab	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa32 f183 	uxtab16	r1, r2, r3
++0[0-9a-f]+ <[^>]+> fa12 f183 	uxtah	r1, r2, r3
++
 diff --git a/gas/testsuite/gas/arm/mvefp-ext.d b/gas/testsuite/gas/arm/mvefp-ext.d
 new file mode 100644
 index 0000000000..530a73561e
