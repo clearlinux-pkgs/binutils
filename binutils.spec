@@ -5,11 +5,11 @@
 # Source0 file verified with key 0x13FCEF89DD9E3C4F (nickc@redhat.com)
 #
 Name     : binutils
-Version  : 2.33.1
-Release  : 335
-URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
-Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz
-Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.33.1.tar.xz.sig
+Version  : 2.34
+Release  : 336
+URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.34.tar.xz
+Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.34.tar.xz
+Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.34.tar.xz.sig
 Summary  : zlib compression library
 Group    : Development/Tools
 License  : BSL-1.0 GPL-2.0 GPL-3.0 GPL-3.0+ LGPL-2.0 LGPL-2.1 LGPL-3.0
@@ -23,7 +23,6 @@ BuildRequires : bison
 BuildRequires : dejagnu
 BuildRequires : expect
 BuildRequires : flex
-BuildRequires : gawk
 BuildRequires : gettext
 BuildRequires : grep
 BuildRequires : sed
@@ -32,13 +31,6 @@ BuildRequires : util-linux
 BuildRequires : zlib-dev
 Patch1: binutils-stable-branch.patch
 Patch2: binutils-add-LD_AS_NEEDED-global-env.patch
-Patch3: CVE-2019-17450.patch
-Patch4: CVE-2019-17451.patch
-Patch5: 0001-gas-Add-md_cons_worker.patch
-Patch6: 0002-gas-Add-md_generic_table_relax_frag.patch
-Patch7: 0003-i386-Align-branches-within-a-fixed-boundary.patch
-Patch8: 0004-i386-Add-mbranches-within-32B-boundaries.patch
-Patch9: 0005-Don-t-add-prefix-to-instructions-with-TLS-relocation.patch
 
 %description
 These are the GNU binutils.  These are utilities of use when dealing
@@ -132,17 +124,10 @@ staticdev components for the binutils package.
 
 
 %prep
-%setup -q -n binutils-2.33.1
-cd %{_builddir}/binutils-2.33.1
+%setup -q -n binutils-2.34
+cd %{_builddir}/binutils-2.34
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
 
 %build
 ## build_prepend content
@@ -173,7 +158,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1580743680
+export SOURCE_DATE_EPOCH=1581188224
 # -Werror is for werrorists
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
@@ -194,20 +179,19 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1580743680
+export SOURCE_DATE_EPOCH=1581188224
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
-cp %{_builddir}/binutils-2.33.1/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
-cp %{_builddir}/binutils-2.33.1/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d
-cp %{_builddir}/binutils-2.33.1/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.33.1/COPYING3.LIB %{buildroot}/usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9
-cp %{_builddir}/binutils-2.33.1/bfd/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.33.1/gas/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.33.1/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
-cp %{_builddir}/binutils-2.33.1/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.33.1/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
-cp %{_builddir}/binutils-2.33.1/libiberty/copying-lib.texi %{buildroot}/usr/share/package-licenses/binutils/cdb23577fa4523cc88845280fd5223270ddb645a
-cp %{_builddir}/binutils-2.33.1/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
+cp %{_builddir}/binutils-2.34/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
+cp %{_builddir}/binutils-2.34/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d
+cp %{_builddir}/binutils-2.34/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.34/COPYING3.LIB %{buildroot}/usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9
+cp %{_builddir}/binutils-2.34/bfd/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.34/gas/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.34/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
+cp %{_builddir}/binutils-2.34/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.34/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
+cp %{_builddir}/binutils-2.34/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
 %make_install tooldir=/usr
 %find_lang binutils
 %find_lang gprof
@@ -392,6 +376,8 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/include/bfd.h
 /usr/include/bfd_stdint.h
 /usr/include/bfdlink.h
+/usr/include/ctf-api.h
+/usr/include/ctf.h
 /usr/include/diagnostics.h
 /usr/include/dis-asm.h
 /usr/include/libiberty.h
@@ -463,9 +449,15 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 
 %files lib
 %defattr(-,root,root,-)
-/usr/lib64/libbfd-2.33.1.20190203.so
+/usr/lib64/libbfd-2.34.0.20190203.so
 /usr/lib64/libbfd.so
-/usr/lib64/libopcodes-2.33.1.20190203.so
+/usr/lib64/libctf-nobfd.so
+/usr/lib64/libctf-nobfd.so.0
+/usr/lib64/libctf-nobfd.so.0.0.0
+/usr/lib64/libctf.so
+/usr/lib64/libctf.so.0
+/usr/lib64/libctf.so.0.0.0
+/usr/lib64/libopcodes-2.34.0.20190203.so
 /usr/lib64/libopcodes.so
 
 %files license
@@ -475,7 +467,6 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
 /usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
 /usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
-/usr/share/package-licenses/binutils/cdb23577fa4523cc88845280fd5223270ddb645a
 /usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9
 
 %files man

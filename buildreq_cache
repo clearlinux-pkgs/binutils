@@ -1,8 +1,7 @@
-2.33.1
+2.34
 bison
 dejagnu
 flex
-gawk
 gettext
 texinfo
 util-linux

@@ -1,10 +1,2 @@
 binutils-stable-branch.patch
 binutils-add-LD_AS_NEEDED-global-env.patch
-CVE-2019-17450.patch
-CVE-2019-17451.patch
-# experiment for optimizations for the DSB
-0001-gas-Add-md_cons_worker.patch
-0002-gas-Add-md_generic_table_relax_frag.patch
-0003-i386-Align-branches-within-a-fixed-boundary.patch
-0004-i386-Add-mbranches-within-32B-boundaries.patch
-0005-Don-t-add-prefix-to-instructions-with-TLS-relocation.patch
