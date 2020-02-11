@@ -1,8 +1,17 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index dd2c11d918..d695a0e1ae 100644
+index dd2c11d918..b7bbf9c414 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,6 +1,49 @@
+@@ -1,6 +1,58 @@
++2020-02-11  Nick Clifton  <nickc@redhat.com>
++
++	Import from the mainline:
++
++	PR 25447
++	* coffgen.c (_bfd_coff_close_and_cleanup): Do not clear the keep
++	syms and keep strings flags as these may have been set in order to
++	prevent a bogus call to free.
++
 +2020-02-11  Nick Clifton  <nickc@redhat.com>
 +
 +	Import from the mainline:
@@ -52,6 +61,23 @@ index dd2c11d918..d695a0e1ae 100644
  
  2020-01-29  Alan Modra  <amodra@gmail.com>
  
+diff --git a/bfd/coffgen.c b/bfd/coffgen.c
+index 2bfcf1a6b1..3ddd2d89a8 100644
+--- a/bfd/coffgen.c
++++ b/bfd/coffgen.c
+@@ -3175,8 +3175,10 @@ _bfd_coff_close_and_cleanup (bfd *abfd)
+       && bfd_family_coff (abfd)
+       && coff_data (abfd) != NULL)
+     {
+-      obj_coff_keep_syms (abfd) = FALSE;
+-      obj_coff_keep_strings (abfd) = FALSE;
++      /* PR 25447:
++	 Do not clear the keep_syms and keep_strings flags.
++	 These may have been set by pe_ILF_build_a_bfd() indicating
++	 that the syms and strings pointers are not to be freed.  */
+       if (!_bfd_coff_free_symbols (abfd))
+ 	return FALSE;
+     }
 diff --git a/bfd/configure b/bfd/configure
 index 9cba071955..bc576b7894 100755
 --- a/bfd/configure
