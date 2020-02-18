@@ -594,6 +594,7 @@ libbfd-2.34.0.20190203.so:bfd_wrapped_link_hash_lookup
 libbfd-2.34.0.20190203.so:bfd_write_bigendian_4byte_int
 libbfd-2.34.0.20190203.so:bfd_zalloc
 libbfd-2.34.0.20190203.so:canonical_filename_eq
+libbfd-2.34.0.20190203.so:choose_tmpdir
 libbfd-2.34.0.20190203.so:coff_bfd_make_debug_symbol
 libbfd-2.34.0.20190203.so:coff_canonicalize_symtab
 libbfd-2.34.0.20190203.so:coff_count_linenumbers
@@ -731,6 +732,8 @@ libbfd-2.34.0.20190203.so:lbasename
 libbfd-2.34.0.20190203.so:lrealpath
 libbfd-2.34.0.20190203.so:make_relative_prefix
 libbfd-2.34.0.20190203.so:make_relative_prefix_ignore_links
+libbfd-2.34.0.20190203.so:make_temp_file
+libbfd-2.34.0.20190203.so:make_temp_file_with_prefix
 libbfd-2.34.0.20190203.so:nacl_final_write_processing
 libbfd-2.34.0.20190203.so:nacl_modify_headers
 libbfd-2.34.0.20190203.so:nacl_modify_segment_map
