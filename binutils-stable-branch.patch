@@ -1,8 +1,14 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index dd2c11d918..5eb7cf3c9d 100644
+index dd2c11d918..17cb9775b5 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,6 +1,118 @@
+@@ -1,6 +1,124 @@
++2020-02-19  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR binutils/25355
++	* plugin.c (plugin_list_entry): Remove handle.
++	(try_load_plugin): Call dlclose before return.
++
 +2020-02-14  Nick Clifton  <nickc@redhat.com>
 +
 +	Import from mainline:
@@ -767,7 +773,7 @@ index 184f01d4ee..784c32ed02 100644
  		/* That will change things, so, we should relax again.
  		   Note that this is not required, and it may be slow.  */
 diff --git a/bfd/plugin.c b/bfd/plugin.c
-index 537ab60311..47c3439042 100644
+index 537ab60311..93d562b9fe 100644
 --- a/bfd/plugin.c
 +++ b/bfd/plugin.c
 @@ -69,7 +69,6 @@ dlerror (void)
@@ -778,14 +784,13 @@ index 537ab60311..47c3439042 100644
  #define bfd_plugin_bfd_free_cached_info		      _bfd_generic_bfd_free_cached_info
  #define bfd_plugin_new_section_hook		      _bfd_generic_new_section_hook
  #define bfd_plugin_get_section_contents		      _bfd_generic_get_section_contents
-@@ -124,13 +123,312 @@ message (int level ATTRIBUTE_UNUSED,
+@@ -124,13 +123,311 @@ message (int level ATTRIBUTE_UNUSED,
    return LDPS_OK;
  }
  
 +struct plugin_list_entry
 +{
 +  /* These must be initialized for each IR object with LTO wrapper.  */
-+  void *handle;
 +  ld_plugin_claim_file_handler claim_file;
 +  ld_plugin_all_symbols_read_handler all_symbols_read;
 +  ld_plugin_all_symbols_read_handler cleanup_handler;
@@ -1093,7 +1098,7 @@ index 537ab60311..47c3439042 100644
    return LDPS_OK;
  }
  
-@@ -143,13 +441,52 @@ add_symbols (void * handle,
+@@ -143,13 +440,52 @@ add_symbols (void * handle,
    struct plugin_data_struct *plugin_data =
      bfd_alloc (abfd, sizeof (plugin_data_struct));
  
@@ -1149,7 +1154,7 @@ index 537ab60311..47c3439042 100644
    return LDPS_OK;
  }
  
-@@ -212,34 +549,72 @@ try_claim (bfd *abfd)
+@@ -212,34 +548,68 @@ try_claim (bfd *abfd)
    struct ld_plugin_input_file file;
  
    file.handle = abfd;
@@ -1215,32 +1220,29 @@ index 537ab60311..47c3439042 100644
 +		 struct plugin_list_entry *plugin_list_iter,
 +		 bfd *abfd, bfd_boolean build_list_p)
  {
-   void *plugin_handle = NULL;
+-  void *plugin_handle = NULL;
 -  struct ld_plugin_tv tv[4];
++  void *plugin_handle;
 +  struct ld_plugin_tv tv[12];
    int i;
    ld_plugin_onload onload;
    enum ld_plugin_status status;
 -  struct plugin_list_entry *plugin_list_iter;
- 
--  *has_plugin_p = 0;
++  int result = 0;
++
 +  /* NB: Each object is independent.  Reuse the previous plugin from
 +     the last run will lead to wrong result.  */
 +  if (current_plugin)
-+    {
-+      if (current_plugin->handle)
-+	dlclose (current_plugin->handle);
-+      memset (current_plugin, 0,
-+	      offsetof (struct plugin_list_entry, next));
-+      current_plugin = NULL;
-+    }
-+
++    memset (current_plugin, 0,
++	    offsetof (struct plugin_list_entry, next));
+ 
+-  *has_plugin_p = 0;
 +  if (plugin_list_iter)
 +    pname = plugin_list_iter->plugin_name;
  
    plugin_handle = dlopen (pname, RTLD_NOW);
    if (!plugin_handle)
-@@ -248,28 +623,30 @@ try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
+@@ -248,32 +618,34 @@ try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
        return 0;
      }
  
@@ -1253,7 +1255,7 @@ index 537ab60311..47c3439042 100644
 +      size_t length_plugin_name = strlen (pname) + 1;
 +      char *plugin_name = bfd_malloc (length_plugin_name);
 +      if (plugin_name == NULL)
-+	return 0;
++	goto short_circuit;
 +      plugin_list_iter = bfd_malloc (sizeof *plugin_list_iter);
 +      if (plugin_list_iter == NULL)
  	{
@@ -1264,7 +1266,7 @@ index 537ab60311..47c3439042 100644
 -	  register_claim_file (plugin_list_iter->claim_file);
 -	  goto have_claim_file;
 +	  free (plugin_name);
-+	  return 0;
++	  goto short_circuit;
  	}
 +      /* Make a copy of PNAME since PNAME from load_plugin () will be
 +	 freed.  */
@@ -1278,16 +1280,22 @@ index 537ab60311..47c3439042 100644
 -  plugin_list_iter = bfd_malloc (sizeof *plugin_list_iter);
 -  if (plugin_list_iter == NULL)
 -    return 0;
-   plugin_list_iter->handle = plugin_handle;
+-  plugin_list_iter->handle = plugin_handle;
 -  plugin_list_iter->claim_file = NULL;
 -  plugin_list_iter->next = plugin_list;
 -  plugin_list = plugin_list_iter;
++  current_plugin = plugin_list_iter;
 +  if (build_list_p)
-+    return 0;
++    goto short_circuit;
  
    onload = dlsym (plugin_handle, "onload");
    if (!onload)
-@@ -287,23 +664,60 @@ try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
+-    return 0;
++    goto short_circuit;
+ 
+   i = 0;
+   tv[i].tv_tag = LDPT_MESSAGE;
+@@ -287,35 +659,73 @@ try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
    tv[i].tv_tag = LDPT_ADD_SYMBOLS;
    tv[i].tv_u.tv_add_symbols = add_symbols;
  
@@ -1330,30 +1338,39 @@ index 537ab60311..47c3439042 100644
    tv[i].tv_tag = LDPT_NULL;
    tv[i].tv_u.tv_val = 0;
  
-+  current_plugin = plugin_list_iter;
-+
 +  /* LTO plugin will call handler hooks to set up plugin handlers.  */
    status = (*onload)(tv);
  
    if (status != LDPS_OK)
-     return 0;
- 
--  plugin_list_iter->claim_file = claim_file;
+-    return 0;
 -
+-  plugin_list_iter->claim_file = claim_file;
++    goto short_circuit;
+ 
 -have_claim_file:
 -  *has_plugin_p = 1;
 +  if (current_plugin->lto_wrapper
 +      && setup_lto_wrapper_env (current_plugin))
-+    return 0;
++    goto short_circuit;
  
    abfd->plugin_format = bfd_plugin_no;
  
 -  if (!claim_file)
+-    return 0;
 +  if (!current_plugin->claim_file)
-     return 0;
++    goto short_circuit;
  
    if (!try_claim (abfd))
-@@ -314,8 +728,7 @@ have_claim_file:
+-    return 0;
++    goto short_circuit;
+ 
+   abfd->plugin_format = bfd_plugin_yes;
+-  return 1;
++  result = 1;
++
++short_circuit:
++  dlclose (plugin_handle);
++  return result;
  }
  
  /* There may be plugin libraries in lib/bfd-plugins.  */
@@ -1363,7 +1380,7 @@ index 537ab60311..47c3439042 100644
  
  static const bfd_target *(*ld_plugin_object_p) (bfd *);
  
-@@ -325,7 +738,6 @@ void
+@@ -325,7 +735,6 @@ void
  bfd_plugin_set_plugin (const char *p)
  {
    plugin_name = p;
@@ -1371,7 +1388,7 @@ index 537ab60311..47c3439042 100644
  }
  
  /* Return TRUE if a plugin library is used.  */
-@@ -333,7 +745,7 @@ bfd_plugin_set_plugin (const char *p)
+@@ -333,7 +742,7 @@ bfd_plugin_set_plugin (const char *p)
  bfd_boolean
  bfd_plugin_specified_p (void)
  {
@@ -1380,7 +1397,7 @@ index 537ab60311..47c3439042 100644
  }
  
  /* Return TRUE if ABFD can be claimed by linker LTO plugin.  */
-@@ -364,8 +776,8 @@ register_ld_plugin_object_p (const bfd_target *(*object_p) (bfd *))
+@@ -364,8 +773,8 @@ register_ld_plugin_object_p (const bfd_target *(*object_p) (bfd *))
    ld_plugin_object_p = object_p;
  }
  
@@ -1391,7 +1408,7 @@ index 537ab60311..47c3439042 100644
  {
    /* The intent was to search ${libdir}/bfd-plugins for plugins, but
       unfortunately the original implementation wasn't precisely that
-@@ -374,17 +786,10 @@ load_plugin (bfd *abfd)
+@@ -374,17 +783,10 @@ load_plugin (bfd *abfd)
    static const char *path[]
      = { LIBDIR "/bfd-plugins", BINDIR "/../lib/bfd-plugins" };
    struct stat last_st;
@@ -1411,7 +1428,7 @@ index 537ab60311..47c3439042 100644
  
    /* Try not to search the same dir twice, by looking at st_dev and
       st_ino for the dir.  If we are on a file system that always sets
-@@ -419,26 +824,38 @@ load_plugin (bfd *abfd)
+@@ -419,26 +821,38 @@ load_plugin (bfd *abfd)
  
  		  full_name = concat (plugin_dir, "/", ent->d_name, NULL);
  		  if (stat (full_name, &st) == 0 && S_ISREG (st.st_mode))
@@ -1462,7 +1479,7 @@ index 537ab60311..47c3439042 100644
  }
  
  
-@@ -562,7 +979,15 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
+@@ -562,7 +976,15 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
  			SEC_ALLOC | SEC_LOAD | SEC_CODE | SEC_HAS_CONTENTS);
    static asection fake_common_section
      = BFD_FAKE_SECTION (fake_common_section, NULL, "plug", 0, SEC_IS_COMMON);
@@ -1479,7 +1496,7 @@ index 537ab60311..47c3439042 100644
  
    for (i = 0; i < nsyms; i++)
      {
-@@ -587,6 +1012,15 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
+@@ -587,6 +1009,15 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
  	case LDPK_DEF:
  	case LDPK_WEAKDEF:
  	  s->section = &fake_section;
@@ -1495,7 +1512,7 @@ index 537ab60311..47c3439042 100644
  	  break;
  	default:
  	  BFD_ASSERT (0);
-@@ -635,6 +1069,24 @@ bfd_plugin_sizeof_headers (bfd *a ATTRIBUTE_UNUSED,
+@@ -635,6 +1066,24 @@ bfd_plugin_sizeof_headers (bfd *a ATTRIBUTE_UNUSED,
    return 0;
  }
  
