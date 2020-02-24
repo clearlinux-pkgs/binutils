@@ -1,8 +1,14 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index dd2c11d918..17cb9775b5 100644
+index dd2c11d918..e5da1b4658 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,6 +1,124 @@
+@@ -1,6 +1,130 @@
++2020-02-22  Alan Modra  <amodra@gmail.com>
++
++	PR 25585
++	* elf.c (assign_file_positions_for_load_sections): Continue linking
++	on "PHDR segment not covered by LOAD segment" errors.
++
 +2020-02-19  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR binutils/25355
@@ -301,6 +307,23 @@ index 32be4b9460..6bbed41d6d 100644
  
  # Indicate whether this is a release branch.
  experimental=false
+diff --git a/bfd/elf.c b/bfd/elf.c
+index a8d98a60f4..f02b7249dd 100644
+--- a/bfd/elf.c
++++ b/bfd/elf.c
+@@ -5934,7 +5934,11 @@ assign_file_positions_for_load_sections (bfd *abfd,
+ 	  _bfd_error_handler (_("%pB: error: PHDR segment not covered"
+ 				" by LOAD segment"),
+ 			      abfd);
+-	  return FALSE;
++	  if (link_info == NULL)
++	    return FALSE;
++	  /* Arrange for the linker to exit with an error, deleting
++	     the output file unless --noinhibit-exec is given.  */
++	  link_info->callbacks->info ("%X");
+ 	}
+ 
+       /* Check that all sections are in a PT_LOAD segment.
 diff --git a/bfd/elf32-msp430.c b/bfd/elf32-msp430.c
 index 184f01d4ee..784c32ed02 100644
 --- a/bfd/elf32-msp430.c
@@ -2166,10 +2189,16 @@ index 727cd72564..c23692e5c3 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index ea75ff6f00..999e0f4e33 100644
+index ea75ff6f00..ebbf64e893 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,6 +1,23 @@
+@@ -1,6 +1,29 @@
++2020-02-22  Alan Modra  <amodra@gmail.com>
++
++	PR 25585
++	* NEWS: Mention better "PHDR segment not covered by LOAD segment"
++	checking.
++
 +2020-02-14  Nick Clifton  <nickc@redhat.com>
 +
 +	Import from the mainline:
@@ -2193,6 +2222,23 @@ index ea75ff6f00..999e0f4e33 100644
  
  2020-01-29  Alan Modra  <amodra@gmail.com>
  
+diff --git a/ld/NEWS b/ld/NEWS
+index f659ccfc06..7734d23d5b 100644
+--- a/ld/NEWS
++++ b/ld/NEWS
+@@ -2,6 +2,12 @@
+ 
+ Changes in 2.34:
+ 
++* The ld check for "PHDR segment not covered by LOAD segment" is more
++  effective, catching cases that were wrongly allowed by previous versions of
++  ld.  If you see this error it is likely you are linking with a bad linker
++  script or the binary you are building is not intended to be loaded by a
++  dynamic loader.  In the latter case --no-dynamic-linker is appropriate.
++
+ * cr16c support removed.
+ 
+ * Add support for z80-elf.
 diff --git a/ld/configure b/ld/configure
 index 27b4341542..811134a503 100755
 --- a/ld/configure
