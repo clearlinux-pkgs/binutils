@@ -1,8 +1,18 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index dd2c11d918..e5da1b4658 100644
+index dd2c11d918..51eda90af1 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,6 +1,130 @@
+@@ -1,6 +1,140 @@
++2020-02-25  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR binutils/25584
++	* plugin.c (need_lto_wrapper_p): New.
++	(bfd_plugin_set_program_name): Add an int argument to set
++	need_lto_wrapper_p.
++	(get_lto_wrapper): Return FALSE if need_lto_wrapper_p isn't
++	set.
++	* plugin.h (bfd_plugin_set_program_name): Add an int argument.
++
 +2020-02-22  Alan Modra  <amodra@gmail.com>
 +
 +	PR 25585
@@ -796,7 +806,7 @@ index 184f01d4ee..784c32ed02 100644
  		/* That will change things, so, we should relax again.
  		   Note that this is not required, and it may be slow.  */
 diff --git a/bfd/plugin.c b/bfd/plugin.c
-index 537ab60311..93d562b9fe 100644
+index 537ab60311..c79468fab8 100644
 --- a/bfd/plugin.c
 +++ b/bfd/plugin.c
 @@ -69,7 +69,6 @@ dlerror (void)
@@ -807,7 +817,7 @@ index 537ab60311..93d562b9fe 100644
  #define bfd_plugin_bfd_free_cached_info		      _bfd_generic_bfd_free_cached_info
  #define bfd_plugin_new_section_hook		      _bfd_generic_new_section_hook
  #define bfd_plugin_get_section_contents		      _bfd_generic_get_section_contents
-@@ -124,13 +123,311 @@ message (int level ATTRIBUTE_UNUSED,
+@@ -124,13 +123,325 @@ message (int level ATTRIBUTE_UNUSED,
    return LDPS_OK;
  }
  
@@ -835,6 +845,17 @@ index 537ab60311..93d562b9fe 100644
 +  bfd_boolean initialized;
 +};
 +
++static const char *plugin_program_name;
++static int need_lto_wrapper_p;
++
++void
++bfd_plugin_set_program_name (const char *program_name,
++			     int need_lto_wrapper)
++{
++  plugin_program_name = program_name;
++  need_lto_wrapper_p = need_lto_wrapper;
++}
++
 +/* Use GCC LTO wrapper to covert LTO IR object to the real object.  */
 +
 +static bfd_boolean
@@ -852,6 +873,9 @@ index 537ab60311..93d562b9fe 100644
 +  char *p;
 +  char dir_seperator = '\0';
 +  char *resolution_file;
++
++  if (!need_lto_wrapper_p)
++    return FALSE;
 +
 +  if (plugin->initialized)
 +    {
@@ -1121,7 +1145,7 @@ index 537ab60311..93d562b9fe 100644
    return LDPS_OK;
  }
  
-@@ -143,13 +440,52 @@ add_symbols (void * handle,
+@@ -143,24 +454,55 @@ add_symbols (void * handle,
    struct plugin_data_struct *plugin_data =
      bfd_alloc (abfd, sizeof (plugin_data_struct));
  
@@ -1177,7 +1201,18 @@ index 537ab60311..93d562b9fe 100644
    return LDPS_OK;
  }
  
-@@ -212,34 +548,68 @@ try_claim (bfd *abfd)
+-static const char *plugin_program_name;
+-
+-void
+-bfd_plugin_set_program_name (const char *program_name)
+-{
+-  plugin_program_name = program_name;
+-}
+-
+ int
+ bfd_plugin_open_input (bfd *ibfd, struct ld_plugin_input_file *file)
+ {
+@@ -212,34 +554,68 @@ try_claim (bfd *abfd)
    struct ld_plugin_input_file file;
  
    file.handle = abfd;
@@ -1213,7 +1248,8 @@ index 537ab60311..93d562b9fe 100644
 +		  plugin_data->real_bfd = current_plugin->real_bfd;
 +		  plugin_data->real_nsyms = current_plugin->real_nsyms;
 +		  plugin_data->real_syms = current_plugin->real_syms;
-+
+ 
+-static struct plugin_list_entry * plugin_list = NULL;
 +		  /* Clean up LTO plugin.  */
 +		  if (current_plugin->cleanup_handler)
 +		    current_plugin->cleanup_handler ();
@@ -1232,8 +1268,7 @@ index 537ab60311..93d562b9fe 100644
 +      unlink (current_plugin->resolution_file);
 +      free (current_plugin->resolution_option);
 +    }
- 
--static struct plugin_list_entry * plugin_list = NULL;
++
 +  return claimed;
 +}
  
@@ -1252,20 +1287,20 @@ index 537ab60311..93d562b9fe 100644
    enum ld_plugin_status status;
 -  struct plugin_list_entry *plugin_list_iter;
 +  int result = 0;
-+
+ 
+-  *has_plugin_p = 0;
 +  /* NB: Each object is independent.  Reuse the previous plugin from
 +     the last run will lead to wrong result.  */
 +  if (current_plugin)
 +    memset (current_plugin, 0,
 +	    offsetof (struct plugin_list_entry, next));
- 
--  *has_plugin_p = 0;
++
 +  if (plugin_list_iter)
 +    pname = plugin_list_iter->plugin_name;
  
    plugin_handle = dlopen (pname, RTLD_NOW);
    if (!plugin_handle)
-@@ -248,32 +618,34 @@ try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
+@@ -248,32 +624,34 @@ try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
        return 0;
      }
  
@@ -1318,7 +1353,7 @@ index 537ab60311..93d562b9fe 100644
  
    i = 0;
    tv[i].tv_tag = LDPT_MESSAGE;
-@@ -287,35 +659,73 @@ try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
+@@ -287,35 +665,73 @@ try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
    tv[i].tv_tag = LDPT_ADD_SYMBOLS;
    tv[i].tv_u.tv_add_symbols = add_symbols;
  
@@ -1403,7 +1438,7 @@ index 537ab60311..93d562b9fe 100644
  
  static const bfd_target *(*ld_plugin_object_p) (bfd *);
  
-@@ -325,7 +735,6 @@ void
+@@ -325,7 +741,6 @@ void
  bfd_plugin_set_plugin (const char *p)
  {
    plugin_name = p;
@@ -1411,7 +1446,7 @@ index 537ab60311..93d562b9fe 100644
  }
  
  /* Return TRUE if a plugin library is used.  */
-@@ -333,7 +742,7 @@ bfd_plugin_set_plugin (const char *p)
+@@ -333,7 +748,7 @@ bfd_plugin_set_plugin (const char *p)
  bfd_boolean
  bfd_plugin_specified_p (void)
  {
@@ -1420,7 +1455,7 @@ index 537ab60311..93d562b9fe 100644
  }
  
  /* Return TRUE if ABFD can be claimed by linker LTO plugin.  */
-@@ -364,8 +773,8 @@ register_ld_plugin_object_p (const bfd_target *(*object_p) (bfd *))
+@@ -364,8 +779,8 @@ register_ld_plugin_object_p (const bfd_target *(*object_p) (bfd *))
    ld_plugin_object_p = object_p;
  }
  
@@ -1431,7 +1466,7 @@ index 537ab60311..93d562b9fe 100644
  {
    /* The intent was to search ${libdir}/bfd-plugins for plugins, but
       unfortunately the original implementation wasn't precisely that
-@@ -374,17 +783,10 @@ load_plugin (bfd *abfd)
+@@ -374,17 +789,10 @@ load_plugin (bfd *abfd)
    static const char *path[]
      = { LIBDIR "/bfd-plugins", BINDIR "/../lib/bfd-plugins" };
    struct stat last_st;
@@ -1451,7 +1486,7 @@ index 537ab60311..93d562b9fe 100644
  
    /* Try not to search the same dir twice, by looking at st_dev and
       st_ino for the dir.  If we are on a file system that always sets
-@@ -419,26 +821,38 @@ load_plugin (bfd *abfd)
+@@ -419,26 +827,38 @@ load_plugin (bfd *abfd)
  
  		  full_name = concat (plugin_dir, "/", ent->d_name, NULL);
  		  if (stat (full_name, &st) == 0 && S_ISREG (st.st_mode))
@@ -1502,7 +1537,7 @@ index 537ab60311..93d562b9fe 100644
  }
  
  
-@@ -562,7 +976,15 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
+@@ -562,7 +982,15 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
  			SEC_ALLOC | SEC_LOAD | SEC_CODE | SEC_HAS_CONTENTS);
    static asection fake_common_section
      = BFD_FAKE_SECTION (fake_common_section, NULL, "plug", 0, SEC_IS_COMMON);
@@ -1519,7 +1554,7 @@ index 537ab60311..93d562b9fe 100644
  
    for (i = 0; i < nsyms; i++)
      {
-@@ -587,6 +1009,15 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
+@@ -587,6 +1015,15 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
  	case LDPK_DEF:
  	case LDPK_WEAKDEF:
  	  s->section = &fake_section;
@@ -1535,7 +1570,7 @@ index 537ab60311..93d562b9fe 100644
  	  break;
  	default:
  	  BFD_ASSERT (0);
-@@ -635,6 +1066,24 @@ bfd_plugin_sizeof_headers (bfd *a ATTRIBUTE_UNUSED,
+@@ -635,6 +1072,24 @@ bfd_plugin_sizeof_headers (bfd *a ATTRIBUTE_UNUSED,
    return 0;
  }
  
@@ -1561,9 +1596,18 @@ index 537ab60311..93d562b9fe 100644
  {
    "plugin",			/* Name.  */
 diff --git a/bfd/plugin.h b/bfd/plugin.h
-index 098bf08455..05c3573933 100644
+index 098bf08455..b2d5e50137 100644
 --- a/bfd/plugin.h
 +++ b/bfd/plugin.h
+@@ -21,7 +21,7 @@
+ #ifndef _PLUGIN_H_
+ #define _PLUGIN_H_
+ 
+-void bfd_plugin_set_program_name (const char *);
++void bfd_plugin_set_program_name (const char *, int);
+ int bfd_plugin_open_input (bfd *, struct ld_plugin_input_file *);
+ void bfd_plugin_set_plugin (const char *);
+ bfd_boolean bfd_plugin_target_p (const bfd_target *);
 @@ -33,6 +33,9 @@ typedef struct plugin_data_struct
  {
    int nsyms;
@@ -1595,10 +1639,16 @@ index 697d7097e6..367775a83a 100644
 -m4_define([BFD_VERSION], [2.34])
 +m4_define([BFD_VERSION], [2.34.0])
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index 7be5ddc706..068b2dbb16 100644
+index 7be5ddc706..24b0515fd6 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
-@@ -1,6 +1,11 @@
+@@ -1,6 +1,17 @@
++2020-02-25  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR binutils/25584
++	* ar.c (main): Pass 0 to bfd_plugin_set_program_name.
++	* nm.c (main): Pass 1 to bfd_plugin_set_program_name.
++
 +2020-02-01  Nick Clifton  <nickc@redhat.com>
 +
 +	* configure: Regenerate.
@@ -1610,6 +1660,19 @@ index 7be5ddc706..068b2dbb16 100644
  
  2020-01-31  Nick Clifton  <nickc@redhat.com>
  
+diff --git a/binutils/ar.c b/binutils/ar.c
+index 1057db9980..35dd51e04a 100644
+--- a/binutils/ar.c
++++ b/binutils/ar.c
+@@ -725,7 +725,7 @@ main (int argc, char **argv)
+   xmalloc_set_program_name (program_name);
+   bfd_set_error_program_name (program_name);
+ #if BFD_SUPPORTS_PLUGINS
+-  bfd_plugin_set_program_name (program_name);
++  bfd_plugin_set_program_name (program_name, 0);
+ #endif
+ 
+   expandargv (&argc, &argv);
 diff --git a/binutils/configure b/binutils/configure
 index 7880de68df..a8dfd4bd68 100755
 --- a/binutils/configure
@@ -1696,6 +1759,19 @@ index 7880de68df..a8dfd4bd68 100755
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
+diff --git a/binutils/nm.c b/binutils/nm.c
+index 0ee3f88386..5b386592a6 100644
+--- a/binutils/nm.c
++++ b/binutils/nm.c
+@@ -1701,7 +1701,7 @@ main (int argc, char **argv)
+   xmalloc_set_program_name (program_name);
+   bfd_set_error_program_name (program_name);
+ #if BFD_SUPPORTS_PLUGINS
+-  bfd_plugin_set_program_name (program_name);
++  bfd_plugin_set_program_name (program_name, 1);
+ #endif
+ 
+   START_PROGRESS (program_name, 0);
 diff --git a/gas/ChangeLog b/gas/ChangeLog
 index 25d49fd4c4..8f1cc8cde8 100644
 --- a/gas/ChangeLog
