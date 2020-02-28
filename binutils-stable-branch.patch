@@ -1,8 +1,14 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index dd2c11d918..51eda90af1 100644
+index dd2c11d918..702416cd43 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,6 +1,140 @@
+@@ -1,6 +1,146 @@
++2020-02-27  Alan Modra  <amodra@gmail.com>
++
++	PR 24511
++	* syms.c (bfd_decode_symclass): Reverse order of coff_section_type
++	and decode_section_type calls.
++
 +2020-02-25  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR binutils/25584
@@ -1631,6 +1637,22 @@ index 9c457c3d91..501bc01088 100644
  "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
+diff --git a/bfd/syms.c b/bfd/syms.c
+index 128cf19145..8a8b74f3f9 100644
+--- a/bfd/syms.c
++++ b/bfd/syms.c
+@@ -705,9 +705,9 @@ bfd_decode_symclass (asymbol *symbol)
+     c = 'a';
+   else if (symbol->section)
+     {
+-      c = decode_section_type (symbol->section);
++      c = coff_section_type (symbol->section->name);
+       if (c == '?')
+-	c = coff_section_type (symbol->section->name);
++	c = decode_section_type (symbol->section);
+     }
+   else
+     return '?';
 diff --git a/bfd/version.m4 b/bfd/version.m4
 index 697d7097e6..367775a83a 100644
 --- a/bfd/version.m4
@@ -2265,10 +2287,16 @@ index 727cd72564..c23692e5c3 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index ea75ff6f00..ebbf64e893 100644
+index ea75ff6f00..58ee70b1b6 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,6 +1,29 @@
+@@ -1,6 +1,35 @@
++2020-02-28  Alan Modra  <amodra@gmail.com>
++
++	Apply from master
++	2020-02-19  Alan Modra  <amodra@gmail.com>
++	* testsuite/ld-plugin/pr25355.d: Allow alpha-linux nm result.
++
 +2020-02-22  Alan Modra  <amodra@gmail.com>
 +
 +	PR 25585
@@ -2427,13 +2455,13 @@ index 0000000000..99f01fb5c8
 +int nm_test_var2 = 1234;
 diff --git a/ld/testsuite/ld-plugin/pr25355.d b/ld/testsuite/ld-plugin/pr25355.d
 new file mode 100644
-index 0000000000..98d10aba1c
+index 0000000000..409189959a
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr25355.d
 @@ -0,0 +1,4 @@
 +#...
-+[0-9a-f]+ B _?nm_test_var
-+[0-9a-f]+ D _?nm_test_var2
++[0-9a-f]+ [BS] _?nm_test_var
++[0-9a-f]+ [DG] _?nm_test_var2
 +#pass
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
 index 6752a76483..e276bb589d 100644
