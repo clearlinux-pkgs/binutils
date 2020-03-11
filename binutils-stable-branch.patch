@@ -1,8 +1,12 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index dd2c11d918..702416cd43 100644
+index dd2c11d918..fd102a9cfe 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,6 +1,146 @@
+@@ -1,6 +1,150 @@
++2020-03-11  Alan Modra  <amodra@gmail.com>
++
++	* elf64-ppc.c (ppc64_elf_inline_plt): Do increment rel in for loop.
++
 +2020-02-27  Alan Modra  <amodra@gmail.com>
 +
 +	PR 24511
@@ -811,6 +815,19 @@ index 184f01d4ee..784c32ed02 100644
  
  		/* That will change things, so, we should relax again.
  		   Note that this is not required, and it may be slow.  */
+diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
+index 73ea2865fd..bea722c6b9 100644
+--- a/bfd/elf64-ppc.c
++++ b/bfd/elf64-ppc.c
+@@ -7507,7 +7507,7 @@ ppc64_elf_inline_plt (struct bfd_link_info *info)
+ 	      return FALSE;
+ 
+ 	    relend = relstart + sec->reloc_count;
+-	    for (rel = relstart; rel < relend; )
++	    for (rel = relstart; rel < relend; rel++)
+ 	      {
+ 		enum elf_ppc64_reloc_type r_type;
+ 		unsigned long r_symndx;
 diff --git a/bfd/plugin.c b/bfd/plugin.c
 index 537ab60311..c79468fab8 100644
 --- a/bfd/plugin.c
