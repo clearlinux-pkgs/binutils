@@ -1888,7 +1888,7 @@ index 5ed7302da7..9a3f352108 100644
  
  * Add support for z80-elf target.
 diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
-index bb0b03e35e..2ee2718744 100644
+index bb0b03e35e..8ad2d6d3bd 100644
 --- a/gas/config/tc-arm.c
 +++ b/gas/config/tc-arm.c
 @@ -7046,6 +7046,8 @@ enum operand_parse_code
@@ -1920,12 +1920,11 @@ index bb0b03e35e..2ee2718744 100644
  	case OP_RNDMQR:
  	  po_reg_or_goto (REG_TYPE_RN, try_rndmq);
  	  break;
-@@ -7456,6 +7464,13 @@ parse_operands (char *str, const unsigned int *pattern, bfd_boolean thumb)
+@@ -7456,6 +7464,12 @@ parse_operands (char *str, const unsigned int *pattern, bfd_boolean thumb)
  	case OP_RVSD_COND:
  	  po_reg_or_goto (REG_TYPE_VFSD, try_cond);
  	  break;
 +	case OP_oRNSDMQ:
-+	case OP_RNSDMQ:
 +	  po_reg_or_goto (REG_TYPE_NSD, try_mq2);
 +	  break;
 +	  try_mq2:
@@ -1934,7 +1933,7 @@ index bb0b03e35e..2ee2718744 100644
  	case OP_oRNSDQ:
  	case OP_RNSDQ: po_reg_or_fail (REG_TYPE_NSDQ);    break;
  	case OP_RNSDQMQR:
-@@ -19542,7 +19557,7 @@ neon_mixed_length (struct neon_type_el et, unsigned size)
+@@ -19542,7 +19556,7 @@ neon_mixed_length (struct neon_type_el et, unsigned size)
  static void
  do_neon_dyadic_long (void)
  {
@@ -1943,7 +1942,7 @@ index bb0b03e35e..2ee2718744 100644
    if (rs == NS_QDD)
      {
        if (vfp_or_neon_is_neon (NEON_CHECK_ARCH | NEON_CHECK_CC) == FAIL)
-@@ -26039,8 +26054,8 @@ static const struct asm_opcode insns[] =
+@@ -26039,8 +26053,8 @@ static const struct asm_opcode insns[] =
  #define ARM_VARIANT & fpu_neon_ext_v1
   mnUF(vabd,      _vabd,		  3, (RNDQMQ, oRNDQMQ, RNDQMQ), neon_dyadic_if_su),
   mnUF(vabdl,     _vabdl,	  3, (RNQMQ, RNDMQ, RNDMQ),   neon_dyadic_long),
