@@ -1,8 +1,13 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index dd2c11d918..fd102a9cfe 100644
+index dd2c11d918..f8abe540ba 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,6 +1,150 @@
+@@ -1,6 +1,155 @@
++2020-03-24  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR binutils/25717
++	* elf-bfd.h (elf_obj_tdata): Change num_group to unsigned int.
++
 +2020-03-11  Alan Modra  <amodra@gmail.com>
 +
 +	* elf64-ppc.c (ppc64_elf_inline_plt): Do increment rel in for loop.
@@ -327,6 +332,19 @@ index 32be4b9460..6bbed41d6d 100644
  
  # Indicate whether this is a release branch.
  experimental=false
+diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
+index cbbba153f4..1550a08b31 100644
+--- a/bfd/elf-bfd.h
++++ b/bfd/elf-bfd.h
+@@ -1937,7 +1937,7 @@ struct elf_obj_tdata
+   struct sdt_note *sdt_note_head;
+ 
+   Elf_Internal_Shdr **group_sect_ptr;
+-  int num_group;
++  unsigned int num_group;
+ 
+   /* Index into group_sect_ptr, updated by setup_group when finding a
+      section's group.  Used to optimize subsequent group searches.  */
 diff --git a/bfd/elf.c b/bfd/elf.c
 index a8d98a60f4..f02b7249dd 100644
 --- a/bfd/elf.c
