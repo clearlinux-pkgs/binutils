@@ -2159,10 +2159,16 @@ index 727cd72564..c23692e5c3 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/include/ChangeLog b/include/ChangeLog
-index c7fd4ab141..ec64261681 100644
+index c7fd4ab141..2cf472a5df 100644
 --- a/include/ChangeLog
 +++ b/include/ChangeLog
-@@ -1,3 +1,27 @@
+@@ -1,3 +1,33 @@
++2020-04-01  Martin Liska  <mliska@suse.cz>
++	    Maciej W. Rozycki <macro@linux-mips.org>
++
++	PR lto/94249
++	* plugin-api.h: Fix a typo.
++
 +2020-03-25  Martin Liska  <mliska@suse.cz>
 +
 +	PR lto/94249
@@ -2213,7 +2219,7 @@ index 0ce0de1012..81a288f5fb 100644
 +
  #endif /* GCC_LTO_SYMTAB_H  */
 diff --git a/include/plugin-api.h b/include/plugin-api.h
-index 09e1202df0..864d2bf91a 100644
+index 09e1202df0..e317d78478 100644
 --- a/include/plugin-api.h
 +++ b/include/plugin-api.h
 @@ -37,6 +37,60 @@
@@ -2234,7 +2240,7 @@ index 09e1202df0..864d2bf91a 100644
 +/* Older GCC releases (<4.6.0) can make detection from glibc macros.  */
 +#if defined(__GLIBC__) || defined(__GNU_LIBRARY__) || defined(__ANDROID__)
 +#include <endian.h>
-+#ifdef _BYTE_ORDER
++#ifdef __BYTE_ORDER
 +#if __BYTE_ORDER == __LITTLE_ENDIAN
 +#define PLUGIN_LITTLE_ENDIAN 1
 +#elif __BYTE_ORDER == __BIG_ENDIAN
