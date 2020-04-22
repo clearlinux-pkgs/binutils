@@ -1,8 +1,17 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index dd2c11d918..1b57d6b071 100644
+index dd2c11d918..ca87f744a3 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,6 +1,215 @@
+@@ -1,6 +1,224 @@
++2020-04-21  Tamar Christina  <tamar.christina@arm.com>
++
++	Backport from mainline.
++	2020-04-21  Tamar Christina  <tamar.christina@arm.com>
++
++	PR binutils/24753
++	* compress.c (bfd_get_full_section_contents): Exclude sections with no
++	content.
++
 +2020-04-08  Tamar Christina  <tamar.christina@arm.com>
 +
 +	Backport from mainline.
@@ -235,6 +244,20 @@ index 2bfcf1a6b1..3ddd2d89a8 100644
        if (!_bfd_coff_free_symbols (abfd))
  	return FALSE;
      }
+diff --git a/bfd/compress.c b/bfd/compress.c
+index ce6bb2beae..728ba39dfb 100644
+--- a/bfd/compress.c
++++ b/bfd/compress.c
+@@ -255,6 +255,9 @@ bfd_get_full_section_contents (bfd *abfd, sec_ptr sec, bfd_byte **ptr)
+ 	      /* PR 24753: Linker created sections can be larger than
+ 		 the file size, eg if they are being used to hold stubs.  */
+ 	      && (bfd_section_flags (sec) & SEC_LINKER_CREATED) == 0
++	      /* PR 24753: Sections which have no content should also be
++		 excluded as they contain no size on disk.  */
++	      && (bfd_section_flags (sec) & SEC_HAS_CONTENTS) != 0
+ 	      /* The MMO file format supports its own special compression
+ 		 technique, but it uses COMPRESS_SECTION_NONE when loading
+ 		 a section's contents.  */
 diff --git a/bfd/configure b/bfd/configure
 index 9cba071955..bc576b7894 100755
 --- a/bfd/configure
@@ -1504,10 +1527,19 @@ index 35842f74b2..6ecfab5d5a 100644
  	      else
  		{
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 25d49fd4c4..4ad599ae79 100644
+index 25d49fd4c4..3ebb0aa53e 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,6 +1,55 @@
+@@ -1,6 +1,64 @@
++2020-04-21  Tamar Christina  <tamar.christina@arm.com>
++
++	Backport from mainline.
++	2020-04-21  Tamar Christina  <tamar.christina@arm.com>
++
++	PR binutils/24753
++	* testsuite/gas/arm/pr24753.d: New test.
++	* testsuite/gas/arm/pr24753.s: New test.
++
 +2020-03-13  Andre Vieira  <andre.simoesdiasvieira@arm.com>
 +
 +	Backport from mainline.
@@ -2072,6 +2104,37 @@ index 0000000000..50b12a0d5d
 +[^>]*> ee30 0a06 	vaddle.f32	s0, s0, s12
 +[^>]*> ee30 0b41 	vsuble.f64	d0, d0, d1
 +#...
+diff --git a/gas/testsuite/gas/arm/pr24753.d b/gas/testsuite/gas/arm/pr24753.d
+new file mode 100644
+index 0000000000..01990d1ff5
+--- /dev/null
++++ b/gas/testsuite/gas/arm/pr24753.d
+@@ -0,0 +1,7 @@
++#skip: *-*-pe *-*-wince *-*-vxworks
++#objdump: -d
++#name: PR24753: Don't error on sections with no content size mismatch with file
++
++.*: +file format .*arm.*
++
++#...
+diff --git a/gas/testsuite/gas/arm/pr24753.s b/gas/testsuite/gas/arm/pr24753.s
+new file mode 100644
+index 0000000000..5ba33fd29c
+--- /dev/null
++++ b/gas/testsuite/gas/arm/pr24753.s
+@@ -0,0 +1,12 @@
++.text
++.global _start
++_start:
++	nop
++
++.section .text2, "ax", %progbits
++_func:
++	nop
++
++.bss
++.fill 0x8000
++
 diff --git a/gas/testsuite/gas/i386/i386.exp b/gas/testsuite/gas/i386/i386.exp
 index 9be9c1a22e..a9b1d0c3b9 100644
 --- a/gas/testsuite/gas/i386/i386.exp
