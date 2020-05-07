@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.34
-Release  : 354
+Release  : 355
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.34.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.34.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.34.tar.xz.sig
@@ -34,14 +34,8 @@ Patch1: binutils-stable-branch.patch
 Patch2: binutils-add-LD_AS_NEEDED-global-env.patch
 
 %description
-These are the GNU binutils.  These are utilities of use when dealing
-with binary files, either object files or executables.  These tools
-consist of the linker (ld), the assembler (gas), and the profiler
-(gprof) each of which have their own sub-directory named after them.
-There is also a collection of other binary tools, including the
-disassembler (objdump) in this directory.  These tools make use of a
-pair of libraries (bfd and opcodes) and a common set of header files
-(include).
+This directory contains various GNU compilers, assemblers, linkers,
+debuggers, etc., plus their support routines, definitions, and documentation.
 
 %package bin
 Summary: bin components for the binutils package.
@@ -58,7 +52,6 @@ Group: Development
 Requires: binutils-lib = %{version}-%{release}
 Requires: binutils-bin = %{version}-%{release}
 Provides: binutils-devel = %{version}-%{release}
-Requires: binutils = %{version}-%{release}
 Requires: binutils = %{version}-%{release}
 
 %description dev
@@ -118,7 +111,6 @@ man components for the binutils package.
 Summary: staticdev components for the binutils package.
 Group: Default
 Requires: binutils-dev = %{version}-%{release}
-Requires: binutils-dev = %{version}-%{release}
 
 %description staticdev
 staticdev components for the binutils package.
@@ -159,16 +151,15 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1586443966
-# -Werror is for werrorists
+export SOURCE_DATE_EPOCH=1588869135
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
 export NM=gcc-nm
-export CFLAGS="$CFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
-export FCFLAGS="$CFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
-export FFLAGS="$CFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
-export CXXFLAGS="$CXXFLAGS -O3 -fcf-protection=full -ffat-lto-objects -flto=4 -fstack-protector-strong "
+export CFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
+export FCFLAGS="$FFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
+export FFLAGS="$FFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
+export CXXFLAGS="$CXXFLAGS -O3 -ffat-lto-objects -flto=4 -fstack-protector-strong -mzero-caller-saved-regs=used "
 make  %{?_smp_mflags}  tooldir=/usr
 
 
@@ -180,7 +171,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1586443966
+export SOURCE_DATE_EPOCH=1588869135
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-2.34/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
