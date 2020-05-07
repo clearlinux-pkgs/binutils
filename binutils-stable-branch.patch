@@ -1527,10 +1527,20 @@ index 35842f74b2..6ecfab5d5a 100644
  	      else
  		{
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 25d49fd4c4..3ebb0aa53e 100644
+index 25d49fd4c4..901af53f54 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,6 +1,64 @@
+@@ -1,6 +1,74 @@
++2020-05-07  Andre Vieira  <andre.simoesdiasvieira@arm.com>
++
++	Backport from mainline.
++	2020-05-04  Andre Vieira  <andre.simoesdiasvieira@arm.com>
++
++	PR gas/25863
++	* config/tc-arm.c (do_mve_vmull): Fix scalar and NEON parsing of vmul.
++	* testsuite/gas/arm/mve-scalar-vmult-it.d: New test.
++	* testsuite/gas/arm/mve-scalar-vmult-it.s: New test.
++
 +2020-04-21  Tamar Christina  <tamar.christina@arm.com>
 +
 +	Backport from mainline.
@@ -1612,7 +1622,7 @@ index 5ed7302da7..9a3f352108 100644
  
  * Add support for z80-elf target.
 diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
-index bb0b03e35e..8ad2d6d3bd 100644
+index bb0b03e35e..7550f9096c 100644
 --- a/gas/config/tc-arm.c
 +++ b/gas/config/tc-arm.c
 @@ -7046,6 +7046,8 @@ enum operand_parse_code
@@ -1657,7 +1667,30 @@ index bb0b03e35e..8ad2d6d3bd 100644
  	case OP_oRNSDQ:
  	case OP_RNSDQ: po_reg_or_fail (REG_TYPE_NSDQ);    break;
  	case OP_RNSDQMQR:
-@@ -19542,7 +19556,7 @@ neon_mixed_length (struct neon_type_el et, unsigned size)
+@@ -18207,19 +18221,13 @@ do_mve_vmull (void)
+ 
+   enum neon_shape rs = neon_select_shape (NS_HHH, NS_FFF, NS_DDD, NS_DDS,
+ 					  NS_QQS, NS_QQQ, NS_QQR, NS_NULL);
+-  if (!ARM_CPU_HAS_FEATURE (cpu_variant, mve_ext)
+-      && inst.cond == COND_ALWAYS
++  if (inst.cond == COND_ALWAYS
+       && ((unsigned)inst.instruction) == M_MNEM_vmullt)
+     {
++
+       if (rs == NS_QQQ)
+ 	{
+-
+-	  struct neon_type_el et = neon_check_type (3, rs, N_EQK , N_EQK,
+-						    N_SUF_32 | N_F64 | N_P8
+-						    | N_P16 | N_I_MVE | N_KEY);
+-	  if (((et.type == NT_poly) && et.size == 8
+-	       && ARM_CPU_IS_ANY (cpu_variant))
+-	      || (et.type == NT_integer) || (et.type == NT_float))
++	  if (!ARM_CPU_HAS_FEATURE (cpu_variant, mve_ext))
+ 	    goto neon_vmul;
+ 	}
+       else
+@@ -19542,7 +19550,7 @@ neon_mixed_length (struct neon_type_el et, unsigned size)
  static void
  do_neon_dyadic_long (void)
  {
@@ -1666,7 +1699,7 @@ index bb0b03e35e..8ad2d6d3bd 100644
    if (rs == NS_QDD)
      {
        if (vfp_or_neon_is_neon (NEON_CHECK_ARCH | NEON_CHECK_CC) == FAIL)
-@@ -26039,8 +26053,8 @@ static const struct asm_opcode insns[] =
+@@ -26039,8 +26047,8 @@ static const struct asm_opcode insns[] =
  #define ARM_VARIANT & fpu_neon_ext_v1
   mnUF(vabd,      _vabd,		  3, (RNDQMQ, oRNDQMQ, RNDQMQ), neon_dyadic_if_su),
   mnUF(vabdl,     _vabdl,	  3, (RNQMQ, RNDMQ, RNDMQ),   neon_dyadic_long),
@@ -1980,6 +2013,34 @@ index 0000000000..9ef0ad532f
 +	bfcvtnt z0.h, p1/m, z2.s
 +
 +	ret
+diff --git a/gas/testsuite/gas/arm/mve-scalar-vmul-it.d b/gas/testsuite/gas/arm/mve-scalar-vmul-it.d
+new file mode 100644
+index 0000000000..f4564a5e80
+--- /dev/null
++++ b/gas/testsuite/gas/arm/mve-scalar-vmul-it.d
+@@ -0,0 +1,11 @@
++# name: Armv8.1-M Mainline scalar vmul instructions in it blocks (with MVE)
++# as: -march=armv8.1-m.main+mve.fp+fp.dp
++# objdump: -dr --prefix-addresses --show-raw-insn -marmv8.1-m.main
++
++.*: +file format .*arm.*
++
++Disassembly of section .text:
++[^>]*> bfbc      	itt	lt
++[^>]*> ee20 0a81 	vmullt.f32	s0, s1, s2
++[^>]*> ee21 0b02 	vmullt.f64	d0, d1, d2
++#...
+diff --git a/gas/testsuite/gas/arm/mve-scalar-vmul-it.s b/gas/testsuite/gas/arm/mve-scalar-vmul-it.s
+new file mode 100644
+index 0000000000..e6c24acdfc
+--- /dev/null
++++ b/gas/testsuite/gas/arm/mve-scalar-vmul-it.s
+@@ -0,0 +1,5 @@
++.syntax unified
++.text
++itt lt
++vmullt.f32 s0, s1, s2
++vmullt.f64 d0, d1, d2
 diff --git a/gas/testsuite/gas/arm/mve-vaddsub-it-bad.d b/gas/testsuite/gas/arm/mve-vaddsub-it-bad.d
 new file mode 100644
 index 0000000000..1889c216f1
