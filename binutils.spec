@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.34
-Release  : 357
+Release  : 358
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.34.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.34.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.34.tar.xz.sig
