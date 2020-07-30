@@ -1,8 +1,15 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 87cd2916c9..65d9aa7087 100644
+index 87cd2916c9..3121a090a9 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,9 @@
+@@ -1,3 +1,16 @@
++2020-07-30  Szabolcs Nagy  <szabolcs.nagy@arm.com>
++
++	PR ld/26312
++	* elfnn-aarch64.c (elfNN_aarch64_init_small_plt0_entry): Set sh_entsize
++	to 0.
++	(elfNN_aarch64_finish_dynamic_sections): Remove sh_entsize setting.
++
 +2020-07-24  Nick Clifton  <nickc@redhat.com>
 +
 +	* version.m4: Set to 2.35.0
@@ -111,6 +118,35 @@ index 32be4b9460..6bbed41d6d 100644
  
  # Indicate whether this is a release branch.
  experimental=false
+diff --git a/bfd/elfnn-aarch64.c b/bfd/elfnn-aarch64.c
+index 8f1e5e1e45..312d11b4ff 100644
+--- a/bfd/elfnn-aarch64.c
++++ b/bfd/elfnn-aarch64.c
+@@ -9512,8 +9512,11 @@ elfNN_aarch64_init_small_plt0_entry (bfd *output_bfd ATTRIBUTE_UNUSED,
+ 
+   memcpy (htab->root.splt->contents, htab->plt0_entry,
+ 	  htab->plt_header_size);
+-  elf_section_data (htab->root.splt->output_section)->this_hdr.sh_entsize =
+-    htab->plt_header_size;
++
++  /* PR 26312: Explicitly set the sh_entsize to 0 so that
++     consumers do not think that the section contains fixed
++     sized objects.  */
++  elf_section_data (htab->root.splt->output_section)->this_hdr.sh_entsize = 0;
+ 
+   plt_got_2nd_ent = (htab->root.sgotplt->output_section->vma
+ 		  + htab->root.sgotplt->output_offset
+@@ -9615,10 +9618,6 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
+     {
+       elfNN_aarch64_init_small_plt0_entry (output_bfd, htab);
+ 
+-      elf_section_data (htab->root.splt->output_section)->
+-	this_hdr.sh_entsize = htab->plt_entry_size;
+-
+-
+       if (htab->root.tlsdesc_plt && !(info->flags & DF_BIND_NOW))
+ 	{
+ 	  BFD_ASSERT (htab->root.tlsdesc_got != (bfd_vma)-1);
 diff --git a/bfd/version.m4 b/bfd/version.m4
 index 0c4dec10c7..8c9222098b 100644
 --- a/bfd/version.m4
