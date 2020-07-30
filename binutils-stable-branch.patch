@@ -217,10 +217,15 @@ index 771184eab9..89c99abfeb 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c2dd314636..9af16a03a2 100644
+index c2dd314636..cba6df5b17 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,18 @@
+@@ -1,3 +1,23 @@
++2020-07-30  Nick Clifton  <nickc@redhat.com>
++
++	* as.c (dwatf_level): Default to level 3 in case version is not
++	set on the command line.
++
 +2020-07-28  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR gas/26305
@@ -239,6 +244,22 @@ index c2dd314636..9af16a03a2 100644
  2020-07-24  Nick Clifton  <nickc@redhat.com>
  
  	2.35 Release:
+diff --git a/gas/as.c b/gas/as.c
+index 4c5881abd8..a04e615d35 100644
+--- a/gas/as.c
++++ b/gas/as.c
+@@ -102,8 +102,9 @@ int verbose = 0;
+    MD_AFTER_PARSE_ARGS.  */
+ int flag_dwarf_cie_version = -1;
+ 
+-/* The maximum level of DWARF DEBUG information we should manufacture.  */
+-unsigned int dwarf_level = 0;
++/* The maximum level of DWARF DEBUG information we should manufacture.
++   This defaults to 3 unless overridden by a command line option.  */
++unsigned int dwarf_level = 3;
+ 
+ #if defined OBJ_ELF || defined OBJ_MAYBE_ELF
+ int flag_use_elf_stt_common = DEFAULT_GENERATE_ELF_STT_COMMON;
 diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
 index ed514cf986..7c8466c6a3 100644
 --- a/gas/config/tc-i386.c
