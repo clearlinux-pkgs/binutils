@@ -253,10 +253,39 @@ index 771184eab9..89c99abfeb 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c2dd314636..cba6df5b17 100644
+index c2dd314636..879c34b103 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,23 @@
+@@ -1,3 +1,52 @@
++2020-08-04  H.J. Lu  <hongjiu.lu@intel.com>
++
++	* NEWS: Mention {disp16} pseudo prefix.
++
++2020-08-04  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR gas/26305
++	* config/tc-i386.c (_i386_insn::disp_encoding): Add
++	disp_encoding_16bit.
++	(parse_insn): Check Prefix_XXX for pseudo prefixes.  Handle
++	{disp16}.
++	(build_modrm_byte): Handle {disp16}.
++	(i386_index_check): Check invalid {disp16} and {disp32} pseudo
++	prefixes.
++	* doc/c-i386.texi: Update {disp32} documentation and document
++	{disp16}.
++	* testsuite/gas/i386/i386.exp: Run x86-64-inval-pseudo.
++	* testsuite/gas/i386/inval-pseudo.s: Add {disp32}/{disp16}
++	tests.
++	* testsuite/gas/i386/pseudos.s: Add {disp8}/{disp32} vmovaps
++	tests with 128-byte displacement.  Add {disp16} tests.
++	* testsuite/gas/i386/x86-64-pseudos.s: Add {disp8}/{disp32}
++	vmovaps test.  Add (%r13)/(%r13d) tests.
++	* testsuite/gas/i386/x86-64-inval-pseudo.l: New file.
++	* testsuite/gas/i386/x86-64-inval-pseudo.s: Likewise.
++	* testsuite/gas/i386/inval-pseudo.l: Updated.
++	* testsuite/gas/i386/pseudos.d: Likewise.
++	* testsuite/gas/i386/x86-64-pseudos.d: Likewise.
++
 +2020-07-30  Nick Clifton  <nickc@redhat.com>
 +
 +	* as.c (dwatf_level): Default to level 3 in case version is not
@@ -280,6 +309,18 @@ index c2dd314636..cba6df5b17 100644
  2020-07-24  Nick Clifton  <nickc@redhat.com>
  
  	2.35 Release:
+diff --git a/gas/NEWS b/gas/NEWS
+index 737bbffead..7e410716b9 100644
+--- a/gas/NEWS
++++ b/gas/NEWS
+@@ -1,5 +1,7 @@
+ -*- text -*-
+ 
++* Add {disp16} pseudo prefix to x86 assembler.
++
+ Changes in 2.35:
+ 
+ * X86 NaCl target support is removed.
 diff --git a/gas/as.c b/gas/as.c
 index 4c5881abd8..a04e615d35 100644
 --- a/gas/as.c
@@ -297,24 +338,106 @@ index 4c5881abd8..a04e615d35 100644
  #if defined OBJ_ELF || defined OBJ_MAYBE_ELF
  int flag_use_elf_stt_common = DEFAULT_GENERATE_ELF_STT_COMMON;
 diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
-index ed514cf986..7c8466c6a3 100644
+index ed514cf986..037fe4d18b 100644
 --- a/gas/config/tc-i386.c
 +++ b/gas/config/tc-i386.c
-@@ -8084,7 +8084,12 @@ build_modrm_byte (void)
+@@ -404,11 +404,12 @@ struct _i386_insn
+ 	dir_encoding_swap
+       } dir_encoding;
+ 
+-    /* Prefer 8bit or 32bit displacement in encoding.  */
++    /* Prefer 8bit, 16bit, 32bit displacement in encoding.  */
+     enum
+       {
+ 	disp_encoding_default = 0,
+ 	disp_encoding_8bit,
++	disp_encoding_16bit,
+ 	disp_encoding_32bit
+       } disp_encoding;
+ 
+@@ -5075,39 +5076,43 @@ parse_insn (char *line, char *mnemonic)
+ 	      /* Handle pseudo prefixes.  */
+ 	      switch (current_templates->start->base_opcode)
+ 		{
+-		case 0x0:
++		case Prefix_Disp8:
+ 		  /* {disp8} */
+ 		  i.disp_encoding = disp_encoding_8bit;
+ 		  break;
+-		case 0x1:
++		case Prefix_Disp16:
++		  /* {disp16} */
++		  i.disp_encoding = disp_encoding_16bit;
++		  break;
++		case Prefix_Disp32:
+ 		  /* {disp32} */
+ 		  i.disp_encoding = disp_encoding_32bit;
+ 		  break;
+-		case 0x2:
++		case Prefix_Load:
+ 		  /* {load} */
+ 		  i.dir_encoding = dir_encoding_load;
+ 		  break;
+-		case 0x3:
++		case Prefix_Store:
+ 		  /* {store} */
+ 		  i.dir_encoding = dir_encoding_store;
+ 		  break;
+-		case 0x4:
++		case Prefix_VEX:
+ 		  /* {vex} */
+ 		  i.vec_encoding = vex_encoding_vex;
+ 		  break;
+-		case 0x5:
++		case Prefix_VEX3:
+ 		  /* {vex3} */
+ 		  i.vec_encoding = vex_encoding_vex3;
+ 		  break;
+-		case 0x6:
++		case Prefix_EVEX:
+ 		  /* {evex} */
+ 		  i.vec_encoding = vex_encoding_evex;
+ 		  break;
+-		case 0x7:
++		case Prefix_REX:
+ 		  /* {rex} */
+ 		  i.rex_encoding = TRUE;
+ 		  break;
+-		case 0x8:
++		case Prefix_NoOptimize:
+ 		  /* {nooptimize} */
+ 		  i.no_optimize = TRUE;
+ 		  break;
+@@ -8084,7 +8089,10 @@ build_modrm_byte (void)
  		      if (operand_type_check (i.types[op], disp) == 0)
  			{
  			  /* fake (%bp) into 0(%bp)  */
 -			  i.types[op].bitfield.disp8 = 1;
-+			  if (i.disp_encoding == disp_encoding_32bit)
-+			    /* NB: Use disp16 since there is no disp32
-+			       in 16-bit mode.  */
++			  if (i.disp_encoding == disp_encoding_16bit)
 +			    i.types[op].bitfield.disp16 = 1;
 +			  else
 +			    i.types[op].bitfield.disp8 = 1;
  			  fake_zero_displacement = 1;
  			}
  		    }
-@@ -8129,7 +8134,10 @@ build_modrm_byte (void)
+@@ -8094,6 +8102,16 @@ build_modrm_byte (void)
+ 		default: /* (%si) -> 4 or (%di) -> 5  */
+ 		  i.rm.regmem = i.base_reg->reg_num - 6 + 4;
+ 		}
++	      if (!fake_zero_displacement
++		  && !i.disp_operands
++		  && i.disp_encoding)
++		{
++		  fake_zero_displacement = 1;
++		  if (i.disp_encoding == disp_encoding_8bit)
++		    i.types[op].bitfield.disp8 = 1;
++		  else
++		    i.types[op].bitfield.disp16 = 1;
++		}
+ 	      i.rm.mode = mode_from_disp_size (i.types[op]);
+ 	    }
+ 	  else /* i.base_reg and 32/64 bit mode  */
+@@ -8129,7 +8147,10 @@ build_modrm_byte (void)
  	      if (i.base_reg->reg_num == 5 && i.disp_operands == 0)
  		{
  		  fake_zero_displacement = 1;
@@ -326,6 +449,31 @@ index ed514cf986..7c8466c6a3 100644
  		}
  	      i.sib.scale = i.log2_scale_factor;
  	      if (i.index_reg == 0)
+@@ -10902,6 +10923,14 @@ i386_index_check (const char *operand_string)
+       if (addr_mode != CODE_16BIT)
+ 	{
+ 	  /* 32-bit/64-bit checks.  */
++	  if (i.disp_encoding == disp_encoding_16bit)
++	    {
++	    bad_disp:
++	      as_bad (_("invalid `%s' prefix"),
++		      addr_mode == CODE_16BIT ? "{disp32}" : "{disp16}");
++	      return 0;
++	    }
++
+ 	  if ((i.base_reg
+ 	       && ((addr_mode == CODE_64BIT
+ 		    ? !i.base_reg->reg_type.bitfield.qword
+@@ -10938,6 +10967,9 @@ i386_index_check (const char *operand_string)
+       else
+ 	{
+ 	  /* 16-bit checks.  */
++	  if (i.disp_encoding == disp_encoding_32bit)
++	    goto bad_disp;
++
+ 	  if ((i.base_reg
+ 	       && (!i.base_reg->reg_type.bitfield.word
+ 		   || !i.base_reg->reg_type.bitfield.baseindex))
 diff --git a/gas/configure b/gas/configure
 index 13bef1e48c..5bccfd9d1b 100755
 --- a/gas/configure
@@ -413,57 +561,148 @@ index 13bef1e48c..5bccfd9d1b 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/gas/doc/c-i386.texi b/gas/doc/c-i386.texi
-index f3183f1ddb..a7dbef0b26 100644
+index f3183f1ddb..2a7551dfeb 100644
 --- a/gas/doc/c-i386.texi
 +++ b/gas/doc/c-i386.texi
-@@ -816,7 +816,7 @@ Different encoding options can be specified via pseudo prefixes:
- @samp{@{disp8@}} -- prefer 8-bit displacement.
- 
+@@ -818,6 +818,9 @@ Different encoding options can be specified via pseudo prefixes:
  @item
--@samp{@{disp32@}} -- prefer 32-bit displacement.
-+@samp{@{disp32@}} -- prefer 32-bit (16-bit in 16-bit mode) displacement.
+ @samp{@{disp32@}} -- prefer 32-bit displacement.
  
++@item
++@samp{@{disp16@}} -- prefer 16-bit displacement.
++
  @item
  @samp{@{load@}} -- prefer load-form instruction.
+ 
+diff --git a/gas/testsuite/gas/i386/i386.exp b/gas/testsuite/gas/i386/i386.exp
+index 55929d3acb..6380ec8239 100644
+--- a/gas/testsuite/gas/i386/i386.exp
++++ b/gas/testsuite/gas/i386/i386.exp
+@@ -1081,6 +1081,7 @@ if [expr ([istarget "i*86-*-*"] || [istarget "x86_64-*-*"]) && [gas_64_check]] t
+     run_list_test "x86-64-cet-shstk-inval"
+     run_dump_test "x86-64-pseudos"
+     run_list_test "x86-64-pseudos-bad"
++    run_list_test "x86-64-inval-pseudo" "-al"
+     run_dump_test "x86-64-notrack"
+     run_dump_test "x86-64-notrack-intel"
+     run_list_test "x86-64-notrackbad" "-al"
+diff --git a/gas/testsuite/gas/i386/inval-pseudo.l b/gas/testsuite/gas/i386/inval-pseudo.l
+index cf344f6986..9df0a9851f 100644
+--- a/gas/testsuite/gas/i386/inval-pseudo.l
++++ b/gas/testsuite/gas/i386/inval-pseudo.l
+@@ -1,5 +1,7 @@
+ .*: Assembler messages:
+ .*:3: Error: .*
++.*:5: Error: .*
++.*:6: Error: .*
+ GAS LISTING .*
+ 
+ 
+@@ -7,5 +9,7 @@ GAS LISTING .*
+ [ 	]*2[ 	]+\?\?\?\? 90       		nop
+ [ 	]*3[ 	]+\{disp32\}
+ [ 	]*4[ 	]+\?\?\?\? 90       		nop
+-[ 	]*5[ 	]+\?\?\?\? 00000000 		\.p2align 4,0
++[ 	]*5[ 	]+\{disp32\} movb \(%bp\),%al
++[ 	]*6[ 	]+\{disp16\} movb \(%ebp\),%al
++[ 	]*7[ 	]+\?\?\?\? 00000000 		\.p2align 4,0
+ #...
+diff --git a/gas/testsuite/gas/i386/inval-pseudo.s b/gas/testsuite/gas/i386/inval-pseudo.s
+index a40362b8f9..b5a6233eb1 100644
+--- a/gas/testsuite/gas/i386/inval-pseudo.s
++++ b/gas/testsuite/gas/i386/inval-pseudo.s
+@@ -2,4 +2,6 @@
+ 	nop
+ 	{disp32}
+ 	nop
++	{disp32} movb (%bp),%al
++	{disp16} movb (%ebp),%al
+ 	.p2align 4,0
 diff --git a/gas/testsuite/gas/i386/pseudos.d b/gas/testsuite/gas/i386/pseudos.d
-index 00c10a520b..76aae367b4 100644
+index 00c10a520b..4f029f154b 100644
 --- a/gas/testsuite/gas/i386/pseudos.d
 +++ b/gas/testsuite/gas/i386/pseudos.d
-@@ -288,6 +288,15 @@ Disassembly of section .text:
+@@ -22,6 +22,10 @@ Disassembly of section .text:
+  +[a-f0-9]+:	c5 f8 28 90 00 00 00 00 	vmovaps 0x0\(%eax\),%xmm2
+  +[a-f0-9]+:	62 f1 7c 08 28 50 00 	vmovaps 0x0\(%eax\),%xmm2
+  +[a-f0-9]+:	62 f1 7c 08 28 90 00 00 00 00 	vmovaps 0x0\(%eax\),%xmm2
++ +[a-f0-9]+:	c5 f8 28 90 80 00 00 00 	vmovaps 0x80\(%eax\),%xmm2
++ +[a-f0-9]+:	c5 f8 28 90 80 00 00 00 	vmovaps 0x80\(%eax\),%xmm2
++ +[a-f0-9]+:	62 f1 7c 08 28 50 08 	vmovaps 0x80\(%eax\),%xmm2
++ +[a-f0-9]+:	62 f1 7c 08 28 90 80 00 00 00 	vmovaps 0x80\(%eax\),%xmm2
+  +[a-f0-9]+:	89 c8                	mov    %ecx,%eax
+  +[a-f0-9]+:	8b c1                	mov    %ecx,%eax
+  +[a-f0-9]+:	89 c8                	mov    %ecx,%eax
+@@ -288,6 +292,21 @@ Disassembly of section .text:
   +[a-f0-9]+:	0f 28 90 80 00 00 00 	movaps 0x80\(%eax\),%xmm2
   +[a-f0-9]+:	0f 28 90 80 00 00 00 	movaps 0x80\(%eax\),%xmm2
   +[a-f0-9]+:	0f 28 90 80 00 00 00 	movaps 0x80\(%eax\),%xmm2
 + +[a-f0-9]+:	8a 45 00             	mov    0x0\(%ebp\),%al
 + +[a-f0-9]+:	8a 45 00             	mov    0x0\(%ebp\),%al
 + +[a-f0-9]+:	8a 85 00 00 00 00    	mov    0x0\(%ebp\),%al
++ +[a-f0-9]+:	67 8a 04             	mov    \(%si\),%al
++ +[a-f0-9]+:	67 8a 44 00          	mov    0x0\(%si\),%al
++ +[a-f0-9]+:	67 8a 84 00 00       	mov    0x0\(%si\),%al
++ +[a-f0-9]+:	67 8a 05             	mov    \(%di\),%al
++ +[a-f0-9]+:	67 8a 45 00          	mov    0x0\(%di\),%al
++ +[a-f0-9]+:	67 8a 85 00 00       	mov    0x0\(%di\),%al
 + +[a-f0-9]+:	67 8a 07             	mov    \(%bx\),%al
-+ +[a-f0-9]+:	67 8a 07             	mov    \(%bx\),%al
-+ +[a-f0-9]+:	67 8a 07             	mov    \(%bx\),%al
++ +[a-f0-9]+:	67 8a 47 00          	mov    0x0\(%bx\),%al
++ +[a-f0-9]+:	67 8a 87 00 00       	mov    0x0\(%bx\),%al
 + +[a-f0-9]+:	67 8a 46 00          	mov    0x0\(%bp\),%al
 + +[a-f0-9]+:	67 8a 46 00          	mov    0x0\(%bp\),%al
 + +[a-f0-9]+:	67 8a 86 00 00       	mov    0x0\(%bp\),%al
   +[a-f0-9]+:	c4 e1 78 28 d7       	vmovaps %xmm7,%xmm2
   +[a-f0-9]+:	c4 e1 78 28 d7       	vmovaps %xmm7,%xmm2
   +[a-f0-9]+:	c4 e1 78 29 fa       	vmovaps %xmm7,%xmm2
-@@ -316,4 +325,13 @@ Disassembly of section .text:
+@@ -302,6 +321,10 @@ Disassembly of section .text:
+  +[a-f0-9]+:	c5 f8 28 90 00 00 00 00 	vmovaps 0x0\(%eax\),%xmm2
+  +[a-f0-9]+:	62 f1 7c 08 28 50 00 	vmovaps 0x0\(%eax\),%xmm2
+  +[a-f0-9]+:	62 f1 7c 08 28 90 00 00 00 00 	vmovaps 0x0\(%eax\),%xmm2
++ +[a-f0-9]+:	c5 f8 28 90 80 00 00 00 	vmovaps 0x80\(%eax\),%xmm2
++ +[a-f0-9]+:	c5 f8 28 90 80 00 00 00 	vmovaps 0x80\(%eax\),%xmm2
++ +[a-f0-9]+:	62 f1 7c 08 28 50 08 	vmovaps 0x80\(%eax\),%xmm2
++ +[a-f0-9]+:	62 f1 7c 08 28 90 80 00 00 00 	vmovaps 0x80\(%eax\),%xmm2
+  +[a-f0-9]+:	89 c8                	mov    %ecx,%eax
+  +[a-f0-9]+:	8b c1                	mov    %ecx,%eax
+  +[a-f0-9]+:	89 c8                	mov    %ecx,%eax
+@@ -316,4 +339,19 @@ Disassembly of section .text:
   +[a-f0-9]+:	0f 28 90 80 00 00 00 	movaps 0x80\(%eax\),%xmm2
   +[a-f0-9]+:	0f 28 90 80 00 00 00 	movaps 0x80\(%eax\),%xmm2
   +[a-f0-9]+:	0f 28 90 80 00 00 00 	movaps 0x80\(%eax\),%xmm2
 + +[a-f0-9]+:	8a 45 00             	mov    0x0\(%ebp\),%al
 + +[a-f0-9]+:	8a 45 00             	mov    0x0\(%ebp\),%al
 + +[a-f0-9]+:	8a 85 00 00 00 00    	mov    0x0\(%ebp\),%al
++ +[a-f0-9]+:	67 8a 04             	mov    \(%si\),%al
++ +[a-f0-9]+:	67 8a 44 00          	mov    0x0\(%si\),%al
++ +[a-f0-9]+:	67 8a 84 00 00       	mov    0x0\(%si\),%al
++ +[a-f0-9]+:	67 8a 05             	mov    \(%di\),%al
++ +[a-f0-9]+:	67 8a 45 00          	mov    0x0\(%di\),%al
++ +[a-f0-9]+:	67 8a 85 00 00       	mov    0x0\(%di\),%al
 + +[a-f0-9]+:	67 8a 07             	mov    \(%bx\),%al
-+ +[a-f0-9]+:	67 8a 07             	mov    \(%bx\),%al
-+ +[a-f0-9]+:	67 8a 07             	mov    \(%bx\),%al
++ +[a-f0-9]+:	67 8a 47 00          	mov    0x0\(%bx\),%al
++ +[a-f0-9]+:	67 8a 87 00 00       	mov    0x0\(%bx\),%al
 + +[a-f0-9]+:	67 8a 46 00          	mov    0x0\(%bp\),%al
 + +[a-f0-9]+:	67 8a 46 00          	mov    0x0\(%bp\),%al
 + +[a-f0-9]+:	67 8a 86 00 00       	mov    0x0\(%bp\),%al
  #pass
 diff --git a/gas/testsuite/gas/i386/pseudos.s b/gas/testsuite/gas/i386/pseudos.s
-index 19900dd7e5..bc18654ced 100644
+index 19900dd7e5..603e112ac8 100644
 --- a/gas/testsuite/gas/i386/pseudos.s
 +++ b/gas/testsuite/gas/i386/pseudos.s
-@@ -293,6 +293,18 @@ _start:
+@@ -17,6 +17,11 @@ _start:
+ 	{evex} {disp8} vmovaps (%eax),%xmm2
+ 	{evex} {disp32} vmovaps (%eax),%xmm2
+ 
++	{vex} {disp8} vmovaps 128(%eax),%xmm2
++	{vex} {disp32} vmovaps 128(%eax),%xmm2
++	{evex} {disp8} vmovaps 128(%eax),%xmm2
++	{evex} {disp32} vmovaps 128(%eax),%xmm2
++
+ 	mov %ecx, %eax
+ 	{load} mov %ecx, %eax
+ 	{store} mov %ecx, %eax
+@@ -293,6 +298,26 @@ _start:
  	{disp8} movaps 128(%eax),%xmm2
  	{disp32} movaps 128(%eax),%xmm2
  
@@ -471,18 +710,39 @@ index 19900dd7e5..bc18654ced 100644
 +	{disp8} movb (%ebp),%al
 +	{disp32} movb (%ebp),%al
 +
++	movb (%si),%al
++	{disp8} movb (%si),%al
++	{disp16} movb (%si),%al
++
++	movb (%di),%al
++	{disp8} movb (%di),%al
++	{disp16} movb (%di),%al
++
 +	movb (%bx),%al
 +	{disp8} movb (%bx),%al
-+	{disp32} movb (%bx),%al
++	{disp16} movb (%bx),%al
 +
 +	movb (%bp),%al
 +	{disp8} movb (%bp),%al
-+	{disp32} movb (%bp),%al
++	{disp16} movb (%bp),%al
 +
  	.intel_syntax noprefix
  	{vex3} vmovaps xmm2,xmm7
  	{vex3} {load} vmovaps xmm2,xmm7
-@@ -322,3 +334,15 @@ _start:
+@@ -308,6 +333,12 @@ _start:
+ 	{disp32} vmovaps xmm2,XMMWORD PTR [eax]
+ 	{evex} {disp8} vmovaps xmm2,XMMWORD PTR [eax]
+ 	{evex} {disp32} vmovaps xmm2,XMMWORD PTR [eax]
++
++	{vex} {disp8} vmovaps xmm2,XMMWORD PTR [eax+128]
++	{vex} {disp32} vmovaps xmm2,XMMWORD PTR [eax+128]
++	{evex} {disp8} vmovaps xmm2,XMMWORD PTR [eax+128]
++	{evex} {disp32} vmovaps xmm2,XMMWORD PTR [eax+128]
++
+ 	mov eax,ecx
+ 	{load} mov eax,ecx
+ 	{store} mov eax,ecx
+@@ -322,3 +353,23 @@ _start:
  	movaps xmm2,XMMWORD PTR [eax+128]
  	{disp8} movaps xmm2,XMMWORD PTR [eax+128]
  	{disp32} movaps xmm2,XMMWORD PTR [eax+128]
@@ -491,18 +751,63 @@ index 19900dd7e5..bc18654ced 100644
 +	{disp8} mov al, BYTE PTR [ebp]
 +	{disp32} mov al, BYTE PTR [ebp]
 +
++	mov al, BYTE PTR [si]
++	{disp8} mov al, BYTE PTR [si]
++	{disp16} mov al, BYTE PTR [si]
++
++	mov al, BYTE PTR [di]
++	{disp8} mov al, BYTE PTR [di]
++	{disp16} mov al, BYTE PTR [di]
++
 +	mov al, BYTE PTR [bx]
 +	{disp8} mov al, BYTE PTR [bx]
-+	{disp32} mov al, BYTE PTR [bx]
++	{disp16} mov al, BYTE PTR [bx]
 +
 +	mov al, BYTE PTR [bp]
 +	{disp8} mov al, BYTE PTR [bp]
-+	{disp32} mov al, BYTE PTR [bp]
++	{disp16} mov al, BYTE PTR [bp]
+diff --git a/gas/testsuite/gas/i386/x86-64-inval-pseudo.l b/gas/testsuite/gas/i386/x86-64-inval-pseudo.l
+new file mode 100644
+index 0000000000..13ad0fb768
+--- /dev/null
++++ b/gas/testsuite/gas/i386/x86-64-inval-pseudo.l
+@@ -0,0 +1,10 @@
++.*: Assembler messages:
++.*:2: Error: .*
++.*:3: Error: .*
++GAS LISTING .*
++
++
++[ 	]*1[ 	]+\.text
++[ 	]*2[ 	]+\{disp16\} movb \(%ebp\),%al
++[ 	]*3[ 	]+\{disp16\} movb \(%rbp\),%al
++#...
+diff --git a/gas/testsuite/gas/i386/x86-64-inval-pseudo.s b/gas/testsuite/gas/i386/x86-64-inval-pseudo.s
+new file mode 100644
+index 0000000000..c10b14c209
+--- /dev/null
++++ b/gas/testsuite/gas/i386/x86-64-inval-pseudo.s
+@@ -0,0 +1,4 @@
++	.text
++	{disp16} movb (%ebp),%al
++	{disp16} movb (%rbp),%al
++	.p2align 4,0
 diff --git a/gas/testsuite/gas/i386/x86-64-pseudos.d b/gas/testsuite/gas/i386/x86-64-pseudos.d
-index 529578bdd4..f67bfde17a 100644
+index 529578bdd4..3b5411184b 100644
 --- a/gas/testsuite/gas/i386/x86-64-pseudos.d
 +++ b/gas/testsuite/gas/i386/x86-64-pseudos.d
-@@ -310,6 +310,12 @@ Disassembly of section .text:
+@@ -22,6 +22,10 @@ Disassembly of section .text:
+  +[a-f0-9]+:	c5 f8 28 90 00 00 00 00 	vmovaps 0x0\(%rax\),%xmm2
+  +[a-f0-9]+:	62 f1 7c 08 28 50 00 	vmovaps 0x0\(%rax\),%xmm2
+  +[a-f0-9]+:	62 f1 7c 08 28 90 00 00 00 00 	vmovaps 0x0\(%rax\),%xmm2
++ +[a-f0-9]+:	c5 f8 28 90 80 00 00 00 	vmovaps 0x80\(%rax\),%xmm2
++ +[a-f0-9]+:	c5 f8 28 90 80 00 00 00 	vmovaps 0x80\(%rax\),%xmm2
++ +[a-f0-9]+:	62 f1 7c 08 28 50 08 	vmovaps 0x80\(%rax\),%xmm2
++ +[a-f0-9]+:	62 f1 7c 08 28 90 80 00 00 00 	vmovaps 0x80\(%rax\),%xmm2
+  +[a-f0-9]+:	48 89 c8             	mov    %rcx,%rax
+  +[a-f0-9]+:	48 8b c1             	mov    %rcx,%rax
+  +[a-f0-9]+:	48 89 c8             	mov    %rcx,%rax
+@@ -310,6 +314,18 @@ Disassembly of section .text:
   +[a-f0-9]+:	41 0f 28 10          	movaps \(%r8\),%xmm2
   +[a-f0-9]+:	40 0f 38 01 01       	rex phaddw \(%rcx\),%mm0
   +[a-f0-9]+:	41 0f 38 01 00       	phaddw \(%r8\),%mm0
@@ -512,10 +817,27 @@ index 529578bdd4..f67bfde17a 100644
 + +[a-f0-9]+:	67 8a 45 00          	mov    0x0\(%ebp\),%al
 + +[a-f0-9]+:	67 8a 45 00          	mov    0x0\(%ebp\),%al
 + +[a-f0-9]+:	67 8a 85 00 00 00 00 	mov    0x0\(%ebp\),%al
++ +[a-f0-9]+:	41 8a 45 00          	mov    0x0\(%r13\),%al
++ +[a-f0-9]+:	41 8a 45 00          	mov    0x0\(%r13\),%al
++ +[a-f0-9]+:	41 8a 85 00 00 00 00 	mov    0x0\(%r13\),%al
++ +[a-f0-9]+:	67 41 8a 45 00       	mov    0x0\(%r13d\),%al
++ +[a-f0-9]+:	67 41 8a 45 00       	mov    0x0\(%r13d\),%al
++ +[a-f0-9]+:	67 41 8a 85 00 00 00 00 	mov    0x0\(%r13d\),%al
   +[a-f0-9]+:	c4 e1 78 28 d7       	vmovaps %xmm7,%xmm2
   +[a-f0-9]+:	c4 e1 78 28 d7       	vmovaps %xmm7,%xmm2
   +[a-f0-9]+:	c4 e1 78 29 fa       	vmovaps %xmm7,%xmm2
-@@ -348,4 +354,10 @@ Disassembly of section .text:
+@@ -324,6 +340,10 @@ Disassembly of section .text:
+  +[a-f0-9]+:	c5 f8 28 90 00 00 00 00 	vmovaps 0x0\(%rax\),%xmm2
+  +[a-f0-9]+:	62 f1 7c 08 28 50 00 	vmovaps 0x0\(%rax\),%xmm2
+  +[a-f0-9]+:	62 f1 7c 08 28 90 00 00 00 00 	vmovaps 0x0\(%rax\),%xmm2
++ +[a-f0-9]+:	c5 f8 28 90 80 00 00 00 	vmovaps 0x80\(%rax\),%xmm2
++ +[a-f0-9]+:	c5 f8 28 90 80 00 00 00 	vmovaps 0x80\(%rax\),%xmm2
++ +[a-f0-9]+:	62 f1 7c 08 28 50 08 	vmovaps 0x80\(%rax\),%xmm2
++ +[a-f0-9]+:	62 f1 7c 08 28 90 80 00 00 00 	vmovaps 0x80\(%rax\),%xmm2
+  +[a-f0-9]+:	48 89 c8             	mov    %rcx,%rax
+  +[a-f0-9]+:	48 8b c1             	mov    %rcx,%rax
+  +[a-f0-9]+:	48 89 c8             	mov    %rcx,%rax
+@@ -348,4 +368,16 @@ Disassembly of section .text:
   +[a-f0-9]+:	41 0f 28 10          	movaps \(%r8\),%xmm2
   +[a-f0-9]+:	40 0f 38 01 01       	rex phaddw \(%rcx\),%mm0
   +[a-f0-9]+:	41 0f 38 01 00       	phaddw \(%r8\),%mm0
@@ -525,12 +847,30 @@ index 529578bdd4..f67bfde17a 100644
 + +[a-f0-9]+:	67 8a 45 00          	mov    0x0\(%ebp\),%al
 + +[a-f0-9]+:	67 8a 45 00          	mov    0x0\(%ebp\),%al
 + +[a-f0-9]+:	67 8a 85 00 00 00 00 	mov    0x0\(%ebp\),%al
++ +[a-f0-9]+:	41 8a 45 00          	mov    0x0\(%r13\),%al
++ +[a-f0-9]+:	41 8a 45 00          	mov    0x0\(%r13\),%al
++ +[a-f0-9]+:	41 8a 85 00 00 00 00 	mov    0x0\(%r13\),%al
++ +[a-f0-9]+:	41 8a 45 00          	mov    0x0\(%r13\),%al
++ +[a-f0-9]+:	67 41 8a 45 00       	mov    0x0\(%r13d\),%al
++ +[a-f0-9]+:	67 41 8a 85 00 00 00 00 	mov    0x0\(%r13d\),%al
  #pass
 diff --git a/gas/testsuite/gas/i386/x86-64-pseudos.s b/gas/testsuite/gas/i386/x86-64-pseudos.s
-index 3bda5737ea..3fc2cac625 100644
+index 3bda5737ea..cf713b7e2d 100644
 --- a/gas/testsuite/gas/i386/x86-64-pseudos.s
 +++ b/gas/testsuite/gas/i386/x86-64-pseudos.s
-@@ -315,6 +315,14 @@ _start:
+@@ -17,6 +17,11 @@ _start:
+ 	{evex} {disp8} vmovaps (%rax),%xmm2
+ 	{evex} {disp32} vmovaps (%rax),%xmm2
+ 
++	{vex} {disp8} vmovaps 128(%rax),%xmm2
++	{vex} {disp32} vmovaps 128(%rax),%xmm2
++	{evex} {disp8} vmovaps 128(%rax),%xmm2
++	{evex} {disp32} vmovaps 128(%rax),%xmm2
++
+ 	mov %rcx, %rax
+ 	{load} mov %rcx, %rax
+ 	{store} mov %rcx, %rax
+@@ -315,6 +320,22 @@ _start:
  	{rex} phaddw (%rcx),%mm0
  	{rex} phaddw (%r8),%mm0
  
@@ -542,10 +882,31 @@ index 3bda5737ea..3fc2cac625 100644
 +	{disp8} movb (%ebp),%al
 +	{disp32} movb (%ebp),%al
 +
++	movb (%r13),%al
++	{disp8} movb (%r13),%al
++	{disp32} movb (%r13),%al
++
++	movb (%r13d),%al
++	{disp8} movb (%r13d),%al
++	{disp32} movb (%r13d),%al
++
  	.intel_syntax noprefix
  	{vex3} vmovaps xmm2,xmm7
  	{vex3} {load} vmovaps xmm2,xmm7
-@@ -354,3 +362,11 @@ _start:
+@@ -330,6 +351,12 @@ _start:
+ 	{disp32} vmovaps xmm2,XMMWORD PTR [rax]
+ 	{evex} {disp8} vmovaps xmm2,XMMWORD PTR [rax]
+ 	{evex} {disp32} vmovaps xmm2,XMMWORD PTR [rax]
++
++	{vex} {disp8} vmovaps xmm2,XMMWORD PTR [rax+128]
++	{vex} {disp32} vmovaps xmm2,XMMWORD PTR [rax+128]
++	{evex} {disp8} vmovaps xmm2,XMMWORD PTR [rax+128]
++	{evex} {disp32} vmovaps xmm2,XMMWORD PTR [rax+128]
++
+ 	mov rax,rcx
+ 	{load} mov rax,rcx
+ 	{store} mov rax,rcx
+@@ -354,3 +381,19 @@ _start:
  	{rex} movaps xmm2,XMMWORD PTR [r8]
  	{rex} phaddw mm0,QWORD PTR [rcx]
  	{rex} phaddw mm0,QWORD PTR [r8]
@@ -557,6 +918,14 @@ index 3bda5737ea..3fc2cac625 100644
 +	mov al, BYTE PTR [ebp]
 +	{disp8} mov al, BYTE PTR [ebp]
 +	{disp32} mov al, BYTE PTR [ebp]
++
++	mov al, BYTE PTR [r13]
++	{disp8} mov al, BYTE PTR [r13]
++	{disp32} mov al, BYTE PTR [r13]
++
++	mov al, BYTE PTR [r13]
++	{disp8} mov al, BYTE PTR [r13d]
++	{disp32} mov al, BYTE PTR [r13d]
 diff --git a/gprof/ChangeLog b/gprof/ChangeLog
 index e0b05295c2..2c7b8678b0 100644
 --- a/gprof/ChangeLog
@@ -902,10 +1271,26 @@ index 58c6c07832..6cab41cf5d 100644
    /* Starting the short option string with '-' is for programs that
       expect options and other ARGV-elements in any order and that care about
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index f97e3408a1..ddb183b42d 100644
+index f97e3408a1..7c423400f2 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
-@@ -1,3 +1,7 @@
+@@ -1,3 +1,23 @@
++2020-08-04  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR gas/26305
++	* i386-opc.h (Prefix_Disp8): New.
++	(Prefix_Disp16): Likewise.
++	(Prefix_Disp32): Likewise.
++	(Prefix_Load): Likewise.
++	(Prefix_Store): Likewise.
++	(Prefix_VEX): Likewise.
++	(Prefix_VEX3): Likewise.
++	(Prefix_EVEX): Likewise.
++	(Prefix_REX): Likewise.
++	(Prefix_NoOptimize): Likewise.
++	* i386-opc.tbl: Use Prefix_XXX on pseudo prefixes.  Add {disp16}.
++	* i386-tbl.h: Regenerated.
++
 +2020-07-24  Nick Clifton  <nickc@redhat.com>
 +
 +	* configure: Regenerate.
@@ -999,3 +1384,164 @@ index b5fb936e73..8d1e561c94 100755
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
+diff --git a/opcodes/i386-opc.h b/opcodes/i386-opc.h
+index c65febbe81..6da6090100 100644
+--- a/opcodes/i386-opc.h
++++ b/opcodes/i386-opc.h
+@@ -875,6 +875,18 @@ typedef struct insn_template
+ #define Opcode_SIMD_FloatD 0x1 /* Direction bit for SIMD fp insns. */
+ #define Opcode_SIMD_IntD 0x10 /* Direction bit for SIMD int insns. */
+ 
++/* Pseudo prefixes.  */
++#define Prefix_Disp8		0	/* {disp8} */
++#define Prefix_Disp16		1	/* {disp16} */
++#define Prefix_Disp32		2	/* {disp32} */
++#define Prefix_Load		3	/* {load} */
++#define Prefix_Store		4	/* {store} */
++#define Prefix_VEX		5	/* {vex} */
++#define Prefix_VEX3		6	/* {vex3} */
++#define Prefix_EVEX		7	/* {evex} */
++#define Prefix_REX		8	/* {rex} */
++#define Prefix_NoOptimize	9	/* {nooptimize} */
++
+   /* extension_opcode is the 3 bit extension for group <n> insns.
+      This field is also used to store the 8-bit opcode suffix for the
+      AMD 3DNow! instructions.
+diff --git a/opcodes/i386-opc.tbl b/opcodes/i386-opc.tbl
+index cd6833c5ae..0a866e9669 100644
+--- a/opcodes/i386-opc.tbl
++++ b/opcodes/i386-opc.tbl
+@@ -833,16 +833,17 @@ rex.wrxb, 0, 0x4f, None, 1, Cpu64, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ld
+ 
+ // Pseudo prefixes (opcode_length == 0)
+ 
+-{disp8}, 0, 0x0, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
+-{disp32}, 0, 0x1, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
+-{load}, 0, 0x2, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
+-{store}, 0, 0x3, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
+-{vex}, 0, 0x4, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
+-{vex2}, 0, 0x4, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
+-{vex3}, 0, 0x5, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
+-{evex}, 0, 0x6, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
+-{rex}, 0, 0x7, None, 0, Cpu64, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
+-{nooptimize}, 0, 0x8, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{disp8}, 0, Prefix_Disp8, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{disp16}, 0, Prefix_Disp16, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{disp32}, 0, Prefix_Disp32, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{load}, 0, Prefix_Load, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{store}, 0, Prefix_Store, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{vex}, 0, Prefix_VEX, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{vex2}, 0, Prefix_VEX, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{vex3}, 0, Prefix_VEX3, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{evex}, 0, Prefix_EVEX, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{rex}, 0, Prefix_REX, None, 0, Cpu64, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
++{nooptimize}, 0, Prefix_NoOptimize, None, 0, 0, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|IsPrefix, { 0 }
+ 
+ // 486 extensions.
+ 
+diff --git a/opcodes/i386-tbl.h b/opcodes/i386-tbl.h
+index 7e77896047..3b2624fa99 100644
+--- a/opcodes/i386-tbl.h
++++ b/opcodes/i386-tbl.h
+@@ -7584,7 +7584,7 @@ const insn_template i386_optab[] =
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 	  0, 0, 0, 0, 0, 0 } } } },
+-  { "{disp8}", 0x0, None, 0, 0,
++  { "{disp8}", 0, None, 0, 0,
+     { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+@@ -7596,7 +7596,7 @@ const insn_template i386_optab[] =
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 	  0, 0, 0, 0, 0, 0 } } } },
+-  { "{disp32}", 0x1, None, 0, 0,
++  { "{disp16}", 1, None, 0, 0,
+     { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+@@ -7608,7 +7608,7 @@ const insn_template i386_optab[] =
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 	  0, 0, 0, 0, 0, 0 } } } },
+-  { "{load}", 0x2, None, 0, 0,
++  { "{disp32}", 2, None, 0, 0,
+     { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+@@ -7620,7 +7620,7 @@ const insn_template i386_optab[] =
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 	  0, 0, 0, 0, 0, 0 } } } },
+-  { "{store}", 0x3, None, 0, 0,
++  { "{load}", 3, None, 0, 0,
+     { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+@@ -7632,7 +7632,7 @@ const insn_template i386_optab[] =
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 	  0, 0, 0, 0, 0, 0 } } } },
+-  { "{vex}", 0x4, None, 0, 0,
++  { "{store}", 4, None, 0, 0,
+     { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+@@ -7644,7 +7644,7 @@ const insn_template i386_optab[] =
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 	  0, 0, 0, 0, 0, 0 } } } },
+-  { "{vex2}", 0x4, None, 0, 0,
++  { "{vex}", 5, None, 0, 0,
+     { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+@@ -7656,7 +7656,7 @@ const insn_template i386_optab[] =
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 	  0, 0, 0, 0, 0, 0 } } } },
+-  { "{vex3}", 0x5, None, 0, 0,
++  { "{vex2}", 5, None, 0, 0,
+     { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+@@ -7668,7 +7668,7 @@ const insn_template i386_optab[] =
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 	  0, 0, 0, 0, 0, 0 } } } },
+-  { "{evex}", 0x6, None, 0, 0,
++  { "{vex3}", 6, None, 0, 0,
+     { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+@@ -7680,7 +7680,19 @@ const insn_template i386_optab[] =
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 	  0, 0, 0, 0, 0, 0 } } } },
+-  { "{rex}", 0x7, None, 0, 0,
++  { "{evex}", 7, None, 0, 0,
++    { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
++        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
++        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
++        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
++        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
++        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } },
++    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0,
++      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
++      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
++    { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
++	  0, 0, 0, 0, 0, 0 } } } },
++  { "{rex}", 8, None, 0, 0,
+     { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+@@ -7692,7 +7704,7 @@ const insn_template i386_optab[] =
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 	  0, 0, 0, 0, 0, 0 } } } },
+-  { "{nooptimize}", 0x8, None, 0, 0,
++  { "{nooptimize}", 9, None, 0, 0,
+     { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
