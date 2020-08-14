@@ -30583,10 +30583,23 @@ index 72dbbc3eac..35e07931d5 100644
  #~ msgstr "(„DW_OP_GNU_implicit_pointer“ у подацима оквира)"
  
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c2dd314636..fa480141e0 100644
+index c2dd314636..183cfe58d8 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,56 @@
+@@ -1,3 +1,69 @@
++2020-08-14  Joe Ramsay  <joe.ramsay@arm.com>
++
++	Backported from master
++	2020-08-04  Joe Ramsay <joe.ramsay@.arm.com>
++
++	* config/tc-arm.c (do_neon_cvt_1): Parse vcvtne as vcvt-ne for
++	NS_FD shape when MVE is present
++	* testsuite/gas/arm/mve-vcvtne-it-bad.d: New test.
++	* testsuite/gas/arm/mve-vcvtne-it-bad.l: New test.
++	* testsuite/gas/arm/mve-vcvtne-it-bad.s: New test.
++	* testsuite/gas/arm/mve-vcvtne-it.d: New test.
++	* testsuite/gas/arm/mve-vcvtne-it.s: New test.
++
 +2020-08-12  Nick Clifton  <nickc@redhat.com>
 +
 +	* po/ru.po: Updated Russian translation.
@@ -30671,6 +30684,42 @@ index 4c5881abd8..a04e615d35 100644
  
  #if defined OBJ_ELF || defined OBJ_MAYBE_ELF
  int flag_use_elf_stt_common = DEFAULT_GENERATE_ELF_STT_COMMON;
+diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
+index a7e0ae785b..e0d0cbd546 100644
+--- a/gas/config/tc-arm.c
++++ b/gas/config/tc-arm.c
+@@ -19087,6 +19087,16 @@ do_neon_cvt_1 (enum neon_cvt_mode mode)
+       return;
+     }
+ 
++  if ((rs == NS_FD || rs == NS_QQI) && mode == neon_cvt_mode_n
++      && ARM_CPU_HAS_FEATURE (cpu_variant, mve_ext))
++    {
++      /* We are dealing with vcvt with the 'ne' condition.  */
++      inst.cond = 0x1;
++      inst.instruction = N_MNEM_vcvt;
++      do_neon_cvt_1 (neon_cvt_mode_z);
++      return;
++    }
++
+   /* VFP rather than Neon conversions.  */
+   if (flavour >= neon_cvt_flavour_first_fp)
+     {
+@@ -19115,14 +19125,6 @@ do_neon_cvt_1 (enum neon_cvt_mode mode)
+ 					     NEON_CHECK_CC | NEON_CHECK_ARCH))
+ 	    return;
+ 	}
+-      else if (mode == neon_cvt_mode_n)
+-	{
+-	  /* We are dealing with vcvt with the 'ne' condition.  */
+-	  inst.cond = 0x1;
+-	  inst.instruction = N_MNEM_vcvt;
+-	  do_neon_cvt_1 (neon_cvt_mode_z);
+-	  return;
+-	}
+       /* fall through.  */
+     case NS_DDI:
+       {
 diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
 index ed514cf986..037fe4d18b 100644
 --- a/gas/config/tc-i386.c
@@ -43582,6 +43631,60 @@ index 6fa9f63f01..22549a48e9 100644
  #~ msgid "unpredictable load of register -- `%s'"
  #~ msgstr "непредсказуемая загрузка регистра — «%s»"
  
+diff --git a/gas/testsuite/gas/arm/mve-vcvtne-it-bad.d b/gas/testsuite/gas/arm/mve-vcvtne-it-bad.d
+new file mode 100644
+index 0000000000..110f45f28a
+--- /dev/null
++++ b/gas/testsuite/gas/arm/mve-vcvtne-it-bad.d
+@@ -0,0 +1,5 @@
++# name: MVE vcvtne instruction outside of IT block
++# as: -march=armv8.1-m.main+mve.fp+fp.dp
++# error_output: mve-vcvtne-it-bad.l
++
++.*: +file format .*arm.*
+diff --git a/gas/testsuite/gas/arm/mve-vcvtne-it-bad.l b/gas/testsuite/gas/arm/mve-vcvtne-it-bad.l
+new file mode 100644
+index 0000000000..8765ae0d69
+--- /dev/null
++++ b/gas/testsuite/gas/arm/mve-vcvtne-it-bad.l
+@@ -0,0 +1,2 @@
++[^:]*: Assembler messages:
++[^:]*:3: Error: thumb conditional instruction should be in IT block -- `vcvtne.s32.f64 s13,d8'
+diff --git a/gas/testsuite/gas/arm/mve-vcvtne-it-bad.s b/gas/testsuite/gas/arm/mve-vcvtne-it-bad.s
+new file mode 100644
+index 0000000000..e4c1b99906
+--- /dev/null
++++ b/gas/testsuite/gas/arm/mve-vcvtne-it-bad.s
+@@ -0,0 +1,3 @@
++.syntax unified
++.text
++vcvtne.s32.f64	s13, d8
+diff --git a/gas/testsuite/gas/arm/mve-vcvtne-it.d b/gas/testsuite/gas/arm/mve-vcvtne-it.d
+new file mode 100644
+index 0000000000..b376a9815c
+--- /dev/null
++++ b/gas/testsuite/gas/arm/mve-vcvtne-it.d
+@@ -0,0 +1,9 @@
++# name: Armv8.1-M Mainline vcvt instruction in it block (with MVE)
++# as: -march=armv8.1-m.main+mve.fp+fp.dp
++# objdump: -dr --prefix-addresses --show-raw-insn -marmv8.1-m.main
++
++.*: +file format .*arm.*
++
++Disassembly of section .text:
++^[^>]*> bf18[ 	]+it[ 	]+ne
++^[^>]*> eefd 6bc8[ 	]+vcvtne.s32.f64[ 	]+s13, d8
+\ No newline at end of file
+diff --git a/gas/testsuite/gas/arm/mve-vcvtne-it.s b/gas/testsuite/gas/arm/mve-vcvtne-it.s
+new file mode 100644
+index 0000000000..a9f2606812
+--- /dev/null
++++ b/gas/testsuite/gas/arm/mve-vcvtne-it.s
+@@ -0,0 +1,4 @@
++.syntax unified
++.text
++it ne
++vcvtne.s32.f64	s13, d8
 diff --git a/gas/testsuite/gas/i386/i386.exp b/gas/testsuite/gas/i386/i386.exp
 index 55929d3acb..6380ec8239 100644
 --- a/gas/testsuite/gas/i386/i386.exp
@@ -46015,10 +46118,18 @@ index 6d06e44057..3cf41b7911 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4ba491d3c1..046a9076a5 100644
+index 4ba491d3c1..e64e28e256 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,41 @@
+@@ -1,3 +1,49 @@
++2020-08-14  Tamar Christina  <tamar.christina@arm.com>
++
++	Backport from master.
++	2020-08-14  Tamar Christina  <tamar.christina@arm.com>
++
++	* testsuite/ld-arm/thumb-plt-got.d: Relax regexpr.
++	* testsuite/ld-arm/thumb-plt.d: Likewise.
++
 +2020-08-07  David Faust  <david.faust@oracle.com>
 +
 +	* testsuite/ld-bpf/call-3.s: New file.
@@ -46282,6 +46393,39 @@ index 58c6c07832..6cab41cf5d 100644
  
    /* Starting the short option string with '-' is for programs that
       expect options and other ARGV-elements in any order and that care about
+diff --git a/ld/testsuite/ld-arm/thumb-plt-got.d b/ld/testsuite/ld-arm/thumb-plt-got.d
+index e65aba9e2f..370a4e2c60 100644
+--- a/ld/testsuite/ld-arm/thumb-plt-got.d
++++ b/ld/testsuite/ld-arm/thumb-plt-got.d
+@@ -6,9 +6,9 @@
+ 
+ Relocation section '.rel.plt' at offset 0x108 contains 1 entry:
+  Offset     Info    Type            Sym.Value  Sym. Name
+-000101c4  00000116 R_ARM_JUMP_SLOT   00000000   foo
++000101.+  00000116 R_ARM_JUMP_SLOT   00000000   foo
+ 
+ Hex dump of section '.got':
+  NOTE: This section has relocations against it, but these have NOT been applied to this dump.
+-  0x000101b8 40010100 00000000 00000000 11010000 @...............
++  0x000101.+ 40010100 00000000 00000000 11010000 @...............
+ 
+diff --git a/ld/testsuite/ld-arm/thumb-plt.d b/ld/testsuite/ld-arm/thumb-plt.d
+index 441325b21d..aa9c61f84d 100644
+--- a/ld/testsuite/ld-arm/thumb-plt.d
++++ b/ld/testsuite/ld-arm/thumb-plt.d
+@@ -14,10 +14,10 @@ Disassembly of section \.plt:
+  112:	f8df e008 	ldr.w	lr, \[pc, #8\]	; 11c <\.plt\+0xc>
+  116:	44fe      	add	lr, pc
+  118:	f85e ff08 	ldr.w	pc, \[lr, #8\]!
+- 11c:	0001009c 	\.word	0x0001009c
++ 11c:	000100(.+) 	\.word	0x000100\1
+ 
+ 00000120 <foo@plt>:
+- 120:	f240 0c98 	movw	ip, #152	; 0x98
++ 120:	f240 0c.+ 	movw	ip, #[0-9]+	; 0x.+
+  124:	f2c0 0c01 	movt	ip, #1
+  128:	44fc      	add	ip, pc
+  12a:	f8dc f000 	ldr.w	pc, \[ip\]
 diff --git a/ld/testsuite/ld-bpf/call-2.d b/ld/testsuite/ld-bpf/call-2.d
 new file mode 100644
 index 0000000000..3d09095f6b
