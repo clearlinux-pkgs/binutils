@@ -1,8 +1,22 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 87cd2916c9..4cbb28e742 100644
+index 87cd2916c9..6d1d01a566 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,33 @@
+@@ -1,3 +1,47 @@
++2020-08-15  Alan Modra  <amodra@gmail.com>
++
++	PR 26389
++	* syms.c (bfd_decode_symclass): Choose 'c' for commons only when
++	SEC_SMALL_DATA.
++	* elf32-m32r.c (_bfd_m32r_elf_symbol_processing): Set SEC_SMALL_DATA
++	on small common section.
++	* elf32-score.c (s3_bfd_score_elf_symbol_processing): Likewise.
++	* elf32-score7.c (s7_bfd_score_elf_symbol_processing): Likewise.
++	* elf32-tic6x.c (elf32_tic6x_symbol_processing): Likewise.
++	* elf32-v850.c (v850_elf_symbol_processing): Likewise.
++	* elfxx-mips.c (_bfd_mips_elf_symbol_processing): Likewise.
++	* ecoff.c (ecoff_set_symbol_info, ecoff_link_add_externals): Likewise.
++
 +2020-08-12  Nick Clifton  <nickc@redhat.com>
 +
 +	* po/ru.po: Updated Russian translation.
@@ -135,6 +149,112 @@ index 32be4b9460..6bbed41d6d 100644
  
  # Indicate whether this is a release branch.
  experimental=false
+diff --git a/bfd/ecoff.c b/bfd/ecoff.c
+index dcded6f4a7..2e4bf888be 100644
+--- a/bfd/ecoff.c
++++ b/bfd/ecoff.c
+@@ -791,7 +791,7 @@ ecoff_set_symbol_info (bfd *abfd,
+ 	{
+ 	  /* Initialize the small common section.  */
+ 	  ecoff_scom_section.name = SCOMMON;
+-	  ecoff_scom_section.flags = SEC_IS_COMMON;
++	  ecoff_scom_section.flags = SEC_IS_COMMON | SEC_SMALL_DATA;
+ 	  ecoff_scom_section.output_section = &ecoff_scom_section;
+ 	  ecoff_scom_section.symbol = &ecoff_scom_symbol;
+ 	  ecoff_scom_section.symbol_ptr_ptr = &ecoff_scom_symbol_ptr;
+@@ -3404,7 +3404,7 @@ ecoff_link_add_externals (bfd *abfd,
+ 	    {
+ 	      /* Initialize the small common section.  */
+ 	      ecoff_scom_section.name = SCOMMON;
+-	      ecoff_scom_section.flags = SEC_IS_COMMON;
++	      ecoff_scom_section.flags = SEC_IS_COMMON | SEC_SMALL_DATA;
+ 	      ecoff_scom_section.output_section = &ecoff_scom_section;
+ 	      ecoff_scom_section.symbol = &ecoff_scom_symbol;
+ 	      ecoff_scom_section.symbol_ptr_ptr = &ecoff_scom_symbol_ptr;
+diff --git a/bfd/elf32-m32r.c b/bfd/elf32-m32r.c
+index dfdf8f38c7..f23997e7d6 100644
+--- a/bfd/elf32-m32r.c
++++ b/bfd/elf32-m32r.c
+@@ -1354,7 +1354,7 @@ _bfd_m32r_elf_symbol_processing (bfd *abfd ATTRIBUTE_UNUSED, asymbol *asym)
+ 	{
+ 	  /* Initialize the small common section.  */
+ 	  m32r_elf_scom_section.name = ".scommon";
+-	  m32r_elf_scom_section.flags = SEC_IS_COMMON;
++	  m32r_elf_scom_section.flags = SEC_IS_COMMON | SEC_SMALL_DATA;
+ 	  m32r_elf_scom_section.output_section = &m32r_elf_scom_section;
+ 	  m32r_elf_scom_section.symbol = &m32r_elf_scom_symbol;
+ 	  m32r_elf_scom_section.symbol_ptr_ptr = &m32r_elf_scom_symbol_ptr;
+diff --git a/bfd/elf32-score.c b/bfd/elf32-score.c
+index d1a910f279..4be656102f 100644
+--- a/bfd/elf32-score.c
++++ b/bfd/elf32-score.c
+@@ -3035,7 +3035,7 @@ s3_bfd_score_elf_symbol_processing (bfd *abfd, asymbol *asym)
+ 	{
+ 	  /* Initialize the small common section.  */
+ 	  score_elf_scom_section.name = ".scommon";
+-	  score_elf_scom_section.flags = SEC_IS_COMMON;
++	  score_elf_scom_section.flags = SEC_IS_COMMON | SEC_SMALL_DATA;
+ 	  score_elf_scom_section.output_section = &score_elf_scom_section;
+ 	  score_elf_scom_section.symbol = &score_elf_scom_symbol;
+ 	  score_elf_scom_section.symbol_ptr_ptr = &score_elf_scom_symbol_ptr;
+diff --git a/bfd/elf32-score7.c b/bfd/elf32-score7.c
+index ab5e32a29a..c9746905b2 100644
+--- a/bfd/elf32-score7.c
++++ b/bfd/elf32-score7.c
+@@ -2840,7 +2840,7 @@ s7_bfd_score_elf_symbol_processing (bfd *abfd, asymbol *asym)
+ 	{
+ 	  /* Initialize the small common section.  */
+ 	  score_elf_scom_section.name = ".scommon";
+-	  score_elf_scom_section.flags = SEC_IS_COMMON;
++	  score_elf_scom_section.flags = SEC_IS_COMMON | SEC_SMALL_DATA;
+ 	  score_elf_scom_section.output_section = &score_elf_scom_section;
+ 	  score_elf_scom_section.symbol = &score_elf_scom_symbol;
+ 	  score_elf_scom_section.symbol_ptr_ptr = &score_elf_scom_symbol_ptr;
+diff --git a/bfd/elf32-tic6x.c b/bfd/elf32-tic6x.c
+index d5fe06e7ea..b8b916bfd3 100644
+--- a/bfd/elf32-tic6x.c
++++ b/bfd/elf32-tic6x.c
+@@ -2977,7 +2977,7 @@ elf32_tic6x_symbol_processing (bfd *abfd ATTRIBUTE_UNUSED, asymbol *asym)
+ 	{
+ 	  /* Initialize the small common section.  */
+ 	  tic6x_elf_scom_section.name = ".scommon";
+-	  tic6x_elf_scom_section.flags = SEC_IS_COMMON;
++	  tic6x_elf_scom_section.flags = SEC_IS_COMMON | SEC_SMALL_DATA;
+ 	  tic6x_elf_scom_section.output_section = &tic6x_elf_scom_section;
+ 	  tic6x_elf_scom_section.symbol = &tic6x_elf_scom_symbol;
+ 	  tic6x_elf_scom_section.symbol_ptr_ptr = &tic6x_elf_scom_symbol_ptr;
+diff --git a/bfd/elf32-v850.c b/bfd/elf32-v850.c
+index 0235044d2d..c1e959e6c2 100644
+--- a/bfd/elf32-v850.c
++++ b/bfd/elf32-v850.c
+@@ -3001,7 +3001,8 @@ v850_elf_symbol_processing (bfd *abfd, asymbol *asym)
+ 	{
+ 	  /* Initialize the small common section.  */
+ 	  v850_elf_scom_section.name	       = ".scommon";
+-	  v850_elf_scom_section.flags	       = SEC_IS_COMMON | SEC_ALLOC | SEC_DATA;
++	  v850_elf_scom_section.flags
++	    = SEC_IS_COMMON | SEC_SMALL_DATA | SEC_ALLOC | SEC_DATA;
+ 	  v850_elf_scom_section.output_section = & v850_elf_scom_section;
+ 	  v850_elf_scom_section.symbol	       = & v850_elf_scom_symbol;
+ 	  v850_elf_scom_section.symbol_ptr_ptr = & v850_elf_scom_symbol_ptr;
+@@ -3019,7 +3020,7 @@ v850_elf_symbol_processing (bfd *abfd, asymbol *asym)
+ 	{
+ 	  /* Initialize the tcommon section.  */
+ 	  v850_elf_tcom_section.name	       = ".tcommon";
+-	  v850_elf_tcom_section.flags	       = SEC_IS_COMMON;
++	  v850_elf_tcom_section.flags	       = SEC_IS_COMMON | SEC_SMALL_DATA;
+ 	  v850_elf_tcom_section.output_section = & v850_elf_tcom_section;
+ 	  v850_elf_tcom_section.symbol	       = & v850_elf_tcom_symbol;
+ 	  v850_elf_tcom_section.symbol_ptr_ptr = & v850_elf_tcom_symbol_ptr;
+@@ -3037,7 +3038,7 @@ v850_elf_symbol_processing (bfd *abfd, asymbol *asym)
+ 	{
+ 	  /* Initialize the zcommon section.  */
+ 	  v850_elf_zcom_section.name	       = ".zcommon";
+-	  v850_elf_zcom_section.flags	       = SEC_IS_COMMON;
++	  v850_elf_zcom_section.flags	       = SEC_IS_COMMON | SEC_SMALL_DATA;
+ 	  v850_elf_zcom_section.output_section = & v850_elf_zcom_section;
+ 	  v850_elf_zcom_section.symbol	       = & v850_elf_zcom_symbol;
+ 	  v850_elf_zcom_section.symbol_ptr_ptr = & v850_elf_zcom_symbol_ptr;
 diff --git a/bfd/elf64-bpf.c b/bfd/elf64-bpf.c
 index 641caa1f05..d5a160f8f1 100644
 --- a/bfd/elf64-bpf.c
@@ -563,6 +683,19 @@ index 8f1e5e1e45..312d11b4ff 100644
        if (htab->root.tlsdesc_plt && !(info->flags & DF_BIND_NOW))
  	{
  	  BFD_ASSERT (htab->root.tlsdesc_got != (bfd_vma)-1);
+diff --git a/bfd/elfxx-mips.c b/bfd/elfxx-mips.c
+index 160febec94..93fedc9262 100644
+--- a/bfd/elfxx-mips.c
++++ b/bfd/elfxx-mips.c
+@@ -7116,7 +7116,7 @@ _bfd_mips_elf_symbol_processing (bfd *abfd, asymbol *asym)
+ 	{
+ 	  /* Initialize the small common section.  */
+ 	  mips_elf_scom_section.name = ".scommon";
+-	  mips_elf_scom_section.flags = SEC_IS_COMMON;
++	  mips_elf_scom_section.flags = SEC_IS_COMMON | SEC_SMALL_DATA;
+ 	  mips_elf_scom_section.output_section = &mips_elf_scom_section;
+ 	  mips_elf_scom_section.symbol = &mips_elf_scom_symbol;
+ 	  mips_elf_scom_section.symbol_ptr_ptr = &mips_elf_scom_symbol_ptr;
 diff --git a/bfd/po/ru.po b/bfd/po/ru.po
 index 5c321f1e66..5e3211cfe7 100644
 --- a/bfd/po/ru.po
@@ -19798,6 +19931,24 @@ index a80cec91be..db9710b12e 100644
  #~ msgid "invalid relocation type %d"
  #~ msgstr "неисправна врста премештања „%d“"
  
+diff --git a/bfd/syms.c b/bfd/syms.c
+index b9f73361e6..cb25af17fa 100644
+--- a/bfd/syms.c
++++ b/bfd/syms.c
+@@ -653,10 +653,10 @@ bfd_decode_symclass (asymbol *symbol)
+ 
+   if (symbol->section && bfd_is_com_section (symbol->section))
+     {
+-      if (symbol->section == bfd_com_section_ptr)
+-	return 'C';
+-      else
++      if (symbol->section->flags & SEC_SMALL_DATA)
+ 	return 'c';
++      else
++	return 'C';
+     }
+   if (bfd_is_und_section (symbol->section))
+     {
 diff --git a/bfd/version.m4 b/bfd/version.m4
 index 0c4dec10c7..8c9222098b 100644
 --- a/bfd/version.m4
@@ -46118,10 +46269,17 @@ index 6d06e44057..3cf41b7911 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4ba491d3c1..e64e28e256 100644
+index 4ba491d3c1..af98a3dbb1 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,49 @@
+@@ -1,3 +1,56 @@
++2020-08-16  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR binutils/26389
++	* testsuite/ld-plugin/lto.exp: Run PR binutils/26389 test.
++	* testsuite/ld-plugin/pr26389.c: New file.
++	* testsuite/ld-plugin/pr26389.d: Likewise.
++
 +2020-08-14  Tamar Christina  <tamar.christina@arm.com>
 +
 +	Backport from master.
@@ -46742,6 +46900,37 @@ index 0000000000..8cb1d9f896
 +    .text
 +main:
 +    lddw %r1, y
+diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
+index a44b6cf4b0..8e5a610d67 100644
+--- a/ld/testsuite/ld-plugin/lto.exp
++++ b/ld/testsuite/ld-plugin/lto.exp
+@@ -240,6 +240,10 @@ set lto_link_tests [list \
+    {dummy.c} \
+    {{error_output "pr26267.err"}} \
+    "pr26267b"] \
++  [list "Build pr26389.o" \
++   "$plug_opt" "-flto $lto_no_fat -fcommon" \
++   {pr26389.c} \
++   [list [list "nm" "$plug_opt" "pr26389.d"]]] \
+ ]
+ 
+ if { [at_least_gcc_version 10 0] } {
+diff --git a/ld/testsuite/ld-plugin/pr26389.c b/ld/testsuite/ld-plugin/pr26389.c
+new file mode 100644
+index 0000000000..84806ff533
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr26389.c
+@@ -0,0 +1 @@
++char nm_test_var;
+diff --git a/ld/testsuite/ld-plugin/pr26389.d b/ld/testsuite/ld-plugin/pr26389.d
+new file mode 100644
+index 0000000000..e4ad69a7c9
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr26389.d
+@@ -0,0 +1,3 @@
++#...
++0+ C _?nm_test_var
++#pass
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
 index f97e3408a1..737b49eb02 100644
 --- a/opcodes/ChangeLog
