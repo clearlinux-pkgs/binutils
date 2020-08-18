@@ -30734,10 +30734,18 @@ index 72dbbc3eac..35e07931d5 100644
  #~ msgstr "(„DW_OP_GNU_implicit_pointer“ у подацима оквира)"
  
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c2dd314636..183cfe58d8 100644
+index c2dd314636..d5696dc1e5 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,69 @@
+@@ -1,3 +1,77 @@
++2020-08-18  Peter Bergner  <bergner@linux.ibm.com>
++
++	Backported from master:
++	2020-08-18  Peter Bergner  <bergner@linux.ibm.com>
++
++	* testsuite/gas/ppc/vsx4.s: Update test to use new mnemonic.
++	* testsuite/gas/ppc/vsx4.d: Likewise.
++
 +2020-08-14  Joe Ramsay  <joe.ramsay@arm.com>
 +
 +	Backported from master
@@ -44188,6 +44196,28 @@ index 3bda5737ea..cf713b7e2d 100644
 +	mov al, BYTE PTR [r13]
 +	{disp8} mov al, BYTE PTR [r13d]
 +	{disp32} mov al, BYTE PTR [r13d]
+diff --git a/gas/testsuite/gas/ppc/vsx4.d b/gas/testsuite/gas/ppc/vsx4.d
+index 657a8ae6d9..e21540eb2e 100644
+--- a/gas/testsuite/gas/ppc/vsx4.d
++++ b/gas/testsuite/gas/ppc/vsx4.d
+@@ -7,6 +7,6 @@
+ Disassembly of section \.text:
+ 
+ 0+0 <vsx4>:
+-.*:	(f0 50 6f 6f|6f 6f 50 f0) 	xvcvbf16sp vs34,vs45
++.*:	(f0 50 6f 6f|6f 6f 50 f0) 	xvcvbf16spn vs34,vs45
+ .*:	(f1 f1 27 6f|6f 27 f1 f1) 	xvcvspbf16 vs47,vs36
+ #pass
+diff --git a/gas/testsuite/gas/ppc/vsx4.s b/gas/testsuite/gas/ppc/vsx4.s
+index 290f595017..3d7534e5d6 100644
+--- a/gas/testsuite/gas/ppc/vsx4.s
++++ b/gas/testsuite/gas/ppc/vsx4.s
+@@ -1,4 +1,4 @@
+ 	.text
+ vsx4:
+-	xvcvbf16sp	34,45
++	xvcvbf16spn	34,45
+ 	xvcvspbf16	47,36
 diff --git a/gold/ChangeLog b/gold/ChangeLog
 index 196b597d32..48c78afccb 100644
 --- a/gold/ChangeLog
@@ -46932,10 +46962,18 @@ index 0000000000..e4ad69a7c9
 +0+ C _?nm_test_var
 +#pass
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index f97e3408a1..737b49eb02 100644
+index f97e3408a1..f5e1d0dc99 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
-@@ -1,3 +1,27 @@
+@@ -1,3 +1,35 @@
++2020-08-18  Peter Bergner  <bergner@linux.ibm.com>
++
++	Backported from master:
++	2020-08-18  Peter Bergner  <bergner@linux.ibm.com>
++
++	* ppc-opc.c (powerpc_opcodes) <xvcvbf16sp>: Rename from this...
++	<xvcvbf16spn>: ...to this.
++
 +2020-08-12  Nick Clifton  <nickc@redhat.com>
 +
 +	* po/sr.po: Updated Serbian translation.
@@ -48660,3 +48698,16 @@ index f795e60f08..ffc1c34c39 100644
  #~ msgid "Illegal limm reference in last instruction!\n"
  #~ msgstr "Неисправна лимм упута у последњој инструкцији!\n"
  
+diff --git a/opcodes/ppc-opc.c b/opcodes/ppc-opc.c
+index 5e20d61766..6932e4e820 100644
+--- a/opcodes/ppc-opc.c
++++ b/opcodes/ppc-opc.c
+@@ -8306,7 +8306,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
+ {"xvxexpsp",	XX2VA(60,475,8),XX2_MASK,    PPCVSX3,	PPCVLE,		{XT6, XB6}},
+ {"xvxsigsp",	XX2VA(60,475,9),XX2_MASK,    PPCVSX3,	PPCVLE,		{XT6, XB6}},
+ {"xxbrw",	XX2VA(60,475,15),XX2_MASK,   PPCVSX3,	PPCVLE,		{XT6, XB6}},
+-{"xvcvbf16sp",	XX2VA(60,475,16),XX2_MASK,   PPCVSX4,	PPCVLE,		{XT6, XB6}},
++{"xvcvbf16spn",	XX2VA(60,475,16),XX2_MASK,   PPCVSX4,	PPCVLE,		{XT6, XB6}},
+ {"xvcvspbf16",	XX2VA(60,475,17),XX2_MASK,   PPCVSX4,	PPCVLE,		{XT6, XB6}},
+ {"xxbrd",	XX2VA(60,475,23),XX2_MASK,   PPCVSX3,	PPCVLE,		{XT6, XB6}},
+ {"xvcvhpsp",	XX2VA(60,475,24),XX2_MASK,   PPCVSX3,	PPCVLE,		{XT6, XB6}},
