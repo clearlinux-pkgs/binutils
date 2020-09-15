@@ -1,8 +1,15 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 87cd2916c9..5d0c57d6c0 100644
+index 87cd2916c9..b1f6007611 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,104 @@
+@@ -1,3 +1,111 @@
++2020-09-15  Hans-Peter Nilsson  <hp@axis.com>
++
++	Backport from mainline:
++	PR ld/26589
++	* elf32-cris.c (cris_elf_check_relocs): Add missing NULL check
++	on argument before calling UNDEFWEAK_NO_DYNAMIC_RELOC.
++
 +2020-09-10  Alan Modra  <amodra@gmail.com>
 +
 +	Apply from master
@@ -572,6 +579,19 @@ index 9ca42e10d8..fe375e7346 100644
  
  bfd_boolean
  _bfd_elf_write_secondary_reloc_section (bfd *abfd, asection *sec)
+diff --git a/bfd/elf32-cris.c b/bfd/elf32-cris.c
+index 4360b5418c..2c0db6507f 100644
+--- a/bfd/elf32-cris.c
++++ b/bfd/elf32-cris.c
+@@ -3358,7 +3358,7 @@ cris_elf_check_relocs (bfd *abfd,
+ 
+ 	  /* No need to do anything if we're not creating a shared object.  */
+ 	  if (! bfd_link_pic (info)
+-	      || UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
++	      || (h != NULL && UNDEFWEAK_NO_DYNAMIC_RELOC (info, h)))
+ 	    break;
+ 
+ 	  /* We may need to create a reloc section in the dynobj and made room
 diff --git a/bfd/elf32-m32r.c b/bfd/elf32-m32r.c
 index dfdf8f38c7..f23997e7d6 100644
 --- a/bfd/elf32-m32r.c
@@ -31800,10 +31820,106 @@ index 95290f6f4e..966500e36d 100644
           (+ (f-imm32 0) (.sym src x-endian) (.sym dst x-endian)
              offset16 OP_MODE_XADD OP_SIZE_W OP_CLASS_STX)
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c2dd314636..bc72700cb4 100644
+index c2dd314636..ded3862343 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,116 @@
+@@ -1,3 +1,212 @@
++2020-09-15  Nick Clifton  <nickc@redhat.com>
++
++	Import from mainline:
++	2020-09-14  Nick Clifton  <nickc@redhat.com>
++
++	* read.c (s_nop): New function.  Handles the .nop directive.
++	(potable): Add entry for "nop".
++	(s_nops): Code tidy.
++	* read.h (s_nop): Add prototype.
++	* config/tc-bpf.h (md_single_noop_insn): Define.
++	* config/tc-mmix.h (md_single_noop_insn): Define.
++	* config/tc-or1k.h (md_single_noop_insn): Define.
++	* config/tc-ia64.h (md_single_noop_insn): Define.
++	* write.c (relax_segment): Update error message regarding
++	non-absolute values passed to .fill and .nops.
++	* NEWS: Mention the new directive.
++	* doc/as.texi: Document the new directive.
++	* doc/internals.texi: Document the new internal macros used to
++	implement the new directive.
++	* testsuite/gas/all/nop.s: New test.
++	* testsuite/gas/all/nop.d: New test control file.
++	* testsuite/gas/all/gas.exp: Run the new test.
++	* testsuite/gas/elf/dwarf-5-nop-for-line-table.s: New test.
++	* testsuite/gas/elf/dwarf-5-nop-for-line-table.d: New test
++	control file.
++	* testsuite/gas/elf/elf.exp: Run the new test.
++	* testsuite/gas/i386/space1.l: Adjust expected output.
++
++2020-09-14  Mark Wielaard  <mark@klomp.org>
++
++	Backport from mainline:
++	2020-09-07  Mark Wielaard  <mark@klomp.org>
++
++	* as.texi (-g): Explicitly mention when .debug_info and .debug_line
++	are generated for the DWARF format.
++	(Loc): Add that it is an error to both use a .loc directive and
++	generate a .debug_line yourself.
++	* dwarf2dbg.c (dwarf2_any_loc_directive_seen): New static variable.
++	(dwarf2_directive_loc): Set dwarf2_any_loc_directive_seen to TRUE.
++	(dwarf2_finish): Check dwarf2_any_loc_directive_seen before emitting
++	an error. Only create .debug_line if it is empty (or doesn't exist).
++	* testsuite/gas/i386/i386.exp: Add dwarf2-line-{1,2,3,4} when testing
++	an elf target.
++	* testsuite/gas/i386/dwarf2-line-{1,2,3,4}.{s,d,l}: New test files.
++
++2020-09-14  Mark Wielaard  <mark@klomp.org>
++
++	Backport from mainline:
++	2020-09-07  Mark Wielaard  <mark@klomp.org>
++
++	* dwarf2dbg.c (add_line_strp): New function.
++	(out_dir_and_file_list): Take line_seg and sizeof_offset as
++	arguments, Use DW_FORM_line_strp for dir and file. Call
++	add_line_strp and set symbol offset for DWARF2_LINE_VERSION 5.
++	(out_debug_line): Call out_dir_and_file_list with line_seg and
++	sizeof_offset.
++	* gas/testsuite/gas/elf/dwarf-5-file0.d: Expect indirect line
++	strings.
++
++2020-09-14  Mark Wielaard  <mark@klomp.org>
++
++	Backport from mainline:
++	2020-09-07  Mark Wielaard  <mark@klomp.org>
++
++	* dwarf2dbg.c (DWARF2_RNGLISTS_VERSION): New constant.
++	(out_debug_ranges): Add ranges_sym argument and set it.
++	(out_debug_rnglists): New function.
++	(out_debug_info): Change ranges_seg argument to ranges_sym
++	and use it to set DW_AT_ranges value.
++	(dwarf2_finish): Remove ranges_seg, add ranges_sym. For
++	DWARF2_VERSION 5 call out_debug_rnglists.
++
++2020-09-14  Mark Wielaard  <mark@klomp.org>
++
++	Backport from mainline:
++	2020-08-28  Mark Wielaard  <mark@klomp.org>
++
++	* dwarf2dbg.c (dwarf2_directive_filename): Initialize with_md5 to
++	FALSE.
++	* gas/testsuite/gas/elf/dwarf-5-file0.s: Add a random bignum.
++
++2020-09-14  Mark Wielaard  <mark@klomp.org>
++
++	Backport from mainline:
++	2020-09-01  Mark Wielaard  <mark@klomp.org>
++
++	* dwarf2dbg.c (out_debug_abbrev): Use DW_FORM_sec_offset for DWARF
++	version 4 or higher.
++
++2020-09-14  Mark Wielaard  <mark@klomp.org>
++
++	Backport from mainline:
++	2020-08-26  Mark Wielaard  <mark@klomp.org>
++
++	* as.c (parse_args): Handle bad -gdwarf options.
++
 +2020-08-26  David Faust  <david.faust@oracle.com>
 +
 +	* config/tc-bpf.c: Add option -mxbpf to select xbpf isa.
@@ -31933,7 +32049,7 @@ index 737bbffead..7e410716b9 100644
  
  * X86 NaCl target support is removed.
 diff --git a/gas/as.c b/gas/as.c
-index 4c5881abd8..a04e615d35 100644
+index 4c5881abd8..0801903126 100644
 --- a/gas/as.c
 +++ b/gas/as.c
 @@ -102,8 +102,9 @@ int verbose = 0;
@@ -31948,6 +32064,20 @@ index 4c5881abd8..a04e615d35 100644
  
  #if defined OBJ_ELF || defined OBJ_MAYBE_ELF
  int flag_use_elf_stt_common = DEFAULT_GENERATE_ELF_STT_COMMON;
+@@ -823,6 +824,13 @@ This program has absolutely no warranty.\n"));
+ 	      && md_parse_option (optc, optarg))
+ 	    continue;
+ 
++	  /* We end up here for any -gsomething-not-already-a-long-option.
++	     give some useful feedback on not (yet) supported -gdwarfxxx
++	     versions/sections/options.  */
++	  if (strncmp (old_argv[optind - 1], "-gdwarf",
++		       strlen ("-gdwarf")) == 0)
++	    as_fatal (_("unknown DWARF option %s\n"), old_argv[optind - 1]);
++
+ 	  if (md_debug_format_selector)
+ 	    debug_type = md_debug_format_selector (& use_gnu_debug_info_extensions);
+ 	  else if (IS_ELF)
 diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
 index a7e0ae785b..e0d0cbd546 100644
 --- a/gas/config/tc-arm.c
@@ -32067,6 +32197,15 @@ index 026a631280..34b2adfc68 100644
  
    /* Set the machine number and endian.  */
    gas_cgen_cpu_desc = bpf_cgen_cpu_open (CGEN_CPU_OPEN_ENDIAN,
+diff --git a/gas/config/tc-bpf.h b/gas/config/tc-bpf.h
+index 5765833997..cb02d6c133 100644
+--- a/gas/config/tc-bpf.h
++++ b/gas/config/tc-bpf.h
+@@ -48,3 +48,4 @@
+ /* Values passed to md_apply_fix don't include the symbol value.  */
+ #define MD_APPLY_SYM_VALUE(FIX) 0
+ 
++#define md_single_noop_insn "mov %r1,%r1"
 diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
 index ed514cf986..037fe4d18b 100644
 --- a/gas/config/tc-i386.c
@@ -32204,6 +32343,36 @@ index ed514cf986..037fe4d18b 100644
  	  if ((i.base_reg
  	       && (!i.base_reg->reg_type.bitfield.word
  		   || !i.base_reg->reg_type.bitfield.baseindex))
+diff --git a/gas/config/tc-ia64.h b/gas/config/tc-ia64.h
+index e982e57b47..d187bbc9f0 100644
+--- a/gas/config/tc-ia64.h
++++ b/gas/config/tc-ia64.h
+@@ -327,3 +327,5 @@ typedef struct unwind_record
+ #ifdef TE_VMS
+ #define DWARF2_VERSION      (dwarf_level < 3 ? 3  : dwarf_level)
+ #endif
++
++#define md_single_noop_insn "nop 0"
+diff --git a/gas/config/tc-mmix.h b/gas/config/tc-mmix.h
+index f7a54c1de2..2d8e226dc8 100644
+--- a/gas/config/tc-mmix.h
++++ b/gas/config/tc-mmix.h
+@@ -228,3 +228,5 @@ extern void mmix_md_do_align (int, char *, int, int);
+ 
+ /* MMIX has global register symbols.  */
+ #define TC_GLOBAL_REGISTER_SYMBOL_OK
++
++#define md_single_noop_insn "set $0, $0"
+diff --git a/gas/config/tc-or1k.h b/gas/config/tc-or1k.h
+index 0242dd480f..b9aa00cb9a 100644
+--- a/gas/config/tc-or1k.h
++++ b/gas/config/tc-or1k.h
+@@ -74,3 +74,5 @@ void or1k_elf_final_processing (void);
+ #define tc_cfi_frame_initial_instructions \
+     or1k_cfi_frame_initial_instructions
+ extern void or1k_cfi_frame_initial_instructions (void);
++
++#define md_single_noop_insn "l.nop"
 diff --git a/gas/configure b/gas/configure
 index 13bef1e48c..5bccfd9d1b 100755
 --- a/gas/configure
@@ -32290,6 +32459,82 @@ index 13bef1e48c..5bccfd9d1b 100755
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
+diff --git a/gas/doc/as.texi b/gas/doc/as.texi
+index ac4a073eab..8ce9fb73e2 100644
+--- a/gas/doc/as.texi
++++ b/gas/doc/as.texi
+@@ -746,7 +746,9 @@ compiler output).
+ @itemx --gen-debug
+ Generate debugging information for each assembler source line using whichever
+ debug format is preferred by the target.  This currently means either STABS,
+-ECOFF or DWARF2.
++ECOFF or DWARF2.  When the debug format is DWARF then a @code{.debug_info} and
++@code{.debug_line} section is only emitted when the assembly file doesn't
++generate one itself.
+ 
+ @item --gstabs
+ Generate stabs debugging information for each assembler line.  This
+@@ -4457,6 +4459,7 @@ Some machine configurations provide additional directives.
+ * MRI::				@code{.mri @var{val}}
+ * Noaltmacro::                  @code{.noaltmacro}
+ * Nolist::                      @code{.nolist}
++* Nop::                         @code{.nop}
+ * Nops::                        @code{.nops @var{size}[, @var{control}]}
+ * Octa::                        @code{.octa @var{bignums}}
+ * Offset::			@code{.offset @var{loc}}
+@@ -5867,7 +5870,8 @@ the @code{.loc} directive will add a row to the @code{.debug_line} line
+ number matrix corresponding to the immediately following assembly
+ instruction.  The @var{fileno}, @var{lineno}, and optional @var{column}
+ arguments will be applied to the @code{.debug_line} state machine before
+-the row is added.
++the row is added.  It is an error for the input assembly file to generate
++a non-empty @code{.debug_line} and also use @code{loc} directives.
+ 
+ The @var{options} are a sequence of the following tokens in any order:
+ 
+@@ -6164,22 +6168,31 @@ internal counter (which is zero initially).   @code{.list} increments the
+ counter, and @code{.nolist} decrements it.  Assembly listings are
+ generated whenever the counter is greater than zero.
+ 
++@node Nop
++@section @code{.nop}
++
++@cindex @code{nop} directive
++@cindex filling memory with no-op instructions
++This directive emits a single no-op instruction.  It is provided on all
++architectures, allowing the creation of architecture neutral tests involving
++actual code.  The size of the generated instruction is target specific.  The
++instruction does affect the generation of DWARF debug line information.
++
+ @node Nops
+ @section @code{.nops @var{size}[, @var{control}]}
+ 
+ @cindex @code{nops} directive
+ @cindex filling memory with no-op instructions
+-This directive emits @var{size} bytes filled with no-op instructions.
+-@var{size} is absolute expression, which must be a positve value.
+-@var{control} controls how no-op instructions should be generated.  If
+-the comma and @var{control} are omitted, @var{control} is assumed to be
+-zero.
+-
+-Note: For Intel 80386 and AMD x86-64 targets, @var{control} specifies
+-the size limit of a no-op instruction.  The valid values of @var{control}
+-are between 0 and 4 in 16-bit mode, between 0 and 7 when tuning for
+-older processors in 32-bit mode, between 0 and 11 in 64-bit mode or when
+-tuning for newer processors in 32-bit mode.  When 0 is used, the no-op
++This directive emits no-op instructions.  It is specific to the Intel 80386 and
++AMD x86-64 targets.  It takes a @var{size} argument and generates @var{size}
++bytes of no-op instructions.  @var{size} must be absolute and positive.  These
++bytes do not affect the generation of DWARF debug line information.
++
++The optional @var{control} argument specifies a size limit for a single no-op
++instruction.  If not provided then a value of 0 is assumed.  The valid values
++of @var{control} are between 0 and 4 in 16-bit mode, between 0 and 7 when
++tuning for older processors in 32-bit mode, between 0 and 11 in 64-bit mode or
++when tuning for newer processors in 32-bit mode.  When 0 is used, the no-op
+ instruction size limit is set to the maximum supported size.
+ 
+ @node Octa
 diff --git a/gas/doc/c-i386.texi b/gas/doc/c-i386.texi
 index f3183f1ddb..2a7551dfeb 100644
 --- a/gas/doc/c-i386.texi
@@ -32304,16 +32549,135 @@ index f3183f1ddb..2a7551dfeb 100644
  @item
  @samp{@{load@}} -- prefer load-form instruction.
  
+diff --git a/gas/doc/internals.texi b/gas/doc/internals.texi
+index 23520bdf75..1230ddd104 100644
+--- a/gas/doc/internals.texi
++++ b/gas/doc/internals.texi
+@@ -1547,6 +1547,16 @@ The function should return the debug format that is preferred by the CPU
+ backend.  This format will be used when generating assembler specific debug
+ information.
+ 
++@item md_emit_single_noop_insn
++@itemx md_single_noop_insn
++These macro facilitate the @var{.nop} directive.  If defined the
++@var{md_emit_single_noop_insn) macro provides code to insert a single no-op
++instruction into the output stream.  If this involves calling @var{md_assemble}
++with a fixed string then the alternative macro @var{md_single_noop_insn} can be
++defined, specifying the string to pass.  If neither of these macros are defined
++then the @var{.nop} directive will call @var{md_assemble} with the string
++@option{nop}.
++
+ @item md_allow_local_subtract (@var{left}, @var{right}, @var{section})
+ If defined, GAS will call this macro when evaluating an expression which is the
+ difference of two symbols defined in the same section.  It takes three
 diff --git a/gas/dwarf2dbg.c b/gas/dwarf2dbg.c
-index 69955fea5b..a95c29736f 100644
+index 69955fea5b..6899a840ef 100644
 --- a/gas/dwarf2dbg.c
 +++ b/gas/dwarf2dbg.c
-@@ -1992,18 +1992,29 @@ out_dir_and_file_list (void)
- 	 the .debug_line_str section and reference them here.  */
-       out_uleb128 (DW_FORM_string);
+@@ -102,6 +102,11 @@
+ #define DWARF2_LINE_VERSION (dwarf_level > 3 ? dwarf_level : 3)
+ #endif
  
++/* The .debug_rnglists has only been in DWARF version 5. */
++#ifndef DWARF2_RNGLISTS_VERSION
++#define DWARF2_RNGLISTS_VERSION 5
++#endif
++
+ #include "subsegs.h"
+ 
+ #include "dwarf2.h"
+@@ -221,9 +226,15 @@ static unsigned int  dirs_in_use = 0;
+ static unsigned int  dirs_allocated = 0;
+ 
+ /* TRUE when we've seen a .loc directive recently.  Used to avoid
+-   doing work when there's nothing to do.  */
++   doing work when there's nothing to do.  Will be reset by
++   dwarf2_consume_line_info.  */
+ bfd_boolean dwarf2_loc_directive_seen;
+ 
++/* TRUE when we've seen any .loc directive at any time during parsing.
++   Indicates the user wants us to generate a .debug_line section.
++   Used in dwarf2_finish as sanity check.  */
++static bfd_boolean dwarf2_any_loc_directive_seen;
++
+ /* TRUE when we're supposed to set the basic block mark whenever a
+    label is seen.  */
+ bfd_boolean dwarf2_loc_mark_labels;
+@@ -1014,7 +1025,7 @@ dwarf2_emit_label (symbolS *label)
+ char *
+ dwarf2_directive_filename (void)
+ {
+-  bfd_boolean with_md5 = TRUE;
++  bfd_boolean with_md5 = FALSE;
+   valueT num;
+   char *filename;
+   const char * dirname = NULL;
+@@ -1285,7 +1296,7 @@ dwarf2_directive_loc (int dummy ATTRIBUTE_UNUSED)
+     }
+ 
+   demand_empty_rest_of_line ();
+-  dwarf2_loc_directive_seen = TRUE;
++  dwarf2_any_loc_directive_seen = dwarf2_loc_directive_seen = TRUE;
+   debug_type = DEBUG_NONE;
+ 
+   /* If we were given a view id, emit the row right away.  */
+@@ -1967,10 +1978,32 @@ process_entries (segT seg, struct line_entry *e)
+     }
+ }
+ 
++/* Switch to LINE_STR_SEG and output the given STR.  Return the
++   symbol pointing to the new string in the section.  */
++
++static symbolS *
++add_line_strp (segT line_str_seg, const char *str)
++{
++  char *cp;
++  size_t size;
++  symbolS *sym;
++
++  subseg_set (line_str_seg, 0);
++
++  sym = symbol_temp_new_now_octets ();
++
++  size = strlen (str) + 1;
++  cp = frag_more (size);
++  memcpy (cp, str, size);
++
++  return sym;
++}
++
++
+ /* Emit the directory and file tables for .debug_line.  */
+ 
+ static void
+-out_dir_and_file_list (void)
++out_dir_and_file_list (segT line_seg, int sizeof_offset)
+ {
+   size_t size;
+   const char *dir;
+@@ -1979,6 +2012,8 @@ out_dir_and_file_list (void)
+   bfd_boolean emit_md5 = FALSE;
+   bfd_boolean emit_timestamps = TRUE;
+   bfd_boolean emit_filesize = TRUE;
++  segT line_str_seg = NULL;
++  symbolS *line_strp;
+ 
+   /* Output the Directory Table.  */
+   if (DWARF2_LINE_VERSION >= 5)
+@@ -1988,32 +2023,58 @@ out_dir_and_file_list (void)
+ 
+       /* Describe the purpose and format of the column.  */
+       out_uleb128 (DW_LNCT_path);
+-      /* FIXME: it would be better to store these strings in
+-	 the .debug_line_str section and reference them here.  */
+-      out_uleb128 (DW_FORM_string);
+-
 -      /* Now state how many rows there are in the table.  */
 -      out_uleb128 (dirs_in_use);
++      /* Store these strings in the .debug_line_str section so they
++	 can be shared.  */
++      out_uleb128 (DW_FORM_line_strp);
++
 +      /* Now state how many rows there are in the table.  We need at
 +	 least 1 if there is one or more file names to store the
 +	 "working directory".  */
@@ -32325,11 +32689,18 @@ index 69955fea5b..a95c29736f 100644
        
    /* Emit directory list.  */
 -  if (DWARF2_LINE_VERSION >= 5 && dirs_in_use > 0)
-+  if (DWARF2_LINE_VERSION >= 5 && (dirs_in_use > 0 || files_in_use > 0))
-     {
+-    {
 -      if (dirs == NULL || dirs[0] == NULL)
 -	dir = remap_debug_filename (".");
 -      else
++  if (DWARF2_LINE_VERSION >= 5 && (dirs_in_use > 0 || files_in_use > 0))
++    {
++      line_str_seg = subseg_new (".debug_line_str", 0);
++      bfd_set_section_flags (line_str_seg,
++			     SEC_READONLY | SEC_DEBUGGING | SEC_OCTETS
++			     | SEC_MERGE | SEC_STRINGS);
++      line_str_seg->entsize = 1;
++
 +      /* DWARF5 uses slot zero, but that is only set explicitly
 +	 using a .file 0 directive.  If that isn't used, but dir
 +	 one is used, then use that as main file directory.
@@ -32337,15 +32708,53 @@ index 69955fea5b..a95c29736f 100644
 +      if (dirs_in_use > 0 && dirs != NULL && dirs[0] != NULL)
  	dir = remap_debug_filename (dirs[0]);
 -	
+-      size = strlen (dir) + 1;
+-      cp = frag_more (size);
+-      memcpy (cp, dir, size);
 +      else if (dirs_in_use > 1 && dirs != NULL && dirs[1] != NULL)
 +	dir = remap_debug_filename (dirs[1]);
 +      else
 +	dir = remap_debug_filename (getpwd ());
 +
-       size = strlen (dir) + 1;
-       cp = frag_more (size);
-       memcpy (cp, dir, size);
-@@ -2089,8 +2100,14 @@ out_dir_and_file_list (void)
++      line_strp = add_line_strp (line_str_seg, dir);
++      subseg_set (line_seg, 0);
++      TC_DWARF2_EMIT_OFFSET (line_strp, sizeof_offset);
+     }
+   for (i = 1; i < dirs_in_use; ++i)
+     {
+       dir = remap_debug_filename (dirs[i]);
+-      size = strlen (dir) + 1;
+-      cp = frag_more (size);
+-      memcpy (cp, dir, size);
++      if (DWARF2_LINE_VERSION < 5)
++	{
++	  size = strlen (dir) + 1;
++	  cp = frag_more (size);
++	  memcpy (cp, dir, size);
++	}
++      else
++	{
++	  line_strp = add_line_strp (line_str_seg, dir);
++	  subseg_set (line_seg, 0);
++	  TC_DWARF2_EMIT_OFFSET (line_strp, sizeof_offset);
++	}
+     }
+ 
+   if (DWARF2_LINE_VERSION < 5)
+@@ -2050,9 +2111,9 @@ out_dir_and_file_list (void)
+       out_byte (columns);
+       /* The format of the file name.  */
+       out_uleb128 (DW_LNCT_path);
+-      /* FIXME: it would be better to store these strings in
+-	 the .debug_line_str section and reference them here.  */
+-      out_uleb128 (DW_FORM_string);
++      /* Store these strings in the .debug_line_str section so they
++	 can be shared.  */
++      out_uleb128 (DW_FORM_line_strp);
+ 
+       /* The format of the directory index.  */
+       out_uleb128 (DW_LNCT_directory_index);
+@@ -2089,8 +2150,14 @@ out_dir_and_file_list (void)
  
        if (files[i].filename == NULL)
  	{
@@ -32362,7 +32771,141 @@ index 69955fea5b..a95c29736f 100644
  	  if (DWARF2_LINE_VERSION < 5 || i != 0)
  	    {
  	      as_bad (_("unassigned file number %ld"), (long) i);
-@@ -2427,8 +2444,7 @@ out_debug_abbrev (segT abbrev_seg,
+@@ -2100,9 +2167,18 @@ out_dir_and_file_list (void)
+ 
+       fullfilename = DWARF2_FILE_NAME (files[i].filename,
+ 				       files[i].dir ? dirs [files [i].dir] : "");
+-      size = strlen (fullfilename) + 1;
+-      cp = frag_more (size);
+-      memcpy (cp, fullfilename, size);
++      if (DWARF2_LINE_VERSION < 5)
++	{
++	  size = strlen (fullfilename) + 1;
++	  cp = frag_more (size);
++	  memcpy (cp, fullfilename, size);
++	}
++      else
++	{
++	  line_strp = add_line_strp (line_str_seg, fullfilename);
++	  subseg_set (line_seg, 0);
++	  TC_DWARF2_EMIT_OFFSET (line_strp, sizeof_offset);
++	}
+ 
+       /* Directory number.  */
+       out_uleb128 (files[i].dir);
+@@ -2260,7 +2336,7 @@ out_debug_line (segT line_seg)
+      matches up to the opcode base value we have been using.  */
+   gas_assert (DWARF2_LINE_OPCODE_BASE == 13);
+ 
+-  out_dir_and_file_list ();
++  out_dir_and_file_list (line_seg, sizeof_offset);
+ 
+   symbol_set_value_now (prologue_end);
+ 
+@@ -2286,7 +2362,7 @@ out_debug_line (segT line_seg)
+ }
+ 
+ static void
+-out_debug_ranges (segT ranges_seg)
++out_debug_ranges (segT ranges_seg, symbolS **ranges_sym)
+ {
+   unsigned int addr_size = sizeof_address;
+   struct line_seg *s;
+@@ -2296,6 +2372,10 @@ out_debug_ranges (segT ranges_seg)
+   memset (&exp, 0, sizeof exp);
+   subseg_set (ranges_seg, 0);
+ 
++  /* For DW_AT_ranges to point at (there is no header, so really start
++     of section, but see out_debug_rnglists).  */
++  *ranges_sym = symbol_temp_new_now_octets ();
++
+   /* Base Address Entry.  */
+   for (i = 0; i < addr_size; i++)
+     out_byte (0xff);
+@@ -2334,6 +2414,57 @@ out_debug_ranges (segT ranges_seg)
+     out_byte (0);
+ }
+ 
++static void
++out_debug_rnglists (segT ranges_seg, symbolS **ranges_sym)
++{
++  expressionS exp;
++  symbolS *ranges_end;
++  struct line_seg *s;
++
++  /* Unit length.  */
++  memset (&exp, 0, sizeof exp);
++  out_header (ranges_seg, &exp);
++  ranges_end = exp.X_add_symbol;
++
++  out_two (DWARF2_RNGLISTS_VERSION);
++  out_byte (sizeof_address);
++  out_byte (0); /* Segment Selector size.  */
++  out_four (0); /* Offset entry count.  */
++
++  /* For DW_AT_ranges to point at (must be after the header).   */
++  *ranges_sym = symbol_temp_new_now_octets ();
++
++  for (s = all_segs; s; s = s->next)
++    {
++      fragS *frag;
++      symbolS *beg, *end;
++
++      out_byte (DW_RLE_start_length);
++
++      frag = first_frag_for_seg (s->seg);
++      beg = symbol_temp_new (s->seg, 0, frag);
++      s->text_start = beg;
++
++      frag = last_frag_for_seg (s->seg);
++      end = symbol_temp_new (s->seg, get_frag_fix (frag, s->seg), frag);
++      s->text_end = end;
++
++      exp.X_op = O_symbol;
++      exp.X_add_symbol = beg;
++      exp.X_add_number = 0;
++      emit_expr (&exp, sizeof_address);
++
++      exp.X_op = O_symbol;
++      exp.X_add_symbol = end;
++      exp.X_add_number = 0;
++      emit_leb128_expr (&exp, 0);
++    }
++
++  out_byte (DW_RLE_end_of_list);
++
++  symbol_set_value_now (ranges_end);
++}
++
+ /* Emit data for .debug_aranges.  */
+ 
+ static void
+@@ -2412,31 +2543,32 @@ out_debug_abbrev (segT abbrev_seg,
+ 		  segT info_seg ATTRIBUTE_UNUSED,
+ 		  segT line_seg ATTRIBUTE_UNUSED)
+ {
++  int secoff_form;
+   subseg_set (abbrev_seg, 0);
+ 
+   out_uleb128 (1);
+   out_uleb128 (DW_TAG_compile_unit);
+   out_byte (DW_CHILDREN_no);
+-  if (DWARF2_FORMAT (line_seg) == dwarf2_format_32bit)
+-    out_abbrev (DW_AT_stmt_list, DW_FORM_data4);
++  if (DWARF2_VERSION < 4)
++    {
++      if (DWARF2_FORMAT (line_seg) == dwarf2_format_32bit)
++	secoff_form = DW_FORM_data4;
++      else
++	secoff_form = DW_FORM_data8;
++    }
+   else
+-    out_abbrev (DW_AT_stmt_list, DW_FORM_data8);
++    secoff_form = DW_FORM_sec_offset;
++  out_abbrev (DW_AT_stmt_list, secoff_form);
+   if (all_segs->next == NULL)
+     {
+       out_abbrev (DW_AT_low_pc, DW_FORM_addr);
        if (DWARF2_VERSION < 4)
  	out_abbrev (DW_AT_high_pc, DW_FORM_addr);
        else
@@ -32371,8 +32914,29 @@ index 69955fea5b..a95c29736f 100644
 +	out_abbrev (DW_AT_high_pc, DW_FORM_udata);
      }
    else
-     {
-@@ -2464,12 +2480,26 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT ranges_seg,
+-    {
+-      if (DWARF2_FORMAT (info_seg) == dwarf2_format_32bit)
+-	out_abbrev (DW_AT_ranges, DW_FORM_data4);
+-      else
+-	out_abbrev (DW_AT_ranges, DW_FORM_data8);
+-    }
++    out_abbrev (DW_AT_ranges, secoff_form);
+   out_abbrev (DW_AT_name, DW_FORM_strp);
+   out_abbrev (DW_AT_comp_dir, DW_FORM_strp);
+   out_abbrev (DW_AT_producer, DW_FORM_strp);
+@@ -2450,8 +2582,9 @@ out_debug_abbrev (segT abbrev_seg,
+ /* Emit a description of this compilation unit for .debug_info.  */
+ 
+ static void
+-out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT ranges_seg,
+-		symbolS *name_sym, symbolS *comp_dir_sym, symbolS *producer_sym)
++out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg,
++		symbolS *ranges_sym, symbolS *name_sym,
++		symbolS *comp_dir_sym, symbolS *producer_sym)
+ {
+   expressionS exp;
+   symbolS *info_end;
+@@ -2464,12 +2597,26 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT ranges_seg,
    /* DWARF version.  */
    out_two (DWARF2_VERSION);
  
@@ -32401,7 +32965,7 @@ index 69955fea5b..a95c29736f 100644
    /* DW_TAG_compile_unit DIE abbrev */
    out_uleb128 (1);
  
-@@ -2497,7 +2527,10 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT ranges_seg,
+@@ -2497,13 +2644,16 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT ranges_seg,
  	}
        exp.X_add_symbol = all_segs->text_end;
        exp.X_add_number = 0;
@@ -32413,6 +32977,111 @@ index 69955fea5b..a95c29736f 100644
      }
    else
      {
+       /* This attribute is emitted if the code is disjoint.  */
+       /* DW_AT_ranges.  */
+-      TC_DWARF2_EMIT_OFFSET (section_symbol (ranges_seg), sizeof_offset);
++      TC_DWARF2_EMIT_OFFSET (ranges_sym, sizeof_offset);
+     }
+ 
+   /* DW_AT_name, DW_AT_comp_dir and DW_AT_producer.  Symbols in .debug_str
+@@ -2593,7 +2743,7 @@ dwarf2_init (void)
+ 
+ 
+ /* Finish the dwarf2 debug sections.  We emit .debug.line if there
+-   were any .file/.loc directives, or --gdwarf2 was given, or if the
++   were any .file/.loc directives, or --gdwarf2 was given, and if the
+    file has a non-empty .debug_info section and an empty .debug_line
+    section.  If we emit .debug_line, and the .debug_info section is
+    empty, we also emit .debug_info, .debug_aranges and .debug_abbrev.
+@@ -2617,8 +2767,10 @@ dwarf2_finish (void)
+   empty_debug_line = line_seg == NULL || !seg_not_empty_p (line_seg);
+ 
+   /* We can't construct a new debug_line section if we already have one.
+-     Give an error.  */
+-  if (all_segs && !empty_debug_line)
++     Give an error if we have seen any .loc, otherwise trust the user
++     knows what they are doing and want to generate the .debug_line
++     (and all other debug sections) themselves.  */
++  if (all_segs && !empty_debug_line && dwarf2_any_loc_directive_seen)
+     as_fatal ("duplicate .debug_line sections");
+ 
+   if ((!all_segs && emit_other_sections)
+@@ -2632,8 +2784,12 @@ dwarf2_finish (void)
+   sizeof_address = DWARF2_ADDR_SIZE (stdoutput);
+ 
+   /* Create and switch to the line number section.  */
+-  line_seg = subseg_new (".debug_line", 0);
+-  bfd_set_section_flags (line_seg, SEC_READONLY | SEC_DEBUGGING | SEC_OCTETS);
++  if (empty_debug_line)
++    {
++      line_seg = subseg_new (".debug_line", 0);
++      bfd_set_section_flags (line_seg,
++			     SEC_READONLY | SEC_DEBUGGING | SEC_OCTETS);
++    }
+ 
+   /* For each subsection, chain the debug entries together.  */
+   for (s = all_segs; s; s = s->next)
+@@ -2659,7 +2815,8 @@ dwarf2_finish (void)
+ 	}
+     }
+ 
+-  out_debug_line (line_seg);
++  if (empty_debug_line)
++    out_debug_line (line_seg);
+ 
+   /* If this is assembler generated line info, and there is no
+      debug_info already, we need .debug_info, .debug_abbrev and
+@@ -2668,9 +2825,8 @@ dwarf2_finish (void)
+     {
+       segT abbrev_seg;
+       segT aranges_seg;
+-      segT ranges_seg;
+       segT str_seg;
+-      symbolS *name_sym, *comp_dir_sym, *producer_sym;
++      symbolS *name_sym, *comp_dir_sym, *producer_sym, *ranges_sym;
+ 
+       gas_assert (all_segs);
+ 
+@@ -2693,20 +2849,32 @@ dwarf2_finish (void)
+       record_alignment (aranges_seg, ffs (2 * sizeof_address) - 1);
+ 
+       if (all_segs->next == NULL)
+-	ranges_seg = NULL;
++	ranges_sym = NULL;
+       else
+ 	{
+-	  ranges_seg = subseg_new (".debug_ranges", 0);
+-	  bfd_set_section_flags (ranges_seg,
+-				 SEC_READONLY | SEC_DEBUGGING | SEC_OCTETS);
+-	  record_alignment (ranges_seg, ffs (2 * sizeof_address) - 1);
+-	  out_debug_ranges (ranges_seg);
++	  if (DWARF2_VERSION < 5)
++	    {
++	      segT ranges_seg = subseg_new (".debug_ranges", 0);
++	      bfd_set_section_flags (ranges_seg, (SEC_READONLY
++						  | SEC_DEBUGGING
++						  | SEC_OCTETS));
++	      record_alignment (ranges_seg, ffs (2 * sizeof_address) - 1);
++	      out_debug_ranges (ranges_seg, &ranges_sym);
++	    }
++	  else
++	    {
++	      segT rnglists_seg = subseg_new (".debug_rnglists", 0);
++	      bfd_set_section_flags (rnglists_seg, (SEC_READONLY
++						    | SEC_DEBUGGING
++						    | SEC_OCTETS));
++	      out_debug_rnglists (rnglists_seg, &ranges_sym);
++	    }
+ 	}
+ 
+       out_debug_aranges (aranges_seg, info_seg);
+       out_debug_abbrev (abbrev_seg, info_seg, line_seg);
+       out_debug_str (str_seg, &name_sym, &comp_dir_sym, &producer_sym);
+-      out_debug_info (info_seg, abbrev_seg, line_seg, ranges_seg,
++      out_debug_info (info_seg, abbrev_seg, line_seg, ranges_sym,
+ 		      name_sym, comp_dir_sym, producer_sym);
+     }
+ }
 diff --git a/gas/po/ru.po b/gas/po/ru.po
 index 6fa9f63f01..22549a48e9 100644
 --- a/gas/po/ru.po
@@ -45088,10 +45757,125 @@ index 6fa9f63f01..22549a48e9 100644
  #~ msgstr "непредсказуемая загрузка регистра — «%s»"
  
 diff --git a/gas/read.c b/gas/read.c
-index 8f93c2ba2b..f192cc16d5 100644
+index 8f93c2ba2b..69eb19c378 100644
 --- a/gas/read.c
 +++ b/gas/read.c
-@@ -5138,7 +5138,7 @@ output_big_leb128 (char *p, LITTLENUM_TYPE *bignum, unsigned int size, int sign)
+@@ -417,6 +417,7 @@ static const pseudo_typeS potable[] = {
+   {"noformat", s_ignore, 0},
+   {"nolist", listing_list, 0},	/* Turn listing off.  */
+   {"nopage", listing_nopage, 0},
++  {"nop", s_nop, 0},
+   {"nops", s_nops, 0},
+   {"octa", cons, 16},
+   {"offset", s_struct, 0},
+@@ -3437,6 +3438,43 @@ s_space (int mult)
+     mri_comment_end (stop, stopc);
+ }
+ 
++void
++s_nop (int ignore ATTRIBUTE_UNUSED)
++{
++#ifdef md_flush_pending_output
++  md_flush_pending_output ();
++#endif
++
++#ifdef md_cons_align
++  md_cons_align (1);
++#endif
++
++  SKIP_WHITESPACE ();
++  demand_empty_rest_of_line ();
++
++#ifdef md_emit_single_noop
++  md_emit_single_noop;
++#else
++  char * nop;
++
++#ifndef md_single_noop_insn
++#define md_single_noop_insn "nop"
++#endif
++  /* md_assemble might modify its argument, so
++     we must pass it a string that is writeable.  */
++  if (asprintf (&nop, "%s", md_single_noop_insn) < 0)
++    as_fatal ("%s", xstrerror (errno));
++
++  /* Some targets assume that they can update input_line_pointer inside
++     md_assemble, and, worse, that they can leave it assigned to the string
++     pointer that was provided as an argument.  So preserve ilp here.  */
++  char * saved_ilp = input_line_pointer;
++  md_assemble (nop);
++  input_line_pointer = saved_ilp;
++  free (nop);
++#endif
++}
++
+ void
+ s_nops (int ignore ATTRIBUTE_UNUSED)
+ {
+@@ -3451,8 +3489,12 @@ s_nops (int ignore ATTRIBUTE_UNUSED)
+   md_cons_align (1);
+ #endif
+ 
++  SKIP_WHITESPACE ();
+   expression (&exp);
++  /* Note - this expression is tested for an absolute value in
++     write.c:relax_segment().  */
+ 
++  SKIP_WHITESPACE ();
+   if (*input_line_pointer == ',')
+     {
+       ++input_line_pointer;
+@@ -3464,29 +3506,30 @@ s_nops (int ignore ATTRIBUTE_UNUSED)
+       val.X_add_number = 0;
+     }
+ 
+-  if (val.X_op == O_constant)
++  if (val.X_op != O_constant)
+     {
+-      if (val.X_add_number < 0)
+-	{
+-	  as_warn (_("negative nop control byte, ignored"));
+-	  val.X_add_number = 0;
+-	}
+-
+-      if (!need_pass_2)
+-	{
+-	  /* Store the no-op instruction control byte in the first byte
+-	     of frag.  */
+-	  char *p;
+-	  symbolS *sym = make_expr_symbol (&exp);
+-	  p = frag_var (rs_space_nop, 1, 1, (relax_substateT) 0,
+-			sym, (offsetT) 0, (char *) 0);
+-	  *p = val.X_add_number;
+-	}
++      as_bad (_("unsupported variable nop control in .nops directive"));
++      val.X_op = O_constant;
++      val.X_add_number = 0;
++    }
++  else if (val.X_add_number < 0)
++    {
++      as_warn (_("negative nop control byte, ignored"));
++      val.X_add_number = 0;
+     }
+-  else
+-    as_bad (_("unsupported variable nop control in .nops directive"));
+ 
+   demand_empty_rest_of_line ();
++
++  if (need_pass_2)
++    /* Ignore this directive if we are going to perform a second pass.  */
++    return;
++
++  /* Store the no-op instruction control byte in the first byte of frag.  */
++  char *p;
++  symbolS *sym = make_expr_symbol (&exp);
++  p = frag_var (rs_space_nop, 1, 1, (relax_substateT) 0,
++		sym, (offsetT) 0, (char *) 0);
++  *p = val.X_add_number;
+ }
+ 
+ /* This is like s_space, but the value is a floating point number with
+@@ -5138,7 +5181,7 @@ output_big_leb128 (char *p, LITTLENUM_TYPE *bignum, unsigned int size, int sign)
  /* Generate the appropriate fragments for a given expression to emit a
     leb128 value.  SIGN is 1 for sleb, 0 for uleb.  */
  
@@ -45101,7 +45885,7 @@ index 8f93c2ba2b..f192cc16d5 100644
  {
    operatorT op = exp->X_op;
 diff --git a/gas/read.h b/gas/read.h
-index 502f3b6f2d..ffcdbb69a7 100644
+index 502f3b6f2d..b2f0d363b1 100644
 --- a/gas/read.h
 +++ b/gas/read.h
 @@ -132,6 +132,7 @@ extern void emit_expr_with_reloc (expressionS *exp, unsigned int nbytes,
@@ -45112,6 +45896,54 @@ index 502f3b6f2d..ffcdbb69a7 100644
  extern void equals (char *, int);
  extern void float_cons (int);
  extern void ignore_rest_of_line (void);
+@@ -206,6 +207,7 @@ extern void s_purgem (int);
+ extern void s_rept (int);
+ extern void s_set (int);
+ extern void s_space (int mult);
++extern void s_nop (int);
+ extern void s_nops (int);
+ extern void s_stab (int what);
+ extern void s_struct (int);
+diff --git a/gas/testsuite/gas/all/gas.exp b/gas/testsuite/gas/all/gas.exp
+index c782955370..7ecf26e4e0 100644
+--- a/gas/testsuite/gas/all/gas.exp
++++ b/gas/testsuite/gas/all/gas.exp
+@@ -440,6 +440,7 @@ dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/err-*.s $srcdir/$subdir/warn
+ dg-finish
+ 
+ # Set $nop_type appropriately to indicate the NOP instruction mnemonic.
++# Note - this code is made obsolete by the new .nops pseudo-op.
+ switch -glob $target_triplet {
+     bpf-*-* {
+         set nop_type 6
+@@ -467,3 +468,5 @@ run_dump_test "org-6"
+ run_dump_test "fill-1"
+ 
+ gas_test "pr23938.s" "" "" ".xstabs"
++
++run_dump_test "nop"
+diff --git a/gas/testsuite/gas/all/nop.d b/gas/testsuite/gas/all/nop.d
+new file mode 100644
+index 0000000000..81ac08d9d4
+--- /dev/null
++++ b/gas/testsuite/gas/all/nop.d
+@@ -0,0 +1,8 @@
++#objdump: -s -j .text -j "\$TEXT\$"
++#name: Generate NOPs in an architecture neutral manner
++
++.*: +file format .*
++
++Contents of section (\.text|\$TEXT\$):
++ [^ ]* .*
++#pass
+diff --git a/gas/testsuite/gas/all/nop.s b/gas/testsuite/gas/all/nop.s
+new file mode 100644
+index 0000000000..bca3805ca3
+--- /dev/null
++++ b/gas/testsuite/gas/all/nop.s
+@@ -0,0 +1,2 @@
++	.text
++	.nop
 diff --git a/gas/testsuite/gas/arm/mve-vcvtne-it-bad.d b/gas/testsuite/gas/arm/mve-vcvtne-it-bad.d
 new file mode 100644
 index 0000000000..110f45f28a
@@ -45316,24 +46148,481 @@ index 0000000000..828f4102a3
 +baz:
 +	.quad 0x1
 +	.size baz, .-baz
+diff --git a/gas/testsuite/gas/elf/dwarf-5-file0.d b/gas/testsuite/gas/elf/dwarf-5-file0.d
+index 3dffa63965..5d76b7bcd1 100644
+--- a/gas/testsuite/gas/elf/dwarf-5-file0.d
++++ b/gas/testsuite/gas/elf/dwarf-5-file0.d
+@@ -5,15 +5,15 @@
+ #...
+  The Directory Table \(offset 0x.*, lines 3, columns 1\):
+   Entry	Name
+-  0	master directory
+-  1	secondary directory
+-  2	/tmp
++  0	\(indirect line string, offset: 0x.*\): master directory
++  1	\(indirect line string, offset: 0x.*\): secondary directory
++  2	\(indirect line string, offset: 0x.*\): /tmp
+ 
+  The File Name Table \(offset 0x.*, lines 3, columns 3\):
+   Entry	Dir	MD5				Name
+-  0	0 0x00000000000000000000000000000000	master source file
+-  1	1 0x00000000000000000000000000000000	secondary source file
+-  2	2 0x95828e8bc4f7404dbf7526fb7bd0f192	foo.c
++  0	0 0x00000000000000000000000000000000	\(indirect line string, offset: 0x.*\): master source file
++  1	1 0x00000000000000000000000000000000	\(indirect line string, offset: 0x.*\): secondary source file
++  2	2 0x95828e8bc4f7404dbf7526fb7bd0f192	\(indirect line string, offset: 0x.*\): foo.c
+ #pass
+ 
+ 
+diff --git a/gas/testsuite/gas/elf/dwarf-5-file0.s b/gas/testsuite/gas/elf/dwarf-5-file0.s
+index 2792ba8c44..9ac15a052b 100644
+--- a/gas/testsuite/gas/elf/dwarf-5-file0.s
++++ b/gas/testsuite/gas/elf/dwarf-5-file0.s
+@@ -8,7 +8,7 @@
+ 	.file 0 "master directory/master source file"
+ 	.line 1
+ 	.text
+-	.word 0
++	.octa 0x12345678901234567890123456789012
+ 
+ 	.file 1 "secondary directory/secondary source file"
+ 	.line 2
+diff --git a/gas/testsuite/gas/elf/dwarf-5-nop-for-line-table.d b/gas/testsuite/gas/elf/dwarf-5-nop-for-line-table.d
+new file mode 100644
+index 0000000000..651a1a2070
+--- /dev/null
++++ b/gas/testsuite/gas/elf/dwarf-5-nop-for-line-table.d
+@@ -0,0 +1,12 @@
++#as: --gdwarf-5
++#name: Check line table is produced with .nops
++#readelf: -wL
++
++#...
++Contents of the .debug_line section:
++
++CU: .*
++File name.*
++#...
++.*[ 	]+[1-8][ 	]+0.*
++#pass
+diff --git a/gas/testsuite/gas/elf/dwarf-5-nop-for-line-table.s b/gas/testsuite/gas/elf/dwarf-5-nop-for-line-table.s
+new file mode 100644
+index 0000000000..e3712ffa9d
+--- /dev/null
++++ b/gas/testsuite/gas/elf/dwarf-5-nop-for-line-table.s
+@@ -0,0 +1,3 @@
++	.text
++	.nop
++	.nop
 diff --git a/gas/testsuite/gas/elf/elf.exp b/gas/testsuite/gas/elf/elf.exp
-index 86b304ae34..155f78efa7 100644
+index 86b304ae34..52c02cffc5 100644
 --- a/gas/testsuite/gas/elf/elf.exp
 +++ b/gas/testsuite/gas/elf/elf.exp
-@@ -274,6 +274,8 @@ if { [is_elf_format] } then {
+@@ -274,6 +274,9 @@ if { [is_elf_format] } then {
      run_dump_test "dwarf2-18" $dump_opts
      run_dump_test "dwarf2-19" $dump_opts
      run_dump_test "dwarf-5-file0" $dump_opts
 +    run_dump_test "dwarf-4-cu" $dump_opts
 +    run_dump_test "dwarf-5-cu" $dump_opts
++    run_dump_test "dwarf-5-nop-for-line-table" $dump_opts
      run_dump_test "pr25917"
      run_dump_test "bss"
      run_dump_test "bad-bss"
+diff --git a/gas/testsuite/gas/i386/dwarf2-line-1.d b/gas/testsuite/gas/i386/dwarf2-line-1.d
+new file mode 100644
+index 0000000000..196f099c1a
+--- /dev/null
++++ b/gas/testsuite/gas/i386/dwarf2-line-1.d
+@@ -0,0 +1,45 @@
++#as: -gdwarf-2
++#readelf: -wl
++#name: DWARF .debug_line 1
++
++Raw dump of debug contents of section \.z?debug_line:
++
++  Offset:                      0x0
++  Length:                      .*
++  DWARF Version:               3
++  Prologue Length:             .*
++  Minimum Instruction Length:  1
++  Initial value of 'is_stmt':  1
++  Line Base:                   -5
++  Line Range:                  14
++  Opcode Base:                 13
++
++ Opcodes:
++  Opcode 1 has 0 args
++  Opcode 2 has 1 arg
++  Opcode 3 has 1 arg
++  Opcode 4 has 1 arg
++  Opcode 5 has 1 arg
++  Opcode 6 has 0 args
++  Opcode 7 has 0 args
++  Opcode 8 has 0 args
++  Opcode 9 has 1 arg
++  Opcode 10 has 0 args
++  Opcode 11 has 0 args
++  Opcode 12 has 1 arg
++
++ The Directory Table \(offset 0x.*\):
++  .*
++
++ The File Name Table \(offset 0x.*\):
++  Entry	Dir	Time	Size	Name
++  1	1	0	0	dwarf2-line-1.s
++
++ Line Number Statements:
++  \[0x.*\]  Extended opcode 2: set Address to 0x0
++  \[0x.*\]  Special opcode 13: advance Address by 0 to 0x0 and Line by 8 to 9
++  \[0x.*\]  Special opcode 20: advance Address by 1 to 0x1 and Line by 1 to 10
++  \[0x.*\]  Advance PC by 1 to 0x2
++  \[0x.*\]  Extended opcode 1: End of Sequence
++
++
+diff --git a/gas/testsuite/gas/i386/dwarf2-line-1.s b/gas/testsuite/gas/i386/dwarf2-line-1.s
+new file mode 100644
+index 0000000000..a2cb22e842
+--- /dev/null
++++ b/gas/testsuite/gas/i386/dwarf2-line-1.s
+@@ -0,0 +1,28 @@
++        .file   "dwarf2-test.c"
++        .text
++        .section .text.startup,"ax",@progbits
++        .p2align 4
++        .globl  main
++        .type   main, @function
++main:
++        .cfi_startproc
++        nop
++        ret
++        .cfi_endproc
++        .size   main, .-main
++        .text
++
++        .section .debug_info,"",%progbits
++        .long   0x0
++        .value  0x2
++        .long   .Ldebug_abbrev0
++        .byte   0x8
++        .uleb128 0x1
++
++        .section .debug_abbrev,"",@progbits
++.Ldebug_abbrev0:
++        .uleb128 0x0    # (abbrev code)
++        .uleb128 0x0    # (abbrev code)
++        .uleb128 0x0    # (abbrev code)
++
++# No .debug_line ok even if there is a .debug_info section
+diff --git a/gas/testsuite/gas/i386/dwarf2-line-2.d b/gas/testsuite/gas/i386/dwarf2-line-2.d
+new file mode 100644
+index 0000000000..2553fea32c
+--- /dev/null
++++ b/gas/testsuite/gas/i386/dwarf2-line-2.d
+@@ -0,0 +1,48 @@
++#as: -gdwarf-2
++#readelf: -wl
++#name: DWARF .debug_line 2
++
++Raw dump of debug contents of section .z?debug_line:
++
++  Offset:                      0x0
++  Length:                      62
++  DWARF Version:               .
++  Prologue Length:             35
++  Minimum Instruction Length:  1
++  Initial value of 'is_stmt':  1
++  Line Base:                   1
++  Line Range:                  1
++  Opcode Base:                 16
++
++ Opcodes:
++  Opcode 1 has 0 args
++  Opcode 2 has 1 arg
++  Opcode 3 has 1 arg
++  Opcode 4 has 1 arg
++  Opcode 5 has 1 arg
++  Opcode 6 has 0 args
++  Opcode 7 has 0 args
++  Opcode 8 has 0 args
++  Opcode 9 has 1 arg
++  Opcode 10 has 0 args
++  Opcode 11 has 0 args
++  Opcode 12 has 1 arg
++  Opcode 13 has 0 args
++  Opcode 14 has 0 args
++  Opcode 15 has 0 args
++
++ The Directory Table is empty.
++
++ The File Name Table \(offset 0x.*\):
++  Entry	Dir	Time	Size	Name
++  1	0	0	0	file1.txt
++
++ Line Number Statements:
++  \[0x.*\]  Extended opcode 2: set Address to 0x0
++  \[0x.*\]  Advance Line by 3 to 4
++  \[0x.*\]  Copy
++  \[0x.*\]  Copy \(view 1\)
++  \[0x.*\]  Extended opcode 2: set Address to 0x0
++  \[0x.*\]  Extended opcode 1: End of Sequence
++
++
+diff --git a/gas/testsuite/gas/i386/dwarf2-line-2.s b/gas/testsuite/gas/i386/dwarf2-line-2.s
+new file mode 100644
+index 0000000000..d43acdaa3a
+--- /dev/null
++++ b/gas/testsuite/gas/i386/dwarf2-line-2.s
+@@ -0,0 +1,91 @@
++        .file   "dwarf2-test.c"
++        .text
++        .section .text.startup,"ax",@progbits
++        .p2align 4
++        .globl  main
++        .type   main, @function
++main:
++        .cfi_startproc
++        nop
++        ret
++        .cfi_endproc
++        .size   main, .-main
++        .text
++
++        .section .debug_info,"",%progbits
++        .long   0x0
++        .value  0x2
++        .long   .Ldebug_abbrev0
++        .byte   0x8
++        .uleb128 0x1
++
++        .section .debug_abbrev,"",@progbits
++.Ldebug_abbrev0:
++        .uleb128 0x0    # (abbrev code)
++        .uleb128 0x0    # (abbrev code)
++        .uleb128 0x0    # (abbrev code)
++
++# A non-empty .debug_line section is ok when not using .loc directives
++	.section .debug_line
++.Lline1_begin:
++	.4byte		.Lline1_end - .Lline1_start	/* Initial length */
++.Lline1_start:
++	.2byte		2			/* Version */
++	.4byte		.Lline1_lines - .Lline1_hdr	/* header_length */
++.Lline1_hdr:
++	.byte		1			/* Minimum insn length */
++	.byte		1			/* default_is_stmt */
++	.byte		1			/* line_base */
++	.byte		1			/* line_range */
++	.byte		0x10			/* opcode_base */
++
++	/* Standard lengths */
++	.byte		0
++	.byte		1
++	.byte		1
++	.byte		1
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		0
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		0
++
++	/* Include directories */
++	.byte		0
++
++	/* File names */
++	.ascii		"file1.txt\0"
++	.uleb128	0
++	.uleb128	0
++	.uleb128	0
++
++	.byte		0
++
++.Lline1_lines:
++	.byte		0	/* DW_LNE_set_address */
++	.uleb128	5
++	.byte		2
++	.4byte		.Lbegin_func_cu1
++
++	.byte		3	/* DW_LNS_advance_line */
++	.sleb128	3	/* ... to 4 */
++
++	.byte		1	/* DW_LNS_copy */
++
++	.byte		1	/* DW_LNS_copy (second time as an end-of-prologue marker) */
++
++	.byte		0	/* DW_LNE_set_address */
++	.uleb128	5
++	.byte		2
++	.4byte		.Lend_func_cu1
++
++	.byte		0	/* DW_LNE_end_of_sequence */
++	.uleb128	1
++	.byte		1
++
+diff --git a/gas/testsuite/gas/i386/dwarf2-line-3.d b/gas/testsuite/gas/i386/dwarf2-line-3.d
+new file mode 100644
+index 0000000000..42c94c5682
+--- /dev/null
++++ b/gas/testsuite/gas/i386/dwarf2-line-3.d
+@@ -0,0 +1,3 @@
++#as: -gdwarf-2
++#name: DWARF .debug_line 3
++#error_output: dwarf2-line-3.l
+diff --git a/gas/testsuite/gas/i386/dwarf2-line-3.l b/gas/testsuite/gas/i386/dwarf2-line-3.l
+new file mode 100644
+index 0000000000..c26e1fa878
+--- /dev/null
++++ b/gas/testsuite/gas/i386/dwarf2-line-3.l
+@@ -0,0 +1,2 @@
++[^:]*: Assembler messages:
++[^:]*: Fatal error: duplicate .debug_line sections
+diff --git a/gas/testsuite/gas/i386/dwarf2-line-3.s b/gas/testsuite/gas/i386/dwarf2-line-3.s
+new file mode 100644
+index 0000000000..2085ef9394
+--- /dev/null
++++ b/gas/testsuite/gas/i386/dwarf2-line-3.s
+@@ -0,0 +1,32 @@
++        .file   "dwarf2-test.c"
++        .text
++        .section .text.startup,"ax",@progbits
++        .p2align 4
++        .globl  main
++        .type   main, @function
++main:
++        .cfi_startproc
++        nop
++	.loc 1 1
++        ret
++        .cfi_endproc
++        .size   main, .-main
++        .text
++
++        .section .debug_info,"",%progbits
++        .long   0x0
++        .value  0x2
++        .long   .Ldebug_abbrev0
++        .byte   0x8
++        .uleb128 0x1
++
++        .section .debug_abbrev,"",@progbits
++.Ldebug_abbrev0:
++        .uleb128 0x0    # (abbrev code)
++        .uleb128 0x0    # (abbrev code)
++        .uleb128 0x0    # (abbrev code)
++
++# A non-empty .debug_line section is NOT ok when using .loc directives
++        .section .debug_line,"",@progbits
++.Ldebug_line0:
++        .byte 0x1
+diff --git a/gas/testsuite/gas/i386/dwarf2-line-4.d b/gas/testsuite/gas/i386/dwarf2-line-4.d
+new file mode 100644
+index 0000000000..c0c85f4639
+--- /dev/null
++++ b/gas/testsuite/gas/i386/dwarf2-line-4.d
+@@ -0,0 +1,46 @@
++#as: -gdwarf-2
++#readelf: -wl
++#name: DWARF .debug_line 4
++
++Raw dump of debug contents of section \.z?debug_line:
++
++  Offset:                      0x0
++  Length:                      .*
++  DWARF Version:               3
++  Prologue Length:             .*
++  Minimum Instruction Length:  1
++  Initial value of 'is_stmt':  1
++  Line Base:                   -5
++  Line Range:                  14
++  Opcode Base:                 13
++
++ Opcodes:
++  Opcode 1 has 0 args
++  Opcode 2 has 1 arg
++  Opcode 3 has 1 arg
++  Opcode 4 has 1 arg
++  Opcode 5 has 1 arg
++  Opcode 6 has 0 args
++  Opcode 7 has 0 args
++  Opcode 8 has 0 args
++  Opcode 9 has 1 arg
++  Opcode 10 has 0 args
++  Opcode 11 has 0 args
++  Opcode 12 has 1 arg
++
++ The Directory Table \(offset 0x.*\):
++  .*
++
++ The File Name Table \(offset 0x.*\):
++  Entry	Dir	Time	Size	Name
++  1	1	0	0	dwarf2-line-4.s
++
++ Line Number Statements:
++  \[0x.*\]  Extended opcode 2: set Address to 0x0
++  \[0x.*\]  Special opcode 13: advance Address by 0 to 0x0 and Line by 8 to 9
++  \[0x.*\]  Advance Line by -8 to 1
++  \[0x.*\]  Special opcode 19: advance Address by 1 to 0x1 and Line by 0 to 1
++  \[0x.*\]  Advance PC by 1 to 0x2
++  \[0x.*\]  Extended opcode 1: End of Sequence
++
++
+diff --git a/gas/testsuite/gas/i386/dwarf2-line-4.s b/gas/testsuite/gas/i386/dwarf2-line-4.s
+new file mode 100644
+index 0000000000..89bb62d9db
+--- /dev/null
++++ b/gas/testsuite/gas/i386/dwarf2-line-4.s
+@@ -0,0 +1,29 @@
++        .file   "dwarf2-test.c"
++        .text
++        .section .text.startup,"ax",@progbits
++        .p2align 4
++        .globl  main
++        .type   main, @function
++main:
++        .cfi_startproc
++        nop
++	.loc 1 1
++        ret
++        .cfi_endproc
++        .size   main, .-main
++        .text
++
++        .section .debug_info,"",%progbits
++        .long   0x0
++        .value  0x2
++        .long   .Ldebug_abbrev0
++        .byte   0x8
++        .uleb128 0x1
++
++        .section .debug_abbrev,"",@progbits
++.Ldebug_abbrev0:
++        .uleb128 0x0    # (abbrev code)
++        .uleb128 0x0    # (abbrev code)
++        .uleb128 0x0    # (abbrev code)
++
++# No .debug_line ok even if there is a .debug_info section and using .locs
 diff --git a/gas/testsuite/gas/i386/i386.exp b/gas/testsuite/gas/i386/i386.exp
-index 55929d3acb..6380ec8239 100644
+index 55929d3acb..6563aae246 100644
 --- a/gas/testsuite/gas/i386/i386.exp
 +++ b/gas/testsuite/gas/i386/i386.exp
-@@ -1081,6 +1081,7 @@ if [expr ([istarget "i*86-*-*"] || [istarget "x86_64-*-*"]) && [gas_64_check]] t
+@@ -590,6 +590,11 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]]
+ 	run_dump_test "localpic"
+ 	run_dump_test "debug1"
+ 
++	run_dump_test "dwarf2-line-1"
++	run_dump_test "dwarf2-line-2"
++	run_dump_test "dwarf2-line-3"
++	run_dump_test "dwarf2-line-4"
++
+ 	run_dump_test "dw2-compress-2"
+ 	run_dump_test "dw2-compressed-2"
+ 
+@@ -1081,6 +1086,7 @@ if [expr ([istarget "i*86-*-*"] || [istarget "x86_64-*-*"]) && [gas_64_check]] t
      run_list_test "x86-64-cet-shstk-inval"
      run_dump_test "x86-64-pseudos"
      run_list_test "x86-64-pseudos-bad"
@@ -45521,6 +46810,25 @@ index 19900dd7e5..603e112ac8 100644
 +	mov al, BYTE PTR [bp]
 +	{disp8} mov al, BYTE PTR [bp]
 +	{disp16} mov al, BYTE PTR [bp]
+diff --git a/gas/testsuite/gas/i386/space1.l b/gas/testsuite/gas/i386/space1.l
+index 5b0053ee37..bf446fa9b1 100644
+--- a/gas/testsuite/gas/i386/space1.l
++++ b/gas/testsuite/gas/i386/space1.l
+@@ -1,9 +1,9 @@
+ .*: Assembler messages:
+-.*:2: Error: .space specifies non-absolute value
+-.*:3: Error: .space specifies non-absolute value
+-.*:4: Error: .space specifies non-absolute value
+-.*:5: Error: .space specifies non-absolute value
+-.*:6: Error: .space specifies non-absolute value
++.*:2: Error: .space, .nops or .fill specifies non-absolute value
++.*:3: Error: .space, .nops or .fill specifies non-absolute value
++.*:4: Error: .space, .nops or .fill specifies non-absolute value
++.*:5: Error: .space, .nops or .fill specifies non-absolute value
++.*:6: Error: .space, .nops or .fill specifies non-absolute value
+ GAS LISTING .*
+ 
+ 
 diff --git a/gas/testsuite/gas/i386/x86-64-inval-pseudo.l b/gas/testsuite/gas/i386/x86-64-inval-pseudo.l
 new file mode 100644
 index 0000000000..13ad0fb768
@@ -45703,6 +47011,19 @@ index 290f595017..3d7534e5d6 100644
 -	xvcvbf16sp	34,45
 +	xvcvbf16spn	34,45
  	xvcvspbf16	47,36
+diff --git a/gas/write.c b/gas/write.c
+index 0b43063bba..054f27987d 100644
+--- a/gas/write.c
++++ b/gas/write.c
+@@ -3017,7 +3017,7 @@ relax_segment (struct frag *segment_frag_root, segT segment, int pass)
+ 			|| ! S_IS_DEFINED (symbolP))
+ 		      {
+ 			as_bad_where (fragP->fr_file, fragP->fr_line,
+-				      _(".space specifies non-absolute value"));
++				      _(".space, .nops or .fill specifies non-absolute value"));
+ 			/* Prevent repeat of this error message.  */
+ 			fragP->fr_symbol = 0;
+ 		      }
 diff --git a/gold/ChangeLog b/gold/ChangeLog
 index 196b597d32..20830f4efb 100644
 --- a/gold/ChangeLog
@@ -48199,10 +49520,16 @@ index 6d06e44057..3cf41b7911 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4ba491d3c1..d02d150a2f 100644
+index 4ba491d3c1..d927be59b1 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,72 @@
+@@ -1,3 +1,78 @@
++2020-09-15  Hans-Peter Nilsson  <hp@axis.com>
++
++	Backport from mainline:
++	PR ld/26589
++	* testsuite/ld-elf/pr26589.d, testsuite/ld-elf/locref3.s: New test.
++
 +2020-09-10  Alan Modra  <amodra@gmail.com>
 +
 +	Apply from master
@@ -48846,6 +50173,48 @@ index 0000000000..8cb1d9f896
 +    .text
 +main:
 +    lddw %r1, y
+diff --git a/ld/testsuite/ld-cris/locref3.s b/ld/testsuite/ld-cris/locref3.s
+new file mode 100644
+index 0000000000..7991097d99
+--- /dev/null
++++ b/ld/testsuite/ld-cris/locref3.s
+@@ -0,0 +1,14 @@
++; Test-case primarily from PR26589, which could have been locref3.d.
++; A local (like "static") function, with all ELF decorations.
++.text
++ .type	alocalfunc,@function
++ .p2align 1
++alocalfunc:
++	nop
++.Lfe1:
++	.size	alocalfunc,.Lfe1-alocalfunc
++
++; Random absolute reference to the address of alocalfunc, requiring a
++; runtime relocation in code that needs to be PIC/PIE.
++ .data
++ .dword alocalfunc
+diff --git a/ld/testsuite/ld-cris/pr26589.d b/ld/testsuite/ld-cris/pr26589.d
+new file mode 100644
+index 0000000000..aee31434ca
+--- /dev/null
++++ b/ld/testsuite/ld-cris/pr26589.d
+@@ -0,0 +1,16 @@
++#source: dso-1.s
++#source: locref3.s
++#as: --pic --no-underscore --em=criself
++#ld: --shared -m crislinux
++#readelf: --dyn-syms -r
++
++# Besides typical DSO stuff (libdso-1.d), we here have a data section
++# with an absolute reloc to a local symbol.  For the original
++# test-case, this happened for a destructor (.dtors).
++
++Relocation section '\.rela\.dyn' at offset 0x[0-9a-f]+ contains 1 entry:
++ Offset[ 	]+Info[ 	]+Type[ 	]+Sym\.Value  Sym\. Name \+ Addend
++[a-f0-9]+[ ]+0+c R_CRIS_RELATIVE[ ]+ [a-f0-9]+
++
++Symbol table '\.dynsym' contains 3 entries:
++#pass
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 index a44b6cf4b0..8e5a610d67 100644
 --- a/ld/testsuite/ld-plugin/lto.exp
