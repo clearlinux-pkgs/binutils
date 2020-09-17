@@ -31820,10 +31820,17 @@ index 95290f6f4e..966500e36d 100644
           (+ (f-imm32 0) (.sym src x-endian) (.sym dst x-endian)
              offset16 OP_MODE_XADD OP_SIZE_W OP_CLASS_STX)
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index c2dd314636..ded3862343 100644
+index c2dd314636..ec4bea89dc 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,212 @@
+@@ -1,3 +1,219 @@
++2020-09-15  Nick Clifton  <nickc@redhat.com>
++
++	Import from mainline:
++	2020-09-15  David Faust  <david.faust@oracle.com>
++
++	* config/tc-bpf.h (md_single_noop_insn): Use 'ja 0' for no-op.
++
 +2020-09-15  Nick Clifton  <nickc@redhat.com>
 +
 +	Import from mainline:
@@ -32198,14 +32205,16 @@ index 026a631280..34b2adfc68 100644
    /* Set the machine number and endian.  */
    gas_cgen_cpu_desc = bpf_cgen_cpu_open (CGEN_CPU_OPEN_ENDIAN,
 diff --git a/gas/config/tc-bpf.h b/gas/config/tc-bpf.h
-index 5765833997..cb02d6c133 100644
+index 5765833997..e7e505cfaa 100644
 --- a/gas/config/tc-bpf.h
 +++ b/gas/config/tc-bpf.h
-@@ -48,3 +48,4 @@
+@@ -48,3 +48,6 @@
  /* Values passed to md_apply_fix don't include the symbol value.  */
  #define MD_APPLY_SYM_VALUE(FIX) 0
  
-+#define md_single_noop_insn "mov %r1,%r1"
++/* The Linux kernel verifier expects NOPs to be encoded in this way;
++   a jump to offset 0 means jump to the next instruction.  */
++#define md_single_noop_insn "ja 0"
 diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
 index ed514cf986..037fe4d18b 100644
 --- a/gas/config/tc-i386.c
