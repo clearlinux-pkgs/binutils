@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.35
-Release  : 377
+Release  : 378
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.35.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.35.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.35.tar.xz.sig
@@ -150,7 +150,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1600351990
+export SOURCE_DATE_EPOCH=1600704248
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -170,7 +170,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1600351990
+export SOURCE_DATE_EPOCH=1600704248
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-2.35/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
@@ -441,7 +441,7 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 
 %files lib
 %defattr(-,root,root,-)
-/usr/lib64/libbfd-2.35.0.20190203.so
+/usr/lib64/libbfd-2.35.1.20190203.so
 /usr/lib64/libbfd.so
 /usr/lib64/libctf-nobfd.so
 /usr/lib64/libctf-nobfd.so.0
@@ -449,7 +449,7 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/lib64/libctf.so
 /usr/lib64/libctf.so.0
 /usr/lib64/libctf.so.0.0.0
-/usr/lib64/libopcodes-2.35.0.20190203.so
+/usr/lib64/libopcodes-2.35.1.20190203.so
 /usr/lib64/libopcodes.so
 
 %files license
