@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.35.1
-Release  : 384
+Release  : 385
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.35.1.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.35.1.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.35.1.tar.xz.sig
