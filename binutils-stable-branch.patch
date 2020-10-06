@@ -1240,10 +1240,15 @@ index 547971f8be..0492fd7fad 100644
  bfd_boolean ppc64_elf_tls_optimize
    (struct bfd_link_info *);
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 26c703531d..fa9e9d1ff2 100644
+index 26c703531d..113023909d 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,34 @@
+@@ -1,3 +1,39 @@
++2020-10-02  Alex Coplan  <alex.coplan@arm.com>
++
++	* config/tc-aarch64.c (aarch64_cpus): Add Neoverse V1.
++	* doc/c-aarch64.texi: Document Neoverse V1 support.
++
 +2020-09-24  Alan Modra  <amodra@gmail.com>
 +
 +	Apply from master
@@ -1278,6 +1283,26 @@ index 26c703531d..fa9e9d1ff2 100644
  2020-09-19  Nick Clifton  <nickc@redhat.com>
  
  	This is the 2.35.1 point release.
+diff --git a/gas/config/tc-aarch64.c b/gas/config/tc-aarch64.c
+index ecb15d2343..91692305c8 100644
+--- a/gas/config/tc-aarch64.c
++++ b/gas/config/tc-aarch64.c
+@@ -8936,6 +8936,15 @@ static const struct aarch64_cpu_option_table aarch64_cpus[] = {
+ 				  | AARCH64_FEATURE_DOTPROD
+ 				  | AARCH64_FEATURE_PROFILE),
+ 				  "Neoverse N1"},
++  {"neoverse-v1", AARCH64_FEATURE (AARCH64_ARCH_V8_4,
++			    AARCH64_FEATURE_PROFILE
++			  | AARCH64_FEATURE_CVADP
++			  | AARCH64_FEATURE_SVE
++			  | AARCH64_FEATURE_SSBS
++			  | AARCH64_FEATURE_RNG
++			  | AARCH64_FEATURE_F16
++			  | AARCH64_FEATURE_BFLOAT16
++			  | AARCH64_FEATURE_I8MM), "Neoverse V1"},
+   {"qdf24xx", AARCH64_FEATURE (AARCH64_ARCH_V8,
+ 			       AARCH64_FEATURE_CRC | AARCH64_FEATURE_CRYPTO
+ 			       | AARCH64_FEATURE_RDMA),
 diff --git a/gas/config/tc-ppc.c b/gas/config/tc-ppc.c
 index aa989e7d1c..9719341c54 100644
 --- a/gas/config/tc-ppc.c
@@ -1298,6 +1323,18 @@ index aa989e7d1c..9719341c54 100644
  
    str = s;
    while (ISSPACE (*str))
+diff --git a/gas/doc/c-aarch64.texi b/gas/doc/c-aarch64.texi
+index 86b6efc52b..00eb6fefb3 100644
+--- a/gas/doc/c-aarch64.texi
++++ b/gas/doc/c-aarch64.texi
+@@ -72,6 +72,7 @@ on the target processor.  The following processor names are recognized:
+ @code{exynos-m1},
+ @code{falkor},
+ @code{neoverse-n1},
++@code{neoverse-v1},
+ @code{neoverse-e1},
+ @code{qdf24xx},
+ @code{saphira},
 diff --git a/gas/testsuite/gas/ppc/476.d b/gas/testsuite/gas/ppc/476.d
 index 7818b86b13..0b75d75ae2 100644
 --- a/gas/testsuite/gas/ppc/476.d
