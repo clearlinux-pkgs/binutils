@@ -1,8 +1,14 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 9fac12538a..dd6d8fdd03 100644
+index 9fac12538a..ac66598c2d 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,71 @@
+@@ -1,3 +1,77 @@
++2020-10-07  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/26711
++	* elfxx-x86.c (_bfd_x86_elf_merge_gnu_properties): Merge -z ibt
++	and -z shstk only with GNU_PROPERTY_X86_FEATURE_1_AND.
++
 +2020-09-28  Alan Modra  <amodra@gmail.com>
 +
 +	PR 26656
@@ -1239,11 +1245,69 @@ index 547971f8be..0492fd7fad 100644
    (struct bfd_link_info *);
  bfd_boolean ppc64_elf_tls_optimize
    (struct bfd_link_info *);
+diff --git a/bfd/elfxx-x86.c b/bfd/elfxx-x86.c
+index e58ddc19cf..143aae4b5c 100644
+--- a/bfd/elfxx-x86.c
++++ b/bfd/elfxx-x86.c
+@@ -2417,15 +2417,19 @@ _bfd_x86_elf_merge_gnu_properties (struct bfd_link_info *info,
+ 	abort ();
+       if (aprop != NULL && bprop != NULL)
+ 	{
+-	  features = 0;
+-	  if (htab->params->ibt)
+-	    features = GNU_PROPERTY_X86_FEATURE_1_IBT;
+-	  if (htab->params->shstk)
+-	    features |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
+ 	  number = aprop->u.number;
+-	  /* Add GNU_PROPERTY_X86_FEATURE_1_IBT and
+-	     GNU_PROPERTY_X86_FEATURE_1_SHSTK.  */
+-	  aprop->u.number = (number & bprop->u.number) | features;
++	  aprop->u.number = number & bprop->u.number;
++	  if (pr_type == GNU_PROPERTY_X86_FEATURE_1_AND)
++	    {
++	      features = 0;
++	      if (htab->params->ibt)
++		features = GNU_PROPERTY_X86_FEATURE_1_IBT;
++	      if (htab->params->shstk)
++		features |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
++	      /* Add GNU_PROPERTY_X86_FEATURE_1_IBT and
++		 GNU_PROPERTY_X86_FEATURE_1_SHSTK.  */
++	      aprop->u.number |= features;
++	    }
+ 	  updated = number != (unsigned int) aprop->u.number;
+ 	  /* Remove the property if all feature bits are cleared.  */
+ 	  if (aprop->u.number == 0)
+@@ -2437,10 +2441,13 @@ _bfd_x86_elf_merge_gnu_properties (struct bfd_link_info *info,
+ 	     have them.  Set IBT and SHSTK properties for -z ibt and -z
+ 	     shstk if needed.  */
+ 	  features = 0;
+-	  if (htab->params->ibt)
+-	    features = GNU_PROPERTY_X86_FEATURE_1_IBT;
+-	  if (htab->params->shstk)
+-	    features |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
++	  if (pr_type == GNU_PROPERTY_X86_FEATURE_1_AND)
++	    {
++	      if (htab->params->ibt)
++		features = GNU_PROPERTY_X86_FEATURE_1_IBT;
++	      if (htab->params->shstk)
++		features |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
++	    }
+ 	  if (features)
+ 	    {
+ 	      if (aprop != NULL)
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 26c703531d..113023909d 100644
+index 26c703531d..e9f57478fc 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,39 @@
+@@ -1,3 +1,47 @@
++2020-10-06  Alex Coplan  <alex.coplan@arm.com>
++
++	PR 26699
++	* config/tc-aarch64.c (asm_barrier_opt): Delete.
++	(parse_barrier): Fix bogus type punning.
++	* testsuite/gas/aarch64/system.d: Update disassembly.
++	* testsuite/gas/aarch64/system.s: Add isb sy test.
++
 +2020-10-02  Alex Coplan  <alex.coplan@arm.com>
 +
 +	* config/tc-aarch64.c (aarch64_cpus): Add Neoverse V1.
@@ -1284,10 +1348,32 @@ index 26c703531d..113023909d 100644
  
  	This is the 2.35.1 point release.
 diff --git a/gas/config/tc-aarch64.c b/gas/config/tc-aarch64.c
-index ecb15d2343..91692305c8 100644
+index ecb15d2343..a21fbe6cf5 100644
 --- a/gas/config/tc-aarch64.c
 +++ b/gas/config/tc-aarch64.c
-@@ -8936,6 +8936,15 @@ static const struct aarch64_cpu_option_table aarch64_cpus[] = {
+@@ -247,12 +247,6 @@ set_fatal_syntax_error (const char *error)
+    present. */
+ #define COND_ALWAYS 0x10
+ 
+-typedef struct
+-{
+-  const char *template;
+-  unsigned long value;
+-} asm_barrier_opt;
+-
+ typedef struct
+ {
+   const char *template;
+@@ -3994,7 +3988,7 @@ static int
+ parse_barrier (char **str)
+ {
+   char *p, *q;
+-  const asm_barrier_opt *o;
++  const struct aarch64_name_value_pair *o;
+ 
+   p = q = *str;
+   while (ISALPHA (*q))
+@@ -8936,6 +8930,15 @@ static const struct aarch64_cpu_option_table aarch64_cpus[] = {
  				  | AARCH64_FEATURE_DOTPROD
  				  | AARCH64_FEATURE_PROFILE),
  				  "Neoverse N1"},
@@ -1335,6 +1421,30 @@ index 86b6efc52b..00eb6fefb3 100644
  @code{neoverse-e1},
  @code{qdf24xx},
  @code{saphira},
+diff --git a/gas/testsuite/gas/aarch64/system.d b/gas/testsuite/gas/aarch64/system.d
+index 20d5c20409..c973584af5 100644
+--- a/gas/testsuite/gas/aarch64/system.d
++++ b/gas/testsuite/gas/aarch64/system.d
+@@ -190,6 +190,7 @@ Disassembly of section \.text:
+ .*:	d5033edf 	isb	#0xe
+ .*:	d5033fdf 	isb
+ .*:	d5033fdf 	isb
++.*:	d5033fdf 	isb
+ .*:	d503309f 	ssbb
+ .*:	d503349f 	pssbb
+ .*:	d8000000 	prfm	pldl1keep, 0 <LABEL1>
+diff --git a/gas/testsuite/gas/aarch64/system.s b/gas/testsuite/gas/aarch64/system.s
+index 9d86f66806..6f494f885a 100644
+--- a/gas/testsuite/gas/aarch64/system.s
++++ b/gas/testsuite/gas/aarch64/system.s
+@@ -44,6 +44,7 @@
+ 	all_barriers	op=isb, from=0, to=15
+ 
+ 	isb
++	isb sy
+ 	ssbb
+ 	pssbb
+ 
 diff --git a/gas/testsuite/gas/ppc/476.d b/gas/testsuite/gas/ppc/476.d
 index 7818b86b13..0b75d75ae2 100644
 --- a/gas/testsuite/gas/ppc/476.d
@@ -5467,10 +5577,36 @@ index 59ba40dc3f..adbc120c14 100644
  		}
  	    }
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4eec7d2977..a3acc07689 100644
+index 4eec7d2977..62efcf2ba0 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,31 @@
+@@ -1,3 +1,57 @@
++2020-10-07  H.J. Lu  <hongjiu.lu@intel.com>
++
++	* testsuite/ld-i386/property-3.r: Updated for Fedora binary
++	annotation plugin for GCC.
++	* testsuite/ld-i386/property-4.r: Likewise.
++	* testsuite/ld-i386/property-5.r: Likewise.
++	* testsuite/ld-x86-64/property-3.r: Likewise.
++	* testsuite/ld-x86-64/property-4.r: Likewise.
++	* testsuite/ld-x86-64/property-5.r: Likewise.
++
++2020-10-07  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/26711
++	* testsuite/ld-i386/i386.exp: Run ld/26711 tests.
++	* testsuite/ld-x86-64/x86-64.exp: Likewise.
++	* testsuite/ld-i386/pr26711-1.d: Likewise.
++	* testsuite/ld-i386/pr26711-2.d: Likewise.
++	* testsuite/ld-i386/pr26711-3.d: Likewise.
++	* testsuite/ld-x86-64/pr26711-1-x32.d: Likewise.
++	* testsuite/ld-x86-64/pr26711-1.d: Likewise.
++	* testsuite/ld-x86-64/pr26711-2-x32.d: Likewise.
++	* testsuite/ld-x86-64/pr26711-2.d: Likewise.
++	* testsuite/ld-x86-64/pr26711-3-x32.d: Likewise.
++	* testsuite/ld-x86-64/pr26711-3.d: Likewise.
++	* testsuite/ld-x86-64/pr26711.s: Likewise.
++
 +2020-09-26  Alan Modra  <amodra@gmail.com>
 +
 +	* testsuite/ld-powerpc/elfv2so.d,
@@ -5598,6 +5734,101 @@ index 1331d03113..2df5a218e6 100644
        return FALSE;
  '
  
+diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
+index 164c099cbb..3089a66337 100644
+--- a/ld/testsuite/ld-i386/i386.exp
++++ b/ld/testsuite/ld-i386/i386.exp
+@@ -470,6 +470,9 @@ run_dump_test "pr24322b"
+ run_dump_test "align-branch-1"
+ run_dump_test "pr26018"
+ run_dump_test "pr26263"
++run_dump_test "pr26711-1"
++run_dump_test "pr26711-2"
++run_dump_test "pr26711-3"
+ 
+ if { !([istarget "i?86-*-linux*"]
+        || [istarget "i?86-*-gnu*"]
+diff --git a/ld/testsuite/ld-i386/pr26711-1.d b/ld/testsuite/ld-i386/pr26711-1.d
+new file mode 100644
+index 0000000000..24a8429fbc
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr26711-1.d
+@@ -0,0 +1,10 @@
++#source: ../ld-x86-64/pr26711.s
++#source: ../ld-x86-64/start.s
++#as: --32 -mx86-used-note=no
++#ld: -m elf_i386 -z ibt
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++[ 	]+Owner[ 	]+Data size[ 	]+Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 feature: IBT
+diff --git a/ld/testsuite/ld-i386/pr26711-2.d b/ld/testsuite/ld-i386/pr26711-2.d
+new file mode 100644
+index 0000000000..e92559fa70
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr26711-2.d
+@@ -0,0 +1,10 @@
++#source: ../ld-x86-64/pr26711.s
++#source: ../ld-x86-64/start.s
++#as: --32 -mx86-used-note=no
++#ld: -m elf_i386 -z shstk
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++[ 	]+Owner[ 	]+Data size[ 	]+Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 feature: SHSTK
+diff --git a/ld/testsuite/ld-i386/pr26711-3.d b/ld/testsuite/ld-i386/pr26711-3.d
+new file mode 100644
+index 0000000000..df9bfced54
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr26711-3.d
+@@ -0,0 +1,10 @@
++#source: ../ld-x86-64/pr26711.s
++#source: ../ld-x86-64/start.s
++#as: --32 -mx86-used-note=no
++#ld: -m elf_i386 -z ibt -z shstk
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++[ 	]+Owner[ 	]+Data size[ 	]+Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 feature: IBT, SHSTK
+diff --git a/ld/testsuite/ld-i386/property-3.r b/ld/testsuite/ld-i386/property-3.r
+index 1abb90b3a2..e95d47ae8d 100644
+--- a/ld/testsuite/ld-i386/property-3.r
++++ b/ld/testsuite/ld-i386/property-3.r
+@@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
+ [ 	]+Owner[ 	]+Data size[ 	]+Description
+   GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
+       Properties: stack size: 0x800000
++#...
+ 	x86 ISA needed: CMOV, SSE
+ #pass
+diff --git a/ld/testsuite/ld-i386/property-4.r b/ld/testsuite/ld-i386/property-4.r
+index e94846e88e..a4b7bb71ad 100644
+--- a/ld/testsuite/ld-i386/property-4.r
++++ b/ld/testsuite/ld-i386/property-4.r
+@@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
+ [ 	]+Owner[ 	]+Data size[ 	]+Description
+   GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
+       Properties: stack size: 0x800000
++#...
+ 	x86 ISA needed: CMOV, SSE, SSE3
+ #pass
+diff --git a/ld/testsuite/ld-i386/property-5.r b/ld/testsuite/ld-i386/property-5.r
+index bd87a9317e..5ff95648c2 100644
+--- a/ld/testsuite/ld-i386/property-5.r
++++ b/ld/testsuite/ld-i386/property-5.r
+@@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
+ [ 	]+Owner[ 	]+Data size[ 	]+Description
+   GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
+       Properties: stack size: 0x900000
++#...
+ 	x86 ISA needed: CMOV, SSE, SSE3
+ #pass
 diff --git a/ld/testsuite/ld-powerpc/elfv2so.d b/ld/testsuite/ld-powerpc/elfv2so.d
 index 0162bd0880..4018f0536c 100644
 --- a/ld/testsuite/ld-powerpc/elfv2so.d
@@ -5807,6 +6038,191 @@ index abb414a633..c2b9616352 100644
    DW_CFA_restore_extended: r65
  
  0+64 0+10 0+68 FDE cie=0+ pc=.*
+diff --git a/ld/testsuite/ld-x86-64/pr26711-1-x32.d b/ld/testsuite/ld-x86-64/pr26711-1-x32.d
+new file mode 100644
+index 0000000000..67013195b2
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr26711-1-x32.d
+@@ -0,0 +1,10 @@
++#source: pr26711.s
++#source: start.s
++#as: --x32 -mx86-used-note=no
++#ld: -m elf32_x86_64 -z ibt
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++[ 	]+Owner[ 	]+Data size[ 	]+Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 feature: IBT
+diff --git a/ld/testsuite/ld-x86-64/pr26711-1.d b/ld/testsuite/ld-x86-64/pr26711-1.d
+new file mode 100644
+index 0000000000..d8e3cbf19b
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr26711-1.d
+@@ -0,0 +1,10 @@
++#source: pr26711.s
++#source: start.s
++#as: --64 -defsym __64_bit__=1 -mx86-used-note=no
++#ld: -m elf_x86_64 -z ibt
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++[ 	]+Owner[ 	]+Data size[ 	]+Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 feature: IBT
+diff --git a/ld/testsuite/ld-x86-64/pr26711-2-x32.d b/ld/testsuite/ld-x86-64/pr26711-2-x32.d
+new file mode 100644
+index 0000000000..9822f8df4d
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr26711-2-x32.d
+@@ -0,0 +1,10 @@
++#source: pr26711.s
++#source: start.s
++#as: --x32 -mx86-used-note=no
++#ld: -m elf32_x86_64 -z shstk
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++[ 	]+Owner[ 	]+Data size[ 	]+Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 feature: SHSTK
+diff --git a/ld/testsuite/ld-x86-64/pr26711-2.d b/ld/testsuite/ld-x86-64/pr26711-2.d
+new file mode 100644
+index 0000000000..e24cfbfc0b
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr26711-2.d
+@@ -0,0 +1,10 @@
++#source: pr26711.s
++#source: start.s
++#as: --64 -defsym __64_bit__=1 -mx86-used-note=no
++#ld: -m elf_x86_64 -z shstk
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++[ 	]+Owner[ 	]+Data size[ 	]+Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 feature: SHSTK
+diff --git a/ld/testsuite/ld-x86-64/pr26711-3-x32.d b/ld/testsuite/ld-x86-64/pr26711-3-x32.d
+new file mode 100644
+index 0000000000..0661c7d523
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr26711-3-x32.d
+@@ -0,0 +1,10 @@
++#source: pr26711.s
++#source: start.s
++#as: --x32 -mx86-used-note=no
++#ld: -m elf32_x86_64 -z ibt -z shstk
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++[ 	]+Owner[ 	]+Data size[ 	]+Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 feature: IBT, SHSTK
+diff --git a/ld/testsuite/ld-x86-64/pr26711-3.d b/ld/testsuite/ld-x86-64/pr26711-3.d
+new file mode 100644
+index 0000000000..87bc3ccfb0
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr26711-3.d
+@@ -0,0 +1,10 @@
++#source: pr26711.s
++#source: start.s
++#as: --64 -defsym __64_bit__=1 -mx86-used-note=no
++#ld: -m elf_x86_64 -z ibt -z shstk
++#readelf: -n
++
++Displaying notes found in: .note.gnu.property
++[ 	]+Owner[ 	]+Data size[ 	]+Description
++  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
++      Properties: x86 feature: IBT, SHSTK
+diff --git a/ld/testsuite/ld-x86-64/pr26711.s b/ld/testsuite/ld-x86-64/pr26711.s
+new file mode 100644
+index 0000000000..8fa185d42a
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr26711.s
+@@ -0,0 +1,33 @@
++	.section ".note.gnu.property", "a"
++.ifdef __64_bit__
++	.p2align 3
++.else
++	.p2align 2
++.endif
++	.long 1f - 0f		/* name length */
++	.long 5f - 2f		/* data length */
++	.long 5			/* note type */
++0:	.asciz "GNU"		/* vendor name */
++1:
++.ifdef __64_bit__
++	.p2align 3
++.else
++	.p2align 2
++.endif
++2:	.long 0xc0001002	/* pr_type.  */
++	.long 4f - 3f		/* pr_datasz.  */
++3:
++	.long 0x30
++4:
++.ifdef __64_bit__
++	.p2align 3
++.else
++	.p2align 2
++.endif
++5:
++
++	.text
++	.globl	foo
++	.type	foo, @function
++foo:
++	ret
+diff --git a/ld/testsuite/ld-x86-64/property-3.r b/ld/testsuite/ld-x86-64/property-3.r
+index 1abb90b3a2..e95d47ae8d 100644
+--- a/ld/testsuite/ld-x86-64/property-3.r
++++ b/ld/testsuite/ld-x86-64/property-3.r
+@@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
+ [ 	]+Owner[ 	]+Data size[ 	]+Description
+   GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
+       Properties: stack size: 0x800000
++#...
+ 	x86 ISA needed: CMOV, SSE
+ #pass
+diff --git a/ld/testsuite/ld-x86-64/property-4.r b/ld/testsuite/ld-x86-64/property-4.r
+index e94846e88e..a4b7bb71ad 100644
+--- a/ld/testsuite/ld-x86-64/property-4.r
++++ b/ld/testsuite/ld-x86-64/property-4.r
+@@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
+ [ 	]+Owner[ 	]+Data size[ 	]+Description
+   GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
+       Properties: stack size: 0x800000
++#...
+ 	x86 ISA needed: CMOV, SSE, SSE3
+ #pass
+diff --git a/ld/testsuite/ld-x86-64/property-5.r b/ld/testsuite/ld-x86-64/property-5.r
+index bd87a9317e..5ff95648c2 100644
+--- a/ld/testsuite/ld-x86-64/property-5.r
++++ b/ld/testsuite/ld-x86-64/property-5.r
+@@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
+ [ 	]+Owner[ 	]+Data size[ 	]+Description
+   GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
+       Properties: stack size: 0x900000
++#...
+ 	x86 ISA needed: CMOV, SSE, SSE3
+ #pass
+diff --git a/ld/testsuite/ld-x86-64/x86-64.exp b/ld/testsuite/ld-x86-64/x86-64.exp
+index d836f33496..3d48f860a3 100644
+--- a/ld/testsuite/ld-x86-64/x86-64.exp
++++ b/ld/testsuite/ld-x86-64/x86-64.exp
+@@ -432,6 +432,12 @@ run_dump_test "pr25416-3"
+ run_dump_test "pr25416-4"
+ run_dump_test "pr26018"
+ run_dump_test "pr26263"
++run_dump_test "pr26711-1"
++run_dump_test "pr26711-1-x32"
++run_dump_test "pr26711-2"
++run_dump_test "pr26711-2-x32"
++run_dump_test "pr26711-3"
++run_dump_test "pr26711-3-x32"
+ 
+ if ![istarget "x86_64-*-linux*"] {
+     return
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
 index b53a2bba98..6e1fb264f9 100644
 --- a/opcodes/ChangeLog
