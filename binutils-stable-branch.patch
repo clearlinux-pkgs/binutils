@@ -1296,10 +1296,59 @@ index e58ddc19cf..143aae4b5c 100644
  	    {
  	      if (aprop != NULL)
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 26c703531d..e9f57478fc 100644
+index 26c703531d..114539bde9 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,47 @@
+@@ -1,3 +1,96 @@
++2020-10-07  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR gas/26685
++	* config/tc-i386.c (process_suffix): Also check the register
++	operand for the address size prefix if the memory operand has
++	no real registers.
++	* testsuite/gas/i386/enqcmd-16bit.d: New file.
++	* testsuite/gas/i386/enqcmd-16bit.s: Likewise.
++	* testsuite/gas/i386/movdir-16bit.d: Likewise.
++	* testsuite/gas/i386/movdir-16bit.s: Likewise.
++	* testsuite/gas/i386/enqcmd.s: Add tests with symbol and DISP.
++	* testsuite/gas/i386/x86-64-enqcmd.s: Likewise.
++	* testsuite/gas/i386/x86-64-movdir.s: Likewise.
++	* testsuite/gas/i386/movdir.s: Add tests with symbol and DISP.
++	Remove the .code16 test.
++	* testsuite/gas/i386/i386.exp: Run movdir-16bit and enqcmd-16bit.
++	* testsuite/gas/i386/x86-64-enqcmd-intel.d: Updated.
++	* testsuite/gas/i386/x86-64-enqcmd.d: Likewise.
++	* testsuite/gas/i386/x86-64-movdir-intel.d: Likewise.
++	* testsuite/gas/i386/x86-64-movdir.d: Likewise.
++	* testsuite/gas/i386/enqcmd-intel.d: Likewise.
++	* testsuite/gas/i386/enqcmd.d: Likewise.
++	* testsuite/gas/i386/movdir-intel.d: Likewise.
++	* testsuite/gas/i386/movdir.d: Likewise.
++	* testsuite/gas/i386/x86-64-enqcmd-intel.d: Likewise.
++	* testsuite/gas/i386/x86-64-enqcmd.d: Likewise.
++	* testsuite/gas/i386/x86-64-movdir-intel.d: Likewise.
++	* testsuite/gas/i386/x86-64-movdir.d: Likewise.
++
++2020-10-07  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR gas/26685
++	* config/tc-i386.c (process_suffix): Check the register operand
++	for the address size prefix if the memory operand is symbol(%rip).
++	* testsuite/gas/i386/x86-64-enqcmd.s: Add tests with RIP-relative
++	addressing.
++	* testsuite/gas/i386/x86-64-movdir.s: Likewise.
++	* testsuite/gas/i386/x86-64-enqcmd-intel.d: Updated.
++	* testsuite/gas/i386/x86-64-enqcmd.d: Likewise.
++	* testsuite/gas/i386/x86-64-movdir-intel.d: Likewise.
++	* testsuite/gas/i386/x86-64-movdir.d: Likewise.
++
++2020-10-07  Jan Beulich  <jbeulich@suse.com>
++
++	* testsuite/gas/i386/evex-no-scale-64.d,
++	testsuite/gas/i386/addr32.d,
++	testsuite/gas/i386/x86-64-addr32-intel.d,
++	testsuite/gas/i386/x86-64-addr32.d: Adjust expectations.
++
 +2020-10-06  Alex Coplan  <alex.coplan@arm.com>
 +
 +	PR 26699
@@ -1389,6 +1438,34 @@ index ecb15d2343..a21fbe6cf5 100644
    {"qdf24xx", AARCH64_FEATURE (AARCH64_ARCH_V8,
  			       AARCH64_FEATURE_CRC | AARCH64_FEATURE_CRYPTO
  			       | AARCH64_FEATURE_RDMA),
+diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
+index 037fe4d18b..623ac77307 100644
+--- a/gas/config/tc-i386.c
++++ b/gas/config/tc-i386.c
+@@ -7115,6 +7115,23 @@ process_suffix (void)
+ 	  unsigned int op;
+ 	  enum { need_word, need_dword, need_qword } need;
+ 
++	  /* Check the register operand for the address size prefix if
++	     the memory operand has no real registers, like symbol, DISP
++	     or symbol(%rip).  */
++	  if (i.mem_operands == 1
++	      && i.reg_operands == 1
++	      && i.operands == 2
++	      && i.types[1].bitfield.class == Reg
++	      && (flag_code == CODE_32BIT
++		  ? i.op[1].regs->reg_type.bitfield.word
++		  : i.op[1].regs->reg_type.bitfield.dword)
++	      && ((i.base_reg == NULL && i.index_reg == NULL)
++		  || (i.base_reg
++		      && i.base_reg->reg_num == RegIP
++		      && i.base_reg->reg_type.bitfield.qword))
++	      && !add_prefix (ADDR_PREFIX_OPCODE))
++	    return 0;
++
+ 	  if (flag_code == CODE_32BIT)
+ 	    need = i.prefix[ADDR_PREFIX] ? need_word : need_dword;
+ 	  else if (i.prefix[ADDR_PREFIX])
 diff --git a/gas/config/tc-ppc.c b/gas/config/tc-ppc.c
 index aa989e7d1c..9719341c54 100644
 --- a/gas/config/tc-ppc.c
@@ -1445,6 +1522,594 @@ index 9d86f66806..6f494f885a 100644
  	ssbb
  	pssbb
  
+diff --git a/gas/testsuite/gas/i386/enqcmd-16bit.d b/gas/testsuite/gas/i386/enqcmd-16bit.d
+new file mode 100644
+index 0000000000..04e8706d29
+--- /dev/null
++++ b/gas/testsuite/gas/i386/enqcmd-16bit.d
+@@ -0,0 +1,21 @@
++#as: -I${srcdir}/$subdir
++#objdump: -dw -Mi8086
++#name: i386 16-bit ENQCMD[S] insns
++
++.*: +file format .*
++
++Disassembly of section .text:
++
++0+ <_start>:
++ +[a-f0-9]+:	67 0f 38 f9 01       	movdiri %eax,\(%ecx\)
++ +[a-f0-9]+:	67 66 0f 38 f8 01    	movdir64b \(%ecx\),%eax
++ +[a-f0-9]+:	66 0f 38 f8 04       	movdir64b \(%si\),%ax
++ +[a-f0-9]+:	66 0f 38 f8 0e 00 00 	movdir64b 0x0,%cx
++ +[a-f0-9]+:	66 0f 38 f8 0e 34 12 	movdir64b 0x1234,%cx
++ +[a-f0-9]+:	67 0f 38 f9 01       	movdiri %eax,\(%ecx\)
++ +[a-f0-9]+:	67 0f 38 f9 01       	movdiri %eax,\(%ecx\)
++ +[a-f0-9]+:	67 66 0f 38 f8 01    	movdir64b \(%ecx\),%eax
++ +[a-f0-9]+:	66 0f 38 f8 04       	movdir64b \(%si\),%ax
++ +[a-f0-9]+:	66 0f 38 f8 0e 00 00 	movdir64b 0x0,%cx
++ +[a-f0-9]+:	66 0f 38 f8 0e 34 12 	movdir64b 0x1234,%cx
++#pass
+diff --git a/gas/testsuite/gas/i386/enqcmd-16bit.s b/gas/testsuite/gas/i386/enqcmd-16bit.s
+new file mode 100644
+index 0000000000..1f21cec363
+--- /dev/null
++++ b/gas/testsuite/gas/i386/enqcmd-16bit.s
+@@ -0,0 +1,4 @@
++# Check ENQCMD[S] 16-bit instructions
++
++	.code16
++.include "movdir.s"
+diff --git a/gas/testsuite/gas/i386/enqcmd-intel.d b/gas/testsuite/gas/i386/enqcmd-intel.d
+index b38c3ed6ee..e1d30dacd7 100644
+--- a/gas/testsuite/gas/i386/enqcmd-intel.d
++++ b/gas/testsuite/gas/i386/enqcmd-intel.d
+@@ -8,13 +8,21 @@
+ 
+ Disassembly of section \.text:
+ 
+-00000000 <_start>:
+-[ 	]*[a-f0-9]+:[ 	]*f2 0f 38 f8 01[ 	]*enqcmd eax,\[ecx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 f2 0f 38 f8 04[ 	]*enqcmd ax,\[si\]
+-[ 	]*[a-f0-9]+:[ 	]*f3 0f 38 f8 01[ 	]*enqcmds eax,\[ecx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 f3 0f 38 f8 04[ 	]*enqcmds ax,\[si\]
+-[ 	]*[a-f0-9]+:[ 	]*f2 0f 38 f8 01[ 	]*enqcmd eax,\[ecx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 f2 0f 38 f8 04[ 	]*enqcmd ax,\[si\]
+-[ 	]*[a-f0-9]+:[ 	]*f3 0f 38 f8 01[ 	]*enqcmds eax,\[ecx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 f3 0f 38 f8 04[ 	]*enqcmds ax,\[si\]
++0+ <_start>:
++ +[a-f0-9]+:	f2 0f 38 f8 01       	enqcmd eax,\[ecx\]
++ +[a-f0-9]+:	67 f2 0f 38 f8 04    	enqcmd ax,\[si\]
++ +[a-f0-9]+:	f3 0f 38 f8 01       	enqcmds eax,\[ecx\]
++ +[a-f0-9]+:	67 f3 0f 38 f8 04    	enqcmds ax,\[si\]
++ +[a-f0-9]+:	67 f2 0f 38 f8 0e 00 00 	enqcmd cx,ds:0x0
++ +[a-f0-9]+:	67 f2 0f 38 f8 0e 34 12 	enqcmd cx,ds:0x1234
++ +[a-f0-9]+:	67 f3 0f 38 f8 0e 00 00 	enqcmds cx,ds:0x0
++ +[a-f0-9]+:	67 f3 0f 38 f8 0e 34 12 	enqcmds cx,ds:0x1234
++ +[a-f0-9]+:	f2 0f 38 f8 01       	enqcmd eax,\[ecx\]
++ +[a-f0-9]+:	67 f2 0f 38 f8 04    	enqcmd ax,\[si\]
++ +[a-f0-9]+:	f3 0f 38 f8 01       	enqcmds eax,\[ecx\]
++ +[a-f0-9]+:	67 f3 0f 38 f8 04    	enqcmds ax,\[si\]
++ +[a-f0-9]+:	67 f2 0f 38 f8 0e 00 00 	enqcmd cx,ds:0x0
++ +[a-f0-9]+:	67 f2 0f 38 f8 0e 34 12 	enqcmd cx,ds:0x1234
++ +[a-f0-9]+:	67 f3 0f 38 f8 0e 00 00 	enqcmds cx,ds:0x0
++ +[a-f0-9]+:	67 f3 0f 38 f8 0e 34 12 	enqcmds cx,ds:0x1234
+ #pass
+diff --git a/gas/testsuite/gas/i386/enqcmd.d b/gas/testsuite/gas/i386/enqcmd.d
+index c601185ba3..99b9c0a729 100644
+--- a/gas/testsuite/gas/i386/enqcmd.d
++++ b/gas/testsuite/gas/i386/enqcmd.d
+@@ -8,13 +8,21 @@
+ 
+ Disassembly of section \.text:
+ 
+-00000000 <_start>:
+-[ 	]*[a-f0-9]+:[ 	]*f2 0f 38 f8 01[ 	]*enqcmd \(%ecx\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*67 f2 0f 38 f8 04[ 	]*enqcmd \(%si\),%ax
+-[ 	]*[a-f0-9]+:[ 	]*f3 0f 38 f8 01[ 	]*enqcmds \(%ecx\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*67 f3 0f 38 f8 04[ 	]*enqcmds \(%si\),%ax
+-[ 	]*[a-f0-9]+:[ 	]*f2 0f 38 f8 01[ 	]*enqcmd \(%ecx\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*67 f2 0f 38 f8 04[ 	]*enqcmd \(%si\),%ax
+-[ 	]*[a-f0-9]+:[ 	]*f3 0f 38 f8 01[ 	]*enqcmds \(%ecx\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*67 f3 0f 38 f8 04[ 	]*enqcmds \(%si\),%ax
++0+ <_start>:
++ +[a-f0-9]+:	f2 0f 38 f8 01       	enqcmd \(%ecx\),%eax
++ +[a-f0-9]+:	67 f2 0f 38 f8 04    	enqcmd \(%si\),%ax
++ +[a-f0-9]+:	f3 0f 38 f8 01       	enqcmds \(%ecx\),%eax
++ +[a-f0-9]+:	67 f3 0f 38 f8 04    	enqcmds \(%si\),%ax
++ +[a-f0-9]+:	67 f2 0f 38 f8 0e 00 00 	enqcmd 0x0,%cx
++ +[a-f0-9]+:	67 f2 0f 38 f8 0e 34 12 	enqcmd 0x1234,%cx
++ +[a-f0-9]+:	67 f3 0f 38 f8 0e 00 00 	enqcmds 0x0,%cx
++ +[a-f0-9]+:	67 f3 0f 38 f8 0e 34 12 	enqcmds 0x1234,%cx
++ +[a-f0-9]+:	f2 0f 38 f8 01       	enqcmd \(%ecx\),%eax
++ +[a-f0-9]+:	67 f2 0f 38 f8 04    	enqcmd \(%si\),%ax
++ +[a-f0-9]+:	f3 0f 38 f8 01       	enqcmds \(%ecx\),%eax
++ +[a-f0-9]+:	67 f3 0f 38 f8 04    	enqcmds \(%si\),%ax
++ +[a-f0-9]+:	67 f2 0f 38 f8 0e 00 00 	enqcmd 0x0,%cx
++ +[a-f0-9]+:	67 f2 0f 38 f8 0e 34 12 	enqcmd 0x1234,%cx
++ +[a-f0-9]+:	67 f3 0f 38 f8 0e 00 00 	enqcmds 0x0,%cx
++ +[a-f0-9]+:	67 f3 0f 38 f8 0e 34 12 	enqcmds 0x1234,%cx
+ #pass
+diff --git a/gas/testsuite/gas/i386/enqcmd.s b/gas/testsuite/gas/i386/enqcmd.s
+index 0a23b25a6f..f7195fa723 100644
+--- a/gas/testsuite/gas/i386/enqcmd.s
++++ b/gas/testsuite/gas/i386/enqcmd.s
+@@ -7,9 +7,17 @@ _start:
+ 	enqcmd (%si),%ax
+ 	enqcmds (%ecx),%eax
+ 	enqcmds (%si),%ax
++	enqcmd foo, %cx
++	enqcmd 0x1234, %cx
++	enqcmds foo, %cx
++	enqcmds 0x1234, %cx
+ 
+ 	.intel_syntax noprefix
+ 	enqcmd eax,[ecx]
+ 	enqcmd ax,[si]
+ 	enqcmds eax,[ecx]
+ 	enqcmds ax,[si]
++	enqcmd cx,ds:foo
++	enqcmd cx,ds:0x1234
++	enqcmds cx,ds:foo
++	enqcmds cx,ds:0x1234
+diff --git a/gas/testsuite/gas/i386/evex-no-scale-64.d b/gas/testsuite/gas/i386/evex-no-scale-64.d
+index 6c9f68faf2..33623656ee 100644
+--- a/gas/testsuite/gas/i386/evex-no-scale-64.d
++++ b/gas/testsuite/gas/i386/evex-no-scale-64.d
+@@ -10,5 +10,5 @@ Disassembly of section .text:
+  +[a-f0-9]+:	62 f1 7c 48 28 04 05 40 00 00 00 	vmovaps 0x40\(,%rax,1\),%zmm0
+  +[a-f0-9]+:	62 f1 7c 48 28 04 25 40 00 00 00 	vmovaps 0x40,%zmm0
+  +[a-f0-9]+:	67 62 f1 7c 48 28 04 05 40 00 00 00 	vmovaps 0x40\(,%eax,1\),%zmm0
+- +[a-f0-9]+:	67 62 f1 7c 48 28 04 25 40 00 00 00 	vmovaps 0x40,%zmm0
++ +[a-f0-9]+:	67 62 f1 7c 48 28 04 25 40 00 00 00 	vmovaps 0x40\(,%eiz,1\),%zmm0
+  +[a-f0-9]+:	62 f1 7c 48 28 04 25 40 00 00 00 	vmovaps 0x40,%zmm0
+diff --git a/gas/testsuite/gas/i386/i386.exp b/gas/testsuite/gas/i386/i386.exp
+index 6563aae246..3580d5d791 100644
+--- a/gas/testsuite/gas/i386/i386.exp
++++ b/gas/testsuite/gas/i386/i386.exp
+@@ -475,9 +475,11 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]]
+     run_dump_test "cldemote-intel"
+     run_dump_test "movdir"
+     run_dump_test "movdir-intel"
++    run_dump_test "movdir-16bit"
+     run_list_test "movdir64b-reg"
+     run_dump_test "enqcmd"
+     run_dump_test "enqcmd-intel"
++    run_dump_test "enqcmd-16bit"
+     run_list_test "enqcmd-inval"
+     run_dump_test "serialize"
+     run_dump_test "tsxldtrk"
+diff --git a/gas/testsuite/gas/i386/movdir-16bit.d b/gas/testsuite/gas/i386/movdir-16bit.d
+new file mode 100644
+index 0000000000..ac5d82507f
+--- /dev/null
++++ b/gas/testsuite/gas/i386/movdir-16bit.d
+@@ -0,0 +1,21 @@
++#as: -I${srcdir}/$subdir
++#objdump: -dw -Mi8086
++#name: i386 16-bit MOVDIR[I,64B] insns
++
++.*: +file format .*
++
++Disassembly of section .text:
++
++0+ <_start>:
++ +[a-f0-9]+:	67 0f 38 f9 01       	movdiri %eax,\(%ecx\)
++ +[a-f0-9]+:	67 66 0f 38 f8 01    	movdir64b \(%ecx\),%eax
++ +[a-f0-9]+:	66 0f 38 f8 04       	movdir64b \(%si\),%ax
++ +[a-f0-9]+:	66 0f 38 f8 0e 00 00 	movdir64b 0x0,%cx
++ +[a-f0-9]+:	66 0f 38 f8 0e 34 12 	movdir64b 0x1234,%cx
++ +[a-f0-9]+:	67 0f 38 f9 01       	movdiri %eax,\(%ecx\)
++ +[a-f0-9]+:	67 0f 38 f9 01       	movdiri %eax,\(%ecx\)
++ +[a-f0-9]+:	67 66 0f 38 f8 01    	movdir64b \(%ecx\),%eax
++ +[a-f0-9]+:	66 0f 38 f8 04       	movdir64b \(%si\),%ax
++ +[a-f0-9]+:	66 0f 38 f8 0e 00 00 	movdir64b 0x0,%cx
++ +[a-f0-9]+:	66 0f 38 f8 0e 34 12 	movdir64b 0x1234,%cx
++#pass
+diff --git a/gas/testsuite/gas/i386/movdir-16bit.s b/gas/testsuite/gas/i386/movdir-16bit.s
+new file mode 100644
+index 0000000000..27f5fda5a5
+--- /dev/null
++++ b/gas/testsuite/gas/i386/movdir-16bit.s
+@@ -0,0 +1,4 @@
++# Check MOVDIR[I,64B] 16-bit instructions
++
++	.code16
++.include "movdir.s"
+diff --git a/gas/testsuite/gas/i386/movdir-intel.d b/gas/testsuite/gas/i386/movdir-intel.d
+index 04f58a7892..56f4fa929a 100644
+--- a/gas/testsuite/gas/i386/movdir-intel.d
++++ b/gas/testsuite/gas/i386/movdir-intel.d
+@@ -8,19 +8,16 @@
+ 
+ Disassembly of section \.text:
+ 
+-00000000 <_start>:
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri DWORD PTR \[ecx\],eax
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 01[ 	]*movdir64b eax,\[ecx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 04[ 	]*movdir64b ax,\[si\]
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri DWORD PTR \[ecx\],eax
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri DWORD PTR \[ecx\],eax
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 01[ 	]*movdir64b eax,\[ecx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 04[ 	]*movdir64b ax,\[si\]
+-[ 	]*[a-f0-9]+:[ 	]*67 0f 38 f9 01[ 	]*movdiri DWORD PTR \[bx\+di\],eax
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 01[ 	]*movdir64b ax,\[bx\+di\]
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 04 67[ 	]*movdir64b eax,\[edi\+eiz\*2\]
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri DWORD PTR \[ecx\],eax
+-[ 	]*[a-f0-9]+:[ 	]*67 0f 38 f9 01[ 	]*movdiri DWORD PTR \[bx\+di\],eax
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 01[ 	]*movdir64b ax,\[bx\+di\]
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 04 90[ 	]*movdir64b eax,\[eax\+edx\*4\]
++0+ <_start>:
++ +[a-f0-9]+:	0f 38 f9 01          	movdiri DWORD PTR \[ecx\],eax
++ +[a-f0-9]+:	66 0f 38 f8 01       	movdir64b eax,\[ecx\]
++ +[a-f0-9]+:	67 66 0f 38 f8 04    	movdir64b ax,\[si\]
++ +[a-f0-9]+:	67 66 0f 38 f8 0e 00 00 	movdir64b cx,ds:0x0
++ +[a-f0-9]+:	67 66 0f 38 f8 0e 34 12 	movdir64b cx,ds:0x1234
++ +[a-f0-9]+:	0f 38 f9 01          	movdiri DWORD PTR \[ecx\],eax
++ +[a-f0-9]+:	0f 38 f9 01          	movdiri DWORD PTR \[ecx\],eax
++ +[a-f0-9]+:	66 0f 38 f8 01       	movdir64b eax,\[ecx\]
++ +[a-f0-9]+:	67 66 0f 38 f8 04    	movdir64b ax,\[si\]
++ +[a-f0-9]+:	67 66 0f 38 f8 0e 00 00 	movdir64b cx,ds:0x0
++ +[a-f0-9]+:	67 66 0f 38 f8 0e 34 12 	movdir64b cx,ds:0x1234
+ #pass
+diff --git a/gas/testsuite/gas/i386/movdir.d b/gas/testsuite/gas/i386/movdir.d
+index 192dad9920..a8f324bdde 100644
+--- a/gas/testsuite/gas/i386/movdir.d
++++ b/gas/testsuite/gas/i386/movdir.d
+@@ -8,19 +8,16 @@
+ 
+ Disassembly of section \.text:
+ 
+-00000000 <_start>:
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri %eax,\(%ecx\)
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 01[ 	]*movdir64b \(%ecx\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 04[ 	]*movdir64b \(%si\),%ax
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri %eax,\(%ecx\)
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri %eax,\(%ecx\)
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 01[ 	]*movdir64b \(%ecx\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 04[ 	]*movdir64b \(%si\),%ax
+-[ 	]*[a-f0-9]+:[ 	]*67 0f 38 f9 01[ 	]*movdiri %eax,\(%bx,%di\)
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 01[ 	]*movdir64b \(%bx,%di\),%ax
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 04 67[ 	]*movdir64b \(%edi,%eiz,2\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri %eax,\(%ecx\)
+-[ 	]*[a-f0-9]+:[ 	]*67 0f 38 f9 01[ 	]*movdiri %eax,\(%bx,%di\)
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 01[ 	]*movdir64b \(%bx,%di\),%ax
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 04 90[ 	]*movdir64b \(%eax,%edx,4\),%eax
++0+ <_start>:
++ +[a-f0-9]+:	0f 38 f9 01          	movdiri %eax,\(%ecx\)
++ +[a-f0-9]+:	66 0f 38 f8 01       	movdir64b \(%ecx\),%eax
++ +[a-f0-9]+:	67 66 0f 38 f8 04    	movdir64b \(%si\),%ax
++ +[a-f0-9]+:	67 66 0f 38 f8 0e 00 00 	movdir64b 0x0,%cx
++ +[a-f0-9]+:	67 66 0f 38 f8 0e 34 12 	movdir64b 0x1234,%cx
++ +[a-f0-9]+:	0f 38 f9 01          	movdiri %eax,\(%ecx\)
++ +[a-f0-9]+:	0f 38 f9 01          	movdiri %eax,\(%ecx\)
++ +[a-f0-9]+:	66 0f 38 f8 01       	movdir64b \(%ecx\),%eax
++ +[a-f0-9]+:	67 66 0f 38 f8 04    	movdir64b \(%si\),%ax
++ +[a-f0-9]+:	67 66 0f 38 f8 0e 00 00 	movdir64b 0x0,%cx
++ +[a-f0-9]+:	67 66 0f 38 f8 0e 34 12 	movdir64b 0x1234,%cx
+ #pass
+diff --git a/gas/testsuite/gas/i386/movdir.s b/gas/testsuite/gas/i386/movdir.s
+index 29c381ca23..00c57db141 100644
+--- a/gas/testsuite/gas/i386/movdir.s
++++ b/gas/testsuite/gas/i386/movdir.s
+@@ -3,19 +3,16 @@
+ 	.allow_index_reg
+ 	.text
+ _start:
+-	.rept 2
+ 	movdiri %eax, (%ecx)
+ 	movdir64b (%ecx),%eax
+ 	movdir64b (%si),%ax
++	movdir64b foo, %cx
++	movdir64b 0x1234, %cx
+ 
+ 	.intel_syntax noprefix
+ 	movdiri [ecx], eax
+ 	movdiri dword ptr [ecx], eax
+ 	movdir64b eax,[ecx]
+ 	movdir64b ax,[si]
+-
+-	.att_syntax prefix
+-	.code16
+-	.endr
+-
+-	nop
++	movdir64b cx,ds:foo
++	movdir64b cx,ds:0x1234
+diff --git a/gas/testsuite/gas/i386/x86-64-addr32-intel.d b/gas/testsuite/gas/i386/x86-64-addr32-intel.d
+index 7a25d40162..0988457b34 100644
+--- a/gas/testsuite/gas/i386/x86-64-addr32-intel.d
++++ b/gas/testsuite/gas/i386/x86-64-addr32-intel.d
+@@ -11,15 +11,15 @@ Disassembly of section .text:
+ [ 	]*[a-f0-9]+:	67 48 8d 80 00 00 00 00[ 	]+lea[ 	]+rax,\[eax\+0x0\].*
+ [ 	]*[a-f0-9]+:	67 49 8d 80 00 00 00 00[ 	]+lea[ 	]+rax,\[r8d\+0x0\].*
+ [ 	]*[a-f0-9]+:	67 48 8d 05 00 00 00 00[ 	]+lea[ 	]+rax,\[eip\+0x0\].*
+-[ 	]*[a-f0-9]+:	67 48 8d 04 25 00 00 00 00 	lea[ ]+rax,ds:0x0	.*
++[ 	]*[a-f0-9]+:	67 48 8d 04 25 00 00 00 00 	lea[ ]+rax,\[eiz\*1\+0x0\].*
+ [ 	]*[a-f0-9]+:	67 a0 98 08 60 00    	addr32 mov al,ds:0x600898
+ [ 	]*[a-f0-9]+:	67 66 a1 98 08 60 00 	addr32 mov ax,ds:0x600898
+ [ 	]*[a-f0-9]+:	67 a1 98 08 60 00    	addr32 mov eax,ds:0x600898
+ [ 	]*[a-f0-9]+:	67 48 a1 98 08 60 00 	addr32 mov rax,ds:0x600898
+ [ 	]*[a-f0-9]+:	67 48 a1 98 08 80 00 	addr32 mov rax,ds:0x800898
+-[ 	]*[a-f0-9]+:	67 48 8b 1c 25 98 08 80 00 	mov[ ]+rbx,QWORD PTR ds:0x800898
++[ 	]*[a-f0-9]+:	67 48 8b 1c 25 98 08 80 00 	mov[ ]+rbx,QWORD PTR \[eiz\*1\+0x800898\]
+ [ 	]*[a-f0-9]+:	67 48 a1 ef cd ab 89 	addr32 mov rax,ds:0x89abcdef
+-[ 	]*[a-f0-9]+:	67 48 8b 1c 25 ef cd ab 89 	mov[ ]+rbx,QWORD PTR ds:0x89abcdef
++[ 	]*[a-f0-9]+:	67 48 8b 1c 25 ef cd ab 89 	mov[ ]+rbx,QWORD PTR \[eiz\*1\+0x89abcdef\]
+ [ 	]*[a-f0-9]+:	67 48 b8 ef cd ab 89 00 00 00 00 	addr32 movabs rax,0x89abcdef
+ [ 	]*[a-f0-9]+:	67 48 bb ef cd ab 89 00 00 00 00 	addr32 movabs rbx,0x89abcdef
+ [ 	]*[a-f0-9]+:	67 a2 98 08 60 00    	addr32 mov ds:0x600898,al
+@@ -27,9 +27,9 @@ Disassembly of section .text:
+ [ 	]*[a-f0-9]+:	67 a3 98 08 60 00    	addr32 mov ds:0x600898,eax
+ [ 	]*[a-f0-9]+:	67 48 a3 98 08 60 00 	addr32 mov ds:0x600898,rax
+ [ 	]*[a-f0-9]+:	67 48 a3 98 08 80 00 	addr32 mov ds:0x800898,rax
+-[ 	]*[a-f0-9]+:	67 48 89 1c 25 98 08 80 00 	mov[ ]+QWORD PTR ds:0x800898,rbx
++[ 	]*[a-f0-9]+:	67 48 89 1c 25 98 08 80 00 	mov[ ]+QWORD PTR \[eiz\*1\+0x800898\],rbx
+ [ 	]*[a-f0-9]+:	67 48 a3 ef cd ab 89 	addr32 mov ds:0x89abcdef,rax
+-[ 	]*[a-f0-9]+:	67 48 89 1c 25 ef cd ab 89 	mov[ ]+QWORD PTR ds:0x89abcdef,rbx
+-[ 	]*[a-f0-9]+:	67 89 04 25 11 22 33 ff 	mov[ ]+DWORD PTR ds:0xff332211,eax
++[ 	]*[a-f0-9]+:	67 48 89 1c 25 ef cd ab 89 	mov[ ]+QWORD PTR \[eiz\*1\+0x89abcdef\],rbx
++[ 	]*[a-f0-9]+:	67 89 04 25 11 22 33 ff 	mov[ ]+DWORD PTR \[eiz\*1\+0xff332211\],eax
+ [ 	]*[a-f0-9]+:	67 89 04 65 11 22 33 ff 	mov[ ]+DWORD PTR \[eiz\*2\+0xff332211\],eax
+ #pass
+diff --git a/gas/testsuite/gas/i386/x86-64-addr32.d b/gas/testsuite/gas/i386/x86-64-addr32.d
+index c513f0dd8e..d9481a7439 100644
+--- a/gas/testsuite/gas/i386/x86-64-addr32.d
++++ b/gas/testsuite/gas/i386/x86-64-addr32.d
+@@ -10,15 +10,15 @@ Disassembly of section .text:
+ [ 	]*[a-f0-9]+:	67 48 8d 80 00 00 00 00[ 	]+lea[ 	]+0x0\(%eax\),%rax.*
+ [ 	]*[a-f0-9]+:	67 49 8d 80 00 00 00 00[ 	]+lea[ 	]+0x0\(%r8d\),%rax.*
+ [ 	]*[a-f0-9]+:	67 48 8d 05 00 00 00 00[ 	]+lea[ 	]+0x0\(%eip\),%rax.*
+-[ 	]*[a-f0-9]+:	67 48 8d 04 25 00 00 00 00[ 	]+lea[ ]+0x0,%rax.*
++[ 	]*[a-f0-9]+:	67 48 8d 04 25 00 00 00 00[ 	]+lea[ ]+0x0\(,%eiz,1\),%rax.*
+ [ 	]*[a-f0-9]+:	67 a0 98 08 60 00    	addr32 mov 0x600898,%al
+ [ 	]*[a-f0-9]+:	67 66 a1 98 08 60 00 	addr32 mov 0x600898,%ax
+ [ 	]*[a-f0-9]+:	67 a1 98 08 60 00    	addr32 mov 0x600898,%eax
+ [ 	]*[a-f0-9]+:	67 48 a1 98 08 60 00 	addr32 mov 0x600898,%rax
+ [ 	]*[a-f0-9]+:	67 48 a1 98 08 80 00 	addr32 mov 0x800898,%rax
+-[ 	]*[a-f0-9]+:	67 48 8b 1c 25 98 08 80 00 	mov[ ]+0x800898,%rbx
++[ 	]*[a-f0-9]+:	67 48 8b 1c 25 98 08 80 00 	mov[ ]+0x800898\(,%eiz,1\),%rbx
+ [ 	]*[a-f0-9]+:	67 48 a1 ef cd ab 89 	addr32 mov 0x89abcdef,%rax
+-[ 	]*[a-f0-9]+:	67 48 8b 1c 25 ef cd ab 89 	mov[ ]+0x89abcdef,%rbx
++[ 	]*[a-f0-9]+:	67 48 8b 1c 25 ef cd ab 89 	mov[ ]+0x89abcdef\(,%eiz,1\),%rbx
+ [ 	]*[a-f0-9]+:	67 48 b8 ef cd ab 89 00 00 00 00 	addr32 movabs \$0x89abcdef,%rax
+ [ 	]*[a-f0-9]+:	67 48 bb ef cd ab 89 00 00 00 00 	addr32 movabs \$0x89abcdef,%rbx
+ [ 	]*[a-f0-9]+:	67 a2 98 08 60 00    	addr32 mov %al,0x600898
+@@ -26,9 +26,9 @@ Disassembly of section .text:
+ [ 	]*[a-f0-9]+:	67 a3 98 08 60 00    	addr32 mov %eax,0x600898
+ [ 	]*[a-f0-9]+:	67 48 a3 98 08 60 00 	addr32 mov %rax,0x600898
+ [ 	]*[a-f0-9]+:	67 48 a3 98 08 80 00 	addr32 mov %rax,0x800898
+-[ 	]*[a-f0-9]+:	67 48 89 1c 25 98 08 80 00 	mov[ ]+%rbx,0x800898
++[ 	]*[a-f0-9]+:	67 48 89 1c 25 98 08 80 00 	mov[ ]+%rbx,0x800898\(,%eiz,1\)
+ [ 	]*[a-f0-9]+:	67 48 a3 ef cd ab 89 	addr32 mov %rax,0x89abcdef
+-[ 	]*[a-f0-9]+:	67 48 89 1c 25 ef cd ab 89 	mov[ ]+%rbx,0x89abcdef
+-[ 	]*[a-f0-9]+:	67 89 04 25 11 22 33 ff 	mov[ ]+%eax,0xff332211
++[ 	]*[a-f0-9]+:	67 48 89 1c 25 ef cd ab 89 	mov[ ]+%rbx,0x89abcdef\(,%eiz,1\)
++[ 	]*[a-f0-9]+:	67 89 04 25 11 22 33 ff 	mov[ ]+%eax,0xff332211\(,%eiz,1\)
+ [ 	]*[a-f0-9]+:	67 89 04 65 11 22 33 ff 	mov[ ]+%eax,0xff332211\(,%eiz,2\)
+ #pass
+diff --git a/gas/testsuite/gas/i386/x86-64-enqcmd-intel.d b/gas/testsuite/gas/i386/x86-64-enqcmd-intel.d
+index e483d570b9..d8dc7facba 100644
+--- a/gas/testsuite/gas/i386/x86-64-enqcmd-intel.d
++++ b/gas/testsuite/gas/i386/x86-64-enqcmd-intel.d
+@@ -9,12 +9,32 @@
+ Disassembly of section \.text:
+ 
+ 0+ <_start>:
+-[ 	]*[a-f0-9]+:[ 	]*f2 0f 38 f8 01[ 	]*enqcmd rax,\[rcx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 f2 0f 38 f8 01[ 	]*enqcmd eax,\[ecx\]
+-[ 	]*[a-f0-9]+:[ 	]*f3 0f 38 f8 01[ 	]*enqcmds rax,\[rcx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 f3 0f 38 f8 01[ 	]*enqcmds eax,\[ecx\]
+-[ 	]*[a-f0-9]+:[ 	]*f2 0f 38 f8 01[ 	]*enqcmd rax,\[rcx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 f2 0f 38 f8 01[ 	]*enqcmd eax,\[ecx\]
+-[ 	]*[a-f0-9]+:[ 	]*f3 0f 38 f8 01[ 	]*enqcmds rax,\[rcx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 f3 0f 38 f8 01[ 	]*enqcmds eax,\[ecx\]
++ +[a-f0-9]+:	f2 0f 38 f8 01       	enqcmd rax,\[rcx\]
++ +[a-f0-9]+:	67 f2 0f 38 f8 01    	enqcmd eax,\[ecx\]
++ +[a-f0-9]+:	f3 0f 38 f8 01       	enqcmds rax,\[rcx\]
++ +[a-f0-9]+:	67 f3 0f 38 f8 01    	enqcmds eax,\[ecx\]
++ +[a-f0-9]+:	f2 0f 38 f8 0d 00 00 00 00 	enqcmd rcx,\[rip\+0x0\]        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0d 00 00 00 00 	enqcmd ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0d 00 00 00 00 	enqcmd ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	f3 0f 38 f8 0d 00 00 00 00 	enqcmds rcx,\[rip\+0x0\]        #.*
++ +[a-f0-9]+:	67 f3 0f 38 f8 0d 00 00 00 00 	enqcmds ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	67 f3 0f 38 f8 0d 00 00 00 00 	enqcmds ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0c 25 00 00 00 00 	enqcmd ecx,\[eiz\*1\+0x0\]
++ +[a-f0-9]+:	67 f2 0f 38 f8 0c 25 78 56 34 12 	enqcmd ecx,\[eiz\*1\+0x12345678\]
++ +[a-f0-9]+:	67 f3 0f 38 f8 0c 25 00 00 00 00 	enqcmds ecx,\[eiz\*1\+0x0\]
++ +[a-f0-9]+:	67 f3 0f 38 f8 0c 25 78 56 34 12 	enqcmds ecx,\[eiz\*1\+0x12345678\]
++ +[a-f0-9]+:	f2 0f 38 f8 01       	enqcmd rax,\[rcx\]
++ +[a-f0-9]+:	67 f2 0f 38 f8 01    	enqcmd eax,\[ecx\]
++ +[a-f0-9]+:	f3 0f 38 f8 01       	enqcmds rax,\[rcx\]
++ +[a-f0-9]+:	67 f3 0f 38 f8 01    	enqcmds eax,\[ecx\]
++ +[a-f0-9]+:	f2 0f 38 f8 0d 00 00 00 00 	enqcmd rcx,\[rip\+0x0\]        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0d 00 00 00 00 	enqcmd ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0d 00 00 00 00 	enqcmd ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	f3 0f 38 f8 0d 00 00 00 00 	enqcmds rcx,\[rip\+0x0\]        #.*
++ +[a-f0-9]+:	67 f3 0f 38 f8 0d 00 00 00 00 	enqcmds ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	67 f3 0f 38 f8 0d 00 00 00 00 	enqcmds ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0c 25 00 00 00 00 	enqcmd ecx,\[eiz\*1\+0x0\]
++ +[a-f0-9]+:	67 f2 0f 38 f8 0c 25 78 56 34 12 	enqcmd ecx,\[eiz\*1\+0x12345678\]
++ +[a-f0-9]+:	67 f3 0f 38 f8 0c 25 00 00 00 00 	enqcmds ecx,\[eiz\*1\+0x0\]
++ +[a-f0-9]+:	67 f3 0f 38 f8 0c 25 78 56 34 12 	enqcmds ecx,\[eiz\*1\+0x12345678\]
+ #pass
+diff --git a/gas/testsuite/gas/i386/x86-64-enqcmd.d b/gas/testsuite/gas/i386/x86-64-enqcmd.d
+index 337febf320..e6f627ff09 100644
+--- a/gas/testsuite/gas/i386/x86-64-enqcmd.d
++++ b/gas/testsuite/gas/i386/x86-64-enqcmd.d
+@@ -9,12 +9,32 @@
+ Disassembly of section \.text:
+ 
+ 0+ <_start>:
+-[ 	]*[a-f0-9]+:[ 	]*f2 0f 38 f8 01[ 	]*enqcmd \(%rcx\),%rax
+-[ 	]*[a-f0-9]+:[ 	]*67 f2 0f 38 f8 01[ 	]*enqcmd \(%ecx\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*f3 0f 38 f8 01[ 	]*enqcmds \(%rcx\),%rax
+-[ 	]*[a-f0-9]+:[ 	]*67 f3 0f 38 f8 01[ 	]*enqcmds \(%ecx\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*f2 0f 38 f8 01[ 	]*enqcmd \(%rcx\),%rax
+-[ 	]*[a-f0-9]+:[ 	]*67 f2 0f 38 f8 01[ 	]*enqcmd \(%ecx\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*f3 0f 38 f8 01[ 	]*enqcmds \(%rcx\),%rax
+-[ 	]*[a-f0-9]+:[ 	]*67 f3 0f 38 f8 01[ 	]*enqcmds \(%ecx\),%eax
++ +[a-f0-9]+:	f2 0f 38 f8 01       	enqcmd \(%rcx\),%rax
++ +[a-f0-9]+:	67 f2 0f 38 f8 01    	enqcmd \(%ecx\),%eax
++ +[a-f0-9]+:	f3 0f 38 f8 01       	enqcmds \(%rcx\),%rax
++ +[a-f0-9]+:	67 f3 0f 38 f8 01    	enqcmds \(%ecx\),%eax
++ +[a-f0-9]+:	f2 0f 38 f8 0d 00 00 00 00 	enqcmd 0x0\(%rip\),%rcx        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0d 00 00 00 00 	enqcmd 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0d 00 00 00 00 	enqcmd 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	f3 0f 38 f8 0d 00 00 00 00 	enqcmds 0x0\(%rip\),%rcx        #.*
++ +[a-f0-9]+:	67 f3 0f 38 f8 0d 00 00 00 00 	enqcmds 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	67 f3 0f 38 f8 0d 00 00 00 00 	enqcmds 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0c 25 00 00 00 00 	enqcmd 0x0\(,%eiz,1\),%ecx
++ +[a-f0-9]+:	67 f2 0f 38 f8 0c 25 78 56 34 12 	enqcmd 0x12345678\(,%eiz,1\),%ecx
++ +[a-f0-9]+:	67 f3 0f 38 f8 0c 25 00 00 00 00 	enqcmds 0x0\(,%eiz,1\),%ecx
++ +[a-f0-9]+:	67 f3 0f 38 f8 0c 25 78 56 34 12 	enqcmds 0x12345678\(,%eiz,1\),%ecx
++ +[a-f0-9]+:	f2 0f 38 f8 01       	enqcmd \(%rcx\),%rax
++ +[a-f0-9]+:	67 f2 0f 38 f8 01    	enqcmd \(%ecx\),%eax
++ +[a-f0-9]+:	f3 0f 38 f8 01       	enqcmds \(%rcx\),%rax
++ +[a-f0-9]+:	67 f3 0f 38 f8 01    	enqcmds \(%ecx\),%eax
++ +[a-f0-9]+:	f2 0f 38 f8 0d 00 00 00 00 	enqcmd 0x0\(%rip\),%rcx        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0d 00 00 00 00 	enqcmd 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0d 00 00 00 00 	enqcmd 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	f3 0f 38 f8 0d 00 00 00 00 	enqcmds 0x0\(%rip\),%rcx        #.*
++ +[a-f0-9]+:	67 f3 0f 38 f8 0d 00 00 00 00 	enqcmds 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	67 f3 0f 38 f8 0d 00 00 00 00 	enqcmds 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	67 f2 0f 38 f8 0c 25 00 00 00 00 	enqcmd 0x0\(,%eiz,1\),%ecx
++ +[a-f0-9]+:	67 f2 0f 38 f8 0c 25 78 56 34 12 	enqcmd 0x12345678\(,%eiz,1\),%ecx
++ +[a-f0-9]+:	67 f3 0f 38 f8 0c 25 00 00 00 00 	enqcmds 0x0\(,%eiz,1\),%ecx
++ +[a-f0-9]+:	67 f3 0f 38 f8 0c 25 78 56 34 12 	enqcmds 0x12345678\(,%eiz,1\),%ecx
+ #pass
+diff --git a/gas/testsuite/gas/i386/x86-64-enqcmd.s b/gas/testsuite/gas/i386/x86-64-enqcmd.s
+index f790b28fc2..a03a5ffc5f 100644
+--- a/gas/testsuite/gas/i386/x86-64-enqcmd.s
++++ b/gas/testsuite/gas/i386/x86-64-enqcmd.s
+@@ -7,9 +7,29 @@ _start:
+ 	enqcmd (%ecx),%eax
+ 	enqcmds (%rcx),%rax
+ 	enqcmds (%ecx),%eax
++	enqcmd foo(%rip),%rcx
++	enqcmd foo(%rip),%ecx
++	enqcmd foo(%eip),%ecx
++	enqcmds foo(%rip),%rcx
++	enqcmds foo(%rip),%ecx
++	enqcmds foo(%eip),%ecx
++	enqcmd foo, %ecx
++	enqcmd 0x12345678, %ecx
++	enqcmds foo, %ecx
++	enqcmds 0x12345678, %ecx
+ 
+ 	.intel_syntax noprefix
+ 	enqcmd rax,[rcx]
+ 	enqcmd eax,[ecx]
+ 	enqcmds rax,[rcx]
+ 	enqcmds eax,[ecx]
++	enqcmd rcx,[rip+foo]
++	enqcmd ecx,[rip+foo]
++	enqcmd ecx,[eip+foo]
++	enqcmds rcx,[rip+foo]
++	enqcmds ecx,[rip+foo]
++	enqcmds ecx,[eip+foo]
++	enqcmd ecx,ds:foo
++	enqcmd ecx,ds:0x12345678
++	enqcmds ecx,ds:foo
++	enqcmds ecx,ds:0x12345678
+diff --git a/gas/testsuite/gas/i386/x86-64-movdir-intel.d b/gas/testsuite/gas/i386/x86-64-movdir-intel.d
+index 0f3a5abd61..a35bc6ca5d 100644
+--- a/gas/testsuite/gas/i386/x86-64-movdir-intel.d
++++ b/gas/testsuite/gas/i386/x86-64-movdir-intel.d
+@@ -9,13 +9,23 @@
+ Disassembly of section \.text:
+ 
+ 0+ <_start>:
+-[ 	]*[a-f0-9]+:[ 	]*48 0f 38 f9 01[ 	]*movdiri QWORD PTR \[rcx\],rax
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 01[ 	]*movdir64b rax,\[rcx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 01[ 	]*movdir64b eax,\[ecx]
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri DWORD PTR \[rcx\],eax
+-[ 	]*[a-f0-9]+:[ 	]*48 0f 38 f9 01[ 	]*movdiri QWORD PTR \[rcx\],rax
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri DWORD PTR \[rcx\],eax
+-[ 	]*[a-f0-9]+:[ 	]*48 0f 38 f9 01[ 	]*movdiri QWORD PTR \[rcx\],rax
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 01[ 	]*movdir64b rax,\[rcx\]
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 01[ 	]*movdir64b eax,\[ecx\]
++ +[a-f0-9]+:	48 0f 38 f9 01       	movdiri QWORD PTR \[rcx\],rax
++ +[a-f0-9]+:	66 0f 38 f8 01       	movdir64b rax,\[rcx\]
++ +[a-f0-9]+:	67 66 0f 38 f8 01    	movdir64b eax,\[ecx\]
++ +[a-f0-9]+:	66 0f 38 f8 0d 00 00 00 00 	movdir64b rcx,\[rip\+0x0\]        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0d 00 00 00 00 	movdir64b ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0d 00 00 00 00 	movdir64b ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0c 25 00 00 00 00 	movdir64b ecx,\[eiz\*1\+0x0\]
++ +[a-f0-9]+:	67 66 0f 38 f8 0c 25 78 56 34 12 	movdir64b ecx,\[eiz\*1\+0x12345678\]
++ +[a-f0-9]+:	0f 38 f9 01          	movdiri DWORD PTR \[rcx\],eax
++ +[a-f0-9]+:	48 0f 38 f9 01       	movdiri QWORD PTR \[rcx\],rax
++ +[a-f0-9]+:	0f 38 f9 01          	movdiri DWORD PTR \[rcx\],eax
++ +[a-f0-9]+:	48 0f 38 f9 01       	movdiri QWORD PTR \[rcx\],rax
++ +[a-f0-9]+:	66 0f 38 f8 01       	movdir64b rax,\[rcx\]
++ +[a-f0-9]+:	67 66 0f 38 f8 01    	movdir64b eax,\[ecx\]
++ +[a-f0-9]+:	66 0f 38 f8 0d 00 00 00 00 	movdir64b rcx,\[rip\+0x0\]        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0d 00 00 00 00 	movdir64b ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0d 00 00 00 00 	movdir64b ecx,\[eip\+0x0\]        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0c 25 00 00 00 00 	movdir64b ecx,\[eiz\*1\+0x0\]
++ +[a-f0-9]+:	67 66 0f 38 f8 0c 25 78 56 34 12 	movdir64b ecx,\[eiz\*1\+0x12345678\]
+ #pass
+diff --git a/gas/testsuite/gas/i386/x86-64-movdir.d b/gas/testsuite/gas/i386/x86-64-movdir.d
+index 2deab8928e..d65787177d 100644
+--- a/gas/testsuite/gas/i386/x86-64-movdir.d
++++ b/gas/testsuite/gas/i386/x86-64-movdir.d
+@@ -9,13 +9,23 @@
+ Disassembly of section \.text:
+ 
+ 0+ <_start>:
+-[ 	]*[a-f0-9]+:[ 	]*48 0f 38 f9 01[ 	]*movdiri %rax,\(%rcx\)
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 01[ 	]*movdir64b \(%rcx\),%rax
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 01[ 	]*movdir64b \(%ecx\),%eax
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri %eax,\(%rcx\)
+-[ 	]*[a-f0-9]+:[ 	]*48 0f 38 f9 01[ 	]*movdiri %rax,\(%rcx\)
+-[ 	]*[a-f0-9]+:[ 	]*0f 38 f9 01[ 	]*movdiri %eax,\(%rcx\)
+-[ 	]*[a-f0-9]+:[ 	]*48 0f 38 f9 01[ 	]*movdiri %rax,\(%rcx\)
+-[ 	]*[a-f0-9]+:[ 	]*66 0f 38 f8 01[ 	]*movdir64b \(%rcx\),%rax
+-[ 	]*[a-f0-9]+:[ 	]*67 66 0f 38 f8 01[ 	]*movdir64b \(%ecx\),%eax
++ +[a-f0-9]+:	48 0f 38 f9 01       	movdiri %rax,\(%rcx\)
++ +[a-f0-9]+:	66 0f 38 f8 01       	movdir64b \(%rcx\),%rax
++ +[a-f0-9]+:	67 66 0f 38 f8 01    	movdir64b \(%ecx\),%eax
++ +[a-f0-9]+:	66 0f 38 f8 0d 00 00 00 00 	movdir64b 0x0\(%rip\),%rcx        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0d 00 00 00 00 	movdir64b 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0d 00 00 00 00 	movdir64b 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0c 25 00 00 00 00 	movdir64b 0x0\(,%eiz,1\),%ecx
++ +[a-f0-9]+:	67 66 0f 38 f8 0c 25 78 56 34 12 	movdir64b 0x12345678\(,%eiz,1\),%ecx
++ +[a-f0-9]+:	0f 38 f9 01          	movdiri %eax,\(%rcx\)
++ +[a-f0-9]+:	48 0f 38 f9 01       	movdiri %rax,\(%rcx\)
++ +[a-f0-9]+:	0f 38 f9 01          	movdiri %eax,\(%rcx\)
++ +[a-f0-9]+:	48 0f 38 f9 01       	movdiri %rax,\(%rcx\)
++ +[a-f0-9]+:	66 0f 38 f8 01       	movdir64b \(%rcx\),%rax
++ +[a-f0-9]+:	67 66 0f 38 f8 01    	movdir64b \(%ecx\),%eax
++ +[a-f0-9]+:	66 0f 38 f8 0d 00 00 00 00 	movdir64b 0x0\(%rip\),%rcx        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0d 00 00 00 00 	movdir64b 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0d 00 00 00 00 	movdir64b 0x0\(%eip\),%ecx        #.*
++ +[a-f0-9]+:	67 66 0f 38 f8 0c 25 00 00 00 00 	movdir64b 0x0\(,%eiz,1\),%ecx
++ +[a-f0-9]+:	67 66 0f 38 f8 0c 25 78 56 34 12 	movdir64b 0x12345678\(,%eiz,1\),%ecx
+ #pass
+diff --git a/gas/testsuite/gas/i386/x86-64-movdir.s b/gas/testsuite/gas/i386/x86-64-movdir.s
+index 6f9032dc4b..ad69bb1322 100644
+--- a/gas/testsuite/gas/i386/x86-64-movdir.s
++++ b/gas/testsuite/gas/i386/x86-64-movdir.s
+@@ -6,6 +6,11 @@ _start:
+ 	movdiri %rax, (%rcx)
+ 	movdir64b (%rcx),%rax
+ 	movdir64b (%ecx),%eax
++	movdir64b foo(%rip),%rcx
++	movdir64b foo(%rip),%ecx
++	movdir64b foo(%eip),%ecx
++	movdir64b foo, %ecx
++	movdir64b 0x12345678, %ecx
+ 
+ 	.intel_syntax noprefix
+ 	movdiri [rcx],eax
+@@ -14,3 +19,8 @@ _start:
+ 	movdiri qword ptr [rcx],rax
+ 	movdir64b rax,[rcx]
+ 	movdir64b eax,[ecx]
++	movdir64b rcx,[rip+foo]
++	movdir64b ecx,[rip+foo]
++	movdir64b ecx,[eip+foo]
++	movdir64b ecx,ds:foo
++	movdir64b ecx,ds:0x12345678
 diff --git a/gas/testsuite/gas/ppc/476.d b/gas/testsuite/gas/ppc/476.d
 index 7818b86b13..0b75d75ae2 100644
 --- a/gas/testsuite/gas/ppc/476.d
@@ -4198,10 +4863,20 @@ index 1627d7afc6..8aa83dd62c 100644
  .*:	(f1 02 f7 6e|6e f7 02 f1) 	xvtlsbb cr2,vs62
  .*:	(f1 82 0f 6c|6c 0f 82 f1) 	xvtlsbb cr3,vs1
 diff --git a/gold/ChangeLog b/gold/ChangeLog
-index 85fefa989f..1f2ee06817 100644
+index 85fefa989f..727d1f593c 100644
 --- a/gold/ChangeLog
 +++ b/gold/ChangeLog
-@@ -1,3 +1,54 @@
+@@ -1,3 +1,64 @@
++2020-10-08  H.J. Lu  <hongjiu.lu@intel.com>
++
++	* testsuite/split_i386.sh: Updated for --split-stack-adjust-size
++	default change.
++	* testsuite/split_x86_64.sh: Likewise.
++
++2020-10-08  Alan Modra  <amodra@gmail.com>
++
++	* options.h (split_stack_adjust_size): Default to 0x100000.
++
 +2020-09-26  Alan Modra  <amodra@gmail.com>
 +
 +	* powerpc.cc (Target_powerpc): Rename power10_stubs_ to
@@ -4304,7 +4979,7 @@ index b13ae71ce1..6b194374c8 100644
    if (this->print_map() && !this->user_set_Map())
      {
 diff --git a/gold/options.h b/gold/options.h
-index 3c8d25a662..bc211151de 100644
+index 3c8d25a662..51d3614e6b 100644
 --- a/gold/options.h
 +++ b/gold/options.h
 @@ -481,9 +481,9 @@ struct Struct_special : public Struct_var
@@ -4386,6 +5061,15 @@ index 3c8d25a662..bc211151de 100644
  	      {"none", "name"});
  
    DEFINE_uint(spare_dynamic_tags, options::TWO_DASHES, '\0', 5,
+@@ -1254,7 +1260,7 @@ class General_options
+ 		 "output sections"),
+ 	      N_("(PowerPC only) Each output section has its own stubs"));
+ 
+-  DEFINE_uint(split_stack_adjust_size, options::TWO_DASHES, '\0', 0x4000,
++  DEFINE_uint(split_stack_adjust_size, options::TWO_DASHES, '\0', 0x100000,
+ 	      N_("Stack size when -fsplit-stack function calls non-split"),
+ 	      N_("SIZE"));
+ 
 @@ -1287,7 +1293,7 @@ class General_options
  	      NULL);
    DEFINE_enum(target2, options::TWO_DASHES, '\0', NULL,
@@ -5576,6 +6260,53 @@ index 59ba40dc3f..adbc120c14 100644
  		  has_stub_value = true;
  		}
  	    }
+diff --git a/gold/testsuite/split_i386.sh b/gold/testsuite/split_i386.sh
+index 67e2b1bb80..611c892b23 100755
+--- a/gold/testsuite/split_i386.sh
++++ b/gold/testsuite/split_i386.sh
+@@ -45,7 +45,7 @@ match 'lea.*-0x200\(%esp\),' split_i386_1.stdout
+ match 'stc' split_i386_2.stdout
+ match 'call.*__morestack_non_split>?$' split_i386_2.stdout
+ nomatch 'call.*__morestack>?$' split_i386_2.stdout
+-match 'lea.*-0x4200\(%esp\),' split_i386_2.stdout
++match 'lea.*-0x100200\(%esp\),' split_i386_2.stdout
+ 
+ match 'failed to match' split_i386_3.stdout
+ 
+diff --git a/gold/testsuite/split_x32.sh b/gold/testsuite/split_x32.sh
+index aefdda5647..bf395c9731 100755
+--- a/gold/testsuite/split_x32.sh
++++ b/gold/testsuite/split_x32.sh
+@@ -44,9 +44,9 @@ match 'callq.*__morestack>?$' split_x32_1.stdout
+ match 'lea.*-0x200\(%rsp\),' split_x32_1.stdout
+ 
+ match 'stc' split_x32_2.stdout
+-match 'callq.*__morestack_non_split>?$' split_x32_2.stdout
+-nomatch 'callq.*__morestack>?$' split_x32_2.stdout
+-match 'lea.*-0x4200\(%rsp\),' split_x32_2.stdout
++match 'call.*__morestack_non_split>?$' split_x32_2.stdout
++nomatch 'call.*__morestack>?$' split_x32_2.stdout
++match 'lea.*-0x100200\(%rsp\),' split_x32_2.stdout
+ 
+ match 'failed to match' split_x32_3.stdout
+ 
+diff --git a/gold/testsuite/split_x86_64.sh b/gold/testsuite/split_x86_64.sh
+index 33bb4892ed..a91009b45a 100755
+--- a/gold/testsuite/split_x86_64.sh
++++ b/gold/testsuite/split_x86_64.sh
+@@ -43,9 +43,9 @@ match 'callq.*__morestack>?$' split_x86_64_1.stdout
+ match 'lea.*-0x200\(%rsp\),' split_x86_64_1.stdout
+ 
+ match 'stc' split_x86_64_2.stdout
+-match 'callq.*__morestack_non_split>?$' split_x86_64_2.stdout
+-nomatch 'callq.*__morestack>?$' split_x86_64_2.stdout
+-match 'lea.*-0x4200\(%rsp\),' split_x86_64_2.stdout
++match 'call.*__morestack_non_split>?$' split_x86_64_2.stdout
++nomatch 'call.*__morestack>?$' split_x86_64_2.stdout
++match 'lea.*-0x100200\(%rsp\),' split_x86_64_2.stdout
+ 
+ match 'failed to match' split_x86_64_3.stdout
+ 
 diff --git a/ld/ChangeLog b/ld/ChangeLog
 index 4eec7d2977..62efcf2ba0 100644
 --- a/ld/ChangeLog
@@ -6224,10 +6955,19 @@ index d836f33496..3d48f860a3 100644
  if ![istarget "x86_64-*-linux*"] {
      return
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index b53a2bba98..6e1fb264f9 100644
+index b53a2bba98..fada4f8c94 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
-@@ -1,3 +1,22 @@
+@@ -1,3 +1,31 @@
++2020-10-07  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR gas/26685
++	* i386-dis.c (mod_table): Replace Gv with Gdq on movdiri.
++
++2020-10-07  Jan Beulich  <jbeulich@suse.com>
++
++	* i386-dis.c (OP_E_memory): Revert previous change.
++
 +2020-09-24  Alan Modra  <amodra@gmail.com>
 +
 +	Apply from master
@@ -6250,6 +6990,28 @@ index b53a2bba98..6e1fb264f9 100644
  2020-09-19  Nick Clifton  <nickc@redhat.com>
  
  	This is the 2.35.1 point release.
+diff --git a/opcodes/i386-dis.c b/opcodes/i386-dis.c
+index 8e0b4a1c2b..ea2ca1bb88 100644
+--- a/opcodes/i386-dis.c
++++ b/opcodes/i386-dis.c
+@@ -10496,7 +10496,7 @@ static const struct dis386 mod_table[][2] = {
+   },
+   {
+     /* MOD_0F38F9_PREFIX_0 */
+-    { "movdiri",	{ Ev, Gv }, PREFIX_OPCODE },
++    { "movdiri",	{ Ev, Gdq }, PREFIX_OPCODE },
+   },
+   {
+     /* MOD_62_32BIT */
+@@ -14190,7 +14190,7 @@ OP_E_memory (int bytemode, int sizeflag)
+ 		  /* Without base nor index registers, zero-extend the
+ 		     lower 32-bit displacement to 64 bits.  */
+ 		  disp = (unsigned int) disp;
+-		  needindex = scale;
++		  needindex = 1;
+ 		}
+ 	      needaddr32 = 1;
+ 	    }
 diff --git a/opcodes/ppc-opc.c b/opcodes/ppc-opc.c
 index 6932e4e820..d15bde1326 100644
 --- a/opcodes/ppc-opc.c
