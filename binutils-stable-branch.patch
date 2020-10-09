@@ -1,8 +1,13 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 9fac12538a..ac66598c2d 100644
+index 9fac12538a..2bca0948f6 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,77 @@
+@@ -1,3 +1,82 @@
++2020-10-09  Alan Modra  <amodra@gmail.com>
++
++	* elf64-ppc.c (write_plt_relocs_for_local_syms): Don't do local
++	entry offset optimisation.
++
 +2020-10-07  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR ld/26711
@@ -117,7 +122,7 @@ index b8f0008a10..977bf43a6a 100644
  						"variable specification "
  						"at offset %lx"),
 diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
-index 4bf37e1d98..0aeda47e57 100644
+index 4bf37e1d98..ec8c85eba5 100644
 --- a/bfd/elf64-ppc.c
 +++ b/bfd/elf64-ppc.c
 @@ -114,7 +114,7 @@ static bfd_vma opd_entry_value
@@ -952,7 +957,16 @@ index 4bf37e1d98..0aeda47e57 100644
  	  *p++ = DW_CFA_restore_extended;
  	  *p++ = 65;
  	  p += ((24 + align - 1) & -align) - 24;
-@@ -14414,23 +14490,60 @@ ppc64_elf_build_stubs (struct bfd_link_info *info,
+@@ -14179,8 +14255,6 @@ write_plt_relocs_for_local_syms (struct bfd_link_info *info)
+ 		}
+ 
+ 	      val = sym->st_value + ent->addend;
+-	      if (ELF_ST_TYPE (sym->st_info) != STT_GNU_IFUNC)
+-		val += PPC64_LOCAL_ENTRY_OFFSET (sym->st_other);
+ 	      if (sym_sec != NULL && sym_sec->output_section != NULL)
+ 		val += sym_sec->output_offset + sym_sec->output_section->vma;
+ 
+@@ -14414,23 +14488,60 @@ ppc64_elf_build_stubs (struct bfd_link_info *info,
  	}
        else
  	{
@@ -1019,7 +1033,7 @@ index 4bf37e1d98..0aeda47e57 100644
  	  p += 4;
  	  bfd_put_32 (htab->glink->owner, LD_R12_0R11, p);
  	  p += 4;
-@@ -15880,22 +15993,25 @@ ppc64_elf_relocate_section (bfd *output_bfd,
+@@ -15880,22 +15991,25 @@ ppc64_elf_relocate_section (bfd *output_bfd,
  	      addend = 0;
  	      reloc_dest = DEST_STUB;
  
@@ -1061,7 +1075,7 @@ index 4bf37e1d98..0aeda47e57 100644
  
  	      if (r_type == R_PPC64_REL24_NOTOC
  		  && (stub_entry->stub_type == ppc_stub_plt_call_notoc
-@@ -15944,7 +16060,8 @@ ppc64_elf_relocate_section (bfd *output_bfd,
+@@ -15944,7 +16058,8 @@ ppc64_elf_relocate_section (bfd *output_bfd,
  	  break;
  
  	case R_PPC64_GOT16_DS:
@@ -1071,7 +1085,7 @@ index 4bf37e1d98..0aeda47e57 100644
  	    break;
  	  from = TOCstart + htab->sec_info[input_section->id].toc_off;
  	  if (relocation + addend - from + 0x8000 < 0x10000
-@@ -15963,7 +16080,8 @@ ppc64_elf_relocate_section (bfd *output_bfd,
+@@ -15963,7 +16078,8 @@ ppc64_elf_relocate_section (bfd *output_bfd,
  
  	case R_PPC64_GOT16_LO_DS:
  	case R_PPC64_GOT16_HA:
@@ -1081,7 +1095,7 @@ index 4bf37e1d98..0aeda47e57 100644
  	    break;
  	  from = TOCstart + htab->sec_info[input_section->id].toc_off;
  	  if (relocation + addend - from + 0x80008000ULL < 0x100000000ULL
-@@ -15986,34 +16104,38 @@ ppc64_elf_relocate_section (bfd *output_bfd,
+@@ -15986,34 +16102,38 @@ ppc64_elf_relocate_section (bfd *output_bfd,
  	  break;
  
  	case R_PPC64_GOT_PCREL34:
@@ -1142,7 +1156,7 @@ index 4bf37e1d98..0aeda47e57 100644
  	    {
  	      offset = rel->r_offset;
  	      pinsn = bfd_get_32 (input_bfd, contents + offset);
-@@ -16023,43 +16145,37 @@ ppc64_elf_relocate_section (bfd *output_bfd,
+@@ -16023,43 +16143,37 @@ ppc64_elf_relocate_section (bfd *output_bfd,
  		   == ((1ULL << 58) | (2ULL << 56) | (1ULL << 52)
  		       | (14ULL << 26) /* paddi */))
  		{
@@ -1296,10 +1310,20 @@ index e58ddc19cf..143aae4b5c 100644
  	    {
  	      if (aprop != NULL)
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 26c703531d..114539bde9 100644
+index 26c703531d..abd9ddd171 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,96 @@
+@@ -1,3 +1,106 @@
++2020-10-09  Alex Coplan  <alex.coplan@arm.com>
++
++	* config/tc-arm.c (arm_cpus): Add Neoverse N2.
++	* doc/c-arm.texi: Document -mcpu=neoverse-n2.
++
++2020-10-09  Alex Coplan  <alex.coplan@arm.com>
++
++	* config/tc-arm.c (arm_cpus): Add Neoverse V1.
++	* doc/c-arm.texi: Document Neoverse V1 support.
++
 +2020-10-07  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR gas/26685
@@ -1438,6 +1462,27 @@ index ecb15d2343..a21fbe6cf5 100644
    {"qdf24xx", AARCH64_FEATURE (AARCH64_ARCH_V8,
  			       AARCH64_FEATURE_CRC | AARCH64_FEATURE_CRYPTO
  			       | AARCH64_FEATURE_RDMA),
+diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
+index e0d0cbd546..a9aaffa3bd 100644
+--- a/gas/config/tc-arm.c
++++ b/gas/config/tc-arm.c
+@@ -31587,6 +31587,16 @@ static const struct arm_cpu_option_table arm_cpus[] =
+   ARM_CPU_OPT ("neoverse-n1",    "Neoverse N1",	       ARM_ARCH_V8_2A,
+ 	       ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+ 	       FPU_ARCH_CRYPTO_NEON_VFP_ARMV8_DOTPROD),
++  ARM_CPU_OPT ("neoverse-n2",	 "Neoverse N2",	       ARM_ARCH_V8_5A,
++	       ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST
++				    | ARM_EXT2_BF16
++				    | ARM_EXT2_I8MM),
++	       FPU_ARCH_CRYPTO_NEON_VFP_ARMV8_4),
++  ARM_CPU_OPT ("neoverse-v1", "Neoverse V1", ARM_ARCH_V8_4A,
++	       ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST
++				    | ARM_EXT2_BF16
++				    | ARM_EXT2_I8MM),
++	       FPU_ARCH_CRYPTO_NEON_VFP_ARMV8_4),
+   /* ??? XSCALE is really an architecture.  */
+   ARM_CPU_OPT ("xscale",	  NULL,		       ARM_ARCH_XSCALE,
+ 	       ARM_ARCH_NONE,
 diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
 index 037fe4d18b..623ac77307 100644
 --- a/gas/config/tc-i386.c
@@ -1498,6 +1543,19 @@ index 86b6efc52b..00eb6fefb3 100644
  @code{neoverse-e1},
  @code{qdf24xx},
  @code{saphira},
+diff --git a/gas/doc/c-arm.texi b/gas/doc/c-arm.texi
+index 9180360577..16c94de675 100644
+--- a/gas/doc/c-arm.texi
++++ b/gas/doc/c-arm.texi
+@@ -151,6 +151,8 @@ recognized:
+ @code{marvell-pj4},
+ @code{marvell-whitney},
+ @code{neoverse-n1},
++@code{neoverse-n2},
++@code{neoverse-v1},
+ @code{xgene1},
+ @code{xgene2},
+ @code{ep9312} (ARM920 with Cirrus Maverick coprocessor),
 diff --git a/gas/testsuite/gas/aarch64/system.d b/gas/testsuite/gas/aarch64/system.d
 index 20d5c20409..c973584af5 100644
 --- a/gas/testsuite/gas/aarch64/system.d
@@ -4863,10 +4921,30 @@ index 1627d7afc6..8aa83dd62c 100644
  .*:	(f1 02 f7 6e|6e f7 02 f1) 	xvtlsbb cr2,vs62
  .*:	(f1 82 0f 6c|6c 0f 82 f1) 	xvtlsbb cr3,vs1
 diff --git a/gold/ChangeLog b/gold/ChangeLog
-index 85fefa989f..727d1f593c 100644
+index 85fefa989f..03d99a52fe 100644
 --- a/gold/ChangeLog
 +++ b/gold/ChangeLog
-@@ -1,3 +1,64 @@
+@@ -1,3 +1,84 @@
++2020-10-09  Alan Modra  <amodra@gmail.com>
++
++	* powerpc.cc (Powerpc_relobj::do_relocate_sections): Don't do
++	local entry offset optimisation for lplt_section.
++	(Target_powerpc::Branch_info::make_stub): Don't add local
++	entry offset to long branch dest passed to
++	add_long_branch_entry.  Do pass st_other bits.
++	(Stub_table::Branch_stub_ent): Add "other_" field.
++	(Stub_table::add_long_branch_entry): Add "other" param, and
++	save.
++	(Stub_table::branch_stub_size): Adjust long branch offset.
++	(Stub_table::do_write): Likewise.
++	(Target_powerpc::Relocate::relocate): Likewise.
++
++2020-10-09  Alan Modra  <amodra@gmail.com>
++
++	* powerpc.cc (is_got_reloc): New function.
++	(Target_powerpc::Relocate::relocate): Use it here, exclude GOT
++	relocs when looking for stubs.
++
 +2020-10-08  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	* testsuite/split_i386.sh: Updated for --split-stack-adjust-size
@@ -5139,7 +5217,7 @@ index 3c8d25a662..51d3614e6b 100644
  
  // The position-dependent options.  We use this to store the state of
 diff --git a/gold/powerpc.cc b/gold/powerpc.cc
-index 59ba40dc3f..adbc120c14 100644
+index 59ba40dc3f..476fb4e588 100644
 --- a/gold/powerpc.cc
 +++ b/gold/powerpc.cc
 @@ -647,7 +647,7 @@ class Target_powerpc : public Sized_target<size, big_endian>
@@ -5201,7 +5279,86 @@ index 59ba40dc3f..adbc120c14 100644
    bool plt_thread_safe_;
    bool plt_localentry0_;
    bool plt_localentry0_init_;
-@@ -4181,6 +4196,7 @@ static const uint32_t cmpwi_11_0	= 0x2c0b0000;
+@@ -1869,6 +1884,19 @@ is_plt16_reloc(unsigned int r_type)
+ 	  || (size == 64 && r_type == elfcpp::R_PPC64_PLT16_LO_DS));
+ }
+ 
++// GOT_TYPE_STANDARD (ie. not TLS) GOT relocs
++inline bool
++is_got_reloc(unsigned int r_type)
++{
++  return (r_type == elfcpp::R_POWERPC_GOT16
++	  || r_type == elfcpp::R_POWERPC_GOT16_LO
++	  || r_type == elfcpp::R_POWERPC_GOT16_HI
++	  || r_type == elfcpp::R_POWERPC_GOT16_HA
++	  || r_type == elfcpp::R_PPC64_GOT16_DS
++	  || r_type == elfcpp::R_PPC64_GOT16_LO_DS
++	  || r_type == elfcpp::R_PPC64_GOT_PCREL34);
++}
++
+ // If INSN is an opcode that may be used with an @tls operand, return
+ // the transformed insn for TLS optimisation, otherwise return 0.  If
+ // REG is non-zero only match an insn with RB or RA equal to REG.
+@@ -2739,8 +2767,6 @@ Powerpc_relobj<size, big_endian>::do_relocate_sections(
+ 	    if (this->local_has_plt_offset(i))
+ 	      {
+ 		Address value = this->local_symbol_value(i, 0);
+-		if (size == 64)
+-		  value += ppc64_local_entry_offset(i);
+ 		size_t off = this->local_plt_offset(i);
+ 		elfcpp::Swap<size, big_endian>::writeval(oview + off, value);
+ 		modified = true;
+@@ -3511,6 +3537,7 @@ Target_powerpc<size, big_endian>::Branch_info::make_stub(
+       from += (this->object_->output_section(this->shndx_)->address()
+ 	       + this->offset_);
+       Address to;
++      unsigned int other;
+       if (gsym != NULL)
+ 	{
+ 	  switch (gsym->source())
+@@ -3538,8 +3565,7 @@ Target_powerpc<size, big_endian>::Branch_info::make_stub(
+ 	  to = symtab->compute_final_value<size>(gsym, &status);
+ 	  if (status != Symbol_table::CFVS_OK)
+ 	    return true;
+-	  if (size == 64)
+-	    to += this->object_->ppc64_local_entry_offset(gsym);
++	  other = gsym->nonvis() >> 3;
+ 	}
+       else
+ 	{
+@@ -3556,8 +3582,7 @@ Target_powerpc<size, big_endian>::Branch_info::make_stub(
+ 	      || !symval.has_output_value())
+ 	    return true;
+ 	  to = symval.value(this->object_, 0);
+-	  if (size == 64)
+-	    to += this->object_->ppc64_local_entry_offset(this->r_sym_);
++	  other = this->object_->st_other(this->r_sym_) >> 5;
+ 	}
+       if (!(size == 32 && this->r_type_ == elfcpp::R_PPC_PLTREL24))
+ 	to += this->addend_;
+@@ -3570,7 +3595,11 @@ Target_powerpc<size, big_endian>::Branch_info::make_stub(
+ 					 &to, &dest_shndx))
+ 	    return true;
+ 	}
+-      Address delta = to - from;
++      unsigned int local_ent = 0;
++      if (size == 64
++	  && this->r_type_ != elfcpp::R_PPC64_REL24_NOTOC)
++	local_ent = elfcpp::ppc64_decode_local_entry(other);
++      Address delta = to + local_ent - from;
+       if (delta + max_branch_offset >= 2 * max_branch_offset
+ 	  || (size == 64
+ 	      && this->r_type_ == elfcpp::R_PPC64_REL24_NOTOC
+@@ -3592,7 +3621,7 @@ Target_powerpc<size, big_endian>::Branch_info::make_stub(
+ 			   && gsym->output_data() == target->savres_section());
+ 	  ok = stub_table->add_long_branch_entry(this->object_,
+ 						 this->r_type_,
+-						 from, to, save_res);
++						 from, to, other, save_res);
+ 	}
+     }
+   if (!ok)
+@@ -4181,6 +4210,7 @@ static const uint32_t cmpwi_11_0	= 0x2c0b0000;
  static const uint32_t cror_15_15_15	= 0x4def7b82;
  static const uint32_t cror_31_31_31	= 0x4ffffb82;
  static const uint32_t ld_0_1		= 0xe8010000;
@@ -5209,7 +5366,7 @@ index 59ba40dc3f..adbc120c14 100644
  static const uint32_t ld_0_12		= 0xe80c0000;
  static const uint32_t ld_2_1		= 0xe8410000;
  static const uint32_t ld_2_2		= 0xe8420000;
-@@ -4563,9 +4579,9 @@ static const unsigned char glink_eh_frame_fde_64v1[] =
+@@ -4563,9 +4593,9 @@ static const unsigned char glink_eh_frame_fde_64v1[] =
    0, 0, 0, 0,				// Replaced with offset to .glink.
    0, 0, 0, 0,				// Replaced with size of .glink.
    0,					// Augmentation size.
@@ -5221,14 +5378,13 @@ index 59ba40dc3f..adbc120c14 100644
    elfcpp::DW_CFA_restore_extended, 65
  };
  
-@@ -4575,9 +4591,20 @@ static const unsigned char glink_eh_frame_fde_64v2[] =
+@@ -4575,9 +4605,20 @@ static const unsigned char glink_eh_frame_fde_64v2[] =
    0, 0, 0, 0,				// Replaced with offset to .glink.
    0, 0, 0, 0,				// Replaced with size of .glink.
    0,					// Augmentation size.
 -  elfcpp::DW_CFA_advance_loc + 1,
 +  elfcpp::DW_CFA_advance_loc + 2,
-   elfcpp::DW_CFA_register, 65, 0,
--  elfcpp::DW_CFA_advance_loc + 7,
++  elfcpp::DW_CFA_register, 65, 0,
 +  elfcpp::DW_CFA_advance_loc + 2,
 +  elfcpp::DW_CFA_restore_extended, 65
 +};
@@ -5239,12 +5395,13 @@ index 59ba40dc3f..adbc120c14 100644
 +  0, 0, 0, 0,				// Replaced with size of .glink.
 +  0,					// Augmentation size.
 +  elfcpp::DW_CFA_advance_loc + 3,
-+  elfcpp::DW_CFA_register, 65, 0,
+   elfcpp::DW_CFA_register, 65, 0,
+-  elfcpp::DW_CFA_advance_loc + 7,
 +  elfcpp::DW_CFA_advance_loc + 2,
    elfcpp::DW_CFA_restore_extended, 65
  };
  
-@@ -4631,26 +4658,32 @@ class Stub_table : public Output_relaxed_input_section
+@@ -4631,26 +4672,33 @@ class Stub_table : public Output_relaxed_input_section
    struct Plt_stub_ent
    {
      Plt_stub_ent(unsigned int off, unsigned int indx)
@@ -5268,7 +5425,7 @@ index 59ba40dc3f..adbc120c14 100644
      Branch_stub_ent(unsigned int off, bool notoc, bool save_res)
 -      : off_(off), iter_(false), notoc_(notoc), save_res_(save_res)
 +      : off_(off), iter_(0), notoc_(notoc), toc_(0), save_res_(save_res),
-+	tocoff_(0)
++	other_(0), tocoff_(0)
      { }
  
      unsigned int off_;
@@ -5279,11 +5436,21 @@ index 59ba40dc3f..adbc120c14 100644
 +    unsigned int notoc_ : 1;
 +    unsigned int toc_ : 1;
 +    unsigned int save_res_ : 1;
++    unsigned int other_ : 3;
 +    unsigned int tocoff_ : 8;
    };
    typedef typename elfcpp::Elf_types<size>::Elf_Addr Address;
    static const Address invalid_address = static_cast<Address>(0) - 1;
-@@ -4898,7 +4931,7 @@ class Stub_table : public Output_relaxed_input_section
+@@ -4716,7 +4764,7 @@ class Stub_table : public Output_relaxed_input_section
+   // Add a long branch stub.
+   bool
+   add_long_branch_entry(const Powerpc_relobj<size, big_endian>*,
+-			unsigned int, Address, Address, bool);
++			unsigned int, Address, Address, unsigned int, bool);
+ 
+   const Branch_stub_ent*
+   find_long_branch_entry(const Powerpc_relobj<size, big_endian>*,
+@@ -4898,7 +4946,7 @@ class Stub_table : public Output_relaxed_input_section
  
    // Size of a given plt call stub.
    unsigned int
@@ -5292,7 +5459,7 @@ index 59ba40dc3f..adbc120c14 100644
  
    unsigned int
    plt_call_align(unsigned int bytes) const
-@@ -4909,16 +4942,14 @@ class Stub_table : public Output_relaxed_input_section
+@@ -4909,16 +4957,14 @@ class Stub_table : public Output_relaxed_input_section
  
    // Return long branch stub size.
    unsigned int
@@ -5314,7 +5481,7 @@ index 59ba40dc3f..adbc120c14 100644
  
    void
    plt_error(const Plt_stub_key& p);
-@@ -5083,15 +5114,22 @@ Stub_table<size, big_endian>::add_plt_call_entry(
+@@ -5083,15 +5129,22 @@ Stub_table<size, big_endian>::add_plt_call_entry(
        if (r_type == elfcpp::R_PPC64_REL24_NOTOC)
  	{
  	  if (!p.second && !p.first->second.notoc_
@@ -5341,7 +5508,7 @@ index 59ba40dc3f..adbc120c14 100644
  	}
      }
    if (p.second || (this->resizing_ && !p.first->second.iter_))
-@@ -5134,15 +5172,22 @@ Stub_table<size, big_endian>::add_plt_call_entry(
+@@ -5134,15 +5187,22 @@ Stub_table<size, big_endian>::add_plt_call_entry(
        if (r_type == elfcpp::R_PPC64_REL24_NOTOC)
  	{
  	  if (!p.second && !p.first->second.notoc_
@@ -5368,7 +5535,15 @@ index 59ba40dc3f..adbc120c14 100644
  	}
      }
    if (p.second || (this->resizing_ && !p.first->second.iter_))
-@@ -5231,11 +5276,18 @@ Stub_table<size, big_endian>::add_long_branch_entry(
+@@ -5224,6 +5284,7 @@ Stub_table<size, big_endian>::add_long_branch_entry(
+     unsigned int r_type,
+     Address from,
+     Address to,
++    unsigned int other,
+     bool save_res)
+ {
+   Branch_stub_key key(object, to);
+@@ -5231,11 +5292,20 @@ Stub_table<size, big_endian>::add_long_branch_entry(
    Branch_stub_ent ent(this->branch_size_, notoc, save_res);
    std::pair<typename Branch_stub_entries::iterator, bool> p
      = this->long_branch_stubs_.insert(std::make_pair(key, ent));
@@ -5386,10 +5561,12 @@ index 59ba40dc3f..adbc120c14 100644
 +	this->need_resize_ = true;
 +      p.first->second.toc_ = true;
 +    }
++  if (p.first->second.other_ == 0)
++    p.first->second.other_ = other;
    gold_assert(save_res == p.first->second.save_res_);
    if (p.second || (this->resizing_ && !p.first->second.iter_))
      {
-@@ -5330,7 +5382,7 @@ Stub_table<size, big_endian>::add_eh_frame(Layout* layout)
+@@ -5330,7 +5400,7 @@ Stub_table<size, big_endian>::add_eh_frame(Layout* layout)
    if (!this->targ_->has_glink())
      return;
  
@@ -5398,7 +5575,7 @@ index 59ba40dc3f..adbc120c14 100644
    std::vector<plt_iter> calls;
    if (!this->plt_call_stubs_.empty())
      for (plt_iter cs = this->plt_call_stubs_.begin();
-@@ -5491,7 +5543,8 @@ class Output_data_glink : public Output_section_data
+@@ -5491,7 +5561,8 @@ class Output_data_glink : public Output_section_data
    {
      if (size == 64)
        return (8
@@ -5408,7 +5585,7 @@ index 59ba40dc3f..adbc120c14 100644
      return 16 * 4;
    }
  
-@@ -5534,6 +5587,12 @@ Output_data_glink<size, big_endian>::add_eh_frame(Layout* layout)
+@@ -5534,6 +5605,12 @@ Output_data_glink<size, big_endian>::add_eh_frame(Layout* layout)
  				     sizeof (Eh_cie<64>::eh_frame_cie),
  				     glink_eh_frame_fde_64v1,
  				     sizeof (glink_eh_frame_fde_64v1));
@@ -5421,7 +5598,7 @@ index 59ba40dc3f..adbc120c14 100644
        else
  	layout->add_eh_frame_for_plt(this,
  				     Eh_cie<64>::eh_frame_cie,
-@@ -5632,7 +5691,7 @@ Stub_table<size, big_endian>::define_stub_syms(Symbol_table* symtab)
+@@ -5632,7 +5709,7 @@ Stub_table<size, big_endian>::define_stub_syms(Symbol_table* symtab)
        // output .symtab ordering depends on the order in which symbols
        // are added to the linker symtab.  We want reproducible output
        // so must sort the call stub symbols.
@@ -5430,7 +5607,7 @@ index 59ba40dc3f..adbc120c14 100644
        std::vector<plt_iter> sorted;
        sorted.resize(this->plt_call_stubs_.size());
  
-@@ -5676,7 +5735,7 @@ Stub_table<size, big_endian>::define_stub_syms(Symbol_table* symtab)
+@@ -5676,7 +5753,7 @@ Stub_table<size, big_endian>::define_stub_syms(Symbol_table* symtab)
  	}
      }
  
@@ -5439,7 +5616,7 @@ index 59ba40dc3f..adbc120c14 100644
    for (branch_iter bs = this->long_branch_stubs_.begin();
         bs != this->long_branch_stubs_.end();
         ++bs)
-@@ -5698,88 +5757,72 @@ Stub_table<size, big_endian>::define_stub_syms(Symbol_table* symtab)
+@@ -5698,88 +5775,72 @@ Stub_table<size, big_endian>::define_stub_syms(Symbol_table* symtab)
  // Emit the start of a __tls_get_addr_opt plt call stub.
  
  template<int size, bool big_endian>
@@ -5500,8 +5677,7 @@ index 59ba40dc3f..adbc120c14 100644
 -	  write_insn<big_endian>(p, lwz_11_3 + 0);
 -	  p += 4;
 -	  write_insn<big_endian>(p, lwz_12_3 + 4);
-+	  write_insn<big_endian>(p, mflr_11);
- 	  p += 4;
+-	  p += 4;
 -	  write_insn<big_endian>(p, mr_0_3);
 -	  p += 4;
 -	  write_insn<big_endian>(p, cmpwi_11_0);
@@ -5511,7 +5687,8 @@ index 59ba40dc3f..adbc120c14 100644
 -	  write_insn<big_endian>(p, beqlr);
 -	  p += 4;
 -	  write_insn<big_endian>(p, mr_3_0);
--	  p += 4;
++	  write_insn<big_endian>(p, mflr_11);
+ 	  p += 4;
 -	  write_insn<big_endian>(p, nop);
 +	  write_insn<big_endian>(p, (std_11_1 + this->targ_->stk_linker()));
  	  p += 4;
@@ -5581,7 +5758,7 @@ index 59ba40dc3f..adbc120c14 100644
  }
  
  // Emit pc-relative plt call stub code.
-@@ -5949,7 +5992,7 @@ build_notoc_offset(unsigned char* p, uint64_t off, bool load)
+@@ -5949,7 +6010,7 @@ build_notoc_offset(unsigned char* p, uint64_t off, bool load)
  template<int size, bool big_endian>
  unsigned int
  Stub_table<size, big_endian>::plt_call_size(
@@ -5590,7 +5767,7 @@ index 59ba40dc3f..adbc120c14 100644
  {
    if (size == 32)
      {
-@@ -5961,77 +6004,122 @@ Stub_table<size, big_endian>::plt_call_size(
+@@ -5961,77 +6022,122 @@ Stub_table<size, big_endian>::plt_call_size(
    const Output_data_plt_powerpc<size, big_endian>* plt;
    uint64_t plt_addr = this->plt_off(p, &plt);
    plt_addr += plt->address();
@@ -5776,7 +5953,7 @@ index 59ba40dc3f..adbc120c14 100644
  }
  
  // Return long branch stub size.
-@@ -6039,7 +6127,7 @@ Stub_table<size, big_endian>::plt_call_size(
+@@ -6039,7 +6145,7 @@ Stub_table<size, big_endian>::plt_call_size(
  template<int size, bool big_endian>
  unsigned int
  Stub_table<size, big_endian>::branch_stub_size(
@@ -5785,7 +5962,7 @@ index 59ba40dc3f..adbc120c14 100644
       bool* need_lt)
  {
    Address loc = this->stub_address() + this->last_plt_size_ + p->second.off_;
-@@ -6053,46 +6141,56 @@ Stub_table<size, big_endian>::branch_stub_size(
+@@ -6053,46 +6159,57 @@ Stub_table<size, big_endian>::branch_stub_size(
      }
  
    uint64_t off = p->first.dest_ - loc;
@@ -5860,6 +6037,7 @@ index 59ba40dc3f..adbc120c14 100644
 +	}
      }
  
++  off += elfcpp::ppc64_decode_local_entry(p->second.other_);
    if (off + (1 << 25) < 2 << 25)
 -    return 4;
 -  if (!this->targ_->power10_stubs())
@@ -5872,7 +6050,7 @@ index 59ba40dc3f..adbc120c14 100644
  }
  
  template<int size, bool big_endian>
-@@ -6128,6 +6226,10 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
+@@ -6128,6 +6245,10 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
    if (size == 64
        && this->targ_->power10_stubs())
      {
@@ -5883,7 +6061,7 @@ index 59ba40dc3f..adbc120c14 100644
        if (!this->plt_call_stubs_.empty())
  	{
  	  // Write out plt call stubs.
-@@ -6137,22 +6239,94 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
+@@ -6137,22 +6258,94 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
  	       ++cs)
  	    {
  	      p = oview + cs->second.off_;
@@ -5991,7 +6169,7 @@ index 59ba40dc3f..adbc120c14 100644
  	    }
  	}
  
-@@ -6168,19 +6342,76 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
+@@ -6168,19 +6361,79 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
  	  p = oview + off;
  	  Address loc = this->stub_address() + off;
  	  Address delta = bs->first.dest_ - loc;
@@ -6021,6 +6199,7 @@ index 59ba40dc3f..adbc120c14 100644
 +		}
 +	      if (bs->second.toc_)
 +		{
++		  delta += elfcpp::ppc64_decode_local_entry(bs->second.other_);
 +		  if (delta + (1 << 25) >= 2 << 25)
 +		    {
 +		      Address brlt_addr
@@ -6059,6 +6238,8 @@ index 59ba40dc3f..adbc120c14 100644
 -	      write_insn<big_endian>(p, mtctr_12);
 -	      p += 4;
 -	      write_insn<big_endian>(p, bctr);
++	      if (!bs->second.notoc_)
++		delta += elfcpp::ppc64_decode_local_entry(bs->second.other_);
 +	      if (bs->second.notoc_ || delta + (1 << 25) >= 2 << 25)
 +		{
 +		  unsigned char* startp = p;
@@ -6077,7 +6258,7 @@ index 59ba40dc3f..adbc120c14 100644
  	    }
  	}
      }
-@@ -6204,7 +6435,11 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
+@@ -6204,7 +6457,11 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
  	      Address plt_addr = pltoff + plt->address();
  
  	      p = oview + cs->second.off_;
@@ -6090,7 +6271,7 @@ index 59ba40dc3f..adbc120c14 100644
  	      if (cs->second.r2save_)
  		{
  		  write_insn<big_endian>(p, std_2_1 + this->targ_->stk_toc());
-@@ -6241,7 +6476,11 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
+@@ -6241,7 +6498,11 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
  		}
  	      write_insn<big_endian>(p, mtctr_12);
  	      p += 4;
@@ -6103,7 +6284,7 @@ index 59ba40dc3f..adbc120c14 100644
  		write_insn<big_endian>(p, bctr);
  	    }
  	}
-@@ -6292,8 +6531,12 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
+@@ -6292,8 +6553,12 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
  		}
  
  	      p = oview + cs->second.off_;
@@ -6118,7 +6299,7 @@ index 59ba40dc3f..adbc120c14 100644
  	      if (cs->second.r2save_)
  		{
  		  write_insn<big_endian>(p, std_2_1 + this->targ_->stk_toc());
-@@ -6355,8 +6598,10 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
+@@ -6355,8 +6620,10 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
  		  write_insn<big_endian>(p, ld_2_2 + l(off + 8));
  		  p += 4;
  		}
@@ -6131,7 +6312,16 @@ index 59ba40dc3f..adbc120c14 100644
  	      else if (thread_safe && !use_fake_dep)
  		{
  		  write_insn<big_endian>(p, cmpldi_2_0);
-@@ -6437,7 +6682,8 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
+@@ -6382,6 +6649,8 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
+ 	  p = oview + off;
+ 	  Address loc = this->stub_address() + off;
+ 	  Address delta = bs->first.dest_ - loc;
++	  if (!bs->second.notoc_)
++	    delta += elfcpp::ppc64_decode_local_entry(bs->second.other_);
+ 	  if (bs->second.notoc_)
+ 	    {
+ 	      unsigned char* startp = p;
+@@ -6437,7 +6706,8 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
  	      plt_addr += plt->address();
  
  	      p = oview + cs->second.off_;
@@ -6141,7 +6331,7 @@ index 59ba40dc3f..adbc120c14 100644
  	      if (parameters->options().output_is_position_independent())
  		{
  		  Address got_addr;
-@@ -6577,15 +6823,25 @@ Output_data_glink<size, big_endian>::do_write(Output_file* of)
+@@ -6577,15 +6847,25 @@ Output_data_glink<size, big_endian>::do_write(Output_file* of)
  	    }
  	  else
  	    {
@@ -6171,7 +6361,7 @@ index 59ba40dc3f..adbc120c14 100644
  	      write_insn<big_endian>(p, ld_12_11 + 0),		p += 4;
  	      write_insn<big_endian>(p, srdi_0_0_2),		p += 4;
  	      write_insn<big_endian>(p, mtctr_12),		p += 4;
-@@ -8230,7 +8486,7 @@ Target_powerpc<size, big_endian>::Scan::local(
+@@ -8230,7 +8510,7 @@ Target_powerpc<size, big_endian>::Scan::local(
      case elfcpp::R_PPC64_GOT_TLSLD_PCREL34:
      case elfcpp::R_PPC64_GOT_DTPREL_PCREL34:
      case elfcpp::R_PPC64_GOT_TPREL_PCREL34:
@@ -6180,7 +6370,7 @@ index 59ba40dc3f..adbc120c14 100644
        break;
      default:
        break;
-@@ -9027,7 +9283,7 @@ Target_powerpc<size, big_endian>::Scan::global(
+@@ -9027,7 +9307,7 @@ Target_powerpc<size, big_endian>::Scan::global(
      case elfcpp::R_PPC64_GOT_TLSLD_PCREL34:
      case elfcpp::R_PPC64_GOT_DTPREL_PCREL34:
      case elfcpp::R_PPC64_GOT_TPREL_PCREL34:
@@ -6189,7 +6379,7 @@ index 59ba40dc3f..adbc120c14 100644
        break;
      default:
        break;
-@@ -9369,6 +9625,13 @@ Target_powerpc<size, big_endian>::scan_relocs(
+@@ -9369,6 +9649,13 @@ Target_powerpc<size, big_endian>::scan_relocs(
      needs_special_offset_handling,
      local_symbol_count,
      plocal_symbols);
@@ -6203,7 +6393,15 @@ index 59ba40dc3f..adbc120c14 100644
  }
  
  // Functor class for processing the global symbol table.
-@@ -10175,19 +10438,29 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+@@ -10118,6 +10405,7 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+        ? gsym->use_plt_offset(Scan::get_reference_flags(r_type, target))
+        : object->local_has_plt_offset(r_sym));
+   if (has_plt_offset
++      && !is_got_reloc(r_type)
+       && !is_plt16_reloc<size>(r_type)
+       && r_type != elfcpp::R_PPC64_PLT_PCREL34
+       && r_type != elfcpp::R_PPC64_PLT_PCREL34_NOTOC
+@@ -10175,19 +10463,29 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
  		  const int reloc_size = elfcpp::Elf_sizes<size>::rela_size;
  		  elfcpp::Shdr<size, big_endian> shdr(relinfo->reloc_shdr);
  		  size_t reloc_count = shdr.get_sh_size() / reloc_size;
@@ -6243,7 +6441,53 @@ index 59ba40dc3f..adbc120c14 100644
  		    }
  		  localentry0 = ent->localentry0_;
  		  has_stub_value = true;
-@@ -10795,8 +11068,14 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+@@ -10250,13 +10548,7 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+       elfcpp::Swap<32, big_endian>::writeval(iview + 1, pnop & 0xffffffff);
+       r_type = elfcpp::R_POWERPC_NONE;
+     }
+-  else if (r_type == elfcpp::R_POWERPC_GOT16
+-	   || r_type == elfcpp::R_POWERPC_GOT16_LO
+-	   || r_type == elfcpp::R_POWERPC_GOT16_HI
+-	   || r_type == elfcpp::R_POWERPC_GOT16_HA
+-	   || r_type == elfcpp::R_PPC64_GOT16_DS
+-	   || r_type == elfcpp::R_PPC64_GOT16_LO_DS
+-	   || r_type == elfcpp::R_PPC64_GOT_PCREL34)
++  else if (is_got_reloc(r_type))
+     {
+       if (gsym != NULL)
+ 	{
+@@ -10758,14 +11050,15 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+ 		|| r_type == elfcpp::R_POWERPC_PLT16_HA)))
+ 	addend = rela.get_r_addend();
+       value = psymval->value(object, addend);
++      unsigned int local_ent = 0;
+       if (size == 64 && is_branch_reloc<size>(r_type))
+ 	{
+ 	  if (target->abiversion() >= 2)
+ 	    {
+ 	      if (gsym != NULL)
+-		value += object->ppc64_local_entry_offset(gsym);
++		local_ent = object->ppc64_local_entry_offset(gsym);
+ 	      else
+-		value += object->ppc64_local_entry_offset(r_sym);
++		local_ent = object->ppc64_local_entry_offset(r_sym);
+ 	    }
+ 	  else
+ 	    {
+@@ -10774,9 +11067,9 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+ 					&value, &dest_shndx);
+ 	    }
+ 	}
+-      Address max_branch_offset = max_branch_delta<size>(r_type);
+-      if (max_branch_offset != 0
+-	  && (value - address + max_branch_offset >= 2 * max_branch_offset
++      Address max_branch = max_branch_delta<size>(r_type);
++      if (max_branch != 0
++	  && (value + local_ent - address + max_branch >= 2 * max_branch
+ 	      || (size == 64
+ 		  && r_type == elfcpp::R_PPC64_REL24_NOTOC
+ 		  && (gsym != NULL
+@@ -10795,12 +11088,21 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
  		    value = (value - target->savres_section()->address()
  			     + stub_table->branch_size());
  		  else
@@ -6255,11 +6499,18 @@ index 59ba40dc3f..adbc120c14 100644
 +			       + ent->off_);
 +		      if (size == 64
 +			  && r_type != elfcpp::R_PPC64_REL24_NOTOC)
-+			value += ent->tocoff_;
++			value += (elfcpp::ppc64_decode_local_entry(ent->other_)
++				  + ent->tocoff_);
 +		    }
  		  has_stub_value = true;
  		}
  	    }
+ 	}
++      if (!has_stub_value)
++	value += local_ent;
+     }
+ 
+   switch (r_type)
 diff --git a/gold/testsuite/split_i386.sh b/gold/testsuite/split_i386.sh
 index 67e2b1bb80..611c892b23 100755
 --- a/gold/testsuite/split_i386.sh
