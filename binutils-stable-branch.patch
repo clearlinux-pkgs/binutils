@@ -7465,10 +7465,19 @@ index 33bb4892ed..a91009b45a 100755
  match 'failed to match' split_x86_64_3.stdout
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4eec7d2977..62efcf2ba0 100644
+index 4eec7d2977..66f6e28110 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,57 @@
+@@ -1,3 +1,66 @@
++2020-11-16  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/26869
++	* ldelf.c (ldelf_before_allocation): Set rel_from_abs to 1 for
++	__ehdr_start.
++	* testsuite/ld-i386/i386.exp: Run pr26869.
++	* testsuite/ld-i386/pr26869.d: New file.
++	* testsuite/ld-i386/pr26869.s: Likewise.
++
 +2020-10-07  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	* testsuite/ld-i386/property-3.r: Updated for Fedora binary
@@ -7622,17 +7631,31 @@ index 1331d03113..2df5a218e6 100644
        return FALSE;
  '
  
+diff --git a/ld/ldelf.c b/ld/ldelf.c
+index bada3ade2d..831d032fe5 100644
+--- a/ld/ldelf.c
++++ b/ld/ldelf.c
+@@ -1589,6 +1589,8 @@ ldelf_before_allocation (char *audit, char *depaudit,
+ 		      (char *) &ehdr_start->u + sizeof ehdr_start->u.def.next,
+ 		      sizeof ehdr_start_save_u);
+ 	      ehdr_start->type = bfd_link_hash_defined;
++	      /* It will be converted to section-relative later.  */
++	      ehdr_start->rel_from_abs = 1;
+ 	      ehdr_start->u.def.section = bfd_abs_section_ptr;
+ 	      ehdr_start->u.def.value = 0;
+ 	    }
 diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
-index 164c099cbb..3089a66337 100644
+index 164c099cbb..f031b01ffe 100644
 --- a/ld/testsuite/ld-i386/i386.exp
 +++ b/ld/testsuite/ld-i386/i386.exp
-@@ -470,6 +470,9 @@ run_dump_test "pr24322b"
+@@ -470,6 +470,10 @@ run_dump_test "pr24322b"
  run_dump_test "align-branch-1"
  run_dump_test "pr26018"
  run_dump_test "pr26263"
 +run_dump_test "pr26711-1"
 +run_dump_test "pr26711-2"
 +run_dump_test "pr26711-3"
++run_dump_test "pr26869"
  
  if { !([istarget "i?86-*-linux*"]
         || [istarget "i?86-*-gnu*"]
@@ -7684,6 +7707,35 @@ index 0000000000..df9bfced54
 +[ 	]+Owner[ 	]+Data size[ 	]+Description
 +  GNU                  0x[0-9a-f]+	NT_GNU_PROPERTY_TYPE_0
 +      Properties: x86 feature: IBT, SHSTK
+diff --git a/ld/testsuite/ld-i386/pr26869.d b/ld/testsuite/ld-i386/pr26869.d
+new file mode 100644
+index 0000000000..bfd00a70e9
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr26869.d
+@@ -0,0 +1,14 @@
++#as: --32
++#ld: -shared -melf_i386
++#readelf: -r -s --wide
++
++Relocation section '.rel.dyn' at offset 0x[a-f0-9]+ contains 1 entry:
++ Offset     Info    Type                Sym. Value  Symbol's Name
++0+[a-f0-9]+  00000008 R_386_RELATIVE        
++
++#...
++Symbol table '.symtab' contains [0-9]+ entries:
++   Num:    Value  Size Type    Bind   Vis      Ndx Name
++#...
++ +[a-f0-9]+: 00000000     0 NOTYPE  LOCAL  DEFAULT    1 __ehdr_start
++#pass
+diff --git a/ld/testsuite/ld-i386/pr26869.s b/ld/testsuite/ld-i386/pr26869.s
+new file mode 100644
+index 0000000000..e492b98e86
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr26869.s
+@@ -0,0 +1,3 @@
++	.text
++foo:
++	pushl	__ehdr_start@GOT(%ebx)
 diff --git a/ld/testsuite/ld-i386/property-3.r b/ld/testsuite/ld-i386/property-3.r
 index 1abb90b3a2..e95d47ae8d 100644
 --- a/ld/testsuite/ld-i386/property-3.r
