@@ -4195,7 +4195,7 @@ index ecb15d2343..12eb13594c 100644
  			       AARCH64_FEATURE_CRC | AARCH64_FEATURE_CRYPTO
  			       | AARCH64_FEATURE_RDMA),
 diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
-index e0d0cbd546..64475d6672 100644
+index e0d0cbd546..b02e9fb1c8 100644
 --- a/gas/config/tc-arm.c
 +++ b/gas/config/tc-arm.c
 @@ -5936,7 +5936,15 @@ parse_address_main (char **str, int i, int group_relocations,
@@ -4215,6 +4215,23 @@ index e0d0cbd546..64475d6672 100644
  	{
  	  /* Bare address - translate to PC-relative offset.  */
  	  inst.relocs[0].pc_rel = 1;
+@@ -26506,14 +26514,14 @@ static const struct asm_opcode insns[] =
+ #define ARM_VARIANT  & fpu_vfp_ext_v1
+ #undef  THUMB_VARIANT
+ #define THUMB_VARIANT  & arm_ext_v6t2
+- mnCEF(vmla,     _vmla,    3, (RNSDQMQ, oRNSDQMQ, RNSDQ_RNSC_MQ_RR), neon_mac_maybe_scalar),
+- mnCEF(vmul,     _vmul,    3, (RNSDQMQ, oRNSDQMQ, RNSDQ_RNSC_MQ_RR), neon_mul),
+ 
+  mcCE(fcpyd,	eb00b40, 2, (RVD, RVD),	      vfp_dp_rd_rm),
+ 
+ #undef  ARM_VARIANT
+ #define ARM_VARIANT  & fpu_vfp_ext_v1xd
+ 
++ mnCEF(vmla,     _vmla,    3, (RNSDQMQ, oRNSDQMQ, RNSDQ_RNSC_MQ_RR), neon_mac_maybe_scalar),
++ mnCEF(vmul,     _vmul,    3, (RNSDQMQ, oRNSDQMQ, RNSDQ_RNSC_MQ_RR), neon_mul),
+  MNCE(vmov,   0,	1, (VMOV),	      neon_mov),
+  mcCE(fmrs,	e100a10, 2, (RR, RVS),	      vfp_reg_from_sp),
+  mcCE(fmsr,	e000a10, 2, (RVS, RR),	      vfp_sp_from_reg),
 @@ -31587,6 +31595,16 @@ static const struct arm_cpu_option_table arm_cpus[] =
    ARM_CPU_OPT ("neoverse-n1",    "Neoverse N1",	       ARM_ARCH_V8_2A,
  	       ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
@@ -5320,6 +5337,32 @@ index 0000000000..c72c1296d2
 +vstrw.32 \op2, \op3
 +.endr
 +.endr
+diff --git a/gas/testsuite/gas/arm/pr26858.d b/gas/testsuite/gas/arm/pr26858.d
+new file mode 100644
+index 0000000000..dbe4d7122e
+--- /dev/null
++++ b/gas/testsuite/gas/arm/pr26858.d
+@@ -0,0 +1,8 @@
++# name: PR26858
++# objdump: -dr --prefix-addresses --show-raw-insn
++
++.*: +file format .*arm.*
++
++Disassembly of section .text:
++[^>]*> ee266a87 	vmul.f32	s12, s13, s14
++[^>]*> ee000a81 	vmla.f32	s0, s1, s2
+diff --git a/gas/testsuite/gas/arm/pr26858.s b/gas/testsuite/gas/arm/pr26858.s
+new file mode 100644
+index 0000000000..5a450e7bde
+--- /dev/null
++++ b/gas/testsuite/gas/arm/pr26858.s
+@@ -0,0 +1,6 @@
++.syntax unified
++.arch armv8-r
++.arm
++.fpu fpv5-sp-d16
++vmul.f32 s12, s13, s14
++vmla.f32 s0, s1, s2
 diff --git a/gas/testsuite/gas/elf/dwarf-5-cu.d b/gas/testsuite/gas/elf/dwarf-5-cu.d
 index 839b4b7c77..7db20a330b 100644
 --- a/gas/testsuite/gas/elf/dwarf-5-cu.d
