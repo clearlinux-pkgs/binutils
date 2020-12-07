@@ -1,8 +1,14 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 9fac12538a..2bca0948f6 100644
+index 9fac12538a..6114b73a05 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,82 @@
+@@ -1,3 +1,88 @@
++2020-12-04  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/27016
++	* elf64-x86-64.c (elf_x86_64_convert_load_reloc): Convert load
++	to mov only for GOTPCRELX relocations.
++
 +2020-10-09  Alan Modra  <amodra@gmail.com>
 +
 +	* elf64-ppc.c (write_plt_relocs_for_local_syms): Don't do local
@@ -1259,6 +1265,19 @@ index 547971f8be..0492fd7fad 100644
    (struct bfd_link_info *);
  bfd_boolean ppc64_elf_tls_optimize
    (struct bfd_link_info *);
+diff --git a/bfd/elf64-x86-64.c b/bfd/elf64-x86-64.c
+index 311fb28a90..7eb1afe614 100644
+--- a/bfd/elf64-x86-64.c
++++ b/bfd/elf64-x86-64.c
+@@ -1731,7 +1731,7 @@ elf_x86_64_convert_load_reloc (bfd *abfd,
+ 
+       if (opcode == 0x8b)
+ 	{
+-	  if (abs_symbol && local_ref)
++	  if (abs_symbol && local_ref && relocx)
+ 	    to_reloc_pc32 = FALSE;
+ 
+ 	  if (to_reloc_pc32)
 diff --git a/bfd/elfxx-x86.c b/bfd/elfxx-x86.c
 index e58ddc19cf..143aae4b5c 100644
 --- a/bfd/elfxx-x86.c
@@ -10855,10 +10874,19 @@ index 882453dce0..3f271fb0f7 100644
  }
  #endif /* __cplusplus */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4eec7d2977..66f6e28110 100644
+index 4eec7d2977..89ec0798db 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,66 @@
+@@ -1,3 +1,75 @@
++2020-12-04  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/27016
++	* testsuite/ld-x86-64/x86-64.exp: Run pr27016a and pr27016b.
++	* testsuite/ld-x86-64/pr27016a.d: New file.
++	* testsuite/ld-x86-64/pr27016a.s: Likewise.
++	* testsuite/ld-x86-64/pr27016b.d: Likewise.
++	* testsuite/ld-x86-64/pr27016b.s: Likewise.
++
 +2020-11-16  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR ld/26869
@@ -11503,6 +11531,103 @@ index 0000000000..8fa185d42a
 +	.type	foo, @function
 +foo:
 +	ret
+diff --git a/ld/testsuite/ld-x86-64/pr27016a.d b/ld/testsuite/ld-x86-64/pr27016a.d
+new file mode 100644
+index 0000000000..13200e3aed
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr27016a.d
+@@ -0,0 +1,23 @@
++#source: pr27016a.s
++#source: pr27016b.s
++#as: --64 -mx86-used-note=no -mrelax-relocations=no
++#ld: -m elf_x86_64 -z max-page-size=0x200000 -z noseparate-code -e main
++#objdump: -dw
++
++.*: +file format .*
++
++
++Disassembly of section .text:
++
++0+4000e8 <main>:
++ +[a-f0-9]+:	55                   	push   %rbp
++ +[a-f0-9]+:	48 89 e5             	mov    %rsp,%rbp
++ +[a-f0-9]+:	4c 8d 1d 39 3f 00 00 	lea    0x3f39\(%rip\),%r11        # 40402c <thesym>
++ +[a-f0-9]+:	41 8b 03             	mov    \(%r11\),%eax
++ +[a-f0-9]+:	8d 50 01             	lea    0x1\(%rax\),%edx
++ +[a-f0-9]+:	4c 8d 1d 2c 3f 00 00 	lea    0x3f2c\(%rip\),%r11        # 40402c <thesym>
++ +[a-f0-9]+:	41 89 13             	mov    %edx,\(%r11\)
++ +[a-f0-9]+:	b8 00 00 00 00       	mov    \$0x0,%eax
++ +[a-f0-9]+:	5d                   	pop    %rbp
++ +[a-f0-9]+:	c3                   	retq   
++#pass
+diff --git a/ld/testsuite/ld-x86-64/pr27016a.s b/ld/testsuite/ld-x86-64/pr27016a.s
+new file mode 100644
+index 0000000000..b64851a5ff
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr27016a.s
+@@ -0,0 +1,23 @@
++        .text
++        .comm   global_int,4,4
++        .globl  main
++        .type   main, @function
++main:
++        .cfi_startproc
++        pushq   %rbp
++        .cfi_def_cfa_offset 16
++        .cfi_offset 6, -16
++        movq    %rsp, %rbp
++        .cfi_def_cfa_register 6
++        movq    thesym@GOTPCREL(%rip), %r11
++        movl    (%r11), %eax
++        leal    1(%rax), %edx
++        movq    thesym@GOTPCREL(%rip), %r11
++        movl    %edx, (%r11)
++        movl    $0, %eax
++        popq    %rbp
++        .cfi_def_cfa 7, 8
++        ret
++        .cfi_endproc
++        .size   main, .-main
++        .section        .note.GNU-stack,"",@progbits
+diff --git a/ld/testsuite/ld-x86-64/pr27016b.d b/ld/testsuite/ld-x86-64/pr27016b.d
+new file mode 100644
+index 0000000000..d1b144bfaa
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr27016b.d
+@@ -0,0 +1,23 @@
++#source: pr27016a.s
++#source: pr27016b.s
++#as: --64 -mx86-used-note=no -mrelax-relocations=yes
++#ld: -m elf_x86_64 -z max-page-size=0x200000 -z noseparate-code -e main
++#objdump: -dw
++
++.*: +file format .*
++
++
++Disassembly of section .text:
++
++0+4000e8 <main>:
++ +[a-f0-9]+:	55                   	push   %rbp
++ +[a-f0-9]+:	48 89 e5             	mov    %rsp,%rbp
++ +[a-f0-9]+:	49 c7 c3 2c 40 40 00 	mov    \$0x40402c,%r11
++ +[a-f0-9]+:	41 8b 03             	mov    \(%r11\),%eax
++ +[a-f0-9]+:	8d 50 01             	lea    0x1\(%rax\),%edx
++ +[a-f0-9]+:	49 c7 c3 2c 40 40 00 	mov    \$0x40402c,%r11
++ +[a-f0-9]+:	41 89 13             	mov    %edx,\(%r11\)
++ +[a-f0-9]+:	b8 00 00 00 00       	mov    \$0x0,%eax
++ +[a-f0-9]+:	5d                   	pop    %rbp
++ +[a-f0-9]+:	c3                   	retq   
++#pass
+diff --git a/ld/testsuite/ld-x86-64/pr27016b.s b/ld/testsuite/ld-x86-64/pr27016b.s
+new file mode 100644
+index 0000000000..ded8d7a826
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr27016b.s
+@@ -0,0 +1,4 @@
++	.globl thesym
++thesym = 0x40402c
++
++	.section        .note.GNU-stack,"",@progbits
 diff --git a/ld/testsuite/ld-x86-64/property-3.r b/ld/testsuite/ld-x86-64/property-3.r
 index 1abb90b3a2..e95d47ae8d 100644
 --- a/ld/testsuite/ld-x86-64/property-3.r
@@ -11537,7 +11662,7 @@ index bd87a9317e..5ff95648c2 100644
  	x86 ISA needed: CMOV, SSE, SSE3
  #pass
 diff --git a/ld/testsuite/ld-x86-64/x86-64.exp b/ld/testsuite/ld-x86-64/x86-64.exp
-index d836f33496..3d48f860a3 100644
+index d836f33496..91410304ea 100644
 --- a/ld/testsuite/ld-x86-64/x86-64.exp
 +++ b/ld/testsuite/ld-x86-64/x86-64.exp
 @@ -432,6 +432,12 @@ run_dump_test "pr25416-3"
@@ -11553,6 +11678,15 @@ index d836f33496..3d48f860a3 100644
  
  if ![istarget "x86_64-*-linux*"] {
      return
+@@ -641,6 +647,8 @@ run_dump_test "pr20253-5b"
+ run_dump_test "tlsdesc2"
+ run_dump_test "pr22048"
+ run_dump_test "pr22929"
++run_dump_test "pr27016a"
++run_dump_test "pr27016b"
+ 
+ proc undefined_weak {cflags ldflags} {
+     set testname "Undefined weak symbol"
 diff --git a/libiberty/ChangeLog b/libiberty/ChangeLog
 index 19d2b702d6..42daff1594 100644
 --- a/libiberty/ChangeLog
