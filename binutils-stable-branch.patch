@@ -1,5 +1,5 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 9fac12538a..4c629d4be6 100644
+index 9fac12538a5..4c629d4be63 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
 @@ -1,3 +1,97 @@
@@ -101,7 +101,7 @@ index 9fac12538a..4c629d4be6 100644
  
  	This is the 2.35.1 point release.
 diff --git a/bfd/development.sh b/bfd/development.sh
-index 32be4b9460..6bbed41d6d 100644
+index 32be4b9460f..6bbed41d6d4 100644
 --- a/bfd/development.sh
 +++ b/bfd/development.sh
 @@ -16,7 +16,7 @@
@@ -114,7 +114,7 @@ index 32be4b9460..6bbed41d6d 100644
  # Indicate whether this is a release branch.
  experimental=false
 diff --git a/bfd/dwarf2.c b/bfd/dwarf2.c
-index b8f0008a10..977bf43a6a 100644
+index b8f0008a10d..977bf43a6a1 100644
 --- a/bfd/dwarf2.c
 +++ b/bfd/dwarf2.c
 @@ -3404,7 +3404,8 @@ scan_unit_for_symbols (struct comp_unit *unit)
@@ -137,7 +137,7 @@ index b8f0008a10..977bf43a6a 100644
  						"variable specification "
  						"at offset %lx"),
 diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
-index 4bf37e1d98..ec8c85eba5 100644
+index 4bf37e1d981..ec8c85eba59 100644
 --- a/bfd/elf64-ppc.c
 +++ b/bfd/elf64-ppc.c
 @@ -114,7 +114,7 @@ static bfd_vma opd_entry_value
@@ -1244,7 +1244,7 @@ index 4bf37e1d98..ec8c85eba5 100644
  		    }
  		}
 diff --git a/bfd/elf64-ppc.h b/bfd/elf64-ppc.h
-index 547971f8be..0492fd7fad 100644
+index 547971f8bec..0492fd7fad5 100644
 --- a/bfd/elf64-ppc.h
 +++ b/bfd/elf64-ppc.h
 @@ -27,6 +27,7 @@ struct ppc64_elf_params
@@ -1275,7 +1275,7 @@ index 547971f8be..0492fd7fad 100644
  bfd_boolean ppc64_elf_tls_optimize
    (struct bfd_link_info *);
 diff --git a/bfd/elf64-x86-64.c b/bfd/elf64-x86-64.c
-index 311fb28a90..7eb1afe614 100644
+index 311fb28a905..7eb1afe6144 100644
 --- a/bfd/elf64-x86-64.c
 +++ b/bfd/elf64-x86-64.c
 @@ -1731,7 +1731,7 @@ elf_x86_64_convert_load_reloc (bfd *abfd,
@@ -1288,7 +1288,7 @@ index 311fb28a90..7eb1afe614 100644
  
  	  if (to_reloc_pc32)
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 998b72f228..222a4573b0 100644
+index 998b72f2281..222a4573b00 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -9636,9 +9636,29 @@ elf_link_output_symstrtab (struct elf_final_link_info *flinfo,
@@ -1323,7 +1323,7 @@ index 998b72f228..222a4573b0 100644
  	return 0;
      }
 diff --git a/bfd/elfxx-x86.c b/bfd/elfxx-x86.c
-index e58ddc19cf..143aae4b5c 100644
+index e58ddc19cf6..143aae4b5cc 100644
 --- a/bfd/elfxx-x86.c
 +++ b/bfd/elfxx-x86.c
 @@ -2417,15 +2417,19 @@ _bfd_x86_elf_merge_gnu_properties (struct bfd_link_info *info,
@@ -1373,7 +1373,7 @@ index e58ddc19cf..143aae4b5c 100644
  	    {
  	      if (aprop != NULL)
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index 76ba6d9840..4b6cd9f755 100644
+index 76ba6d9840a..4b6cd9f755e 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
 @@ -1,3 +1,142 @@
@@ -1520,7 +1520,7 @@ index 76ba6d9840..4b6cd9f755 100644
  
  	This is the 2.35.1 point release.
 diff --git a/binutils/doc/binutils.texi b/binutils/doc/binutils.texi
-index f19862655b..cf8d0ea7f1 100644
+index f19862655bd..cf8d0ea7f1c 100644
 --- a/binutils/doc/binutils.texi
 +++ b/binutils/doc/binutils.texi
 @@ -796,7 +796,7 @@ nm [@option{-A}|@option{-o}|@option{--print-file-name}] [@option{-a}|@option{--d
@@ -1563,7 +1563,7 @@ index f19862655b..cf8d0ea7f1 100644
  @cindex object code format
  Specify an object code format other than your system's default format.
 diff --git a/binutils/dwarf.c b/binutils/dwarf.c
-index cc13fe067f..91b61e3fdf 100644
+index cc13fe067f0..91b61e3fdfe 100644
 --- a/binutils/dwarf.c
 +++ b/binutils/dwarf.c
 @@ -849,101 +849,208 @@ fetch_indexed_value (dwarf_vma offset, dwarf_vma bytes)
@@ -2551,7 +2551,7 @@ index cc13fe067f..91b61e3fdf 100644
      free_debug_section ((enum dwarf_section_display_enum) i);
  
 diff --git a/binutils/nm.c b/binutils/nm.c
-index 1b5122d56a..a5144faba6 100644
+index 1b5122d56ab..a5144faba60 100644
 --- a/binutils/nm.c
 +++ b/binutils/nm.c
 @@ -161,7 +161,6 @@ static int show_version = 0;	/* Show the version number.  */
@@ -2662,7 +2662,7 @@ index 1b5122d56a..a5144faba6 100644
  	  dynamic = 1;
  	  break;
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index 6057515a89..41547a2594 100644
+index 6057515a89b..41547a2594b 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
 @@ -12091,9 +12091,9 @@ print_dynamic_symbol (Filedata *filedata, unsigned long si,
@@ -2678,7 +2678,7 @@ index 6057515a89..41547a2594 100644
        if (sym_info == symbol_undefined)
  	len_avail -= sprintf (buffer," (%d)", vna_other);
 diff --git a/binutils/testsuite/binutils-all/dw5.W b/binutils/testsuite/binutils-all/dw5.W
-index 2eccb03c5a..cb949ad49c 100644
+index 2eccb03c5a6..cb949ad49cd 100644
 --- a/binutils/testsuite/binutils-all/dw5.W
 +++ b/binutils/testsuite/binutils-all/dw5.W
 @@ -3,6 +3,7 @@ Contents of the .debug_info section:
@@ -2690,7 +2690,7 @@ index 2eccb03c5a..cb949ad49c 100644
     Pointer Size:  8
   <0><c>: Abbrev Number: 6 \(DW_TAG_compile_unit\)
 diff --git a/binutils/testsuite/binutils-all/dwarf-attributes.W b/binutils/testsuite/binutils-all/dwarf-attributes.W
-index 3a4e740988..4e8386ae88 100644
+index 3a4e7409889..4e8386ae880 100644
 --- a/binutils/testsuite/binutils-all/dwarf-attributes.W
 +++ b/binutils/testsuite/binutils-all/dwarf-attributes.W
 @@ -3,6 +3,7 @@ Contents of the .debug_info section:
@@ -2703,7 +2703,7 @@ index 3a4e740988..4e8386ae88 100644
   <0><c>: Abbrev Number: 1 \(User TAG value: 0x5555\)
 diff --git a/binutils/testsuite/binutils-all/x86-64/pr26808.dump b/binutils/testsuite/binutils-all/x86-64/pr26808.dump
 new file mode 100644
-index 0000000000..f64f9d008f
+index 00000000000..f64f9d008f9
 --- /dev/null
 +++ b/binutils/testsuite/binutils-all/x86-64/pr26808.dump
 @@ -0,0 +1,1440 @@
@@ -4149,10 +4149,10 @@ index 0000000000..f64f9d008f
 +
 diff --git a/binutils/testsuite/binutils-all/x86-64/pr26808.dwp.bz2 b/binutils/testsuite/binutils-all/x86-64/pr26808.dwp.bz2
 new file mode 100644
-index 0000000000..75cce36f8b
+index 00000000000..75cce36f8bc
 Binary files /dev/null and b/binutils/testsuite/binutils-all/x86-64/pr26808.dwp.bz2 differ
 diff --git a/binutils/testsuite/binutils-all/x86-64/x86-64.exp b/binutils/testsuite/binutils-all/x86-64/x86-64.exp
-index 7bd49ab619..5f02ed35ad 100644
+index 7bd49ab619d..5f02ed35ade 100644
 --- a/binutils/testsuite/binutils-all/x86-64/x86-64.exp
 +++ b/binutils/testsuite/binutils-all/x86-64/x86-64.exp
 @@ -27,3 +27,34 @@ foreach t $test_list {
@@ -4191,7 +4191,7 @@ index 7bd49ab619..5f02ed35ad 100644
 +    }
 +}
 diff --git a/elfcpp/ChangeLog b/elfcpp/ChangeLog
-index efb82c5770..fa1d20e5d9 100644
+index efb82c57703..fa1d20e5d9a 100644
 --- a/elfcpp/ChangeLog
 +++ b/elfcpp/ChangeLog
 @@ -1,3 +1,10 @@
@@ -4206,7 +4206,7 @@ index efb82c5770..fa1d20e5d9 100644
  
  	Binutils 2.35 branch created.
 diff --git a/elfcpp/dwarf.h b/elfcpp/dwarf.h
-index 1221f37f8a..d5e06d4d7d 100644
+index 1221f37f8a6..d5e06d4d7d3 100644
 --- a/elfcpp/dwarf.h
 +++ b/elfcpp/dwarf.h
 @@ -81,6 +81,11 @@ namespace elfcpp
@@ -4233,7 +4233,7 @@ index 1221f37f8a..d5e06d4d7d 100644
  
  enum DW_EH_PE
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 26c703531d..3ac2f7b72e 100644
+index 26c703531d9..3ac2f7b72e2 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
 @@ -1,3 +1,171 @@
@@ -4409,7 +4409,7 @@ index 26c703531d..3ac2f7b72e 100644
  
  	This is the 2.35.1 point release.
 diff --git a/gas/config/tc-aarch64.c b/gas/config/tc-aarch64.c
-index ecb15d2343..12eb13594c 100644
+index ecb15d23437..12eb13594c9 100644
 --- a/gas/config/tc-aarch64.c
 +++ b/gas/config/tc-aarch64.c
 @@ -247,12 +247,6 @@ set_fatal_syntax_error (const char *error)
@@ -4461,7 +4461,7 @@ index ecb15d2343..12eb13594c 100644
  			       AARCH64_FEATURE_CRC | AARCH64_FEATURE_CRYPTO
  			       | AARCH64_FEATURE_RDMA),
 diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
-index e0d0cbd546..b02e9fb1c8 100644
+index e0d0cbd5463..b02e9fb1c8f 100644
 --- a/gas/config/tc-arm.c
 +++ b/gas/config/tc-arm.c
 @@ -5936,7 +5936,15 @@ parse_address_main (char **str, int i, int group_relocations,
@@ -4516,7 +4516,7 @@ index e0d0cbd546..b02e9fb1c8 100644
    ARM_CPU_OPT ("xscale",	  NULL,		       ARM_ARCH_XSCALE,
  	       ARM_ARCH_NONE,
 diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
-index 037fe4d18b..623ac77307 100644
+index 037fe4d18b4..623ac77307e 100644
 --- a/gas/config/tc-i386.c
 +++ b/gas/config/tc-i386.c
 @@ -7115,6 +7115,23 @@ process_suffix (void)
@@ -4544,7 +4544,7 @@ index 037fe4d18b..623ac77307 100644
  	    need = i.prefix[ADDR_PREFIX] ? need_word : need_dword;
  	  else if (i.prefix[ADDR_PREFIX])
 diff --git a/gas/config/tc-ppc.c b/gas/config/tc-ppc.c
-index aa989e7d1c..9719341c54 100644
+index aa989e7d1c2..9719341c546 100644
 --- a/gas/config/tc-ppc.c
 +++ b/gas/config/tc-ppc.c
 @@ -3335,6 +3335,15 @@ md_assemble (char *str)
@@ -4564,7 +4564,7 @@ index aa989e7d1c..9719341c54 100644
    str = s;
    while (ISSPACE (*str))
 diff --git a/gas/doc/c-aarch64.texi b/gas/doc/c-aarch64.texi
-index 86b6efc52b..f5d2669574 100644
+index 86b6efc52bd..f5d26695749 100644
 --- a/gas/doc/c-aarch64.texi
 +++ b/gas/doc/c-aarch64.texi
 @@ -72,6 +72,8 @@ on the target processor.  The following processor names are recognized:
@@ -4577,7 +4577,7 @@ index 86b6efc52b..f5d2669574 100644
  @code{qdf24xx},
  @code{saphira},
 diff --git a/gas/doc/c-arm.texi b/gas/doc/c-arm.texi
-index 9180360577..16c94de675 100644
+index 91803605775..16c94de675c 100644
 --- a/gas/doc/c-arm.texi
 +++ b/gas/doc/c-arm.texi
 @@ -151,6 +151,8 @@ recognized:
@@ -4590,7 +4590,7 @@ index 9180360577..16c94de675 100644
  @code{xgene2},
  @code{ep9312} (ARM920 with Cirrus Maverick coprocessor),
 diff --git a/gas/dwarf2dbg.c b/gas/dwarf2dbg.c
-index 6899a840ef..1160cafc13 100644
+index 6899a840eff..1160cafc13e 100644
 --- a/gas/dwarf2dbg.c
 +++ b/gas/dwarf2dbg.c
 @@ -211,7 +211,6 @@ struct file_entry
@@ -4716,7 +4716,7 @@ index 6899a840ef..1160cafc13 100644
  				   with_md5))
      return NULL;
 diff --git a/gas/testsuite/gas/aarch64/system.d b/gas/testsuite/gas/aarch64/system.d
-index 20d5c20409..c973584af5 100644
+index 20d5c204094..c973584af59 100644
 --- a/gas/testsuite/gas/aarch64/system.d
 +++ b/gas/testsuite/gas/aarch64/system.d
 @@ -190,6 +190,7 @@ Disassembly of section \.text:
@@ -4728,7 +4728,7 @@ index 20d5c20409..c973584af5 100644
  .*:	d503349f 	pssbb
  .*:	d8000000 	prfm	pldl1keep, 0 <LABEL1>
 diff --git a/gas/testsuite/gas/aarch64/system.s b/gas/testsuite/gas/aarch64/system.s
-index 9d86f66806..6f494f885a 100644
+index 9d86f66806a..6f494f885a6 100644
 --- a/gas/testsuite/gas/aarch64/system.s
 +++ b/gas/testsuite/gas/aarch64/system.s
 @@ -44,6 +44,7 @@
@@ -4741,7 +4741,7 @@ index 9d86f66806..6f494f885a 100644
  
 diff --git a/gas/testsuite/gas/arm/mve-vldr-vstr-bad.d b/gas/testsuite/gas/arm/mve-vldr-vstr-bad.d
 new file mode 100644
-index 0000000000..8989688f0f
+index 00000000000..8989688f0f3
 --- /dev/null
 +++ b/gas/testsuite/gas/arm/mve-vldr-vstr-bad.d
 @@ -0,0 +1,5 @@
@@ -4752,7 +4752,7 @@ index 0000000000..8989688f0f
 +.*: +file format .*arm.*
 diff --git a/gas/testsuite/gas/arm/mve-vldr-vstr-bad.l b/gas/testsuite/gas/arm/mve-vldr-vstr-bad.l
 new file mode 100644
-index 0000000000..2df3a37ac0
+index 00000000000..2df3a37ac02
 --- /dev/null
 +++ b/gas/testsuite/gas/arm/mve-vldr-vstr-bad.l
 @@ -0,0 +1,811 @@
@@ -5569,7 +5569,7 @@ index 0000000000..2df3a37ac0
 +[^:]*:30: Error: syntax error -- `vstrw.32 q7,r14'
 diff --git a/gas/testsuite/gas/arm/mve-vldr-vstr-bad.s b/gas/testsuite/gas/arm/mve-vldr-vstr-bad.s
 new file mode 100644
-index 0000000000..c72c1296d2
+index 00000000000..c72c1296d2f
 --- /dev/null
 +++ b/gas/testsuite/gas/arm/mve-vldr-vstr-bad.s
 @@ -0,0 +1,30 @@
@@ -5605,7 +5605,7 @@ index 0000000000..c72c1296d2
 +.endr
 diff --git a/gas/testsuite/gas/arm/pr26858.d b/gas/testsuite/gas/arm/pr26858.d
 new file mode 100644
-index 0000000000..dbe4d7122e
+index 00000000000..dbe4d7122ee
 --- /dev/null
 +++ b/gas/testsuite/gas/arm/pr26858.d
 @@ -0,0 +1,8 @@
@@ -5619,7 +5619,7 @@ index 0000000000..dbe4d7122e
 +[^>]*> ee000a81 	vmla.f32	s0, s1, s2
 diff --git a/gas/testsuite/gas/arm/pr26858.s b/gas/testsuite/gas/arm/pr26858.s
 new file mode 100644
-index 0000000000..5a450e7bde
+index 00000000000..5a450e7bde7
 --- /dev/null
 +++ b/gas/testsuite/gas/arm/pr26858.s
 @@ -0,0 +1,6 @@
@@ -5630,7 +5630,7 @@ index 0000000000..5a450e7bde
 +vmul.f32 s12, s13, s14
 +vmla.f32 s0, s1, s2
 diff --git a/gas/testsuite/gas/elf/dwarf-5-cu.d b/gas/testsuite/gas/elf/dwarf-5-cu.d
-index 839b4b7c77..7db20a330b 100644
+index 839b4b7c77b..7db20a330b8 100644
 --- a/gas/testsuite/gas/elf/dwarf-5-cu.d
 +++ b/gas/testsuite/gas/elf/dwarf-5-cu.d
 @@ -6,6 +6,7 @@
@@ -5643,7 +5643,7 @@ index 839b4b7c77..7db20a330b 100644
  #pass
 diff --git a/gas/testsuite/gas/i386/dwarf4-line-1.d b/gas/testsuite/gas/i386/dwarf4-line-1.d
 new file mode 100644
-index 0000000000..4f8321e9bf
+index 00000000000..4f8321e9bfd
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/dwarf4-line-1.d
 @@ -0,0 +1,50 @@
@@ -5699,7 +5699,7 @@ index 0000000000..4f8321e9bf
 +
 diff --git a/gas/testsuite/gas/i386/dwarf4-line-1.s b/gas/testsuite/gas/i386/dwarf4-line-1.s
 new file mode 100644
-index 0000000000..e558fdc050
+index 00000000000..e558fdc0507
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/dwarf4-line-1.s
 @@ -0,0 +1,14 @@
@@ -5719,7 +5719,7 @@ index 0000000000..e558fdc050
 +	ret
 diff --git a/gas/testsuite/gas/i386/dwarf5-line-1.d b/gas/testsuite/gas/i386/dwarf5-line-1.d
 new file mode 100644
-index 0000000000..7d602d0594
+index 00000000000..7d602d0594f
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/dwarf5-line-1.d
 @@ -0,0 +1,50 @@
@@ -5775,7 +5775,7 @@ index 0000000000..7d602d0594
 +
 diff --git a/gas/testsuite/gas/i386/dwarf5-line-1.s b/gas/testsuite/gas/i386/dwarf5-line-1.s
 new file mode 100644
-index 0000000000..6e343ad0d3
+index 00000000000..6e343ad0d36
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/dwarf5-line-1.s
 @@ -0,0 +1,6 @@
@@ -5787,7 +5787,7 @@ index 0000000000..6e343ad0d3
 +	.file	1 "types.h"
 diff --git a/gas/testsuite/gas/i386/dwarf5-line-2.d b/gas/testsuite/gas/i386/dwarf5-line-2.d
 new file mode 100644
-index 0000000000..302a2d8fcc
+index 00000000000..302a2d8fcc4
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/dwarf5-line-2.d
 @@ -0,0 +1,49 @@
@@ -5842,7 +5842,7 @@ index 0000000000..302a2d8fcc
 +
 diff --git a/gas/testsuite/gas/i386/dwarf5-line-2.s b/gas/testsuite/gas/i386/dwarf5-line-2.s
 new file mode 100644
-index 0000000000..4af7d7061c
+index 00000000000..4af7d7061c9
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/dwarf5-line-2.s
 @@ -0,0 +1,5 @@
@@ -5853,7 +5853,7 @@ index 0000000000..4af7d7061c
 +	.file	0 "core.c" md5 0xbbd69fc03ce253b2dbaab2522dd519ae
 diff --git a/gas/testsuite/gas/i386/dwarf5-line-3.d b/gas/testsuite/gas/i386/dwarf5-line-3.d
 new file mode 100644
-index 0000000000..6f4ebf0471
+index 00000000000..6f4ebf04718
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/dwarf5-line-3.d
 @@ -0,0 +1,49 @@
@@ -5908,7 +5908,7 @@ index 0000000000..6f4ebf0471
 +
 diff --git a/gas/testsuite/gas/i386/dwarf5-line-3.s b/gas/testsuite/gas/i386/dwarf5-line-3.s
 new file mode 100644
-index 0000000000..52e259d103
+index 00000000000..52e259d1033
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/dwarf5-line-3.s
 @@ -0,0 +1,10 @@
@@ -5924,7 +5924,7 @@ index 0000000000..52e259d103
 + .nop
 diff --git a/gas/testsuite/gas/i386/enqcmd-16bit.d b/gas/testsuite/gas/i386/enqcmd-16bit.d
 new file mode 100644
-index 0000000000..04e8706d29
+index 00000000000..04e8706d291
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/enqcmd-16bit.d
 @@ -0,0 +1,21 @@
@@ -5951,7 +5951,7 @@ index 0000000000..04e8706d29
 +#pass
 diff --git a/gas/testsuite/gas/i386/enqcmd-16bit.s b/gas/testsuite/gas/i386/enqcmd-16bit.s
 new file mode 100644
-index 0000000000..1f21cec363
+index 00000000000..1f21cec3634
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/enqcmd-16bit.s
 @@ -0,0 +1,4 @@
@@ -5960,7 +5960,7 @@ index 0000000000..1f21cec363
 +	.code16
 +.include "movdir.s"
 diff --git a/gas/testsuite/gas/i386/enqcmd-intel.d b/gas/testsuite/gas/i386/enqcmd-intel.d
-index b38c3ed6ee..e1d30dacd7 100644
+index b38c3ed6ee1..e1d30dacd70 100644
 --- a/gas/testsuite/gas/i386/enqcmd-intel.d
 +++ b/gas/testsuite/gas/i386/enqcmd-intel.d
 @@ -8,13 +8,21 @@
@@ -5995,7 +5995,7 @@ index b38c3ed6ee..e1d30dacd7 100644
 + +[a-f0-9]+:	67 f3 0f 38 f8 0e 34 12 	enqcmds cx,ds:0x1234
  #pass
 diff --git a/gas/testsuite/gas/i386/enqcmd.d b/gas/testsuite/gas/i386/enqcmd.d
-index c601185ba3..99b9c0a729 100644
+index c601185ba32..99b9c0a7299 100644
 --- a/gas/testsuite/gas/i386/enqcmd.d
 +++ b/gas/testsuite/gas/i386/enqcmd.d
 @@ -8,13 +8,21 @@
@@ -6030,7 +6030,7 @@ index c601185ba3..99b9c0a729 100644
 + +[a-f0-9]+:	67 f3 0f 38 f8 0e 34 12 	enqcmds 0x1234,%cx
  #pass
 diff --git a/gas/testsuite/gas/i386/enqcmd.s b/gas/testsuite/gas/i386/enqcmd.s
-index 0a23b25a6f..f7195fa723 100644
+index 0a23b25a6ff..f7195fa7236 100644
 --- a/gas/testsuite/gas/i386/enqcmd.s
 +++ b/gas/testsuite/gas/i386/enqcmd.s
 @@ -7,9 +7,17 @@ _start:
@@ -6052,7 +6052,7 @@ index 0a23b25a6f..f7195fa723 100644
 +	enqcmds cx,ds:foo
 +	enqcmds cx,ds:0x1234
 diff --git a/gas/testsuite/gas/i386/evex-no-scale-64.d b/gas/testsuite/gas/i386/evex-no-scale-64.d
-index 6c9f68faf2..33623656ee 100644
+index 6c9f68faf23..33623656eef 100644
 --- a/gas/testsuite/gas/i386/evex-no-scale-64.d
 +++ b/gas/testsuite/gas/i386/evex-no-scale-64.d
 @@ -10,5 +10,5 @@ Disassembly of section .text:
@@ -6063,7 +6063,7 @@ index 6c9f68faf2..33623656ee 100644
 + +[a-f0-9]+:	67 62 f1 7c 48 28 04 25 40 00 00 00 	vmovaps 0x40\(,%eiz,1\),%zmm0
   +[a-f0-9]+:	62 f1 7c 48 28 04 25 40 00 00 00 	vmovaps 0x40,%zmm0
 diff --git a/gas/testsuite/gas/i386/i386.exp b/gas/testsuite/gas/i386/i386.exp
-index 6563aae246..3039c36a30 100644
+index 6563aae246c..3039c36a30a 100644
 --- a/gas/testsuite/gas/i386/i386.exp
 +++ b/gas/testsuite/gas/i386/i386.exp
 @@ -475,9 +475,11 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]]
@@ -6091,7 +6091,7 @@ index 6563aae246..3039c36a30 100644
  	run_dump_test "dw2-compressed-2"
 diff --git a/gas/testsuite/gas/i386/movdir-16bit.d b/gas/testsuite/gas/i386/movdir-16bit.d
 new file mode 100644
-index 0000000000..ac5d82507f
+index 00000000000..ac5d82507f1
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/movdir-16bit.d
 @@ -0,0 +1,21 @@
@@ -6118,7 +6118,7 @@ index 0000000000..ac5d82507f
 +#pass
 diff --git a/gas/testsuite/gas/i386/movdir-16bit.s b/gas/testsuite/gas/i386/movdir-16bit.s
 new file mode 100644
-index 0000000000..27f5fda5a5
+index 00000000000..27f5fda5a58
 --- /dev/null
 +++ b/gas/testsuite/gas/i386/movdir-16bit.s
 @@ -0,0 +1,4 @@
@@ -6127,7 +6127,7 @@ index 0000000000..27f5fda5a5
 +	.code16
 +.include "movdir.s"
 diff --git a/gas/testsuite/gas/i386/movdir-intel.d b/gas/testsuite/gas/i386/movdir-intel.d
-index 04f58a7892..56f4fa929a 100644
+index 04f58a7892e..56f4fa929a7 100644
 --- a/gas/testsuite/gas/i386/movdir-intel.d
 +++ b/gas/testsuite/gas/i386/movdir-intel.d
 @@ -8,19 +8,16 @@
@@ -6163,7 +6163,7 @@ index 04f58a7892..56f4fa929a 100644
 + +[a-f0-9]+:	67 66 0f 38 f8 0e 34 12 	movdir64b cx,ds:0x1234
  #pass
 diff --git a/gas/testsuite/gas/i386/movdir.d b/gas/testsuite/gas/i386/movdir.d
-index 192dad9920..a8f324bdde 100644
+index 192dad9920e..a8f324bddec 100644
 --- a/gas/testsuite/gas/i386/movdir.d
 +++ b/gas/testsuite/gas/i386/movdir.d
 @@ -8,19 +8,16 @@
@@ -6199,7 +6199,7 @@ index 192dad9920..a8f324bdde 100644
 + +[a-f0-9]+:	67 66 0f 38 f8 0e 34 12 	movdir64b 0x1234,%cx
  #pass
 diff --git a/gas/testsuite/gas/i386/movdir.s b/gas/testsuite/gas/i386/movdir.s
-index 29c381ca23..00c57db141 100644
+index 29c381ca23c..00c57db141a 100644
 --- a/gas/testsuite/gas/i386/movdir.s
 +++ b/gas/testsuite/gas/i386/movdir.s
 @@ -3,19 +3,16 @@
@@ -6227,7 +6227,7 @@ index 29c381ca23..00c57db141 100644
 +	movdir64b cx,ds:foo
 +	movdir64b cx,ds:0x1234
 diff --git a/gas/testsuite/gas/i386/x86-64-addr32-intel.d b/gas/testsuite/gas/i386/x86-64-addr32-intel.d
-index 7a25d40162..0988457b34 100644
+index 7a25d40162c..0988457b34c 100644
 --- a/gas/testsuite/gas/i386/x86-64-addr32-intel.d
 +++ b/gas/testsuite/gas/i386/x86-64-addr32-intel.d
 @@ -11,15 +11,15 @@ Disassembly of section .text:
@@ -6263,7 +6263,7 @@ index 7a25d40162..0988457b34 100644
  [ 	]*[a-f0-9]+:	67 89 04 65 11 22 33 ff 	mov[ ]+DWORD PTR \[eiz\*2\+0xff332211\],eax
  #pass
 diff --git a/gas/testsuite/gas/i386/x86-64-addr32.d b/gas/testsuite/gas/i386/x86-64-addr32.d
-index c513f0dd8e..d9481a7439 100644
+index c513f0dd8e1..d9481a7439e 100644
 --- a/gas/testsuite/gas/i386/x86-64-addr32.d
 +++ b/gas/testsuite/gas/i386/x86-64-addr32.d
 @@ -10,15 +10,15 @@ Disassembly of section .text:
@@ -6299,7 +6299,7 @@ index c513f0dd8e..d9481a7439 100644
  [ 	]*[a-f0-9]+:	67 89 04 65 11 22 33 ff 	mov[ ]+%eax,0xff332211\(,%eiz,2\)
  #pass
 diff --git a/gas/testsuite/gas/i386/x86-64-enqcmd-intel.d b/gas/testsuite/gas/i386/x86-64-enqcmd-intel.d
-index e483d570b9..d8dc7facba 100644
+index e483d570b92..d8dc7facba3 100644
 --- a/gas/testsuite/gas/i386/x86-64-enqcmd-intel.d
 +++ b/gas/testsuite/gas/i386/x86-64-enqcmd-intel.d
 @@ -9,12 +9,32 @@
@@ -6344,7 +6344,7 @@ index e483d570b9..d8dc7facba 100644
 + +[a-f0-9]+:	67 f3 0f 38 f8 0c 25 78 56 34 12 	enqcmds ecx,\[eiz\*1\+0x12345678\]
  #pass
 diff --git a/gas/testsuite/gas/i386/x86-64-enqcmd.d b/gas/testsuite/gas/i386/x86-64-enqcmd.d
-index 337febf320..e6f627ff09 100644
+index 337febf320f..e6f627ff09a 100644
 --- a/gas/testsuite/gas/i386/x86-64-enqcmd.d
 +++ b/gas/testsuite/gas/i386/x86-64-enqcmd.d
 @@ -9,12 +9,32 @@
@@ -6389,7 +6389,7 @@ index 337febf320..e6f627ff09 100644
 + +[a-f0-9]+:	67 f3 0f 38 f8 0c 25 78 56 34 12 	enqcmds 0x12345678\(,%eiz,1\),%ecx
  #pass
 diff --git a/gas/testsuite/gas/i386/x86-64-enqcmd.s b/gas/testsuite/gas/i386/x86-64-enqcmd.s
-index f790b28fc2..a03a5ffc5f 100644
+index f790b28fc20..a03a5ffc5f3 100644
 --- a/gas/testsuite/gas/i386/x86-64-enqcmd.s
 +++ b/gas/testsuite/gas/i386/x86-64-enqcmd.s
 @@ -7,9 +7,29 @@ _start:
@@ -6423,7 +6423,7 @@ index f790b28fc2..a03a5ffc5f 100644
 +	enqcmds ecx,ds:foo
 +	enqcmds ecx,ds:0x12345678
 diff --git a/gas/testsuite/gas/i386/x86-64-movdir-intel.d b/gas/testsuite/gas/i386/x86-64-movdir-intel.d
-index 0f3a5abd61..a35bc6ca5d 100644
+index 0f3a5abd610..a35bc6ca5d8 100644
 --- a/gas/testsuite/gas/i386/x86-64-movdir-intel.d
 +++ b/gas/testsuite/gas/i386/x86-64-movdir-intel.d
 @@ -9,13 +9,23 @@
@@ -6460,7 +6460,7 @@ index 0f3a5abd61..a35bc6ca5d 100644
 + +[a-f0-9]+:	67 66 0f 38 f8 0c 25 78 56 34 12 	movdir64b ecx,\[eiz\*1\+0x12345678\]
  #pass
 diff --git a/gas/testsuite/gas/i386/x86-64-movdir.d b/gas/testsuite/gas/i386/x86-64-movdir.d
-index 2deab8928e..d65787177d 100644
+index 2deab8928e6..d65787177dc 100644
 --- a/gas/testsuite/gas/i386/x86-64-movdir.d
 +++ b/gas/testsuite/gas/i386/x86-64-movdir.d
 @@ -9,13 +9,23 @@
@@ -6497,7 +6497,7 @@ index 2deab8928e..d65787177d 100644
 + +[a-f0-9]+:	67 66 0f 38 f8 0c 25 78 56 34 12 	movdir64b 0x12345678\(,%eiz,1\),%ecx
  #pass
 diff --git a/gas/testsuite/gas/i386/x86-64-movdir.s b/gas/testsuite/gas/i386/x86-64-movdir.s
-index 6f9032dc4b..ad69bb1322 100644
+index 6f9032dc4b3..ad69bb13223 100644
 --- a/gas/testsuite/gas/i386/x86-64-movdir.s
 +++ b/gas/testsuite/gas/i386/x86-64-movdir.s
 @@ -6,6 +6,11 @@ _start:
@@ -6522,7 +6522,7 @@ index 6f9032dc4b..ad69bb1322 100644
 +	movdir64b ecx,ds:foo
 +	movdir64b ecx,ds:0x12345678
 diff --git a/gas/testsuite/gas/ppc/476.d b/gas/testsuite/gas/ppc/476.d
-index 7818b86b13..0b75d75ae2 100644
+index 7818b86b134..0b75d75ae2d 100644
 --- a/gas/testsuite/gas/ppc/476.d
 +++ b/gas/testsuite/gas/ppc/476.d
 @@ -7,491 +7,485 @@
@@ -7500,7 +7500,7 @@ index 7818b86b13..0b75d75ae2 100644
 +.*:	(68 83 de ad|ad de 83 68) 	xori    r3,r4,57005
 +.*:	(6c 83 de ad|ad de 83 6c) 	xoris   r3,r4,57005
 diff --git a/gas/testsuite/gas/ppc/476.s b/gas/testsuite/gas/ppc/476.s
-index da6fb7152f..db5d9e153b 100644
+index da6fb7152f4..db5d9e153b6 100644
 --- a/gas/testsuite/gas/ppc/476.s
 +++ b/gas/testsuite/gas/ppc/476.s
 @@ -226,9 +226,6 @@ ppc476:
@@ -7524,7 +7524,7 @@ index da6fb7152f..db5d9e153b 100644
  	stwbrx	3,4,5
  	stwcx.	3,4,5
 diff --git a/gas/testsuite/gas/ppc/a2.d b/gas/testsuite/gas/ppc/a2.d
-index fa7211943a..517ec1c368 100644
+index fa7211943ae..517ec1c368e 100644
 --- a/gas/testsuite/gas/ppc/a2.d
 +++ b/gas/testsuite/gas/ppc/a2.d
 @@ -9,577 +9,569 @@
@@ -8671,7 +8671,7 @@ index fa7211943a..517ec1c368 100644
 +.*:	(6d 6a 10 00|00 10 6a 6d) 	xoris   r10,r11,4096
  #pass
 diff --git a/gas/testsuite/gas/ppc/a2.s b/gas/testsuite/gas/ppc/a2.s
-index 6893ae8cfe..c3d23ea3de 100644
+index 6893ae8cfef..c3d23ea3def 100644
 --- a/gas/testsuite/gas/ppc/a2.s
 +++ b/gas/testsuite/gas/ppc/a2.s
 @@ -295,10 +295,6 @@ start:
@@ -8698,7 +8698,7 @@ index 6893ae8cfe..c3d23ea3de 100644
  	stwepx	10,11,12
 diff --git a/gas/testsuite/gas/ppc/be.d b/gas/testsuite/gas/ppc/be.d
 new file mode 100644
-index 0000000000..9255ddbadf
+index 00000000000..9255ddbadf4
 --- /dev/null
 +++ b/gas/testsuite/gas/ppc/be.d
 @@ -0,0 +1,17 @@
@@ -8721,7 +8721,7 @@ index 0000000000..9255ddbadf
 +.*:	7d 4b 65 2a 	stswx   r10,r11,r12
 diff --git a/gas/testsuite/gas/ppc/be.s b/gas/testsuite/gas/ppc/be.s
 new file mode 100644
-index 0000000000..dbbcbb6331
+index 00000000000..dbbcbb63311
 --- /dev/null
 +++ b/gas/testsuite/gas/ppc/be.s
 @@ -0,0 +1,10 @@
@@ -8736,7 +8736,7 @@ index 0000000000..dbbcbb6331
 +	stswi	10,11,32
 +	stswx	10,11,12
 diff --git a/gas/testsuite/gas/ppc/int128.d b/gas/testsuite/gas/ppc/int128.d
-index c9f14d3360..d7410345ad 100644
+index c9f14d3360d..d7410345ad7 100644
 --- a/gas/testsuite/gas/ppc/int128.d
 +++ b/gas/testsuite/gas/ppc/int128.d
 @@ -20,7 +20,7 @@ Disassembly of section \.text:
@@ -8749,7 +8749,7 @@ index c9f14d3360..d7410345ad 100644
  .*:	(11 09 51 c7|c7 51 09 11) 	vcmpequq v8,v9,v10
  .*:	(11 6c 6d c7|c7 6d 6c 11) 	vcmpequq. v11,v12,v13
 diff --git a/gas/testsuite/gas/ppc/int128.s b/gas/testsuite/gas/ppc/int128.s
-index 4dce648c36..4561cfe9ee 100644
+index 4dce648c36f..4561cfe9ee6 100644
 --- a/gas/testsuite/gas/ppc/int128.s
 +++ b/gas/testsuite/gas/ppc/int128.s
 @@ -12,7 +12,7 @@ _start:
@@ -8763,7 +8763,7 @@ index 4dce648c36..4561cfe9ee 100644
  	vcmpequq. 11,12,13
 diff --git a/gas/testsuite/gas/ppc/le_error.d b/gas/testsuite/gas/ppc/le_error.d
 new file mode 100644
-index 0000000000..765004655e
+index 00000000000..765004655e5
 --- /dev/null
 +++ b/gas/testsuite/gas/ppc/le_error.d
 @@ -0,0 +1,3 @@
@@ -8772,7 +8772,7 @@ index 0000000000..765004655e
 +#error_output: le_error.l
 diff --git a/gas/testsuite/gas/ppc/le_error.l b/gas/testsuite/gas/ppc/le_error.l
 new file mode 100644
-index 0000000000..dd0021b972
+index 00000000000..dd0021b972c
 --- /dev/null
 +++ b/gas/testsuite/gas/ppc/le_error.l
 @@ -0,0 +1,9 @@
@@ -8786,7 +8786,7 @@ index 0000000000..dd0021b972
 +.*invalid when little-endian
 +.*invalid when little-endian
 diff --git a/gas/testsuite/gas/ppc/power8.d b/gas/testsuite/gas/ppc/power8.d
-index dfd3345461..df3f5d410d 100644
+index dfd3345461d..df3f5d410db 100644
 --- a/gas/testsuite/gas/ppc/power8.d
 +++ b/gas/testsuite/gas/ppc/power8.d
 @@ -7,151 +7,151 @@
@@ -9094,7 +9094,7 @@ index dfd3345461..df3f5d410d 100644
 +.*:	(7f 5a d3 78|78 d3 5a 7f) 	miso
  #pass
 diff --git a/gas/testsuite/gas/ppc/power8.s b/gas/testsuite/gas/ppc/power8.s
-index beb1c5e81c..52a3e8ea69 100644
+index beb1c5e81c5..52a3e8ea69f 100644
 --- a/gas/testsuite/gas/ppc/power8.s
 +++ b/gas/testsuite/gas/ppc/power8.s
 @@ -302,3 +302,5 @@ power8:
@@ -9104,7 +9104,7 @@ index beb1c5e81c..52a3e8ea69 100644
 +	or	     26,26,26
 +	miso
 diff --git a/gas/testsuite/gas/ppc/power9.d b/gas/testsuite/gas/ppc/power9.d
-index 4e7156d46d..45a8f495ae 100644
+index 4e7156d46d9..45a8f495aeb 100644
 --- a/gas/testsuite/gas/ppc/power9.d
 +++ b/gas/testsuite/gas/ppc/power9.d
 @@ -399,4 +399,8 @@ Disassembly of section \.text:
@@ -9117,7 +9117,7 @@ index 4e7156d46d..45a8f495ae 100644
 +.*:	(7c 00 d8 dc|dc d8 00 7c) 	msgclru r27
  #pass
 diff --git a/gas/testsuite/gas/ppc/power9.s b/gas/testsuite/gas/ppc/power9.s
-index 69053819ff..2d412b9e66 100644
+index 69053819ffe..2d412b9e66a 100644
 --- a/gas/testsuite/gas/ppc/power9.s
 +++ b/gas/testsuite/gas/ppc/power9.s
 @@ -390,3 +390,7 @@ power9:
@@ -9129,7 +9129,7 @@ index 69053819ff..2d412b9e66 100644
 +	msgsndu     3
 +	msgclru     27
 diff --git a/gas/testsuite/gas/ppc/ppc.exp b/gas/testsuite/gas/ppc/ppc.exp
-index 48c4ce62f3..f2a7b44cdd 100644
+index 48c4ce62f31..f2a7b44cdd3 100644
 --- a/gas/testsuite/gas/ppc/ppc.exp
 +++ b/gas/testsuite/gas/ppc/ppc.exp
 @@ -76,6 +76,8 @@ if { [istarget powerpc64*-*-*] || [istarget *-*-elf64*]} then {
@@ -9142,7 +9142,7 @@ index 48c4ce62f3..f2a7b44cdd 100644
  run_dump_test "vle"
  run_dump_test "vle-reloc"
 diff --git a/gas/testsuite/gas/ppc/vsx2.d b/gas/testsuite/gas/ppc/vsx2.d
-index e7ea585262..4f0b25bd47 100644
+index e7ea585262a..4f0b25bd474 100644
 --- a/gas/testsuite/gas/ppc/vsx2.d
 +++ b/gas/testsuite/gas/ppc/vsx2.d
 @@ -7,59 +7,59 @@
@@ -9261,7 +9261,7 @@ index e7ea585262..4f0b25bd47 100644
 +.*:	(fe c7 2f 8c|8c 2f c7 fe) 	fmrgew  f22,f7,f5
  #pass
 diff --git a/gas/testsuite/gas/ppc/xvtlsbb.d b/gas/testsuite/gas/ppc/xvtlsbb.d
-index 1627d7afc6..8aa83dd62c 100644
+index 1627d7afc6d..8aa83dd62c7 100644
 --- a/gas/testsuite/gas/ppc/xvtlsbb.d
 +++ b/gas/testsuite/gas/ppc/xvtlsbb.d
 @@ -7,7 +7,7 @@
@@ -9274,7 +9274,7 @@ index 1627d7afc6..8aa83dd62c 100644
  .*:	(f1 02 f7 6e|6e f7 02 f1) 	xvtlsbb cr2,vs62
  .*:	(f1 82 0f 6c|6c 0f 82 f1) 	xvtlsbb cr3,vs1
 diff --git a/gold/ChangeLog b/gold/ChangeLog
-index 85fefa989f..ea4927330e 100644
+index 85fefa989f0..ea4927330e2 100644
 --- a/gold/ChangeLog
 +++ b/gold/ChangeLog
 @@ -1,3 +1,106 @@
@@ -9385,7 +9385,7 @@ index 85fefa989f..ea4927330e 100644
  
  	This is the 2.35.1 point release.
 diff --git a/gold/options.cc b/gold/options.cc
-index b13ae71ce1..6b194374c8 100644
+index b13ae71ce14..6b194374c8c 100644
 --- a/gold/options.cc
 +++ b/gold/options.cc
 @@ -464,6 +464,14 @@ General_options::parse_plugin_opt(const char*, const char* arg,
@@ -9432,7 +9432,7 @@ index b13ae71ce1..6b194374c8 100644
    if (this->print_map() && !this->user_set_Map())
      {
 diff --git a/gold/options.h b/gold/options.h
-index 3c8d25a662..51d3614e6b 100644
+index 3c8d25a6628..51d3614e6b6 100644
 --- a/gold/options.h
 +++ b/gold/options.h
 @@ -481,9 +481,9 @@ struct Struct_special : public Struct_var
@@ -9592,7 +9592,7 @@ index 3c8d25a662..51d3614e6b 100644
  
  // The position-dependent options.  We use this to store the state of
 diff --git a/gold/powerpc.cc b/gold/powerpc.cc
-index 59ba40dc3f..1cc2478941 100644
+index 59ba40dc3fc..1cc2478941f 100644
 --- a/gold/powerpc.cc
 +++ b/gold/powerpc.cc
 @@ -647,10 +647,9 @@ class Target_powerpc : public Sized_target<size, big_endian>
@@ -10946,7 +10946,7 @@ index 59ba40dc3f..1cc2478941 100644
  
    switch (r_type)
 diff --git a/gold/testsuite/split_i386.sh b/gold/testsuite/split_i386.sh
-index 67e2b1bb80..611c892b23 100755
+index 67e2b1bb801..611c892b23f 100755
 --- a/gold/testsuite/split_i386.sh
 +++ b/gold/testsuite/split_i386.sh
 @@ -45,7 +45,7 @@ match 'lea.*-0x200\(%esp\),' split_i386_1.stdout
@@ -10959,7 +10959,7 @@ index 67e2b1bb80..611c892b23 100755
  match 'failed to match' split_i386_3.stdout
  
 diff --git a/gold/testsuite/split_x32.sh b/gold/testsuite/split_x32.sh
-index aefdda5647..bf395c9731 100755
+index aefdda5647f..bf395c97315 100755
 --- a/gold/testsuite/split_x32.sh
 +++ b/gold/testsuite/split_x32.sh
 @@ -44,9 +44,9 @@ match 'callq.*__morestack>?$' split_x32_1.stdout
@@ -10976,7 +10976,7 @@ index aefdda5647..bf395c9731 100755
  match 'failed to match' split_x32_3.stdout
  
 diff --git a/gold/testsuite/split_x86_64.sh b/gold/testsuite/split_x86_64.sh
-index 33bb4892ed..a91009b45a 100755
+index 33bb4892ed6..a91009b45a5 100755
 --- a/gold/testsuite/split_x86_64.sh
 +++ b/gold/testsuite/split_x86_64.sh
 @@ -43,9 +43,9 @@ match 'callq.*__morestack>?$' split_x86_64_1.stdout
@@ -10993,7 +10993,7 @@ index 33bb4892ed..a91009b45a 100755
  match 'failed to match' split_x86_64_3.stdout
  
 diff --git a/include/ChangeLog b/include/ChangeLog
-index acdd85fc4d..5997c26899 100644
+index acdd85fc4df..5997c26899c 100644
 --- a/include/ChangeLog
 +++ b/include/ChangeLog
 @@ -1,3 +1,15 @@
@@ -11013,7 +11013,7 @@ index acdd85fc4d..5997c26899 100644
  
  	PR ld/26262
 diff --git a/include/dwarf2.def b/include/dwarf2.def
-index d8a8cce794..13825a3eef 100644
+index d8a8cce7947..13825a3eef7 100644
 --- a/include/dwarf2.def
 +++ b/include/dwarf2.def
 @@ -805,3 +805,14 @@ DW_IDX (DW_IDX_hi_user, 0x3fff)
@@ -11032,7 +11032,7 @@ index d8a8cce794..13825a3eef 100644
 +DW_UT (DW_UT_hi_user, 0xff)
 +DW_END_UT
 diff --git a/include/dwarf2.h b/include/dwarf2.h
-index 882453dce0..3f271fb0f7 100644
+index 882453dce08..3f271fb0f7a 100644
 --- a/include/dwarf2.h
 +++ b/include/dwarf2.h
 @@ -55,6 +55,7 @@
@@ -11102,7 +11102,7 @@ index 882453dce0..3f271fb0f7 100644
  }
  #endif /* __cplusplus */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 4eec7d2977..d8abc62717 100644
+index 4eec7d29775..d8abc62717c 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
 @@ -1,3 +1,107 @@
@@ -11214,7 +11214,7 @@ index 4eec7d2977..d8abc62717 100644
  
  	This is the 2.35.1 point release.
 diff --git a/ld/emultempl/ppc64elf.em b/ld/emultempl/ppc64elf.em
-index 1331d03113..2df5a218e6 100644
+index 1331d03113b..2df5a218e6a 100644
 --- a/ld/emultempl/ppc64elf.em
 +++ b/ld/emultempl/ppc64elf.em
 @@ -32,13 +32,15 @@ fragment <<EOF
@@ -11310,7 +11310,7 @@ index 1331d03113..2df5a218e6 100644
  '
  
 diff --git a/ld/ldelf.c b/ld/ldelf.c
-index bada3ade2d..831d032fe5 100644
+index bada3ade2d7..831d032fe56 100644
 --- a/ld/ldelf.c
 +++ b/ld/ldelf.c
 @@ -1589,6 +1589,8 @@ ldelf_before_allocation (char *audit, char *depaudit,
@@ -11324,7 +11324,7 @@ index bada3ade2d..831d032fe5 100644
  	    }
 diff --git a/ld/testsuite/ld-elf/pr26302.nd b/ld/testsuite/ld-elf/pr26302.nd
 new file mode 100644
-index 0000000000..bc9a675789
+index 00000000000..bc9a675789a
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr26302.nd
 @@ -0,0 +1,3 @@
@@ -11333,7 +11333,7 @@ index 0000000000..bc9a675789
 +#pass
 diff --git a/ld/testsuite/ld-elf/pr26302.rd b/ld/testsuite/ld-elf/pr26302.rd
 new file mode 100644
-index 0000000000..8f7b8a96e7
+index 00000000000..8f7b8a96e75
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr26302.rd
 @@ -0,0 +1,12 @@
@@ -11351,7 +11351,7 @@ index 0000000000..8f7b8a96e7
 +#pass
 diff --git a/ld/testsuite/ld-elf/pr26302.ver b/ld/testsuite/ld-elf/pr26302.ver
 new file mode 100644
-index 0000000000..f2c03ac7a1
+index 00000000000..f2c03ac7a13
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr26302.ver
 @@ -0,0 +1,5 @@
@@ -11362,7 +11362,7 @@ index 0000000000..f2c03ac7a1
 +};
 diff --git a/ld/testsuite/ld-elf/pr26302a.c b/ld/testsuite/ld-elf/pr26302a.c
 new file mode 100644
-index 0000000000..cd0130cacd
+index 00000000000..cd0130cacdf
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr26302a.c
 @@ -0,0 +1,4 @@
@@ -11372,7 +11372,7 @@ index 0000000000..cd0130cacd
 +}
 diff --git a/ld/testsuite/ld-elf/pr26302b.c b/ld/testsuite/ld-elf/pr26302b.c
 new file mode 100644
-index 0000000000..eae278df96
+index 00000000000..eae278df96d
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr26302b.c
 @@ -0,0 +1,7 @@
@@ -11385,7 +11385,7 @@ index 0000000000..eae278df96
 +}
 diff --git a/ld/testsuite/ld-elf/pr27128.s b/ld/testsuite/ld-elf/pr27128.s
 new file mode 100644
-index 0000000000..7af5be183b
+index 00000000000..7af5be183b6
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr27128.s
 @@ -0,0 +1,13 @@
@@ -11404,7 +11404,7 @@ index 0000000000..7af5be183b
 +	.symver _Zrm1XS_,_Zrm1XS_@@VERS_2.0,remove
 diff --git a/ld/testsuite/ld-elf/pr27128.t b/ld/testsuite/ld-elf/pr27128.t
 new file mode 100644
-index 0000000000..27669a505b
+index 00000000000..27669a505b6
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr27128.t
 @@ -0,0 +1,6 @@
@@ -11416,7 +11416,7 @@ index 0000000000..27669a505b
 +};
 diff --git a/ld/testsuite/ld-elf/pr27128a.d b/ld/testsuite/ld-elf/pr27128a.d
 new file mode 100644
-index 0000000000..9ce8eaa546
+index 00000000000..9ce8eaa5467
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr27128a.d
 @@ -0,0 +1,16 @@
@@ -11438,7 +11438,7 @@ index 0000000000..9ce8eaa546
 +#pass
 diff --git a/ld/testsuite/ld-elf/pr27128b.d b/ld/testsuite/ld-elf/pr27128b.d
 new file mode 100644
-index 0000000000..934f8330d7
+index 00000000000..934f8330d76
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr27128b.d
 @@ -0,0 +1,16 @@
@@ -11460,7 +11460,7 @@ index 0000000000..934f8330d7
 +#pass
 diff --git a/ld/testsuite/ld-elf/pr27128c.d b/ld/testsuite/ld-elf/pr27128c.d
 new file mode 100644
-index 0000000000..f80c57b64c
+index 00000000000..f80c57b64cd
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr27128c.d
 @@ -0,0 +1,16 @@
@@ -11482,7 +11482,7 @@ index 0000000000..f80c57b64c
 +#pass
 diff --git a/ld/testsuite/ld-elf/pr27128d.d b/ld/testsuite/ld-elf/pr27128d.d
 new file mode 100644
-index 0000000000..ba628d22de
+index 00000000000..ba628d22de3
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr27128d.d
 @@ -0,0 +1,16 @@
@@ -11504,7 +11504,7 @@ index 0000000000..ba628d22de
 +#pass
 diff --git a/ld/testsuite/ld-elf/pr27128e.d b/ld/testsuite/ld-elf/pr27128e.d
 new file mode 100644
-index 0000000000..b8b1657fe7
+index 00000000000..b8b1657fe71
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/pr27128e.d
 @@ -0,0 +1,16 @@
@@ -11525,7 +11525,7 @@ index 0000000000..b8b1657fe7
 +operator%\(X, X\)@@VERS_2\.0 T [0-9a-f]+ 10
 +#pass
 diff --git a/ld/testsuite/ld-elf/shared.exp b/ld/testsuite/ld-elf/shared.exp
-index e9e9012058..4de5b34183 100644
+index e9e90120586..4de5b341834 100644
 --- a/ld/testsuite/ld-elf/shared.exp
 +++ b/ld/testsuite/ld-elf/shared.exp
 @@ -843,6 +843,25 @@ run_cc_link_tests [list \
@@ -11555,7 +11555,7 @@ index e9e9012058..4de5b34183 100644
  
  run_ld_link_tests [list \
 diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
-index 164c099cbb..f031b01ffe 100644
+index 164c099cbbb..f031b01ffea 100644
 --- a/ld/testsuite/ld-i386/i386.exp
 +++ b/ld/testsuite/ld-i386/i386.exp
 @@ -470,6 +470,10 @@ run_dump_test "pr24322b"
@@ -11571,7 +11571,7 @@ index 164c099cbb..f031b01ffe 100644
         || [istarget "i?86-*-gnu*"]
 diff --git a/ld/testsuite/ld-i386/pr26711-1.d b/ld/testsuite/ld-i386/pr26711-1.d
 new file mode 100644
-index 0000000000..24a8429fbc
+index 00000000000..24a8429fbca
 --- /dev/null
 +++ b/ld/testsuite/ld-i386/pr26711-1.d
 @@ -0,0 +1,10 @@
@@ -11587,7 +11587,7 @@ index 0000000000..24a8429fbc
 +      Properties: x86 feature: IBT
 diff --git a/ld/testsuite/ld-i386/pr26711-2.d b/ld/testsuite/ld-i386/pr26711-2.d
 new file mode 100644
-index 0000000000..e92559fa70
+index 00000000000..e92559fa70f
 --- /dev/null
 +++ b/ld/testsuite/ld-i386/pr26711-2.d
 @@ -0,0 +1,10 @@
@@ -11603,7 +11603,7 @@ index 0000000000..e92559fa70
 +      Properties: x86 feature: SHSTK
 diff --git a/ld/testsuite/ld-i386/pr26711-3.d b/ld/testsuite/ld-i386/pr26711-3.d
 new file mode 100644
-index 0000000000..df9bfced54
+index 00000000000..df9bfced540
 --- /dev/null
 +++ b/ld/testsuite/ld-i386/pr26711-3.d
 @@ -0,0 +1,10 @@
@@ -11619,7 +11619,7 @@ index 0000000000..df9bfced54
 +      Properties: x86 feature: IBT, SHSTK
 diff --git a/ld/testsuite/ld-i386/pr26869.d b/ld/testsuite/ld-i386/pr26869.d
 new file mode 100644
-index 0000000000..bfd00a70e9
+index 00000000000..bfd00a70e9b
 --- /dev/null
 +++ b/ld/testsuite/ld-i386/pr26869.d
 @@ -0,0 +1,14 @@
@@ -11639,7 +11639,7 @@ index 0000000000..bfd00a70e9
 +#pass
 diff --git a/ld/testsuite/ld-i386/pr26869.s b/ld/testsuite/ld-i386/pr26869.s
 new file mode 100644
-index 0000000000..e492b98e86
+index 00000000000..e492b98e869
 --- /dev/null
 +++ b/ld/testsuite/ld-i386/pr26869.s
 @@ -0,0 +1,3 @@
@@ -11647,7 +11647,7 @@ index 0000000000..e492b98e86
 +foo:
 +	pushl	__ehdr_start@GOT(%ebx)
 diff --git a/ld/testsuite/ld-i386/property-3.r b/ld/testsuite/ld-i386/property-3.r
-index 1abb90b3a2..e95d47ae8d 100644
+index 1abb90b3a2e..e95d47ae8d6 100644
 --- a/ld/testsuite/ld-i386/property-3.r
 +++ b/ld/testsuite/ld-i386/property-3.r
 @@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
@@ -11658,7 +11658,7 @@ index 1abb90b3a2..e95d47ae8d 100644
  	x86 ISA needed: CMOV, SSE
  #pass
 diff --git a/ld/testsuite/ld-i386/property-4.r b/ld/testsuite/ld-i386/property-4.r
-index e94846e88e..a4b7bb71ad 100644
+index e94846e88ea..a4b7bb71adf 100644
 --- a/ld/testsuite/ld-i386/property-4.r
 +++ b/ld/testsuite/ld-i386/property-4.r
 @@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
@@ -11669,7 +11669,7 @@ index e94846e88e..a4b7bb71ad 100644
  	x86 ISA needed: CMOV, SSE, SSE3
  #pass
 diff --git a/ld/testsuite/ld-i386/property-5.r b/ld/testsuite/ld-i386/property-5.r
-index bd87a9317e..5ff95648c2 100644
+index bd87a9317ef..5ff95648c29 100644
 --- a/ld/testsuite/ld-i386/property-5.r
 +++ b/ld/testsuite/ld-i386/property-5.r
 @@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
@@ -11680,7 +11680,7 @@ index bd87a9317e..5ff95648c2 100644
  	x86 ISA needed: CMOV, SSE, SSE3
  #pass
 diff --git a/ld/testsuite/ld-powerpc/elfv2so.d b/ld/testsuite/ld-powerpc/elfv2so.d
-index 0162bd0880..4018f0536c 100644
+index 0162bd0880e..4018f0536c6 100644
 --- a/ld/testsuite/ld-powerpc/elfv2so.d
 +++ b/ld/testsuite/ld-powerpc/elfv2so.d
 @@ -74,12 +74,11 @@ Disassembly of section \.text:
@@ -11722,7 +11722,7 @@ index 0162bd0880..4018f0536c 100644
 -.*:	(4b ff ff b8|b8 ff ff 4b) 	b       .* <__glink_PLTresolve>
 +.*:	(4b ff ff bc|bc ff ff 4b) 	b       .* <__glink_PLTresolve>
 diff --git a/ld/testsuite/ld-powerpc/notoc2.d b/ld/testsuite/ld-powerpc/notoc2.d
-index 1e519c0d1b..3448f8b37e 100644
+index 1e519c0d1b0..3448f8b37e6 100644
 --- a/ld/testsuite/ld-powerpc/notoc2.d
 +++ b/ld/testsuite/ld-powerpc/notoc2.d
 @@ -22,8 +22,8 @@ Disassembly of section \.text:
@@ -11737,7 +11737,7 @@ index 1e519c0d1b..3448f8b37e 100644
  .*:	(60 00 00 00|00 00 00 60) 	nop
  #pass
 diff --git a/ld/testsuite/ld-powerpc/tlsdesc.wf b/ld/testsuite/ld-powerpc/tlsdesc.wf
-index 09503fa005..e7d4522b50 100644
+index 09503fa0053..e7d4522b507 100644
 --- a/ld/testsuite/ld-powerpc/tlsdesc.wf
 +++ b/ld/testsuite/ld-powerpc/tlsdesc.wf
 @@ -38,9 +38,9 @@ Contents of the \.eh_frame section:
@@ -11753,7 +11753,7 @@ index 09503fa005..e7d4522b50 100644
  
  0+64 0+10 0+68 FDE cie=0+ pc=0+2e0\.\.0+2ec
 diff --git a/ld/testsuite/ld-powerpc/tlsdesc2.d b/ld/testsuite/ld-powerpc/tlsdesc2.d
-index 47aedbecb8..c271c949b0 100644
+index 47aedbecb88..c271c949b01 100644
 --- a/ld/testsuite/ld-powerpc/tlsdesc2.d
 +++ b/ld/testsuite/ld-powerpc/tlsdesc2.d
 @@ -53,12 +53,11 @@ Disassembly of section \.text:
@@ -11779,7 +11779,7 @@ index 47aedbecb8..c271c949b0 100644
 -.*:	(4b ff ff c8|c8 ff ff 4b) 	b       .* <__glink_PLTresolve>
 +.*:	(4b ff ff cc|cc ff ff 4b) 	b       .* <__glink_PLTresolve>
 diff --git a/ld/testsuite/ld-powerpc/tlsdesc2.wf b/ld/testsuite/ld-powerpc/tlsdesc2.wf
-index cb92c294b1..79a417ba06 100644
+index cb92c294b15..79a417ba06e 100644
 --- a/ld/testsuite/ld-powerpc/tlsdesc2.wf
 +++ b/ld/testsuite/ld-powerpc/tlsdesc2.wf
 @@ -37,10 +37,10 @@ Contents of the \.eh_frame section:
@@ -11797,7 +11797,7 @@ index cb92c294b1..79a417ba06 100644
  
  0+64 0+10 0+68 FDE cie=0+ pc=0+300\.\.0+30c
 diff --git a/ld/testsuite/ld-powerpc/tlsopt5.d b/ld/testsuite/ld-powerpc/tlsopt5.d
-index 0fcb79821b..efd6debc55 100644
+index 0fcb79821b8..efd6debc555 100644
 --- a/ld/testsuite/ld-powerpc/tlsopt5.d
 +++ b/ld/testsuite/ld-powerpc/tlsopt5.d
 @@ -49,12 +49,11 @@ Disassembly of section \.text:
@@ -11827,7 +11827,7 @@ index 0fcb79821b..efd6debc55 100644
 -.*:	(c4 ff ff 4b|4b ff ff c4) 	b       .*
 +.*:	(c8 ff ff 4b|4b ff ff c8) 	b       .*
 diff --git a/ld/testsuite/ld-powerpc/tlsopt5.wf b/ld/testsuite/ld-powerpc/tlsopt5.wf
-index f0453610e0..84bd94ed72 100644
+index f0453610e08..84bd94ed728 100644
 --- a/ld/testsuite/ld-powerpc/tlsopt5.wf
 +++ b/ld/testsuite/ld-powerpc/tlsopt5.wf
 @@ -16,9 +16,9 @@ Contents of the \.eh_frame section:
@@ -11843,7 +11843,7 @@ index f0453610e0..84bd94ed72 100644
  
  0+44 0+10 0+48 FDE cie=0+ pc=.*
 diff --git a/ld/testsuite/ld-powerpc/tlsopt6.d b/ld/testsuite/ld-powerpc/tlsopt6.d
-index 4ca64092c1..15def719cb 100644
+index 4ca64092c1d..15def719cba 100644
 --- a/ld/testsuite/ld-powerpc/tlsopt6.d
 +++ b/ld/testsuite/ld-powerpc/tlsopt6.d
 @@ -67,12 +67,11 @@ Disassembly of section \.text:
@@ -11873,7 +11873,7 @@ index 4ca64092c1..15def719cb 100644
 -.*:	(c4 ff ff 4b|4b ff ff c4) 	b       .*
 +.*:	(c8 ff ff 4b|4b ff ff c8) 	b       .*
 diff --git a/ld/testsuite/ld-powerpc/tlsopt6.wf b/ld/testsuite/ld-powerpc/tlsopt6.wf
-index abb414a633..c2b9616352 100644
+index abb414a6339..c2b96163523 100644
 --- a/ld/testsuite/ld-powerpc/tlsopt6.wf
 +++ b/ld/testsuite/ld-powerpc/tlsopt6.wf
 @@ -38,9 +38,9 @@ Contents of the \.eh_frame section:
@@ -11889,7 +11889,7 @@ index abb414a633..c2b9616352 100644
  
  0+64 0+10 0+68 FDE cie=0+ pc=.*
 diff --git a/ld/testsuite/ld-sparc/tlssunbin32.rd b/ld/testsuite/ld-sparc/tlssunbin32.rd
-index 937611da91..a41f27d644 100644
+index 937611da91b..a41f27d644c 100644
 --- a/ld/testsuite/ld-sparc/tlssunbin32.rd
 +++ b/ld/testsuite/ld-sparc/tlssunbin32.rd
 @@ -111,7 +111,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
@@ -11902,7 +11902,7 @@ index 937611da91..a41f27d644 100644
  .* NOTYPE +GLOBAL +DEFAULT +12 __bss_start
  .* TLS +GLOBAL +DEFAULT +UND sG6
 diff --git a/ld/testsuite/ld-sparc/tlssunbin64.rd b/ld/testsuite/ld-sparc/tlssunbin64.rd
-index 07a632c5ec..4d792b8410 100644
+index 07a632c5ec9..4d792b84108 100644
 --- a/ld/testsuite/ld-sparc/tlssunbin64.rd
 +++ b/ld/testsuite/ld-sparc/tlssunbin64.rd
 @@ -111,7 +111,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
@@ -11916,7 +11916,7 @@ index 07a632c5ec..4d792b8410 100644
  .* TLS +GLOBAL +DEFAULT +UND sG6
 diff --git a/ld/testsuite/ld-x86-64/pr26711-1-x32.d b/ld/testsuite/ld-x86-64/pr26711-1-x32.d
 new file mode 100644
-index 0000000000..67013195b2
+index 00000000000..67013195b2e
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr26711-1-x32.d
 @@ -0,0 +1,10 @@
@@ -11932,7 +11932,7 @@ index 0000000000..67013195b2
 +      Properties: x86 feature: IBT
 diff --git a/ld/testsuite/ld-x86-64/pr26711-1.d b/ld/testsuite/ld-x86-64/pr26711-1.d
 new file mode 100644
-index 0000000000..d8e3cbf19b
+index 00000000000..d8e3cbf19ba
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr26711-1.d
 @@ -0,0 +1,10 @@
@@ -11948,7 +11948,7 @@ index 0000000000..d8e3cbf19b
 +      Properties: x86 feature: IBT
 diff --git a/ld/testsuite/ld-x86-64/pr26711-2-x32.d b/ld/testsuite/ld-x86-64/pr26711-2-x32.d
 new file mode 100644
-index 0000000000..9822f8df4d
+index 00000000000..9822f8df4dc
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr26711-2-x32.d
 @@ -0,0 +1,10 @@
@@ -11964,7 +11964,7 @@ index 0000000000..9822f8df4d
 +      Properties: x86 feature: SHSTK
 diff --git a/ld/testsuite/ld-x86-64/pr26711-2.d b/ld/testsuite/ld-x86-64/pr26711-2.d
 new file mode 100644
-index 0000000000..e24cfbfc0b
+index 00000000000..e24cfbfc0b0
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr26711-2.d
 @@ -0,0 +1,10 @@
@@ -11980,7 +11980,7 @@ index 0000000000..e24cfbfc0b
 +      Properties: x86 feature: SHSTK
 diff --git a/ld/testsuite/ld-x86-64/pr26711-3-x32.d b/ld/testsuite/ld-x86-64/pr26711-3-x32.d
 new file mode 100644
-index 0000000000..0661c7d523
+index 00000000000..0661c7d5236
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr26711-3-x32.d
 @@ -0,0 +1,10 @@
@@ -11996,7 +11996,7 @@ index 0000000000..0661c7d523
 +      Properties: x86 feature: IBT, SHSTK
 diff --git a/ld/testsuite/ld-x86-64/pr26711-3.d b/ld/testsuite/ld-x86-64/pr26711-3.d
 new file mode 100644
-index 0000000000..87bc3ccfb0
+index 00000000000..87bc3ccfb05
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr26711-3.d
 @@ -0,0 +1,10 @@
@@ -12012,7 +12012,7 @@ index 0000000000..87bc3ccfb0
 +      Properties: x86 feature: IBT, SHSTK
 diff --git a/ld/testsuite/ld-x86-64/pr26711.s b/ld/testsuite/ld-x86-64/pr26711.s
 new file mode 100644
-index 0000000000..8fa185d42a
+index 00000000000..8fa185d42a7
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr26711.s
 @@ -0,0 +1,33 @@
@@ -12051,7 +12051,7 @@ index 0000000000..8fa185d42a
 +	ret
 diff --git a/ld/testsuite/ld-x86-64/pr27016a.d b/ld/testsuite/ld-x86-64/pr27016a.d
 new file mode 100644
-index 0000000000..13200e3aed
+index 00000000000..13200e3aed3
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr27016a.d
 @@ -0,0 +1,23 @@
@@ -12080,7 +12080,7 @@ index 0000000000..13200e3aed
 +#pass
 diff --git a/ld/testsuite/ld-x86-64/pr27016a.s b/ld/testsuite/ld-x86-64/pr27016a.s
 new file mode 100644
-index 0000000000..b64851a5ff
+index 00000000000..b64851a5ffb
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr27016a.s
 @@ -0,0 +1,23 @@
@@ -12109,7 +12109,7 @@ index 0000000000..b64851a5ff
 +        .section        .note.GNU-stack,"",@progbits
 diff --git a/ld/testsuite/ld-x86-64/pr27016b.d b/ld/testsuite/ld-x86-64/pr27016b.d
 new file mode 100644
-index 0000000000..d1b144bfaa
+index 00000000000..d1b144bfaa3
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr27016b.d
 @@ -0,0 +1,23 @@
@@ -12138,7 +12138,7 @@ index 0000000000..d1b144bfaa
 +#pass
 diff --git a/ld/testsuite/ld-x86-64/pr27016b.s b/ld/testsuite/ld-x86-64/pr27016b.s
 new file mode 100644
-index 0000000000..ded8d7a826
+index 00000000000..ded8d7a826c
 --- /dev/null
 +++ b/ld/testsuite/ld-x86-64/pr27016b.s
 @@ -0,0 +1,4 @@
@@ -12147,7 +12147,7 @@ index 0000000000..ded8d7a826
 +
 +	.section        .note.GNU-stack,"",@progbits
 diff --git a/ld/testsuite/ld-x86-64/property-3.r b/ld/testsuite/ld-x86-64/property-3.r
-index 1abb90b3a2..e95d47ae8d 100644
+index 1abb90b3a2e..e95d47ae8d6 100644
 --- a/ld/testsuite/ld-x86-64/property-3.r
 +++ b/ld/testsuite/ld-x86-64/property-3.r
 @@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
@@ -12158,7 +12158,7 @@ index 1abb90b3a2..e95d47ae8d 100644
  	x86 ISA needed: CMOV, SSE
  #pass
 diff --git a/ld/testsuite/ld-x86-64/property-4.r b/ld/testsuite/ld-x86-64/property-4.r
-index e94846e88e..a4b7bb71ad 100644
+index e94846e88ea..a4b7bb71adf 100644
 --- a/ld/testsuite/ld-x86-64/property-4.r
 +++ b/ld/testsuite/ld-x86-64/property-4.r
 @@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
@@ -12169,7 +12169,7 @@ index e94846e88e..a4b7bb71ad 100644
  	x86 ISA needed: CMOV, SSE, SSE3
  #pass
 diff --git a/ld/testsuite/ld-x86-64/property-5.r b/ld/testsuite/ld-x86-64/property-5.r
-index bd87a9317e..5ff95648c2 100644
+index bd87a9317ef..5ff95648c29 100644
 --- a/ld/testsuite/ld-x86-64/property-5.r
 +++ b/ld/testsuite/ld-x86-64/property-5.r
 @@ -3,5 +3,6 @@ Displaying notes found in: .note.gnu.property
@@ -12180,7 +12180,7 @@ index bd87a9317e..5ff95648c2 100644
  	x86 ISA needed: CMOV, SSE, SSE3
  #pass
 diff --git a/ld/testsuite/ld-x86-64/x86-64.exp b/ld/testsuite/ld-x86-64/x86-64.exp
-index d836f33496..91410304ea 100644
+index d836f334963..91410304ea0 100644
 --- a/ld/testsuite/ld-x86-64/x86-64.exp
 +++ b/ld/testsuite/ld-x86-64/x86-64.exp
 @@ -432,6 +432,12 @@ run_dump_test "pr25416-3"
@@ -12206,7 +12206,7 @@ index d836f33496..91410304ea 100644
  proc undefined_weak {cflags ldflags} {
      set testname "Undefined weak symbol"
 diff --git a/libiberty/ChangeLog b/libiberty/ChangeLog
-index 19d2b702d6..42daff1594 100644
+index 19d2b702d62..42daff15948 100644
 --- a/libiberty/ChangeLog
 +++ b/libiberty/ChangeLog
 @@ -1,3 +1,12 @@
@@ -12223,7 +12223,7 @@ index 19d2b702d6..42daff1594 100644
  
  	* bsearch_r.c: New file.
 diff --git a/libiberty/dwarfnames.c b/libiberty/dwarfnames.c
-index 968d191753..af11668b43 100644
+index 968d1917532..af11668b431 100644
 --- a/libiberty/dwarfnames.c
 +++ b/libiberty/dwarfnames.c
 @@ -64,6 +64,11 @@ Boston, MA 02110-1301, USA.  */
@@ -12255,7 +12255,7 @@ index 968d191753..af11668b43 100644
  #undef DW_TAG
  #undef DW_TAG_DUP
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index b53a2bba98..fada4f8c94 100644
+index b53a2bba98d..fada4f8c94b 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
 @@ -1,3 +1,31 @@
@@ -12291,7 +12291,7 @@ index b53a2bba98..fada4f8c94 100644
  
  	This is the 2.35.1 point release.
 diff --git a/opcodes/i386-dis.c b/opcodes/i386-dis.c
-index 8e0b4a1c2b..ea2ca1bb88 100644
+index 8e0b4a1c2b1..ea2ca1bb88e 100644
 --- a/opcodes/i386-dis.c
 +++ b/opcodes/i386-dis.c
 @@ -10496,7 +10496,7 @@ static const struct dis386 mod_table[][2] = {
@@ -12313,7 +12313,7 @@ index 8e0b4a1c2b..ea2ca1bb88 100644
  	      needaddr32 = 1;
  	    }
 diff --git a/opcodes/ppc-opc.c b/opcodes/ppc-opc.c
-index 6932e4e820..d15bde1326 100644
+index 6932e4e820d..d15bde1326e 100644
 --- a/opcodes/ppc-opc.c
 +++ b/opcodes/ppc-opc.c
 @@ -4441,7 +4441,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
