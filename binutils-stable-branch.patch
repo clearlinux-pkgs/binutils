@@ -1,8 +1,20 @@
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 9fac12538a5..4c629d4be63 100644
+index 9fac12538a5..6a2e70291d4 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,97 @@
+@@ -1,3 +1,109 @@
++2021-01-24  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR binutils/27231
++	* dwarf2.c (read_rnglists): Ignore empty range when parsing line
++	number tables.
++
++2021-01-23  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR binutils/27231
++	* dwarf2.c (read_rnglists): Advance rngs_ptr after
++	_bfd_safe_read_leb128 when parsing DW_RLE_offset_pair.
++
 +2021-01-01  Alan Modra  <amodra@gmail.com>
 +
 +	Apply from master
@@ -114,10 +126,32 @@ index 32be4b9460f..6bbed41d6d4 100644
  # Indicate whether this is a release branch.
  experimental=false
 diff --git a/bfd/dwarf2.c b/bfd/dwarf2.c
-index b8f0008a10d..977bf43a6a1 100644
+index b8f0008a10d..767e9731199 100644
 --- a/bfd/dwarf2.c
 +++ b/bfd/dwarf2.c
-@@ -3404,7 +3404,8 @@ scan_unit_for_symbols (struct comp_unit *unit)
+@@ -3252,9 +3252,11 @@ read_rnglists (struct comp_unit *unit, struct arange *arange,
+ 	  low_pc = base_address;
+ 	  low_pc += _bfd_safe_read_leb128 (abfd, rngs_ptr, &bytes_read,
+ 					   FALSE, rngs_end);
++	  rngs_ptr += bytes_read;
+ 	  high_pc = base_address;
+ 	  high_pc += _bfd_safe_read_leb128 (abfd, rngs_ptr, &bytes_read,
+ 					    FALSE, rngs_end);
++	  rngs_ptr += bytes_read;
+ 	  break;
+ 
+ 	case DW_RLE_start_end:
+@@ -3274,9 +3276,6 @@ read_rnglists (struct comp_unit *unit, struct arange *arange,
+ 	  return FALSE;
+ 	}
+ 
+-      if ((low_pc == 0 && high_pc == 0) || low_pc == high_pc)
+-	return FALSE;
+-
+       if (!arange_add (unit, arange, low_pc, high_pc))
+ 	return FALSE;
+     }
+@@ -3404,7 +3403,8 @@ scan_unit_for_symbols (struct comp_unit *unit)
        else
  	{
  	  func = NULL;
@@ -127,7 +161,7 @@ index b8f0008a10d..977bf43a6a1 100644
  	    {
  	      size_t amt = sizeof (struct varinfo);
  	      var = (struct varinfo *) bfd_zalloc (abfd, amt);
-@@ -3516,7 +3517,7 @@ scan_unit_for_symbols (struct comp_unit *unit)
+@@ -3516,7 +3516,7 @@ scan_unit_for_symbols (struct comp_unit *unit)
  		      spec_var = lookup_var_by_offset (attr.u.val,
  						       unit->variable_table);
  		      if (spec_var == NULL)
