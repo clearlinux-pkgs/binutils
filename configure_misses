@@ -5,71 +5,71 @@ Configure miss: windmc
 Configure miss: windres
 Configure miss: windmc
 Configure miss: stdint.h
-Configure miss: build system type
 Configure miss: off_t
 Configure miss: working mmap
+Configure miss: sys/resource.h
 Configure miss: argz.h presence
-Configure miss: sys/table.h
+Configure miss: limits.h usability
 Configure miss: limits.h presence
-Configure miss: sys/systemcfg.h... checking locale.h usability
+Configure miss: locale.h usability
+Configure miss: sys/systemcfg.h
 Configure miss: locale.h presence
 Configure miss: whether errno must be declared
-Configure miss: mempcpy... checking for suffix of object files
-Configure miss: whether we are cross compiling... checking for suffix of object files
-Configure miss: suffix of object files
+Configure miss: clock... checking whether included gettext is requested
+Configure miss: suffix of object files... checking for suffix of object files... checking for suffix of object files
+Configure miss: gcc option to accept ISO C89... checking for putenv
 Configure miss: whether gcc understands -c and -o together
-Configure miss: whether gcc understands -c and -o together... checking for putenv
-Configure miss: stdint.h
-Configure miss: whether it is safe to define __EXTENSIONS__... checking for strtol
-Configure miss: whether the shell understands some XSI constructs
+Configure miss: whether gcc understands -c and -o together... checking whether gcc understands -c and -o together
+Configure miss: strtod... checking minix/config.h usability... checking minix/config.h usability
+Configure miss: strtol... checking for stdint.h
+Configure miss: whether it is safe to define __EXTENSIONS__... checking for minix/config.h
+Configure miss: whether it is safe to define __EXTENSIONS__
 Configure miss: command to parse gcc-nm output from gcc object
-Configure miss: strtoull
-Configure miss: whether g++ accepts -g... checking if gcc supports -fno-rtti -fno-exceptions... checking if gcc supports -fno-rtti -fno-exceptions... checking if gcc supports -fno-rtti -fno-exceptions... checking for dlfcn.h
-Configure miss: catalogs to be installed
-Configure miss: dynamic linker characteristics... checking for vsprintf
-Configure miss: whether the gcc linker (ld -m elf_x86_64) supports shared libraries
 Configure miss: library containing dlsym
-Configure miss: library containing dlsym
-Configure miss: stack direction for C alloca
-Configure miss: whether static linking works
-Configure miss: vfork.h... checking for special C compiler options needed for large files
-Configure miss: _FILE_OFFSET_BITS value needed for large files... checking for special C compiler options needed for large files
-Configure miss: fork
-Configure miss: whether gcc supports -fmerge-constants
-Configure miss: whether to use debuginfod
-Configure miss: thread support... checking for vfork
-Configure miss: -frandom-seed support
-Configure miss: glibc ifunc support
-Configure miss: sys/mman.h usability... checking for sys_siglist
-Configure miss: if g++ supports -c -o file.o... checking whether to enable maintainer-specific portions of Makefiles
-Configure miss: chsize
-Configure miss: __fsetlocking... checking for a known getopt prototype in unistd.h
-Configure miss: library containing dlsym
+Configure miss: strverscmp
+Configure miss: gcc option to accept ISO C89... (cached) checking for ld option to reload object files
 Configure miss: catalogs to be installed
-Configure miss: whether gcc is Clang... checking for on_exit
-Configure miss: whether ffs is declared
-Configure miss: sysmp... checking how to run the C++ preprocessor
-Configure miss: catalogs to be installed
-Configure miss: msgfmt
-Configure miss: whether compiling a cross-assembler
-Configure miss: limits.h usability... checking whether vsnprintf is declared
-Configure miss: unordered_map presence
-Configure miss: locale.h presence
-Configure miss: elf-hints.h
-Configure miss: whether declaration is required for errno... checking sys/file.h usability
-Configure miss: sys/time.h presence
-Configure miss: whether strtoll is declared
-Configure miss: mkstemp
-Configure miss: realpath... checking for sbrk
-Configure miss: whether strverscmp is declared... checking for sbrk... checking for utimes
-Configure miss: waitpid
-Configure miss: getc_unlocked
-Configure miss: setlocale
-Configure miss: locale.h usability... checking if gcc supports -fno-rtti -fno-exceptions
 Configure miss: if gcc supports -c -o file.o
-Configure miss: setlocale
+Configure miss: if gcc supports -c -o file.o
+Configure miss: msgmerge
+Configure miss: if gcc supports -c -o file.o
+Configure miss: stack direction for C alloca
+Configure miss: library containing dlsym
+Configure miss: library containing dlsym
+Configure miss: whether static linking works
+Configure miss: vfork... checking how to run the C++ preprocessor
+Configure miss: whether gcc supports -fmerge-constants... checking whether to use debuginfod
+Configure miss: thread support
+Configure miss: glibc >= 2.9
+Configure miss: glibc ifunc support
+Configure miss: sys/gmon_out.h usability... checking sys/mman.h usability
+Configure miss: a known getopt prototype in unistd.h... checking for chsize
+Configure miss: library containing fabs... checking for dup3
+Configure miss: pread
 Configure miss: whether basename is declared
-Configure miss: sigsetjmp
+Configure miss: strerror
+Configure miss: sysctl
+Configure miss: sysmp
+Configure miss: times... checking how to run the C++ preprocessor
+Configure miss: unordered_set presence
+Configure miss: whether compiling a cross-assembler
+Configure miss: limits.h presence... checking whether getenv is declared
+Configure miss: tr1/unordered_set usability... checking sys/param.h usability
+Configure miss: alloca
+Configure miss: elf-hints.h
+Configure miss: whether strtoll is declared
+Configure miss: sys/time.h presence
+Configure miss: ext/hash_map usability
+Configure miss: sbrk... checking for mkstemp
+Configure miss: setmode... checking for sbrk
+Configure miss: working mmap... checking for getc_unlocked... checking for setlocale
+Configure miss: struct stat.st_mtim.tv_nsec in sys/stat.h
+Configure miss: whether snprintf is declared
+Configure miss: if the linker (ld) is GNU ld
+Configure miss: if gcc static flag -static works... checking if gcc supports -fno-rtti -fno-exceptions
+Configure miss: if gcc supports -c -o file.o
+Configure miss: LC_MESSAGES
+Configure miss: whether basename is declared
 Configure miss: fls
 Configure miss: gcc version with buggy 64-bit support
 Configure miss: prstatus32_t in sys/procfs.h
