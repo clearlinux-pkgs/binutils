@@ -251,10 +251,18 @@ index 1ea0b624ed3..83b4b0172db 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index fd17b2ba94d..d6eeb1eea8a 100644
+index fd17b2ba94d..6d74c512fea 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,14 @@
+@@ -1,3 +1,22 @@
++2021-01-26  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR gas/27243
++	* config/tc-nios2.c (md_begin): Don't disable relaxation with
++	--gdwarf-N.
++	* testsuite/gas/nios2/relax.d: New file.
++	* testsuite/gas/nios2/relax.s: Likewise.
++
 +2021-01-24  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	PR gas/27228
@@ -269,6 +277,21 @@ index fd17b2ba94d..d6eeb1eea8a 100644
  2021-01-24  Nick Clifton  <nickc@redhat.com>
  
  	This is the 2.36 release.
+diff --git a/gas/config/tc-nios2.c b/gas/config/tc-nios2.c
+index eea6687fcc4..be4536caa8a 100644
+--- a/gas/config/tc-nios2.c
++++ b/gas/config/tc-nios2.c
+@@ -3643,10 +3643,6 @@ md_begin (void)
+   nios2_as_options.noat = FALSE;
+   nios2_as_options.nobreak = FALSE;
+ 
+-  /* Debug information is incompatible with relaxation.  */
+-  if (debug_type != DEBUG_UNSPECIFIED)
+-    nios2_as_options.relax = relax_none;
+-
+   /* Initialize the alignment data.  */
+   nios2_current_align_seg = now_seg;
+   nios2_last_label = NULL;
 diff --git a/gas/configure b/gas/configure
 index adf248c3419..d03432c6dc6 100755
 --- a/gas/configure
@@ -390,6 +413,48 @@ index 00000000000..5ed301d5ac7
 +	.reloc	1f,BFD_RELOC_NONE,.LTHUNK5.lto_priv.0
 +1:
 +	.nop
+diff --git a/gas/testsuite/gas/nios2/relax.d b/gas/testsuite/gas/nios2/relax.d
+new file mode 100644
+index 00000000000..ca01a4f926a
+--- /dev/null
++++ b/gas/testsuite/gas/nios2/relax.d
+@@ -0,0 +1,25 @@
++#source: relax.s
++#as: --gdwarf-5
++#objdump: -w -WL -dr --prefix-addresses --show-raw-insn
++#name: NIOS2 relax with --gdwarf-5
++
++# Test relaxation with assembler generated debug info.
++.*:     file format elf32-littlenios2
++
++Contents of the .debug_line section:
++
++CU: ./relax.s:
++File +name +Line +number +Starting +address +View +Stmt
++relax.s +2 +0 +x
++relax.s +5 +0x10018 +x
++relax.s +- +0x1001c
++
++Disassembly of section .text:
++0x00000000 21400526 	beq	r4,r5,0x00000018
++0x00000004 0002e03a 	nextpc	at
++0x00000008 085fffc4 	addi	at,at,32767
++0x0000000c 085fffc4 	addi	at,at,32767
++0x00000010 08400484 	addi	at,at,18
++0x00000014 0800683a 	jmp	at
++	...
++0x00010018 f800283a 	ret
+diff --git a/gas/testsuite/gas/nios2/relax.s b/gas/testsuite/gas/nios2/relax.s
+new file mode 100644
+index 00000000000..ef417fdc33b
+--- /dev/null
++++ b/gas/testsuite/gas/nios2/relax.s
+@@ -0,0 +1,5 @@
++	.text
++	bne	r4, r5, 1f
++	.zero 0x10000
++1:
++	ret
 diff --git a/gprof/ChangeLog b/gprof/ChangeLog
 index 39c939f2d14..843d784f818 100644
 --- a/gprof/ChangeLog
