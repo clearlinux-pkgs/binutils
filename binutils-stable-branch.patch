@@ -4267,10 +4267,28 @@ index 1221f37f8a6..d5e06d4d7d3 100644
  
  enum DW_EH_PE
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 26c703531d9..3ac2f7b72e2 100644
+index 26c703531d9..92ce9595d32 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,171 @@
+@@ -1,3 +1,189 @@
++2021-01-25  Alan Modra  <amodra@gmail.com>
++
++	PR 27218
++	* dwarf2dbg.c (dwarf2_gen_line_info): Correct setting of dwarf_level.
++	(dwarf2_directive_filename, dwarf2_directive_loc): Likewise, and
++	error for negative file numbers.
++
++2021-01-25  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR gas/27195
++	* dwarf2dbg.c (dwarf2_gen_line_info): Set dwarf_level to 5 if
++	needed.
++	(dwarf2_directive_filename): Likewise.
++	(dwarf2_directive_loc): Likewise.
++	* testsuite/gas/elf/dwarf-5-file0.d: Pass --gdwarf-3.
++	* testsuite/gas/lns/lns-diag-1.l: Remove the
++	"Error: file number less than one" errors.
++
 +2020-11-15  Mark Wielaard  <mark@klomp.org>
 +
 +	Backport from the mainline:
@@ -4624,7 +4642,7 @@ index 91803605775..16c94de675c 100644
  @code{xgene2},
  @code{ep9312} (ARM920 with Cirrus Maverick coprocessor),
 diff --git a/gas/dwarf2dbg.c b/gas/dwarf2dbg.c
-index 6899a840eff..1160cafc13e 100644
+index 6899a840eff..419582f9aa8 100644
 --- a/gas/dwarf2dbg.c
 +++ b/gas/dwarf2dbg.c
 @@ -211,7 +211,6 @@ struct file_entry
@@ -4643,7 +4661,23 @@ index 6899a840eff..1160cafc13e 100644
  
  /* Table of directories used by .debug_line.  */
  static char **       dirs = NULL;
-@@ -633,7 +633,7 @@ get_directory_table_entry (const char *  dirname,
+@@ -536,8 +536,13 @@ dwarf2_gen_line_info (addressT ofs, struct dwarf2_line_info *loc)
+   /* Early out for as-yet incomplete location information.  */
+   if (loc->line == 0)
+     return;
+-  if (loc->filenum == 0 && DWARF2_LINE_VERSION < 5)
+-    return;
++  if (loc->filenum == 0)
++    {
++      if (dwarf_level < 5)
++	dwarf_level = 5;
++      if (DWARF2_LINE_VERSION < 5)
++	return;
++    }
+ 
+   /* Don't emit sequences of line symbols for the same line when the
+      symbols apply to assembler code.  It is necessary to emit
+@@ -633,7 +638,7 @@ get_directory_table_entry (const char *  dirname,
  }
  
  static bfd_boolean
@@ -4652,7 +4686,7 @@ index 6899a840eff..1160cafc13e 100644
  {
    if (i >= files_allocated)
      {
-@@ -653,7 +653,6 @@ assign_file_to_slot (unsigned long i, const char *file, unsigned int dir, bfd_bo
+@@ -653,7 +658,6 @@ assign_file_to_slot (unsigned long i, const char *file, unsigned int dir, bfd_bo
  
    files[i].filename = file;
    files[i].dir = dir;
@@ -4660,7 +4694,7 @@ index 6899a840eff..1160cafc13e 100644
    memset (files[i].md5, 0, NUM_MD5_BYTES);
  
    if (files_in_use < i + 1)
-@@ -717,9 +716,11 @@ allocate_filenum (const char * pathname)
+@@ -717,9 +721,11 @@ allocate_filenum (const char * pathname)
  	return i;
        }
  
@@ -4673,7 +4707,7 @@ index 6899a840eff..1160cafc13e 100644
    last_used = i;
    last_used_dir_len = dir_len;
  
-@@ -792,30 +793,15 @@ allocate_filename_to_slot (const char *  dirname,
+@@ -792,30 +798,15 @@ allocate_filename_to_slot (const char *  dirname,
  	}
  
      fail:
@@ -4713,7 +4747,7 @@ index 6899a840eff..1160cafc13e 100644
      }
  
    if (dirname == NULL)
-@@ -833,7 +819,7 @@ allocate_filename_to_slot (const char *  dirname,
+@@ -833,7 +824,7 @@ allocate_filename_to_slot (const char *  dirname,
    d = get_directory_table_entry (dirname, dirlen, num == 0);
    i = num;
  
@@ -4722,7 +4756,7 @@ index 6899a840eff..1160cafc13e 100644
      return FALSE;
  
    if (with_md5)
-@@ -1030,6 +1016,7 @@ dwarf2_directive_filename (void)
+@@ -1030,6 +1021,7 @@ dwarf2_directive_filename (void)
    char *filename;
    const char * dirname = NULL;
    int filename_len;
@@ -4730,7 +4764,28 @@ index 6899a840eff..1160cafc13e 100644
  
    /* Continue to accept a bare string and pass it off.  */
    SKIP_WHITESPACE ();
-@@ -1096,6 +1083,18 @@ dwarf2_directive_filename (void)
+@@ -1041,11 +1033,16 @@ dwarf2_directive_filename (void)
+ 
+   num = get_absolute_expression ();
+ 
+-  if ((offsetT) num < 1 && DWARF2_LINE_VERSION < 5)
++  if ((offsetT) num < 1)
+     {
+-      as_bad (_("file number less than one"));
+-      ignore_rest_of_line ();
+-      return NULL;
++      if (num == 0 && dwarf_level < 5)
++	dwarf_level = 5;
++      if ((offsetT) num < 0 || DWARF2_LINE_VERSION < 5)
++	{
++	  as_bad (_("file number less than one"));
++	  ignore_rest_of_line ();
++	  return NULL;
++	}
+     }
+ 
+   /* FIXME: Should we allow ".file <N>\n" as an expression meaning
+@@ -1096,6 +1093,18 @@ dwarf2_directive_filename (void)
        return NULL;
      }
  
@@ -4749,6 +4804,25 @@ index 6899a840eff..1160cafc13e 100644
    if (! allocate_filename_to_slot (dirname, filename, (unsigned int) num,
  				   with_md5))
      return NULL;
+@@ -1128,14 +1137,16 @@ dwarf2_directive_loc (int dummy ATTRIBUTE_UNUSED)
+ 
+   if (filenum < 1)
+     {
+-      if (filenum != 0 || DWARF2_LINE_VERSION < 5)
++      if (filenum == 0 && dwarf_level < 5)
++	dwarf_level = 5;
++      if (filenum < 0 || DWARF2_LINE_VERSION < 5)
+ 	{
+ 	  as_bad (_("file number less than one"));
+ 	  return;
+ 	}
+     }
+ 
+-  if (filenum >= (int) files_in_use || files[filenum].filename == NULL)
++  if ((valueT) filenum >= files_in_use || files[filenum].filename == NULL)
+     {
+       as_bad (_("unassigned file number %ld"), (long) filenum);
+       return;
 diff --git a/gas/testsuite/gas/aarch64/system.d b/gas/testsuite/gas/aarch64/system.d
 index 20d5c204094..c973584af59 100644
 --- a/gas/testsuite/gas/aarch64/system.d
@@ -5675,6 +5749,16 @@ index 839b4b7c77b..7db20a330b8 100644
     Abbrev Offset: 0x0
     Pointer Size:  .
  #pass
+diff --git a/gas/testsuite/gas/elf/dwarf-5-file0.d b/gas/testsuite/gas/elf/dwarf-5-file0.d
+index 5d76b7bcd14..6cc96e3284f 100644
+--- a/gas/testsuite/gas/elf/dwarf-5-file0.d
++++ b/gas/testsuite/gas/elf/dwarf-5-file0.d
+@@ -1,4 +1,4 @@
+-#as: --gdwarf-5
++#as: --gdwarf-3
+ #name: DWARF5 .line 0
+ #readelf: -wl
+ 
 diff --git a/gas/testsuite/gas/i386/dwarf4-line-1.d b/gas/testsuite/gas/i386/dwarf4-line-1.d
 new file mode 100644
 index 00000000000..4f8321e9bfd
@@ -6555,6 +6639,24 @@ index 6f9032dc4b3..ad69bb13223 100644
 +	movdir64b ecx,[eip+foo]
 +	movdir64b ecx,ds:foo
 +	movdir64b ecx,ds:0x12345678
+diff --git a/gas/testsuite/gas/lns/lns-diag-1.l b/gas/testsuite/gas/lns/lns-diag-1.l
+index 1256e85cfcb..3d8a52f4d5b 100644
+--- a/gas/testsuite/gas/lns/lns-diag-1.l
++++ b/gas/testsuite/gas/lns/lns-diag-1.l
+@@ -1,5 +1,4 @@
+ .*: Assembler messages:
+-.*:2: Error: file number less than one
+ .*:3: Error: missing string
+ .*:4: Error: file table slot 1 is already occupied.*
+ .*:8: Error: unassigned file number 3
+@@ -9,7 +8,6 @@
+ .*:19: Error: bad or irreducible absolute expression
+ .*:23: Error: isa number less than zero
+ .*:26: Error: bad or irreducible absolute expression
+-.*:26: Error: file number less than one
+ .*:27: Error: bad or irreducible absolute expression
+ .*:28: Error: unknown .loc sub-directive `frobnitz'
+ .*:29: Error: unknown .loc sub-directive `frobnitz'
 diff --git a/gas/testsuite/gas/ppc/476.d b/gas/testsuite/gas/ppc/476.d
 index 7818b86b134..0b75d75ae2d 100644
 --- a/gas/testsuite/gas/ppc/476.d
