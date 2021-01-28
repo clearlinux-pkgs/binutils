@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.36
-Release  : 400
+Release  : 401
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.36.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.36.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.36.tar.xz.sig
@@ -150,7 +150,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1611762262
+export SOURCE_DATE_EPOCH=1611846341
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -170,7 +170,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1611762262
+export SOURCE_DATE_EPOCH=1611846341
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-2.36/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
@@ -182,6 +182,7 @@ cp %{_builddir}/binutils-2.36/gas/COPYING %{buildroot}/usr/share/package-license
 cp %{_builddir}/binutils-2.36/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
 cp %{_builddir}/binutils-2.36/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
 cp %{_builddir}/binutils-2.36/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
+cp %{_builddir}/binutils-2.36/libiberty/copying-lib.texi %{buildroot}/usr/share/package-licenses/binutils/0533e856d64a28ae9b067604a701e3a14cf6a80c
 cp %{_builddir}/binutils-2.36/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
 %make_install tooldir=/usr
 %find_lang binutils
@@ -454,6 +455,7 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 
 %files license
 %defattr(0644,root,root,0755)
+/usr/share/package-licenses/binutils/0533e856d64a28ae9b067604a701e3a14cf6a80c
 /usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d
 /usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
 /usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
