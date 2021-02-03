@@ -36,10 +36,17 @@ index 4fe7321786e..c2c852c5660 100644
  install-strip-binutils: maybe-install-strip-opcodes
  install-opcodes: maybe-install-bfd
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 91a828c550a..08d28999487 100644
+index 91a828c550a..e2a34164f69 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,32 @@
+@@ -1,3 +1,39 @@
++2021-02-03  Alan Modra  <amodra@gmail.com>
++
++	PR 27311
++	* elflink.c (elf_link_add_object_symbols): Don't pull in as-needed
++	libraries when H is an indirect symbol after calling
++	_bfd_elf_add_default_symbol.
++
 +2021-01-28  Alan Modra  <amodra@gmail.com>
 +
 +	PR 27259
@@ -200,7 +207,7 @@ index bd0ed3e81d3..5a6ec764804 100644
        return & ft32_elf_howto_table [ft32_reloc_map[i].ft32_reloc_val];
  
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 27564adb8c3..e7b96f8ca86 100644
+index 27564adb8c3..da288f3f2ac 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -537,8 +537,10 @@ bfd_elf_link_record_dynamic_symbol (struct bfd_link_info *info,
@@ -214,7 +221,15 @@ index 27564adb8c3..e7b96f8ca86 100644
  		      && h->root.u.c.p->section->owner->no_export))
  		return TRUE;
  	    }
-@@ -13825,15 +13827,23 @@ _bfd_elf_gc_mark_extra_sections (struct bfd_link_info *info,
+@@ -5272,6 +5274,7 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
+ 	  if (!add_needed
+ 	      && matched
+ 	      && definition
++	      && h->root.type != bfd_link_hash_indirect
+ 	      && ((dynsym
+ 		   && h->ref_regular_nonweak)
+ 		  || (old_bfd != NULL
+@@ -13825,15 +13828,23 @@ _bfd_elf_gc_mark_extra_sections (struct bfd_link_info *info,
  	      /* Since all sections, except for backend specific ones,
  		 have been garbage collected, call mark_hook on this
  		 section if any of its linked-to sections is marked.  */
@@ -267,10 +282,26 @@ index 0e9d81ff8e9..755c0393dcd 100644
 -m4_define([BFD_VERSION], [2.36])
 +m4_define([BFD_VERSION], [2.36.0])
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index b81a7d369eb..c7ad3742ccb 100644
+index b81a7d369eb..c53a4b5eb1e 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
-@@ -1,3 +1,13 @@
+@@ -1,3 +1,29 @@
++2021-02-03  Alan Modra  <amodra@gmail.com>
++
++	PR 27270
++	PR 27284
++	PR 26945
++	* ar.c: Don't include libbfd.h.
++	(write_archive): Replace xmalloc+strcpy with xstrdup.  Use
++	bfd_stat rather than fstat on iostream.  Move stat and fd tests
++	outside of _WIN32 ifdef.  Delete skip_stat variable.
++	* arsup.c (temp_name, real_ofd): New static variables.
++	(ar_open): Use make_tempname and bfd_fdopenw.
++	(ar_save): Adjust to suit ar_open changes.  Move stat output
++	of _WIN32 ifdef.
++	* objcopy.c: Don't include libbfd.h.
++	(copy_file): Use bfd_stat.
++
 +2021-01-26  Frederic Cambus  <fred@statdns.com>
 +
 +	* objcopy.c (copy_main): Fix a double free happening when both
@@ -284,6 +315,150 @@ index b81a7d369eb..c7ad3742ccb 100644
  2021-01-24  Nick Clifton  <nickc@redhat.com>
  
  	This is the 2.36 release.
+diff --git a/binutils/ar.c b/binutils/ar.c
+index 24ff0920f40..0ecfa337228 100644
+--- a/binutils/ar.c
++++ b/binutils/ar.c
+@@ -25,7 +25,6 @@
+ 
+ #include "sysdep.h"
+ #include "bfd.h"
+-#include "libbfd.h"
+ #include "libiberty.h"
+ #include "progress.h"
+ #include "getopt.h"
+@@ -1255,10 +1254,8 @@ write_archive (bfd *iarch)
+   bfd *contents_head = iarch->archive_next;
+   int ofd = -1;
+   struct stat target_stat;
+-  bfd_boolean skip_stat = FALSE;
+ 
+-  old_name = (char *) xmalloc (strlen (bfd_get_filename (iarch)) + 1);
+-  strcpy (old_name, bfd_get_filename (iarch));
++  old_name = xstrdup (bfd_get_filename (iarch));
+   new_name = make_tempname (old_name, &ofd);
+ 
+   if (new_name == NULL)
+@@ -1303,11 +1300,9 @@ write_archive (bfd *iarch)
+ 
+ #if !defined (_WIN32) || defined (__CYGWIN32__)
+   ofd = dup (ofd);
+-  if (iarch == NULL || iarch->iostream == NULL)
+-    skip_stat = TRUE;
+-  else if (ofd == -1 || fstat (fileno ((FILE *) iarch->iostream), &target_stat) != 0)
+-    bfd_fatal (old_name);
+ #endif
++  if (ofd == -1 || bfd_stat (iarch, &target_stat) != 0)
++    bfd_fatal (old_name);
+ 
+   if (!bfd_close (obfd))
+     bfd_fatal (old_name);
+@@ -1318,7 +1313,7 @@ write_archive (bfd *iarch)
+   /* We don't care if this fails; we might be creating the archive.  */
+   bfd_close (iarch);
+ 
+-  if (smart_rename (new_name, old_name, ofd, skip_stat ? NULL : &target_stat, 0) != 0)
++  if (smart_rename (new_name, old_name, ofd, &target_stat, 0) != 0)
+     xexit (1);
+   free (old_name);
+   free (new_name);
+diff --git a/binutils/arsup.c b/binutils/arsup.c
+index 837011bdfd2..a60629f6761 100644
+--- a/binutils/arsup.c
++++ b/binutils/arsup.c
+@@ -42,6 +42,8 @@ extern int deterministic;
+ 
+ static bfd *obfd;
+ static char *real_name;
++static char *temp_name;
++static int real_ofd;
+ static FILE *outfile;
+ 
+ static void
+@@ -149,27 +151,24 @@ maybequit (void)
+ void
+ ar_open (char *name, int t)
+ {
+-  char *tname;
+-  const char *bname = lbasename (name);
+-  real_name = name;
++  real_name = xstrdup (name);
++  temp_name = make_tempname (real_name, &real_ofd);
+ 
+-  /* Prepend tmp- to the beginning, to avoid file-name clashes after
+-     truncation on filesystems with limited namespaces (DOS).  */
+-  if (asprintf (&tname, "%.*stmp-%s", (int) (bname - name), name, bname) == -1)
++  if (temp_name == NULL)
+     {
+-      fprintf (stderr, _("%s: Can't allocate memory for temp name (%s)\n"),
++      fprintf (stderr, _("%s: Can't open temporary file (%s)\n"),
+ 	       program_name, strerror(errno));
+       maybequit ();
+       return;
+     }
+ 
+-  obfd = bfd_openw (tname, NULL);
++  obfd = bfd_fdopenw (temp_name, NULL, real_ofd);
+ 
+   if (!obfd)
+     {
+       fprintf (stderr,
+ 	       _("%s: Can't open output archive %s\n"),
+-	       program_name,  tname);
++	       program_name, temp_name);
+ 
+       maybequit ();
+     }
+@@ -344,10 +343,9 @@ ar_save (void)
+     }
+   else
+     {
+-      char *ofilename = xstrdup (bfd_get_filename (obfd));
+       bfd_boolean skip_stat = FALSE;
+       struct stat target_stat;
+-      int ofd = -1;
++      int ofd = real_ofd;
+ 
+       if (deterministic > 0)
+         obfd->flags |= BFD_DETERMINISTIC_OUTPUT;
+@@ -355,17 +353,31 @@ ar_save (void)
+ #if !defined (_WIN32) || defined (__CYGWIN32__)
+       /* It's OK to fail; at worst it will result in SMART_RENAME using a slow
+          copy fallback to write the output.  */
+-      ofd = dup (fileno ((FILE *) obfd->iostream));
+-      if (lstat (real_name, &target_stat) != 0)
+-	skip_stat = TRUE;
++      ofd = dup (ofd);
+ #endif
+-
+       bfd_close (obfd);
+ 
+-      smart_rename (ofilename, real_name, ofd,
++      if (lstat (real_name, &target_stat) != 0)
++	{
++	  /* The temp file created in ar_open has mode 0600 as per mkstemp.
++	     Create the real empty output file here so smart_rename will
++	     update the mode according to the process umask.  */
++	  obfd = bfd_openw (real_name, NULL);
++	  if (obfd == NULL
++	      || bfd_stat (obfd, &target_stat) != 0)
++	    skip_stat = TRUE;
++	  if (obfd != NULL)
++	    {
++	      bfd_set_format (obfd, bfd_archive);
++	      bfd_close (obfd);
++	    }
++	}
++
++      smart_rename (temp_name, real_name, ofd,
+ 		    skip_stat ? NULL : &target_stat, 0);
+       obfd = 0;
+-      free (ofilename);
++      free (temp_name);
++      free (real_name);
+     }
+ }
+ 
 diff --git a/binutils/configure b/binutils/configure
 index 1ea0b624ed3..83b4b0172db 100755
 --- a/binutils/configure
@@ -371,10 +546,27 @@ index 1ea0b624ed3..83b4b0172db 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index 62ee22202ff..a5cead1cf8e 100644
+index 62ee22202ff..19eb4361446 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
-@@ -6018,7 +6018,7 @@ copy_main (int argc, char *argv[])
+@@ -20,7 +20,6 @@
+ 
+ #include "sysdep.h"
+ #include "bfd.h"
+-#include "libbfd.h"
+ #include "progress.h"
+ #include "getopt.h"
+ #include "libiberty.h"
+@@ -3769,7 +3768,7 @@ copy_file (const char *input_filename, const char *output_filename, int ofd,
+   /* To allow us to do "strip *" without dying on the first
+      non-object file, failures are nonfatal.  */
+   ibfd = bfd_openr (input_filename, input_target);
+-  if (ibfd == NULL || fstat (fileno ((FILE *) ibfd->iostream), in_stat) != 0)
++  if (ibfd == NULL || bfd_stat (ibfd, in_stat) != 0)
+     {
+       bfd_nonfatal_message (input_filename, NULL, NULL, NULL);
+       status = 1;
+@@ -6018,7 +6017,7 @@ copy_main (int argc, char *argv[])
      free (keep_specific_buffer);
  
    if (localize_specific_buffer)
@@ -737,10 +929,26 @@ index 0089913632d..b12ec2e472f 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 1a2a60e70e7..ff2ee9668ce 100644
+index 1a2a60e70e7..fbb7d5094f2 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,25 @@
+@@ -1,3 +1,41 @@
++2021-02-03  Alan Modra  <amodra@gmail.com>
++
++	Apply from mainline
++	2021-02-03  Alan Modra  <amodra@gmail.com>
++	* testsuite/ld-ifunc/ifunc.exp (libpr16467b.so, libpr16467bn.so):
++	Link with --as-needed.
++
++	2021-02-02  Alan Modra  <amodra@gmail.com>
++	* testsuite/ld-plugin/pr27311.d,
++	* testsuite/ld-plugin/pr27311.ver,
++	* testsuite/ld-plugin/pr27311a.c,
++	* testsuite/ld-plugin/pr27311b.c,
++	* testsuite/ld-plugin/pr27311c.c: New testcase.
++	* testsuite/ld-plugin/lto.exp: Run it.  Correct PR14918 and
++	PR12982 entries.
++
 +2021-01-28  Alan Modra  <amodra@gmail.com>
 +
 +	PR 27259
@@ -941,6 +1149,123 @@ index 37c14caa36e..dfcdf7aa587 100644
 +  .debug_str_offsets 0 : { *(.debug_str_offsets) }
 +  .debug_sup      0 : { *(.debug_sup) }
  EOF
+diff --git a/ld/testsuite/ld-ifunc/ifunc.exp b/ld/testsuite/ld-ifunc/ifunc.exp
+index 9d3ace65216..45b47d7d6a8 100644
+--- a/ld/testsuite/ld-ifunc/ifunc.exp
++++ b/ld/testsuite/ld-ifunc/ifunc.exp
+@@ -397,7 +397,7 @@ run_cc_link_tests [list \
+     ] \
+     [list \
+ 	"Build libpr16467b.so" \
+-	"-shared tmpdir/pr16467b.o tmpdir/libpr16467a.so \
++	"-shared -Wl,--as-needed tmpdir/pr16467b.o tmpdir/libpr16467a.so \
+ 	 -Wl,--version-script=pr16467b.map" \
+ 	"-fPIC" \
+ 	{ dummy.c } \
+@@ -422,7 +422,7 @@ run_cc_link_tests [list \
+     ] \
+     [list \
+ 	"Build libpr16467bn.so" \
+-	"-shared tmpdir/pr16467b.o tmpdir/libpr16467an.so \
++	"-shared -Wl,--as-needed tmpdir/pr16467b.o tmpdir/libpr16467an.so \
+ 	 -Wl,--version-script=pr16467b.map" \
+ 	"-fPIC" \
+ 	{ dummy.c } \
+diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
+index 3c129760498..878d9e776ae 100644
+--- a/ld/testsuite/ld-plugin/lto.exp
++++ b/ld/testsuite/ld-plugin/lto.exp
+@@ -415,6 +415,18 @@ set lto_link_elf_tests [list \
+   [list {pr26806.so} \
+    {-shared} {-fpic -O2 -flto} \
+    {pr26806.c} {{nm {-D} pr26806.d}} {pr26806.so}] \
++  [list {pr27311a.so} \
++   {-shared -Wl,--version-script=pr27311.ver} {-fPIC} \
++   {pr27311a.c} {} {pr27311a.so}] \
++  [list {pr27311b.so} \
++   {-shared -Wl,--no-as-needed tmpdir/pr27311a.so} {-fPIC} \
++   {pr27311b.c} {} {pr27311b.so}] \
++  [list {pr27311c.o} \
++   {} {-flto} \
++   {pr27311c.c} {} {} {c}] \
++  [list {pr27311} \
++   {tmpdir/pr27311c.o -Wl,--no-as-needed,--rpath-link=. tmpdir/pr27311b.so} {} \
++   {dummy.c} {{readelf {--dyn-syms --wide} pr27311.d}} {pr27311}] \
+ ]
+ 
+ # PR 14918 checks that libgcc is not spuriously included in a shared link of
+@@ -423,11 +435,10 @@ set lto_link_elf_tests [list \
+ # __aeabi_unwind_cpp_pr0@@GCC_3.5 which is provided by libgcc_s.so.1, so the
+ # test fails.  Hence this code to skip the test.
+ if { ! [istarget "arm*-*-*"] } {
+-    lappend lto_link_elf_tests [list \
++    lappend lto_link_elf_tests \
+   [list "PR ld/14918" \
+    "-flto" "-flto" \
+-   {pr14918.c} {{"readelf" {-d --wide} "pr14918.d"}} "pr14918.exe" "c"] \
+-  ]
++   {pr14918.c} {{"readelf" {-d --wide} "pr14918.d"}} "pr14918.exe" "c"]
+ }
+ 
+ # PR 12982 checks that an executable stack is not created by default
+@@ -435,11 +446,10 @@ if { ! [istarget "arm*-*-*"] } {
+ # executable stack for syscall restarts and signal returns, so we
+ # skip this test for that target.
+ if { ! [istarget "hppa*-*-*"] } {
+-    lappend lto_link_elf_tests [list \
++    lappend lto_link_elf_tests \
+   [list "PR ld/12982" \
+    "-O2 -flto -fuse-linker-plugin" "-O2 -flto" \
+-   {pr12982.c} {{"readelf" {-l --wide} "pr12982.d"}} "pr12982.exe"] \
+-  ]
++   {pr12982.c} {{"readelf" {-l --wide} "pr12982.d"}} "pr12982.exe"]
+ }
+ 
+ # Check final symbols in executables.
+diff --git a/ld/testsuite/ld-plugin/pr27311.d b/ld/testsuite/ld-plugin/pr27311.d
+new file mode 100644
+index 00000000000..debf41cdc7f
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr27311.d
+@@ -0,0 +1,4 @@
++#failif
++#...
++.* _*inlib1.*
++#...
+diff --git a/ld/testsuite/ld-plugin/pr27311.ver b/ld/testsuite/ld-plugin/pr27311.ver
+new file mode 100644
+index 00000000000..324daf0c5b6
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr27311.ver
+@@ -0,0 +1,3 @@
++LIBFOO {
++  *;
++};
+diff --git a/ld/testsuite/ld-plugin/pr27311a.c b/ld/testsuite/ld-plugin/pr27311a.c
+new file mode 100644
+index 00000000000..314984781db
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr27311a.c
+@@ -0,0 +1 @@
++void inlib1(void) {}
+diff --git a/ld/testsuite/ld-plugin/pr27311b.c b/ld/testsuite/ld-plugin/pr27311b.c
+new file mode 100644
+index 00000000000..ed9c8a7048e
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr27311b.c
+@@ -0,0 +1 @@
++void inlib2(void) {}
+diff --git a/ld/testsuite/ld-plugin/pr27311c.c b/ld/testsuite/ld-plugin/pr27311c.c
+new file mode 100644
+index 00000000000..6712499130e
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr27311c.c
+@@ -0,0 +1,5 @@
++void inlib1(void) {}
++int main()
++{
++  return 0;
++}
 diff --git a/ld/testsuite/ld-tic6x/tic6x.exp b/ld/testsuite/ld-tic6x/tic6x.exp
 index e11699bed31..0a913da25d9 100644
 --- a/ld/testsuite/ld-tic6x/tic6x.exp
