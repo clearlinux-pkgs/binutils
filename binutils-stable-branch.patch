@@ -36,10 +36,17 @@ index 4fe7321786e..c2c852c5660 100644
  install-strip-binutils: maybe-install-strip-opcodes
  install-opcodes: maybe-install-bfd
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 91a828c550a..e2a34164f69 100644
+index 91a828c550a..c5cbad5d881 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,39 @@
+@@ -1,3 +1,46 @@
++2021-02-04  Alan Modra  <amodra@gmail.com>
++
++	PR 27311
++	* elflink.c (elf_link_add_object_symbols): Don't pull in as-needed
++	libraries for IR references on pass over libraries after LTO
++	recompilation.
++
 +2021-02-03  Alan Modra  <amodra@gmail.com>
 +
 +	PR 27311
@@ -207,7 +214,7 @@ index bd0ed3e81d3..5a6ec764804 100644
        return & ft32_elf_howto_table [ft32_reloc_map[i].ft32_reloc_val];
  
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 27564adb8c3..da288f3f2ac 100644
+index 27564adb8c3..7afbc5b1072 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -537,8 +537,10 @@ bfd_elf_link_record_dynamic_symbol (struct bfd_link_info *info,
@@ -221,7 +228,7 @@ index 27564adb8c3..da288f3f2ac 100644
  		      && h->root.u.c.p->section->owner->no_export))
  		return TRUE;
  	    }
-@@ -5272,6 +5274,7 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -5272,10 +5274,12 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
  	  if (!add_needed
  	      && matched
  	      && definition
@@ -229,7 +236,12 @@ index 27564adb8c3..da288f3f2ac 100644
  	      && ((dynsym
  		   && h->ref_regular_nonweak)
  		  || (old_bfd != NULL
-@@ -13825,15 +13828,23 @@ _bfd_elf_gc_mark_extra_sections (struct bfd_link_info *info,
+ 		      && (old_bfd->flags & BFD_PLUGIN) != 0
++		      && !info->lto_all_symbols_read
+ 		      && bind != STB_WEAK)
+ 		  || (h->ref_dynamic_nonweak
+ 		      && (elf_dyn_lib_class (abfd) & DYN_AS_NEEDED) != 0
+@@ -13825,15 +13829,23 @@ _bfd_elf_gc_mark_extra_sections (struct bfd_link_info *info,
  	      /* Since all sections, except for backend specific ones,
  		 have been garbage collected, call mark_hook on this
  		 section if any of its linked-to sections is marked.  */
@@ -929,10 +941,26 @@ index 0089913632d..b12ec2e472f 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 1a2a60e70e7..fbb7d5094f2 100644
+index 1a2a60e70e7..b419b4a9788 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,41 @@
+@@ -1,3 +1,57 @@
++2021-02-04  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/15146
++	* testsuite/ld-plugin/lto.exp: Run PR ld/15146 tests.
++	* testsuite/ld-plugin/pr15146.d: Restored.
++	* testsuite/ld-plugin/pr15146a.c: Likewise.
++	* testsuite/ld-plugin/pr15146b.c: Likewise.
++	* testsuite/ld-plugin/pr15146c.c: Likewise.
++	* testsuite/ld-plugin/pr15146d.c: Likewise.
++
++2021-02-04  Alan Modra  <amodra@gmail.com>
++
++	* testsuite/ld-plugin/pr27311d.c: New test.
++	* testsuite/ld-plugin/lto.exp: Rename pr27311 to pr27311-1, compile
++	and link new test as pr27311-2.
++
 +2021-02-03  Alan Modra  <amodra@gmail.com>
 +
 +	Apply from mainline
@@ -1172,10 +1200,32 @@ index 9d3ace65216..45b47d7d6a8 100644
  	"-fPIC" \
  	{ dummy.c } \
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
-index 3c129760498..878d9e776ae 100644
+index 3c129760498..ec339ee1495 100644
 --- a/ld/testsuite/ld-plugin/lto.exp
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -415,6 +415,18 @@ set lto_link_elf_tests [list \
+@@ -304,6 +304,21 @@ set lto_link_elf_tests [list \
+   [list "PR ld/13244" \
+    "-shared -O2 -fPIC -flto -fuse-linker-plugin -nostdlib" "-O2 -fno-early-inlining -flto" \
+    {pr13244.c} {{"readelf" {-s --wide} "pr13244.d"}} "pr13244.so" "c"] \
++  [list "Build libpr15146a.a" \
++   "$plug_opt" "-flto -O2" \
++   {pr15146a.c} {} "lib15146a.a"] \
++  [list "Build pr15146b.so" \
++   "-shared" "-O2 -fpic" \
++   {pr15146b.c} {} "pr15146b.so" "c"] \
++  [list "Build pr15146c.so" \
++   "-shared -Wl,--no-as-needed tmpdir/pr15146b.so" "-O2 -fpic $no_lto" \
++   {pr15146c.c} {} "pr15146c.so" "c"] \
++  [list "PR ld/15146 (1)" \
++   "-O2 -flto -fuse-linker-plugin -Wl,-rpath-link,. -Wl,--no-copy-dt-needed-entries -Wl,--no-as-needed tmpdir/pr15146a.o tmpdir/pr15146c.so" "" \
++   {dummy.c} {{"readelf" {-d} "pr15146.d"}} "pr15146a.exe"] \
++  [list "Build libpr15146d.a" \
++   "$plug_opt" "-flto -O2" \
++   {pr15146d.c} {} "lib15146d.a"] \
+   [list "Build libpr16746a.a" \
+    "" "" \
+    {pr16746a.c pr16746b.c} {} "lib15146a.a"] \
+@@ -415,6 +430,24 @@ set lto_link_elf_tests [list \
    [list {pr26806.so} \
     {-shared} {-fpic -O2 -flto} \
     {pr26806.c} {{nm {-D} pr26806.d}} {pr26806.so}] \
@@ -1188,13 +1238,19 @@ index 3c129760498..878d9e776ae 100644
 +  [list {pr27311c.o} \
 +   {} {-flto} \
 +   {pr27311c.c} {} {} {c}] \
-+  [list {pr27311} \
++  [list {pr27311d.o} \
++   {} {-flto} \
++   {pr27311d.c} {} {} {c}] \
++  [list {pr27311-1} \
 +   {tmpdir/pr27311c.o -Wl,--no-as-needed,--rpath-link=. tmpdir/pr27311b.so} {} \
-+   {dummy.c} {{readelf {--dyn-syms --wide} pr27311.d}} {pr27311}] \
++   {dummy.c} {{readelf {--dyn-syms --wide} pr27311.d}} {pr27311-1}] \
++  [list {pr27311-2} \
++   {tmpdir/pr27311d.o -Wl,--no-as-needed,--rpath-link=. tmpdir/pr27311b.so} {} \
++   {dummy.c} {{readelf {--dyn-syms --wide} pr27311.d}} {pr27311-2}] \
  ]
  
  # PR 14918 checks that libgcc is not spuriously included in a shared link of
-@@ -423,11 +435,10 @@ set lto_link_elf_tests [list \
+@@ -423,11 +456,10 @@ set lto_link_elf_tests [list \
  # __aeabi_unwind_cpp_pr0@@GCC_3.5 which is provided by libgcc_s.so.1, so the
  # test fails.  Hence this code to skip the test.
  if { ! [istarget "arm*-*-*"] } {
@@ -1208,7 +1264,7 @@ index 3c129760498..878d9e776ae 100644
  }
  
  # PR 12982 checks that an executable stack is not created by default
-@@ -435,11 +446,10 @@ if { ! [istarget "arm*-*-*"] } {
+@@ -435,11 +467,10 @@ if { ! [istarget "arm*-*-*"] } {
  # executable stack for syscall restarts and signal returns, so we
  # skip this test for that target.
  if { ! [istarget "hppa*-*-*"] } {
@@ -1222,6 +1278,72 @@ index 3c129760498..878d9e776ae 100644
  }
  
  # Check final symbols in executables.
+@@ -621,6 +652,13 @@ run_cc_link_tests $lto_compile_elf_tests
+ # Restrict these to ELF targets that support shared libs and PIC.
+ if { [is_elf_format] && [check_lto_shared_available] } {
+     run_cc_link_tests $lto_link_elf_tests
++    set testname "PR ld/15146 (2)"
++    set exec_output [run_host_cmd "$CC" "-O2 -flto -fuse-linker-plugin -Wl,-rpath-link,. -Wl,--no-copy-dt-needed-entries -Wl,--no-as-needed tmpdir/pr15146d.o tmpdir/pr15146c.so"]
++    if { [ regexp "undefined reference to symbol '\\.?xxx'" $exec_output ] } {
++	pass $testname
++    } {
++	fail $testname
++    }
+     set testname "PR ld/16746 (3)"
+     set exec_output [run_host_cmd "$CC" "-O2 -flto -fuse-linker-plugin tmpdir/pr16746b.o tmpdir/pr16746d.o"]
+     if { [ regexp "warning: \\.?foobar" $exec_output ] && ![ regexp "symbol from plugin" $exec_output ] } {
+diff --git a/ld/testsuite/ld-plugin/pr15146.d b/ld/testsuite/ld-plugin/pr15146.d
+new file mode 100644
+index 00000000000..48d4b854466
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr15146.d
+@@ -0,0 +1,4 @@
++#failif
++#...
++ +0x[0-9a-f]+ +\(NEEDED\) +Shared library: +\[.*pr15146b.so\]
++#...
+diff --git a/ld/testsuite/ld-plugin/pr15146a.c b/ld/testsuite/ld-plugin/pr15146a.c
+new file mode 100644
+index 00000000000..d85fe973cbc
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr15146a.c
+@@ -0,0 +1,13 @@
++extern int xxx;
++
++int
++bar (void)
++{
++  return xxx;
++}
++
++int
++main ()
++{
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/pr15146b.c b/ld/testsuite/ld-plugin/pr15146b.c
+new file mode 100644
+index 00000000000..90eb21ea556
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr15146b.c
+@@ -0,0 +1 @@
++int xxx = 3;
+diff --git a/ld/testsuite/ld-plugin/pr15146c.c b/ld/testsuite/ld-plugin/pr15146c.c
+new file mode 100644
+index 00000000000..e69de29bb2d
+diff --git a/ld/testsuite/ld-plugin/pr15146d.c b/ld/testsuite/ld-plugin/pr15146d.c
+new file mode 100644
+index 00000000000..3986ff62457
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr15146d.c
+@@ -0,0 +1,7 @@
++extern int xxx;
++
++int
++main ()
++{
++  return xxx;
++}
 diff --git a/ld/testsuite/ld-plugin/pr27311.d b/ld/testsuite/ld-plugin/pr27311.d
 new file mode 100644
 index 00000000000..debf41cdc7f
@@ -1262,6 +1384,17 @@ index 00000000000..6712499130e
 +++ b/ld/testsuite/ld-plugin/pr27311c.c
 @@ -0,0 +1,5 @@
 +void inlib1(void) {}
++int main()
++{
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/pr27311d.c b/ld/testsuite/ld-plugin/pr27311d.c
+new file mode 100644
+index 00000000000..11e4ba4d6dd
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr27311d.c
+@@ -0,0 +1,5 @@
++__attribute__((visibility("hidden"))) void inlib1(void) {}
 +int main()
 +{
 +  return 0;
