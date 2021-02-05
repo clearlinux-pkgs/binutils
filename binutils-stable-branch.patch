@@ -1,5 +1,5 @@
 diff --git a/ChangeLog b/ChangeLog
-index 185bde7efbd..8420c77ff49 100644
+index 185bde7efb..8420c77ff4 100644
 --- a/ChangeLog
 +++ b/ChangeLog
 @@ -1,3 +1,8 @@
@@ -12,7 +12,7 @@ index 185bde7efbd..8420c77ff49 100644
  
  	* 2.36 release branch crated.
 diff --git a/Makefile.def b/Makefile.def
-index cc429aa8628..b45e580da5b 100644
+index cc429aa862..b45e580da5 100644
 --- a/Makefile.def
 +++ b/Makefile.def
 @@ -448,6 +448,7 @@ dependencies = { module=all-binutils; on=all-intl; };
@@ -24,7 +24,7 @@ index cc429aa8628..b45e580da5b 100644
  // We put install-opcodes before install-binutils because the installed
  // binutils might be on PATH, and they might need the shared opcodes
 diff --git a/Makefile.in b/Makefile.in
-index 4fe7321786e..c2c852c5660 100644
+index 4fe7321786..c2c852c566 100644
 --- a/Makefile.in
 +++ b/Makefile.in
 @@ -52111,6 +52111,7 @@ all-stage3-ld: maybe-all-stage3-libctf
@@ -36,7 +36,7 @@ index 4fe7321786e..c2c852c5660 100644
  install-strip-binutils: maybe-install-strip-opcodes
  install-opcodes: maybe-install-bfd
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 91a828c550a..640a2ec80ed 100644
+index 91a828c550..640a2ec80e 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
 @@ -1,3 +1,50 @@
@@ -91,7 +91,7 @@ index 91a828c550a..640a2ec80ed 100644
  
  	This is the 2.36 release.
 diff --git a/bfd/configure b/bfd/configure
-index 4e44eb05869..b3665c68c13 100755
+index 4e44eb0586..b3665c68c1 100755
 --- a/bfd/configure
 +++ b/bfd/configure
 @@ -1,6 +1,6 @@
@@ -177,7 +177,7 @@ index 4e44eb05869..b3665c68c13 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/bfd/development.sh b/bfd/development.sh
-index eb9762e4426..a376b02d869 100644
+index eb9762e442..a376b02d86 100644
 --- a/bfd/development.sh
 +++ b/bfd/development.sh
 @@ -16,7 +16,7 @@
@@ -190,7 +190,7 @@ index eb9762e4426..a376b02d869 100644
  # Indicate whether this is a release branch.
  experimental=false
 diff --git a/bfd/dwarf2.c b/bfd/dwarf2.c
-index 292d60c33d4..240138d5982 100644
+index 292d60c33d..240138d598 100644
 --- a/bfd/dwarf2.c
 +++ b/bfd/dwarf2.c
 @@ -3289,9 +3289,6 @@ read_rnglists (struct comp_unit *unit, struct arange *arange,
@@ -204,7 +204,7 @@ index 292d60c33d4..240138d5982 100644
  	return FALSE;
      }
 diff --git a/bfd/elf32-ft32.c b/bfd/elf32-ft32.c
-index bd0ed3e81d3..5a6ec764804 100644
+index bd0ed3e81d..5a6ec76480 100644
 --- a/bfd/elf32-ft32.c
 +++ b/bfd/elf32-ft32.c
 @@ -267,8 +267,7 @@ ft32_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
@@ -218,7 +218,7 @@ index bd0ed3e81d3..5a6ec764804 100644
        return & ft32_elf_howto_table [ft32_reloc_map[i].ft32_reloc_val];
  
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 27564adb8c3..7afbc5b1072 100644
+index 27564adb8c..7afbc5b107 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -537,8 +537,10 @@ bfd_elf_link_record_dynamic_symbol (struct bfd_link_info *info,
@@ -278,7 +278,7 @@ index 27564adb8c3..7afbc5b1072 100644
  
  	  if (!debug_frag_seen
 diff --git a/bfd/elfxx-riscv.c b/bfd/elfxx-riscv.c
-index 42aeed767fe..97ad51f8659 100644
+index 42aeed767f..97ad51f865 100644
 --- a/bfd/elfxx-riscv.c
 +++ b/bfd/elfxx-riscv.c
 @@ -1597,7 +1597,7 @@ riscv_parse_prefixed_ext (riscv_parse_subset_t *rps,
@@ -291,7 +291,7 @@ index 42aeed767fe..97ad51f8659 100644
  
  static const char * const riscv_std_s_ext_strtab[] =
 diff --git a/bfd/po/bfd.pot b/bfd/po/bfd.pot
-index c00be6459e8..c1b2ed936d2 100644
+index c00be6459e..c1b2ed936d 100644
 --- a/bfd/po/bfd.pot
 +++ b/bfd/po/bfd.pot
 @@ -8,7 +8,7 @@ msgid ""
@@ -304,14 +304,14 @@ index c00be6459e8..c1b2ed936d2 100644
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/bfd/version.m4 b/bfd/version.m4
-index 0e9d81ff8e9..755c0393dcd 100644
+index 0e9d81ff8e..755c0393dc 100644
 --- a/bfd/version.m4
 +++ b/bfd/version.m4
 @@ -1 +1 @@
 -m4_define([BFD_VERSION], [2.36])
 +m4_define([BFD_VERSION], [2.36.0])
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index b81a7d369eb..c7ad3742ccb 100644
+index b81a7d369e..c7ad3742cc 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
 @@ -1,3 +1,13 @@
@@ -329,7 +329,7 @@ index b81a7d369eb..c7ad3742ccb 100644
  
  	This is the 2.36 release.
 diff --git a/binutils/ar.c b/binutils/ar.c
-index 24ff0920f40..45a34e3a6cf 100644
+index 24ff0920f4..45a34e3a6c 100644
 --- a/binutils/ar.c
 +++ b/binutils/ar.c
 @@ -1254,8 +1254,6 @@ write_archive (bfd *iarch)
@@ -366,7 +366,7 @@ index 24ff0920f40..45a34e3a6cf 100644
    free (old_name);
    free (new_name);
 diff --git a/binutils/arsup.c b/binutils/arsup.c
-index 837011bdfd2..5403a0c5d74 100644
+index 837011bdfd..5403a0c5d7 100644
 --- a/binutils/arsup.c
 +++ b/binutils/arsup.c
 @@ -345,25 +345,13 @@ ar_save (void)
@@ -397,7 +397,7 @@ index 837011bdfd2..5403a0c5d74 100644
        free (ofilename);
      }
 diff --git a/binutils/bucomm.h b/binutils/bucomm.h
-index 7a0adfae565..91f6a5b228f 100644
+index 7a0adfae56..91f6a5b228 100644
 --- a/binutils/bucomm.h
 +++ b/binutils/bucomm.h
 @@ -71,8 +71,7 @@ extern void print_version (const char *);
@@ -411,7 +411,7 @@ index 7a0adfae565..91f6a5b228f 100644
  /* In libiberty.  */
  void *xmalloc (size_t);
 diff --git a/binutils/configure b/binutils/configure
-index 1ea0b624ed3..83b4b0172db 100755
+index 1ea0b624ed..83b4b0172d 100755
 --- a/binutils/configure
 +++ b/binutils/configure
 @@ -1,6 +1,6 @@
@@ -497,7 +497,7 @@ index 1ea0b624ed3..83b4b0172db 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index 62ee22202ff..00d751522c4 100644
+index 62ee22202f..00d751522c 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
 @@ -3769,7 +3769,7 @@ copy_file (const char *input_filename, const char *output_filename, int ofd,
@@ -610,7 +610,7 @@ index 62ee22202ff..00d751522c4 100644
    if (globalize_specific_buffer)
      free (globalize_specific_buffer);
 diff --git a/binutils/rename.c b/binutils/rename.c
-index fece3117915..65ad5bf52c4 100644
+index fece311791..65ad5bf52c 100644
 --- a/binutils/rename.c
 +++ b/binutils/rename.c
 @@ -131,55 +131,17 @@ set_times (const char *destination, const struct stat *statbuf)
@@ -749,7 +749,7 @@ index fece3117915..65ad5bf52c4 100644
  
    return ret;
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index fd17b2ba94d..89cf883e25c 100644
+index fd17b2ba94..89cf883e25 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
 @@ -1,3 +1,36 @@
@@ -790,7 +790,7 @@ index fd17b2ba94d..89cf883e25c 100644
  
  	This is the 2.36 release.
 diff --git a/gas/config/tc-nios2.c b/gas/config/tc-nios2.c
-index eea6687fcc4..be4536caa8a 100644
+index eea6687fcc..be4536caa8 100644
 --- a/gas/config/tc-nios2.c
 +++ b/gas/config/tc-nios2.c
 @@ -3643,10 +3643,6 @@ md_begin (void)
@@ -805,7 +805,7 @@ index eea6687fcc4..be4536caa8a 100644
    nios2_current_align_seg = now_seg;
    nios2_last_label = NULL;
 diff --git a/gas/config/tc-riscv.c b/gas/config/tc-riscv.c
-index 8dc84cbe3df..3322f17ccba 100644
+index 8dc84cbe3d..3322f17ccb 100644
 --- a/gas/config/tc-riscv.c
 +++ b/gas/config/tc-riscv.c
 @@ -253,16 +253,6 @@ riscv_multi_subset_supports (enum riscv_insn_class insn_class)
@@ -826,7 +826,7 @@ index 8dc84cbe3df..3322f17ccba 100644
        as_fatal ("Unreachable");
        return FALSE;
 diff --git a/gas/configure b/gas/configure
-index adf248c3419..d03432c6dc6 100755
+index adf248c341..d03432c6dc 100755
 --- a/gas/configure
 +++ b/gas/configure
 @@ -1,6 +1,6 @@
@@ -912,7 +912,7 @@ index adf248c3419..d03432c6dc6 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/gas/testsuite/gas/all/none.d b/gas/testsuite/gas/all/none.d
-index deebab8b49c..374808a4f59 100644
+index deebab8b49..374808a4f5 100644
 --- a/gas/testsuite/gas/all/none.d
 +++ b/gas/testsuite/gas/all/none.d
 @@ -1,7 +1,7 @@
@@ -925,7 +925,7 @@ index deebab8b49c..374808a4f59 100644
  #...
  0+ .*(NONE|NULL|UNUSED0) +\*ABS\*
 diff --git a/gas/testsuite/gas/elf/elf.exp b/gas/testsuite/gas/elf/elf.exp
-index 4f7ff6a2e01..4a695dfbaed 100644
+index 4f7ff6a2e0..4a695dfbae 100644
 --- a/gas/testsuite/gas/elf/elf.exp
 +++ b/gas/testsuite/gas/elf/elf.exp
 @@ -328,4 +328,5 @@ if { [is_elf_format] } then {
@@ -936,7 +936,7 @@ index 4f7ff6a2e01..4a695dfbaed 100644
  }
 diff --git a/gas/testsuite/gas/elf/pr27228.d b/gas/testsuite/gas/elf/pr27228.d
 new file mode 100644
-index 00000000000..da336ff2191
+index 0000000000..da336ff219
 --- /dev/null
 +++ b/gas/testsuite/gas/elf/pr27228.d
 @@ -0,0 +1,10 @@
@@ -952,7 +952,7 @@ index 00000000000..da336ff2191
 +#pass
 diff --git a/gas/testsuite/gas/elf/pr27228.s b/gas/testsuite/gas/elf/pr27228.s
 new file mode 100644
-index 00000000000..5ed301d5ac7
+index 0000000000..5ed301d5ac
 --- /dev/null
 +++ b/gas/testsuite/gas/elf/pr27228.s
 @@ -0,0 +1,5 @@
@@ -963,7 +963,7 @@ index 00000000000..5ed301d5ac7
 +	.nop
 diff --git a/gas/testsuite/gas/nios2/relax.d b/gas/testsuite/gas/nios2/relax.d
 new file mode 100644
-index 00000000000..ca01a4f926a
+index 0000000000..ca01a4f926
 --- /dev/null
 +++ b/gas/testsuite/gas/nios2/relax.d
 @@ -0,0 +1,25 @@
@@ -994,7 +994,7 @@ index 00000000000..ca01a4f926a
 +0x00010018 f800283a 	ret
 diff --git a/gas/testsuite/gas/nios2/relax.s b/gas/testsuite/gas/nios2/relax.s
 new file mode 100644
-index 00000000000..ef417fdc33b
+index 0000000000..ef417fdc33
 --- /dev/null
 +++ b/gas/testsuite/gas/nios2/relax.s
 @@ -0,0 +1,5 @@
@@ -1005,7 +1005,7 @@ index 00000000000..ef417fdc33b
 +	ret
 diff --git a/gas/testsuite/gas/riscv/bitmanip-insns-32.d b/gas/testsuite/gas/riscv/bitmanip-insns-32.d
 deleted file mode 100644
-index b218f96e948..00000000000
+index b218f96e94..0000000000
 --- a/gas/testsuite/gas/riscv/bitmanip-insns-32.d
 +++ /dev/null
 @@ -1,37 +0,0 @@
@@ -1048,7 +1048,7 @@ index b218f96e948..00000000000
 -[ 	]+[0-9a-f]+:[ 	]+0ac5a533[ 	]+clmulr[ 	]+a0,a1,a2
 diff --git a/gas/testsuite/gas/riscv/bitmanip-insns-64.d b/gas/testsuite/gas/riscv/bitmanip-insns-64.d
 deleted file mode 100644
-index 9914f3e5571..00000000000
+index 9914f3e557..0000000000
 --- a/gas/testsuite/gas/riscv/bitmanip-insns-64.d
 +++ /dev/null
 @@ -1,55 +0,0 @@
@@ -1109,7 +1109,7 @@ index 9914f3e5571..00000000000
 -[ 	]+[0-9a-f]+:[ 	]+0ac5a533[ 	]+clmulr[ 	]+a0,a1,a2
 diff --git a/gas/testsuite/gas/riscv/bitmanip-insns.s b/gas/testsuite/gas/riscv/bitmanip-insns.s
 deleted file mode 100644
-index b14e89c1d4c..00000000000
+index b14e89c1d4..0000000000
 --- a/gas/testsuite/gas/riscv/bitmanip-insns.s
 +++ /dev/null
 @@ -1,58 +0,0 @@
@@ -1172,7 +1172,7 @@ index b14e89c1d4c..00000000000
 -	clmulh	a0, a1, a2
 -	clmulr	a0, a1, a2
 diff --git a/gold/ChangeLog b/gold/ChangeLog
-index 94443eeaaa4..8988f198b21 100644
+index 94443eeaaa..8988f198b2 100644
 --- a/gold/ChangeLog
 +++ b/gold/ChangeLog
 @@ -1,3 +1,9 @@
@@ -1186,7 +1186,7 @@ index 94443eeaaa4..8988f198b21 100644
  
  	This is the 2.36 release.
 diff --git a/gold/dwarf_reader.cc b/gold/dwarf_reader.cc
-index 487376965db..f0e6b89bde2 100644
+index 487376965d..f0e6b89bde 100644
 --- a/gold/dwarf_reader.cc
 +++ b/gold/dwarf_reader.cc
 @@ -1658,6 +1658,10 @@ Sized_dwarf_line_info<size, big_endian>::read_header_prolog(
@@ -1201,7 +1201,7 @@ index 487376965db..f0e6b89bde2 100644
      header_.prologue_length = elfcpp::Swap_unaligned<32, big_endian>::readval(lineptr);
    else
 diff --git a/gprof/ChangeLog b/gprof/ChangeLog
-index 39c939f2d14..843d784f818 100644
+index 39c939f2d1..843d784f81 100644
 --- a/gprof/ChangeLog
 +++ b/gprof/ChangeLog
 @@ -1,3 +1,7 @@
@@ -1213,7 +1213,7 @@ index 39c939f2d14..843d784f818 100644
  
  	This is the 2.36 release.
 diff --git a/gprof/configure b/gprof/configure
-index 0089913632d..b12ec2e472f 100755
+index 0089913632..b12ec2e472 100755
 --- a/gprof/configure
 +++ b/gprof/configure
 @@ -1,6 +1,6 @@
@@ -1299,7 +1299,7 @@ index 0089913632d..b12ec2e472f 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/include/ChangeLog b/include/ChangeLog
-index 14c508f84ec..59f97426630 100644
+index 14c508f84e..59f9742663 100644
 --- a/include/ChangeLog
 +++ b/include/ChangeLog
 @@ -1,3 +1,8 @@
@@ -1312,7 +1312,7 @@ index 14c508f84ec..59f97426630 100644
  
  	This is the 2.36 release.
 diff --git a/include/opcode/riscv-opc.h b/include/opcode/riscv-opc.h
-index 38ce41d8430..b0e549a0f2f 100644
+index 38ce41d843..b0e549a0f2 100644
 --- a/include/opcode/riscv-opc.h
 +++ b/include/opcode/riscv-opc.h
 @@ -191,78 +191,6 @@
@@ -1438,7 +1438,7 @@ index 38ce41d8430..b0e549a0f2f 100644
  DECLARE_INSN(amoxor_w, MATCH_AMOXOR_W, MASK_AMOXOR_W)
  DECLARE_INSN(amoor_w, MATCH_AMOOR_W, MASK_AMOOR_W)
 diff --git a/include/opcode/riscv.h b/include/opcode/riscv.h
-index 33ef290bb27..caaaea51629 100644
+index 33ef290bb2..caaaea5162 100644
 --- a/include/opcode/riscv.h
 +++ b/include/opcode/riscv.h
 @@ -312,10 +312,6 @@ enum riscv_insn_class
@@ -1453,7 +1453,7 @@ index 33ef290bb27..caaaea51629 100644
  
  /* This structure holds information for a particular instruction.  */
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 1a2a60e70e7..b419b4a9788 100644
+index 1a2a60e70e..b419b4a978 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
 @@ -1,3 +1,57 @@
@@ -1515,7 +1515,7 @@ index 1a2a60e70e7..b419b4a9788 100644
  
  	This is the 2.36 release.
 diff --git a/ld/configure b/ld/configure
-index a8d248eab58..d399d08d0c4 100755
+index a8d248eab5..d399d08d0c 100755
 --- a/ld/configure
 +++ b/ld/configure
 @@ -1,6 +1,6 @@
@@ -1601,7 +1601,7 @@ index a8d248eab58..d399d08d0c4 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/ld/ldelf.c b/ld/ldelf.c
-index f7407ab55a7..28974968251 100644
+index f7407ab55a..2897496825 100644
 --- a/ld/ldelf.c
 +++ b/ld/ldelf.c
 @@ -2188,14 +2188,21 @@ ldelf_before_place_orphans (void)
@@ -1634,7 +1634,7 @@ index f7407ab55a7..28974968251 100644
        }
  }
 diff --git a/ld/scripttempl/DWARF.sc b/ld/scripttempl/DWARF.sc
-index 37c14caa36e..dfcdf7aa587 100644
+index 37c14caa36..dfcdf7aa58 100644
 --- a/ld/scripttempl/DWARF.sc
 +++ b/ld/scripttempl/DWARF.sc
 @@ -9,19 +9,19 @@ cat <<EOF
@@ -1690,7 +1690,7 @@ index 37c14caa36e..dfcdf7aa587 100644
 +  .debug_sup      0 : { *(.debug_sup) }
  EOF
 diff --git a/ld/testsuite/ld-ifunc/ifunc.exp b/ld/testsuite/ld-ifunc/ifunc.exp
-index 9d3ace65216..45b47d7d6a8 100644
+index 9d3ace6521..45b47d7d6a 100644
 --- a/ld/testsuite/ld-ifunc/ifunc.exp
 +++ b/ld/testsuite/ld-ifunc/ifunc.exp
 @@ -397,7 +397,7 @@ run_cc_link_tests [list \
@@ -1712,7 +1712,7 @@ index 9d3ace65216..45b47d7d6a8 100644
  	"-fPIC" \
  	{ dummy.c } \
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
-index 3c129760498..ec339ee1495 100644
+index 3c12976049..ec339ee149 100644
 --- a/ld/testsuite/ld-plugin/lto.exp
 +++ b/ld/testsuite/ld-plugin/lto.exp
 @@ -304,6 +304,21 @@ set lto_link_elf_tests [list \
@@ -1806,7 +1806,7 @@ index 3c129760498..ec339ee1495 100644
      if { [ regexp "warning: \\.?foobar" $exec_output ] && ![ regexp "symbol from plugin" $exec_output ] } {
 diff --git a/ld/testsuite/ld-plugin/pr15146.d b/ld/testsuite/ld-plugin/pr15146.d
 new file mode 100644
-index 00000000000..48d4b854466
+index 0000000000..48d4b85446
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr15146.d
 @@ -0,0 +1,4 @@
@@ -1816,7 +1816,7 @@ index 00000000000..48d4b854466
 +#...
 diff --git a/ld/testsuite/ld-plugin/pr15146a.c b/ld/testsuite/ld-plugin/pr15146a.c
 new file mode 100644
-index 00000000000..d85fe973cbc
+index 0000000000..d85fe973cb
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr15146a.c
 @@ -0,0 +1,13 @@
@@ -1835,17 +1835,17 @@ index 00000000000..d85fe973cbc
 +}
 diff --git a/ld/testsuite/ld-plugin/pr15146b.c b/ld/testsuite/ld-plugin/pr15146b.c
 new file mode 100644
-index 00000000000..90eb21ea556
+index 0000000000..90eb21ea55
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr15146b.c
 @@ -0,0 +1 @@
 +int xxx = 3;
 diff --git a/ld/testsuite/ld-plugin/pr15146c.c b/ld/testsuite/ld-plugin/pr15146c.c
 new file mode 100644
-index 00000000000..e69de29bb2d
+index 0000000000..e69de29bb2
 diff --git a/ld/testsuite/ld-plugin/pr15146d.c b/ld/testsuite/ld-plugin/pr15146d.c
 new file mode 100644
-index 00000000000..3986ff62457
+index 0000000000..3986ff6245
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr15146d.c
 @@ -0,0 +1,7 @@
@@ -1858,7 +1858,7 @@ index 00000000000..3986ff62457
 +}
 diff --git a/ld/testsuite/ld-plugin/pr27311.d b/ld/testsuite/ld-plugin/pr27311.d
 new file mode 100644
-index 00000000000..debf41cdc7f
+index 0000000000..debf41cdc7
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr27311.d
 @@ -0,0 +1,4 @@
@@ -1868,7 +1868,7 @@ index 00000000000..debf41cdc7f
 +#...
 diff --git a/ld/testsuite/ld-plugin/pr27311.ver b/ld/testsuite/ld-plugin/pr27311.ver
 new file mode 100644
-index 00000000000..324daf0c5b6
+index 0000000000..324daf0c5b
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr27311.ver
 @@ -0,0 +1,3 @@
@@ -1877,21 +1877,21 @@ index 00000000000..324daf0c5b6
 +};
 diff --git a/ld/testsuite/ld-plugin/pr27311a.c b/ld/testsuite/ld-plugin/pr27311a.c
 new file mode 100644
-index 00000000000..314984781db
+index 0000000000..314984781d
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr27311a.c
 @@ -0,0 +1 @@
 +void inlib1(void) {}
 diff --git a/ld/testsuite/ld-plugin/pr27311b.c b/ld/testsuite/ld-plugin/pr27311b.c
 new file mode 100644
-index 00000000000..ed9c8a7048e
+index 0000000000..ed9c8a7048
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr27311b.c
 @@ -0,0 +1 @@
 +void inlib2(void) {}
 diff --git a/ld/testsuite/ld-plugin/pr27311c.c b/ld/testsuite/ld-plugin/pr27311c.c
 new file mode 100644
-index 00000000000..6712499130e
+index 0000000000..6712499130
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr27311c.c
 @@ -0,0 +1,5 @@
@@ -1902,7 +1902,7 @@ index 00000000000..6712499130e
 +}
 diff --git a/ld/testsuite/ld-plugin/pr27311d.c b/ld/testsuite/ld-plugin/pr27311d.c
 new file mode 100644
-index 00000000000..11e4ba4d6dd
+index 0000000000..11e4ba4d6d
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/pr27311d.c
 @@ -0,0 +1,5 @@
@@ -1912,7 +1912,7 @@ index 00000000000..11e4ba4d6dd
 +  return 0;
 +}
 diff --git a/ld/testsuite/ld-tic6x/tic6x.exp b/ld/testsuite/ld-tic6x/tic6x.exp
-index e11699bed31..0a913da25d9 100644
+index e11699bed3..0a913da25d 100644
 --- a/ld/testsuite/ld-tic6x/tic6x.exp
 +++ b/ld/testsuite/ld-tic6x/tic6x.exp
 @@ -130,6 +130,11 @@ set shlibtests {
@@ -1928,7 +1928,7 @@ index e11699bed31..0a913da25d9 100644
  
  run_ld_link_tests $shlibtests
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index 206957af5e8..fbfd6cd4c18 100644
+index 206957af5e..fbfd6cd4c1 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
 @@ -1,3 +1,19 @@
@@ -1952,7 +1952,7 @@ index 206957af5e8..fbfd6cd4c18 100644
  
  	This is the 2.36 release.
 diff --git a/opcodes/configure b/opcodes/configure
-index b72f679440d..dca94db9c3f 100755
+index b72f679440..dca94db9c3 100755
 --- a/opcodes/configure
 +++ b/opcodes/configure
 @@ -1,6 +1,6 @@
@@ -2038,7 +2038,7 @@ index b72f679440d..dca94db9c3f 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/opcodes/i386-gen.c b/opcodes/i386-gen.c
-index b3c87dbbd66..44cdc661985 100644
+index b3c87dbbd6..44cdc66198 100644
 --- a/opcodes/i386-gen.c
 +++ b/opcodes/i386-gen.c
 @@ -1576,6 +1576,8 @@ parse_template (char *buf, int lineno)
@@ -2051,7 +2051,7 @@ index b3c87dbbd66..44cdc661985 100644
        cur = next_field (buf, ':', &next, end);
        inst->name = xstrdup (cur);
 diff --git a/opcodes/po/opcodes.pot b/opcodes/po/opcodes.pot
-index 12e4ddfe091..902d8970953 100644
+index 12e4ddfe09..902d897095 100644
 --- a/opcodes/po/opcodes.pot
 +++ b/opcodes/po/opcodes.pot
 @@ -8,7 +8,7 @@ msgid ""
@@ -2064,7 +2064,7 @@ index 12e4ddfe091..902d8970953 100644
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/opcodes/riscv-opc.c b/opcodes/riscv-opc.c
-index 7c262ddf531..a2ea66a723e 100644
+index 7c262ddf53..a2ea66a723 100644
 --- a/opcodes/riscv-opc.c
 +++ b/opcodes/riscv-opc.c
 @@ -79,7 +79,6 @@ const char * const riscv_fpr_names_abi[NFPR] = {
