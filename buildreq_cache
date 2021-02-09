@@ -5,3 +5,4 @@ flex
 gettext
 pkg-config
 texinfo
+util-linux
