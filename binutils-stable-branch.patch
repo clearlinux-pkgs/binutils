@@ -873,10 +873,15 @@ index 0e9d81ff8e..a6f1d0f070 100644
 -m4_define([BFD_VERSION], [2.36])
 +m4_define([BFD_VERSION], [2.36.1])
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index b81a7d369e..8b08bd0db7 100644
+index b81a7d369e..b60e55d163 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
-@@ -1,3 +1,19 @@
+@@ -1,3 +1,24 @@
++2021-02-09  Alan Modra  <amodra@gmail.com>
++
++	PR 27382
++	* objcopy.c (copy_file): Use bfd_stat.
++
 +2021-02-06  Nick Clifton  <nickc@redhat.com>
 +
 +	This is the 2.36.1 release.
@@ -1065,7 +1070,7 @@ index 1ea0b624ed..1bbc43adeb 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index 62ee22202f..00d751522c 100644
+index 62ee22202f..eab3b6db58 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
 @@ -3769,7 +3769,7 @@ copy_file (const char *input_filename, const char *output_filename, int ofd,
@@ -1073,7 +1078,7 @@ index 62ee22202f..00d751522c 100644
       non-object file, failures are nonfatal.  */
    ibfd = bfd_openr (input_filename, input_target);
 -  if (ibfd == NULL || fstat (fileno ((FILE *) ibfd->iostream), in_stat) != 0)
-+  if (ibfd == NULL || fstat (fileno (ibfd->iostream), in_stat) != 0)
++  if (ibfd == NULL || bfd_stat (ibfd, in_stat) != 0)
      {
        bfd_nonfatal_message (input_filename, NULL, NULL, NULL);
        status = 1;
