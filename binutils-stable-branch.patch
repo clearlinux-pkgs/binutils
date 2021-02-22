@@ -873,10 +873,23 @@ index 0e9d81ff8e..a6f1d0f070 100644
 -m4_define([BFD_VERSION], [2.36])
 +m4_define([BFD_VERSION], [2.36.1])
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index b81a7d369e..b60e55d163 100644
+index b81a7d369e..a725898321 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
-@@ -1,3 +1,24 @@
+@@ -1,3 +1,37 @@
++2021-02-22  Siddhesh Poyarekar  <siddhesh@gotplt.org>
++
++	* ar.c (write_archive): Adjust call to SMART_RENAME.
++	* arsup.c (ar_save): Likewise.
++	* objcopy (strip_main): Don't set times on temporary file and
++	adjust call to SMART_RENAME.
++	(copy_main): Likewise.
++	* rename.c [!S_ISLNK]: Remove definitions.
++	(try_preserve_permissions): Remove function.
++	(smart_rename): Replace PRESERVE_DATES argument with
++	TARGET_STAT.  Use rename system call only if TO does not exist.
++	* bucomm.h (smart_rename): Adjust declaration.
++
 +2021-02-09  Alan Modra  <amodra@gmail.com>
 +
 +	PR 27382
@@ -902,7 +915,7 @@ index b81a7d369e..b60e55d163 100644
  
  	This is the 2.36 release.
 diff --git a/binutils/ar.c b/binutils/ar.c
-index 24ff0920f4..45a34e3a6c 100644
+index 24ff0920f4..3a91708b51 100644
 --- a/binutils/ar.c
 +++ b/binutils/ar.c
 @@ -1254,8 +1254,6 @@ write_archive (bfd *iarch)
@@ -934,12 +947,12 @@ index 24ff0920f4..45a34e3a6c 100644
    bfd_close (iarch);
  
 -  if (smart_rename (new_name, old_name, ofd, skip_stat ? NULL : &target_stat, 0) != 0)
-+  if (smart_rename (new_name, old_name, 0) != 0)
++  if (smart_rename (new_name, old_name, NULL) != 0)
      xexit (1);
    free (old_name);
    free (new_name);
 diff --git a/binutils/arsup.c b/binutils/arsup.c
-index 837011bdfd..5403a0c5d7 100644
+index 837011bdfd..0a1f63f645 100644
 --- a/binutils/arsup.c
 +++ b/binutils/arsup.c
 @@ -345,25 +345,13 @@ ar_save (void)
@@ -965,24 +978,23 @@ index 837011bdfd..5403a0c5d7 100644
  
 -      smart_rename (ofilename, real_name, ofd,
 -		    skip_stat ? NULL : &target_stat, 0);
-+      smart_rename (ofilename, real_name, 0);
++      smart_rename (ofilename, real_name, NULL);
        obfd = 0;
        free (ofilename);
      }
 diff --git a/binutils/bucomm.h b/binutils/bucomm.h
-index 7a0adfae56..91f6a5b228 100644
+index 7a0adfae56..aa7e33d8cd 100644
 --- a/binutils/bucomm.h
 +++ b/binutils/bucomm.h
-@@ -71,8 +71,7 @@ extern void print_version (const char *);
+@@ -71,7 +71,7 @@ extern void print_version (const char *);
  /* In rename.c.  */
  extern void set_times (const char *, const struct stat *);
  
 -extern int smart_rename (const char *, const char *, int, struct stat *, int);
--
-+extern int smart_rename (const char *, const char *, int);
++extern int smart_rename (const char *, const char *, struct stat *);
+ 
  
  /* In libiberty.  */
- void *xmalloc (size_t);
 diff --git a/binutils/configure b/binutils/configure
 index 1ea0b624ed..1bbc43adeb 100755
 --- a/binutils/configure
@@ -1070,7 +1082,7 @@ index 1ea0b624ed..1bbc43adeb 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index 62ee22202f..eab3b6db58 100644
+index 62ee22202f..07a872b5a8 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
 @@ -3769,7 +3769,7 @@ copy_file (const char *input_filename, const char *output_filename, int ofd,
@@ -1104,12 +1116,17 @@ index 62ee22202f..eab3b6db58 100644
  	{
  	  bfd_nonfatal_message (argv[i], NULL, NULL,
  				_("could not create temporary file to hold stripped copy"));
-@@ -4872,18 +4866,12 @@ strip_main (int argc, char *argv[])
+@@ -4867,23 +4861,15 @@ strip_main (int argc, char *argv[])
+ 		 output_target, NULL);
+       if (status == 0)
+ 	{
+-	  if (preserve_dates)
+-	    set_times (tmpname, &statbuf);
  	  if (output_file != tmpname)
  	    status = (smart_rename (tmpname,
  				    output_file ? output_file : argv[i],
 -				    copyfd, &statbuf, preserve_dates) != 0);
-+				    preserve_dates) != 0);
++				    preserve_dates ? &statbuf : NULL) != 0);
  	  if (status == 0)
  	    status = hold_status;
  	}
@@ -1125,7 +1142,7 @@ index 62ee22202f..eab3b6db58 100644
        if (output_file != tmpname)
  	free (tmpname);
      }
-@@ -5091,7 +5079,6 @@ copy_main (int argc, char *argv[])
+@@ -5091,7 +5077,6 @@ copy_main (int argc, char *argv[])
    bfd_boolean use_globalize = FALSE;
    bfd_boolean use_keep_global = FALSE;
    int c, tmpfd = -1;
@@ -1133,7 +1150,7 @@ index 62ee22202f..eab3b6db58 100644
    struct stat statbuf;
    const bfd_arch_info_type *input_arch = NULL;
  
-@@ -5936,16 +5923,9 @@ copy_main (int argc, char *argv[])
+@@ -5936,35 +5921,20 @@ copy_main (int argc, char *argv[])
    else
      tmpname = output_filename;
  
@@ -1153,13 +1170,15 @@ index 62ee22202f..eab3b6db58 100644
  
    copy_file (input_filename, tmpname, tmpfd, &statbuf, input_target,
  	     output_target, input_arch);
-@@ -5954,17 +5934,11 @@ copy_main (int argc, char *argv[])
-       if (preserve_dates)
- 	set_times (tmpname, &statbuf);
+   if (status == 0)
+     {
+-      if (preserve_dates)
+-	set_times (tmpname, &statbuf);
        if (tmpname != output_filename)
 -	status = (smart_rename (tmpname, input_filename, copyfd, &statbuf,
+-				preserve_dates) != 0);
 +	status = (smart_rename (tmpname, input_filename,
- 				preserve_dates) != 0);
++				preserve_dates ? &statbuf : NULL) != 0);
      }
    else
 -    {
@@ -1173,7 +1192,7 @@ index 62ee22202f..eab3b6db58 100644
  
    if (tmpname != output_filename)
      free (tmpname);
-@@ -6018,7 +5992,7 @@ copy_main (int argc, char *argv[])
+@@ -6018,7 +5988,7 @@ copy_main (int argc, char *argv[])
      free (keep_specific_buffer);
  
    if (localize_specific_buffer)
@@ -1482,13 +1501,22 @@ index b45c92c1c6..b3c2c3b008 100644
  msgid "unable to copy file '%s'; reason: %s"
  msgstr ""
 diff --git a/binutils/rename.c b/binutils/rename.c
-index fece311791..65ad5bf52c 100644
+index fece311791..f471b45fd3 100644
 --- a/binutils/rename.c
 +++ b/binutils/rename.c
-@@ -131,55 +131,17 @@ set_times (const char *destination, const struct stat *statbuf)
- #endif
- #endif
+@@ -122,64 +122,19 @@ set_times (const char *destination, const struct stat *statbuf)
+     non_fatal (_("%s: cannot set time: %s"), destination, strerror (errno));
+ }
  
+-#ifndef S_ISLNK
+-#ifdef S_IFLNK
+-#define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
+-#else
+-#define S_ISLNK(m) 0
+-#define lstat stat
+-#endif
+-#endif
+-
 -#if !defined (_WIN32) || defined (__CYGWIN32__)
 -/* Try to preserve the permission bits and ownership of an existing file when
 -   rename overwrites it.  FD is the file being renamed and TARGET_STAT has the
@@ -1530,14 +1558,16 @@ index fece311791..65ad5bf52c 100644
 -   up permissions of the file after renaming.  TARGET_STAT has the file status
 -   that is used to fix up permissions and timestamps after rename.  Return 0 if
 -   ok, -1 if error and FD is closed before returning.  */
-+/* Rename FROM to TO, copying if TO is a link.
-+   Return 0 if ok, -1 if error.  */
++/* Rename FROM to TO, copying if TO exists.  TARGET_STAT has the file status
++   that, if non-NULL, is used to fix up timestamps after rename.  Return 0 if
++   ok, -1 if error.  */
  
  int
 -smart_rename (const char *from, const char *to, int fd ATTRIBUTE_UNUSED,
 -	      struct stat *target_stat ATTRIBUTE_UNUSED,
 -	      int preserve_dates ATTRIBUTE_UNUSED)
-+smart_rename (const char *from, const char *to, int preserve_dates ATTRIBUTE_UNUSED)
++smart_rename (const char *from, const char *to,
++	      struct stat *target_stat ATTRIBUTE_UNUSED)
  {
 +  bfd_boolean exists;
 +  struct stat s;
@@ -1548,7 +1578,7 @@ index fece311791..65ad5bf52c 100644
  
  #if defined (_WIN32) && !defined (__CYGWIN32__)
    /* Win32, unlike unix, will not erase `to' in `rename(from, to)' but
-@@ -196,35 +158,36 @@ smart_rename (const char *from, const char *to, int fd ATTRIBUTE_UNUSED,
+@@ -196,37 +151,10 @@ smart_rename (const char *from, const char *to, int fd ATTRIBUTE_UNUSED,
        unlink (from);
      }
  #else
@@ -1568,51 +1598,34 @@ index fece311791..65ad5bf52c 100644
 -     without knowledge of our change (if it happens after the rename syscall)
 -     or our rename and permissions fixup survive without any knowledge of the
 -     external change.  */
-+  /* Use rename only if TO is not a symbolic link and has
-+     only one hard link, and we have permission to write to it.  */
-   if (! exists
+-  if (! exists
 -      || (fd >= 0
 -	  && !S_ISLNK (target_stat->st_mode)
 -	  && S_ISREG (target_stat->st_mode)
 -	  && (target_stat->st_mode & S_IWUSR)
 -	  && target_stat->st_nlink == 1)
-+      || (!S_ISLNK (s.st_mode)
-+	  && S_ISREG (s.st_mode)
-+	  && (s.st_mode & S_IWUSR)
-+	  && s.st_nlink == 1)
-       )
+-      )
++  /* Avoid a full copy and use rename if TO does not exist.  */
++  if (!exists)
      {
-       ret = rename (from, to);
-       if (ret == 0)
- 	{
- 	  if (exists)
+-      ret = rename (from, to);
+-      if (ret == 0)
+-	{
+-	  if (exists)
 -	    try_preserve_permissions (fd, target_stat);
-+	    {
-+	      /* Try to preserve the permission bits and ownership of
-+		 TO.  First get the mode right except for the setuid
-+		 bit.  Then change the ownership.  Then fix the setuid
-+		 bit.  We do the chmod before the chown because if the
-+		 chown succeeds, and we are a normal user, we won't be
-+		 able to do the chmod afterward.  We don't bother to
-+		 fix the setuid bit first because that might introduce
-+		 a fleeting security problem, and because the chown
-+		 will clear the setuid bit anyhow.  We only fix the
-+		 setuid bit if the chown succeeds, because we don't
-+		 want to introduce an unexpected setuid file owned by
-+		 the user running objcopy.  */
-+	      chmod (to, s.st_mode & 0777);
-+	      if (chown (to, s.st_uid, s.st_gid) >= 0)
-+		chmod (to, s.st_mode & 07777);
-+	    }
- 	}
-       else
+-	}
+-      else
++      if ((ret = rename (from, to)) != 0)
  	{
-@@ -240,11 +203,9 @@ smart_rename (const char *from, const char *to, int fd ATTRIBUTE_UNUSED,
+ 	  /* We have to clean up here.  */
+ 	  non_fatal (_("unable to rename '%s'; reason: %s"), to, strerror (errno));
+@@ -239,12 +167,10 @@ smart_rename (const char *from, const char *to, int fd ATTRIBUTE_UNUSED,
+       if (ret != 0)
  	non_fatal (_("unable to copy file '%s'; reason: %s"), to, strerror (errno));
  
-       if (preserve_dates)
--	set_times (to, target_stat);
-+	set_times (to, &s);
+-      if (preserve_dates)
++      if (target_stat != NULL)
+ 	set_times (to, target_stat);
        unlink (from);
      }
 -  if (fd >= 0)
