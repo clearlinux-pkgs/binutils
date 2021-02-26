@@ -873,10 +873,49 @@ index 0e9d81ff8e..a6f1d0f070 100644
 -m4_define([BFD_VERSION], [2.36])
 +m4_define([BFD_VERSION], [2.36.1])
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index b81a7d369e..a725898321 100644
+index b81a7d369e..57ee4bc8ab 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
-@@ -1,3 +1,37 @@
+@@ -1,3 +1,76 @@
++2021-02-26  Alan Modra  <amodra@gmail.com>
++
++	Backport from mainline
++	2021-02-25  Alan Modra  <amodra@gmail.com>
++	PR 27456
++	* rename.c (simple_copy): Mark target_stat ATTRIBUTE_UNUSED.
++
++	2021-02-24  Alan Modra  <amodra@gmail.com>
++		    Siddhesh Poyarekar  <siddhesh@gotplt.org>
++	PR 27456
++	* bucomm.h (smart_rename): Update prototype.
++	* rename.c (smart_rename): Add fromfd and preserve_dates params.
++	Pass fromfd and target_stat to simple_copy.  Call set_times
++	when preserve_dates.
++	(simple_copy): Accept fromfd rather than from filename.  Add
++	target_stat param.  Rewind fromfd rather than opening.  Open
++	"to" file without O_CREAT.  Try to preserve S_ISUID and S_ISGID.
++	* ar.c (write_archive): Rename ofd to tmpfd.  Dup tmpfd before
++	closing output temp file, and pass tmpfd to smart_rename.
++	* arsup.c (temp_fd): Rename from real_fd.
++	(ar_save): Dup temp_fd and pass to smart_rename.
++	* objcopy.c (strip_main, copy_main): Likewise, and pass
++	preserve_dates.
++
++	2021-02-24  Alan Modra  <amodra@gmail.com>
++	PR 27456
++	* rename.c: Tidy throughout.
++	(smart_rename): Always copy.  Remove windows specific code.
++
++	2021-02-03  Alan Modra  <amodra@gmail.com>
++	PR 26945
++	* ar.c: Don't include libbfd.h.
++	(write_archive): Replace xmalloc+strcpy with xstrdup.
++	* arsup.c (temp_name, real_ofd): New static variables.
++	(ar_open): Use make_tempname and bfd_fdopenw.
++	(ar_save): Adjust to suit ar_open changes.
++	* objcopy.c: Don't include libbfd.h.
++	* rename.c: Rename and reorder variables.
++
 +2021-02-22  Siddhesh Poyarekar  <siddhesh@gotplt.org>
 +
 +	* ar.c (write_archive): Adjust call to SMART_RENAME.
@@ -915,19 +954,48 @@ index b81a7d369e..a725898321 100644
  
  	This is the 2.36 release.
 diff --git a/binutils/ar.c b/binutils/ar.c
-index 24ff0920f4..3a91708b51 100644
+index 24ff0920f4..fb19b14fec 100644
 --- a/binutils/ar.c
 +++ b/binutils/ar.c
-@@ -1254,8 +1254,6 @@ write_archive (bfd *iarch)
+@@ -25,7 +25,6 @@
+ 
+ #include "sysdep.h"
+ #include "bfd.h"
+-#include "libbfd.h"
+ #include "libiberty.h"
+ #include "progress.h"
+ #include "getopt.h"
+@@ -1253,24 +1252,21 @@ write_archive (bfd *iarch)
+   bfd *obfd;
    char *old_name, *new_name;
    bfd *contents_head = iarch->archive_next;
-   int ofd = -1;
+-  int ofd = -1;
 -  struct stat target_stat;
 -  bfd_boolean skip_stat = FALSE;
++  int tmpfd = -1;
  
-   old_name = (char *) xmalloc (strlen (bfd_get_filename (iarch)) + 1);
-   strcpy (old_name, bfd_get_filename (iarch));
-@@ -1301,14 +1299,6 @@ write_archive (bfd *iarch)
+-  old_name = (char *) xmalloc (strlen (bfd_get_filename (iarch)) + 1);
+-  strcpy (old_name, bfd_get_filename (iarch));
+-  new_name = make_tempname (old_name, &ofd);
++  old_name = xstrdup (bfd_get_filename (iarch));
++  new_name = make_tempname (old_name, &tmpfd);
+ 
+   if (new_name == NULL)
+     bfd_fatal (_("could not create temporary file whilst writing archive"));
+ 
+   output_filename = new_name;
+ 
+-  obfd = bfd_fdopenw (new_name, bfd_get_target (iarch), ofd);
++  obfd = bfd_fdopenw (new_name, bfd_get_target (iarch), tmpfd);
+ 
+   if (obfd == NULL)
+     {
+-      close (ofd);
++      close (tmpfd);
+       bfd_fatal (old_name);
+     }
+ 
+@@ -1301,14 +1297,7 @@ write_archive (bfd *iarch)
    if (!bfd_set_archive_head (obfd, contents_head))
      bfd_fatal (old_name);
  
@@ -939,28 +1007,73 @@ index 24ff0920f4..3a91708b51 100644
 -    bfd_fatal (old_name);
 -#endif
 -
++  tmpfd = dup (tmpfd);
    if (!bfd_close (obfd))
      bfd_fatal (old_name);
  
-@@ -1318,7 +1308,7 @@ write_archive (bfd *iarch)
+@@ -1318,7 +1307,7 @@ write_archive (bfd *iarch)
    /* We don't care if this fails; we might be creating the archive.  */
    bfd_close (iarch);
  
 -  if (smart_rename (new_name, old_name, ofd, skip_stat ? NULL : &target_stat, 0) != 0)
-+  if (smart_rename (new_name, old_name, NULL) != 0)
++  if (smart_rename (new_name, old_name, tmpfd, NULL, FALSE) != 0)
      xexit (1);
    free (old_name);
    free (new_name);
 diff --git a/binutils/arsup.c b/binutils/arsup.c
-index 837011bdfd..0a1f63f645 100644
+index 837011bdfd..9982484dbe 100644
 --- a/binutils/arsup.c
 +++ b/binutils/arsup.c
-@@ -345,25 +345,13 @@ ar_save (void)
+@@ -42,6 +42,8 @@ extern int deterministic;
+ 
+ static bfd *obfd;
+ static char *real_name;
++static char *temp_name;
++static int temp_fd;
+ static FILE *outfile;
+ 
+ static void
+@@ -149,27 +151,24 @@ maybequit (void)
+ void
+ ar_open (char *name, int t)
+ {
+-  char *tname;
+-  const char *bname = lbasename (name);
+-  real_name = name;
++  real_name = xstrdup (name);
++  temp_name = make_tempname (real_name, &temp_fd);
+ 
+-  /* Prepend tmp- to the beginning, to avoid file-name clashes after
+-     truncation on filesystems with limited namespaces (DOS).  */
+-  if (asprintf (&tname, "%.*stmp-%s", (int) (bname - name), name, bname) == -1)
++  if (temp_name == NULL)
+     {
+-      fprintf (stderr, _("%s: Can't allocate memory for temp name (%s)\n"),
++      fprintf (stderr, _("%s: Can't open temporary file (%s)\n"),
+ 	       program_name, strerror(errno));
+       maybequit ();
+       return;
+     }
+ 
+-  obfd = bfd_openw (tname, NULL);
++  obfd = bfd_fdopenw (temp_name, NULL, temp_fd);
+ 
+   if (!obfd)
+     {
+       fprintf (stderr,
+ 	       _("%s: Can't open output archive %s\n"),
+-	       program_name,  tname);
++	       program_name, temp_name);
+ 
+       maybequit ();
+     }
+@@ -344,28 +343,31 @@ ar_save (void)
+     }
    else
      {
-       char *ofilename = xstrdup (bfd_get_filename (obfd));
+-      char *ofilename = xstrdup (bfd_get_filename (obfd));
 -      bfd_boolean skip_stat = FALSE;
--      struct stat target_stat;
+       struct stat target_stat;
 -      int ofd = -1;
  
        if (deterministic > 0)
@@ -974,24 +1087,43 @@ index 837011bdfd..0a1f63f645 100644
 -	skip_stat = TRUE;
 -#endif
 -
++      temp_fd = dup (temp_fd);
        bfd_close (obfd);
  
 -      smart_rename (ofilename, real_name, ofd,
 -		    skip_stat ? NULL : &target_stat, 0);
-+      smart_rename (ofilename, real_name, NULL);
++      if (stat (real_name, &target_stat) != 0)
++	{
++	  /* The temp file created in ar_open has mode 0600 as per mkstemp.
++	     Create the real empty output file here so smart_rename will
++	     update the mode according to the process umask.  */
++	  obfd = bfd_openw (real_name, NULL);
++	  if (obfd != NULL)
++	    {
++	      bfd_set_format (obfd, bfd_archive);
++	      bfd_close (obfd);
++	    }
++	}
++
++      smart_rename (temp_name, real_name, temp_fd, NULL, FALSE);
        obfd = 0;
-       free (ofilename);
+-      free (ofilename);
++      free (temp_name);
++      free (real_name);
      }
+ }
+ 
 diff --git a/binutils/bucomm.h b/binutils/bucomm.h
-index 7a0adfae56..aa7e33d8cd 100644
+index 7a0adfae56..f1ae47fa1b 100644
 --- a/binutils/bucomm.h
 +++ b/binutils/bucomm.h
-@@ -71,7 +71,7 @@ extern void print_version (const char *);
+@@ -71,7 +71,8 @@ extern void print_version (const char *);
  /* In rename.c.  */
  extern void set_times (const char *, const struct stat *);
  
 -extern int smart_rename (const char *, const char *, int, struct stat *, int);
-+extern int smart_rename (const char *, const char *, struct stat *);
++extern int smart_rename (const char *, const char *, int,
++			 struct stat *, bfd_boolean);
  
  
  /* In libiberty.  */
@@ -1082,10 +1214,18 @@ index 1ea0b624ed..1bbc43adeb 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index 62ee22202f..07a872b5a8 100644
+index 62ee22202f..620baee6de 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
-@@ -3769,7 +3769,7 @@ copy_file (const char *input_filename, const char *output_filename, int ofd,
+@@ -20,7 +20,6 @@
+ 
+ #include "sysdep.h"
+ #include "bfd.h"
+-#include "libbfd.h"
+ #include "progress.h"
+ #include "getopt.h"
+ #include "libiberty.h"
+@@ -3769,7 +3768,7 @@ copy_file (const char *input_filename, const char *output_filename, int ofd,
    /* To allow us to do "strip *" without dying on the first
       non-object file, failures are nonfatal.  */
    ibfd = bfd_openr (input_filename, input_target);
@@ -1094,15 +1234,16 @@ index 62ee22202f..07a872b5a8 100644
      {
        bfd_nonfatal_message (input_filename, NULL, NULL, NULL);
        status = 1;
-@@ -4835,7 +4835,6 @@ strip_main (int argc, char *argv[])
-       struct stat statbuf;
-       char *tmpname;
-       int tmpfd = -1;
--      int copyfd = -1;
+@@ -4845,16 +4844,15 @@ strip_main (int argc, char *argv[])
  
-       if (get_file_size (argv[i]) < 1)
- 	{
-@@ -4849,12 +4848,7 @@ strip_main (int argc, char *argv[])
+       if (output_file == NULL
+ 	  || filename_cmp (argv[i], output_file) == 0)
+-	tmpname = make_tempname (argv[i], &tmpfd);
++	{
++	  tmpname = make_tempname (argv[i], &tmpfd);
++	  if (tmpfd >= 0)
++	    copyfd = dup (tmpfd);
++	}
        else
  	tmpname = output_file;
  
@@ -1116,41 +1257,58 @@ index 62ee22202f..07a872b5a8 100644
  	{
  	  bfd_nonfatal_message (argv[i], NULL, NULL,
  				_("could not create temporary file to hold stripped copy"));
-@@ -4867,23 +4861,15 @@ strip_main (int argc, char *argv[])
+@@ -4867,21 +4865,17 @@ strip_main (int argc, char *argv[])
  		 output_target, NULL);
        if (status == 0)
  	{
 -	  if (preserve_dates)
 -	    set_times (tmpname, &statbuf);
  	  if (output_file != tmpname)
- 	    status = (smart_rename (tmpname,
- 				    output_file ? output_file : argv[i],
+-	    status = (smart_rename (tmpname,
+-				    output_file ? output_file : argv[i],
 -				    copyfd, &statbuf, preserve_dates) != 0);
-+				    preserve_dates ? &statbuf : NULL) != 0);
++	    status = smart_rename (tmpname,
++				   output_file ? output_file : argv[i],
++				   copyfd, &statbuf, preserve_dates) != 0;
  	  if (status == 0)
  	    status = hold_status;
  	}
        else
--	{
+ 	{
 -#if !defined (_WIN32) || defined (__CYGWIN32__)
--	  if (copyfd >= 0)
--	    close (copyfd);
+ 	  if (copyfd >= 0)
+ 	    close (copyfd);
 -#endif
--	  unlink_if_ordinary (tmpname);
--	}
-+	unlink_if_ordinary (tmpname);
+ 	  unlink_if_ordinary (tmpname);
+ 	}
        if (output_file != tmpname)
- 	free (tmpname);
-     }
-@@ -5091,7 +5077,6 @@ copy_main (int argc, char *argv[])
+@@ -5090,8 +5084,9 @@ copy_main (int argc, char *argv[])
+   bfd_boolean formats_info = FALSE;
    bfd_boolean use_globalize = FALSE;
    bfd_boolean use_keep_global = FALSE;
-   int c, tmpfd = -1;
+-  int c, tmpfd = -1;
 -  int copyfd = -1;
++  int c;
++  int tmpfd = -1;
++  int copyfd;
    struct stat statbuf;
    const bfd_arch_info_type *input_arch = NULL;
  
-@@ -5936,35 +5921,20 @@ copy_main (int argc, char *argv[])
+@@ -5929,40 +5924,34 @@ copy_main (int argc, char *argv[])
+     }
+ 
+   /* If there is no destination file, or the source and destination files
+-     are the same, then create a temp and rename the result into the input.  */
++     are the same, then create a temp and copy the result into the input.  */
++  copyfd = -1;
+   if (output_filename == NULL
+       || filename_cmp (input_filename, output_filename) == 0)
+-    tmpname = make_tempname (input_filename, &tmpfd);
++    {
++      tmpname = make_tempname (input_filename, &tmpfd);
++      if (tmpfd >= 0)
++	copyfd = dup (tmpfd);
++    }
    else
      tmpname = output_filename;
  
@@ -1177,22 +1335,19 @@ index 62ee22202f..07a872b5a8 100644
        if (tmpname != output_filename)
 -	status = (smart_rename (tmpname, input_filename, copyfd, &statbuf,
 -				preserve_dates) != 0);
-+	status = (smart_rename (tmpname, input_filename,
-+				preserve_dates ? &statbuf : NULL) != 0);
++	status = smart_rename (tmpname, input_filename, copyfd,
++			       &statbuf, preserve_dates) != 0;
      }
    else
--    {
+     {
 -#if !defined (_WIN32) || defined (__CYGWIN32__)
--      if (copyfd >= 0)
--	close (copyfd);
+       if (copyfd >= 0)
+ 	close (copyfd);
 -#endif
--      unlink_if_ordinary (tmpname);
--    }
-+    unlink_if_ordinary (tmpname);
+       unlink_if_ordinary (tmpname);
+     }
  
-   if (tmpname != output_filename)
-     free (tmpname);
-@@ -6018,7 +5988,7 @@ copy_main (int argc, char *argv[])
+@@ -6018,7 +6007,7 @@ copy_main (int argc, char *argv[])
      free (keep_specific_buffer);
  
    if (localize_specific_buffer)
@@ -1501,22 +1656,151 @@ index b45c92c1c6..b3c2c3b008 100644
  msgid "unable to copy file '%s'; reason: %s"
  msgstr ""
 diff --git a/binutils/rename.c b/binutils/rename.c
-index fece311791..f471b45fd3 100644
+index fece311791..861c2b56d1 100644
 --- a/binutils/rename.c
 +++ b/binutils/rename.c
-@@ -122,64 +122,19 @@ set_times (const char *destination, const struct stat *statbuf)
-     non_fatal (_("%s: cannot set time: %s"), destination, strerror (errno));
- }
+@@ -24,36 +24,29 @@
  
+ #ifdef HAVE_GOOD_UTIME_H
+ #include <utime.h>
+-#else /* ! HAVE_GOOD_UTIME_H */
+-#ifdef HAVE_UTIMES
++#elif defined HAVE_UTIMES
+ #include <sys/time.h>
+-#endif /* HAVE_UTIMES */
+-#endif /* ! HAVE_GOOD_UTIME_H */
+-
+-#if ! defined (_WIN32) || defined (__CYGWIN32__)
+-static int simple_copy (const char *, const char *);
++#endif
+ 
+ /* The number of bytes to copy at once.  */
+ #define COPY_BUF 8192
+ 
+-/* Copy file FROM to file TO, performing no translations.
++/* Copy file FROMFD to file TO, performing no translations.
+    Return 0 if ok, -1 if error.  */
+ 
+ static int
+-simple_copy (const char *from, const char *to)
++simple_copy (int fromfd, const char *to,
++	     struct stat *target_stat ATTRIBUTE_UNUSED)
+ {
+-  int fromfd, tofd, nread;
++  int tofd, nread;
+   int saved;
+   char buf[COPY_BUF];
+ 
+-  fromfd = open (from, O_RDONLY | O_BINARY);
+-  if (fromfd < 0)
++  if (fromfd < 0
++      || lseek (fromfd, 0, SEEK_SET) != 0)
+     return -1;
+-#ifdef O_CREAT
+-  tofd = open (to, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0777);
+-#else
+-  tofd = creat (to, 0777);
+-#endif
++
++  tofd = open (to, O_WRONLY | O_TRUNC | O_BINARY);
+   if (tofd < 0)
+     {
+       saved = errno;
+@@ -61,6 +54,7 @@ simple_copy (const char *from, const char *to)
+       errno = saved;
+       return -1;
+     }
++
+   while ((nread = read (fromfd, buf, sizeof buf)) > 0)
+     {
+       if (write (tofd, buf, nread) != nread)
+@@ -72,7 +66,16 @@ simple_copy (const char *from, const char *to)
+ 	  return -1;
+ 	}
+     }
++
+   saved = errno;
++
++#if !defined (_WIN32) || defined (__CYGWIN32__)
++  /* Writing to a setuid/setgid file may clear S_ISUID and S_ISGID.
++     Try to restore them, ignoring failure.  */
++  if (target_stat != NULL)
++    fchmod (tofd, target_stat->st_mode);
++#endif
++
+   close (fromfd);
+   close (tofd);
+   if (nread < 0)
+@@ -82,7 +85,6 @@ simple_copy (const char *from, const char *to)
+     }
+   return 0;
+ }
+-#endif /* __CYGWIN32__ or not _WIN32 */
+ 
+ /* Set the times of the file DESTINATION to be the same as those in
+    STATBUF.  */
+@@ -91,161 +93,52 @@ void
+ set_times (const char *destination, const struct stat *statbuf)
+ {
+   int result;
+-
+-  {
+ #ifdef HAVE_GOOD_UTIME_H
+-    struct utimbuf tb;
+-
+-    tb.actime = statbuf->st_atime;
+-    tb.modtime = statbuf->st_mtime;
+-    result = utime (destination, &tb);
+-#else /* ! HAVE_GOOD_UTIME_H */
+-#ifndef HAVE_UTIMES
+-    long tb[2];
+-
+-    tb[0] = statbuf->st_atime;
+-    tb[1] = statbuf->st_mtime;
+-    result = utime (destination, tb);
+-#else /* HAVE_UTIMES */
+-    struct timeval tv[2];
+-
+-    tv[0].tv_sec = statbuf->st_atime;
+-    tv[0].tv_usec = 0;
+-    tv[1].tv_sec = statbuf->st_mtime;
+-    tv[1].tv_usec = 0;
+-    result = utimes (destination, tv);
+-#endif /* HAVE_UTIMES */
+-#endif /* ! HAVE_GOOD_UTIME_H */
+-  }
+-
+-  if (result != 0)
+-    non_fatal (_("%s: cannot set time: %s"), destination, strerror (errno));
+-}
+-
 -#ifndef S_ISLNK
 -#ifdef S_IFLNK
 -#define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
--#else
++  struct utimbuf tb;
++
++  tb.actime = statbuf->st_atime;
++  tb.modtime = statbuf->st_mtime;
++  result = utime (destination, &tb);
++#elif defined HAVE_UTIMES
++  struct timeval tv[2];
++
++  tv[0].tv_sec = statbuf->st_atime;
++  tv[0].tv_usec = 0;
++  tv[1].tv_sec = statbuf->st_mtime;
++  tv[1].tv_usec = 0;
++  result = utimes (destination, tv);
+ #else
 -#define S_ISLNK(m) 0
 -#define lstat stat
 -#endif
--#endif
--
++  long tb[2];
++
++  tb[0] = statbuf->st_atime;
++  tb[1] = statbuf->st_mtime;
++  result = utime (destination, tb);
+ #endif
+ 
 -#if !defined (_WIN32) || defined (__CYGWIN32__)
 -/* Try to preserve the permission bits and ownership of an existing file when
 -   rename overwrites it.  FD is the file being renamed and TARGET_STAT has the
@@ -1550,38 +1834,49 @@ index fece311791..f471b45fd3 100644
 -     succeeded.  */
 -  if (ret == 0)
 -    fchmod (fd, target_stat->st_mode & 07777);
--}
++  if (result != 0)
++    non_fatal (_("%s: cannot set time: %s"), destination, strerror (errno));
+ }
 -#endif
--
+ 
 -/* Rename FROM to TO, copying if TO is either a link or is not a regular file.
 -   FD is an open file descriptor pointing to FROM that we can use to safely fix
 -   up permissions of the file after renaming.  TARGET_STAT has the file status
 -   that is used to fix up permissions and timestamps after rename.  Return 0 if
 -   ok, -1 if error and FD is closed before returning.  */
-+/* Rename FROM to TO, copying if TO exists.  TARGET_STAT has the file status
-+   that, if non-NULL, is used to fix up timestamps after rename.  Return 0 if
-+   ok, -1 if error.  */
++/* Copy FROM to TO.  TARGET_STAT has the file status that, if non-NULL,
++   is used to fix up timestamps.  Return 0 if ok, -1 if error.
++   At one time this function renamed files, but file permissions are
++   tricky to update given the number of different schemes used by
++   various systems.  So now we just copy.  */
  
  int
 -smart_rename (const char *from, const char *to, int fd ATTRIBUTE_UNUSED,
 -	      struct stat *target_stat ATTRIBUTE_UNUSED,
 -	      int preserve_dates ATTRIBUTE_UNUSED)
-+smart_rename (const char *from, const char *to,
-+	      struct stat *target_stat ATTRIBUTE_UNUSED)
++smart_rename (const char *from, const char *to, int fromfd,
++	      struct stat *target_stat, bfd_boolean preserve_dates)
  {
-+  bfd_boolean exists;
-+  struct stat s;
-   int ret = 0;
+-  int ret = 0;
 -  bfd_boolean exists = target_stat != NULL;
-+
-+  exists = lstat (to, &s) == 0;
++  int ret;
  
- #if defined (_WIN32) && !defined (__CYGWIN32__)
-   /* Win32, unlike unix, will not erase `to' in `rename(from, to)' but
-@@ -196,37 +151,10 @@ smart_rename (const char *from, const char *to, int fd ATTRIBUTE_UNUSED,
-       unlink (from);
-     }
- #else
+-#if defined (_WIN32) && !defined (__CYGWIN32__)
+-  /* Win32, unlike unix, will not erase `to' in `rename(from, to)' but
+-     fail instead.  Also, chown is not present.  */
+-
+-  if (exists)
+-    remove (to);
+-
+-  ret = rename (from, to);
++  ret = simple_copy (fromfd, to, target_stat);
+   if (ret != 0)
+-    {
+-      /* We have to clean up here.  */
+-      non_fatal (_("unable to rename '%s'; reason: %s"), to, strerror (errno));
+-      unlink (from);
+-    }
+-#else
 -  /* Avoid a full copy and use rename if we can fix up permissions of the
 -     file after renaming, i.e.:
 -
@@ -1605,9 +1900,7 @@ index fece311791..f471b45fd3 100644
 -	  && (target_stat->st_mode & S_IWUSR)
 -	  && target_stat->st_nlink == 1)
 -      )
-+  /* Avoid a full copy and use rename if TO does not exist.  */
-+  if (!exists)
-     {
+-    {
 -      ret = rename (from, to);
 -      if (ret == 0)
 -	{
@@ -1615,24 +1908,33 @@ index fece311791..f471b45fd3 100644
 -	    try_preserve_permissions (fd, target_stat);
 -	}
 -      else
-+      if ((ret = rename (from, to)) != 0)
- 	{
- 	  /* We have to clean up here.  */
- 	  non_fatal (_("unable to rename '%s'; reason: %s"), to, strerror (errno));
-@@ -239,12 +167,10 @@ smart_rename (const char *from, const char *to, int fd ATTRIBUTE_UNUSED,
-       if (ret != 0)
- 	non_fatal (_("unable to copy file '%s'; reason: %s"), to, strerror (errno));
+-	{
+-	  /* We have to clean up here.  */
+-	  non_fatal (_("unable to rename '%s'; reason: %s"), to, strerror (errno));
+-	  unlink (from);
+-	}
+-    }
+-  else
+-    {
+-      ret = simple_copy (from, to);
+-      if (ret != 0)
+-	non_fatal (_("unable to copy file '%s'; reason: %s"), to, strerror (errno));
++    non_fatal (_("unable to copy file '%s'; reason: %s"),
++	       to, strerror (errno));
  
 -      if (preserve_dates)
-+      if (target_stat != NULL)
- 	set_times (to, target_stat);
-       unlink (from);
-     }
+-	set_times (to, target_stat);
+-      unlink (from);
+-    }
 -  if (fd >= 0)
 -    close (fd);
- #endif /* _WIN32 && !__CYGWIN32__ */
+-#endif /* _WIN32 && !__CYGWIN32__ */
++  if (preserve_dates)
++    set_times (to, target_stat);
++  unlink (from);
  
    return ret;
+ }
 diff --git a/elfcpp/ChangeLog b/elfcpp/ChangeLog
 index 98283babd8..404e0de556 100644
 --- a/elfcpp/ChangeLog
