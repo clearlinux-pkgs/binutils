@@ -57,10 +57,16 @@ index 4fe7321786e..a63050cd3e6 100644
  install-strip-opcodes: maybe-install-strip-bfd
  configure-gas: maybe-configure-intl
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 91a828c550a..6b399753762 100644
+index 91a828c550a..24d25dc1a46 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,77 @@
+@@ -1,3 +1,83 @@
++2021-03-22  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/27587
++	* dwarf2.c (read_attribute_value): Check version >= 3 for
++	DW_FORM_ref_addr.
++
 +2021-03-02  Alan Modra  <amodra@gmail.com>
 +
 +	* elf64-ppc.c (ppc64_elf_relocate_section): Don't optimise got
@@ -238,9 +244,18 @@ index eb9762e4426..a376b02d869 100644
  # Indicate whether this is a release branch.
  experimental=false
 diff --git a/bfd/dwarf2.c b/bfd/dwarf2.c
-index 292d60c33d4..240138d5982 100644
+index 292d60c33d4..5651696c0f7 100644
 --- a/bfd/dwarf2.c
 +++ b/bfd/dwarf2.c
+@@ -1195,7 +1195,7 @@ read_attribute_value (struct attribute *  attr,
+     case DW_FORM_ref_addr:
+       /* DW_FORM_ref_addr is an address in DWARF2, and an offset in
+ 	 DWARF3.  */
+-      if (unit->version == 3 || unit->version == 4)
++      if (unit->version >= 3)
+ 	{
+ 	  if (unit->offset_size == 4)
+ 	    attr->u.val = read_4_bytes (unit->abfd, info_ptr, info_ptr_end);
 @@ -3289,9 +3289,6 @@ read_rnglists (struct comp_unit *unit, struct arange *arange,
  	  return FALSE;
  	}
@@ -3316,10 +3331,18 @@ index cc112b01588..868ae2f02dc 100644
    };
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 1a2a60e70e7..094ca70ad0c 100644
+index 1a2a60e70e7..7c5237a73df 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,79 @@
+@@ -1,3 +1,87 @@
++2021-03-22  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/27587
++	* testsuite/ld-x86-64/pr27587.err: New file.
++	* testsuite/ld-x86-64/pr27587a.obj.bz2: Likewise.
++	* testsuite/ld-x86-64/pr27587b.obj.bz2: Likewise.
++	* testsuite/ld-x86-64/x86-64.exp: Run PR ld/27587 test.
++
 +2021-03-02  Alan Modra  <amodra@gmail.com>
 +
 +	* testsuite/ld-powerpc/weak1.d,
@@ -4032,11 +4055,40 @@ index e11699bed31..0a913da25d9 100644
  }
  
  run_ld_link_tests $shlibtests
+diff --git a/ld/testsuite/ld-x86-64/pr27587.err b/ld/testsuite/ld-x86-64/pr27587.err
+new file mode 100644
+index 00000000000..fa870790813
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr27587.err
+@@ -0,0 +1,3 @@
++#...
++.*pr27587.i:4: undefined reference to `stack_size'
++#...
+diff --git a/ld/testsuite/ld-x86-64/pr27587a.obj.bz2 b/ld/testsuite/ld-x86-64/pr27587a.obj.bz2
+new file mode 100644
+index 00000000000..eebcf54d44d
+Binary files /dev/null and b/ld/testsuite/ld-x86-64/pr27587a.obj.bz2 differ
+diff --git a/ld/testsuite/ld-x86-64/pr27587b.obj.bz2 b/ld/testsuite/ld-x86-64/pr27587b.obj.bz2
+new file mode 100644
+index 00000000000..8506e4eccdb
+Binary files /dev/null and b/ld/testsuite/ld-x86-64/pr27587b.obj.bz2 differ
 diff --git a/ld/testsuite/ld-x86-64/x86-64.exp b/ld/testsuite/ld-x86-64/x86-64.exp
-index 83fdaa7db65..da0d2a76f3b 100644
+index 83fdaa7db65..d2ec1ddc328 100644
 --- a/ld/testsuite/ld-x86-64/x86-64.exp
 +++ b/ld/testsuite/ld-x86-64/x86-64.exp
-@@ -1582,69 +1582,6 @@ if { [isnative] && [check_compiler_available] } {
+@@ -221,6 +221,11 @@ set x86_64tests {
+      "-melf_x86_64 -pie -z notext tmpdir/pr20550a.o tmpdir/pr20550b.so"
+      ""
+      "--64" { dummy.s } {} "pr20550"}
++    {"Build pr27587"
++     "-melf_x86_64 -e main"
++     "" ""
++     { pr27587a.obj.bz2 pr27587b.obj.bz2 }
++     {{ld "pr27587.err"}} "pr27587"}
+ }
+ 
+ run_ld_link_tests $x86_64tests
+@@ -1582,69 +1587,6 @@ if { [isnative] && [check_compiler_available] } {
  	    {pass.c property-stack.S} \
  	    "property-3-static" "pass.out" \
  	] \
