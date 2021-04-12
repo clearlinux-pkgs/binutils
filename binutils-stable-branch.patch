@@ -2096,10 +2096,20 @@ index 98283babd83..404e0de5562 100644
  
  	This is the 2.36 release.
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index fd17b2ba94d..ed383a970e0 100644
+index fd17b2ba94d..057943ce68d 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,50 @@
+@@ -1,3 +1,60 @@
++2021-04-09  Tejas Belagod  <tejas.belagod@arm.com>
++
++	Backported from mainline.
++	2021-04-09  Tejas Belagod  <tejas.belagod@arm.com>
++
++	* config/tc-aarch64.c (warn_unpredictable_ldst): Clean-up diagnostic messages
++	for LD/ST Exclusive instructions.
++	* testsuite/gas/aarch64/diagnostic.s: Add a diagnostic test for STLXP.
++	* testsuite/gas/aarch64/diagnostic.l: Fix-up test after message clean-up.
++
 +2021-02-19  Andreas Krebbel  <krebbel@linux.ibm.com>
 +
 +	* config/tc-s390.c (s390_parse_cpu): New entry for arch14.
@@ -2150,6 +2160,68 @@ index fd17b2ba94d..ed383a970e0 100644
  2021-01-24  Nick Clifton  <nickc@redhat.com>
  
  	This is the 2.36 release.
+diff --git a/gas/config/tc-aarch64.c b/gas/config/tc-aarch64.c
+index 6f782d057f8..e852e38dfb4 100644
+--- a/gas/config/tc-aarch64.c
++++ b/gas/config/tc-aarch64.c
+@@ -7020,18 +7020,49 @@ warn_unpredictable_ldst (aarch64_instruction *instr, char *str)
+       break;
+ 
+     case ldstexcl:
+-      /* It is unpredictable if the destination and status registers are the
+-	 same.  */
+       if ((aarch64_get_operand_class (opnds[0].type)
+ 	   == AARCH64_OPND_CLASS_INT_REG)
+ 	  && (aarch64_get_operand_class (opnds[1].type)
+-	      == AARCH64_OPND_CLASS_INT_REG)
+-	  && (opnds[0].reg.regno == opnds[1].reg.regno
+-	      || opnds[0].reg.regno == opnds[2].reg.regno))
+-	as_warn (_("unpredictable: identical transfer and status registers"
+-		   " --`%s'"),
+-		 str);
++	      == AARCH64_OPND_CLASS_INT_REG))
++	{
++          if ((opcode->opcode & (1 << 22)))
++	    {
++	      /* It is unpredictable if load-exclusive pair with Rt == Rt2.  */
++	      if ((opcode->opcode & (1 << 21))
++		  && opnds[0].reg.regno == opnds[1].reg.regno)
++		as_warn (_("unpredictable load of register pair -- `%s'"), str);
++	    }
++	  else
++	    {
++	      /*  Store-Exclusive is unpredictable if Rt == Rs.  */
++	      if (opnds[0].reg.regno == opnds[1].reg.regno)
++		as_warn
++		  (_("unpredictable: identical transfer and status registers"
++		     " --`%s'"),str);
+ 
++	      if (opnds[0].reg.regno == opnds[2].reg.regno)
++		{
++		  if (!(opcode->opcode & (1 << 21)))
++	            /*  Store-Exclusive is unpredictable if Rn == Rs.  */
++		    as_warn
++		      (_("unpredictable: identical base and status registers"
++			 " --`%s'"),str);
++		  else
++	            /*  Store-Exclusive pair is unpredictable if Rt2 == Rs.  */
++		    as_warn
++		      (_("unpredictable: "
++			 "identical transfer and status registers"
++			 " --`%s'"),str);
++		}
++
++	      /* Store-Exclusive pair is unpredictable if Rn == Rs.  */
++	      if ((opcode->opcode & (1 << 21))
++		  && opnds[0].reg.regno == opnds[3].reg.regno
++		  && opnds[3].reg.regno != REG_SP)
++		as_warn (_("unpredictable: identical base and status registers"
++			   " --`%s'"),str);
++	    }
++	}
+       break;
+ 
+     default:
 diff --git a/gas/config/tc-nios2.c b/gas/config/tc-nios2.c
 index eea6687fcc4..be4536caa8a 100644
 --- a/gas/config/tc-nios2.c
@@ -2700,6 +2772,37 @@ index 3ad7b98ef3e..b5c9921838e 100644
  msgid ".attribute priv spec must set before any instructions"
  msgstr ""
  
+diff --git a/gas/testsuite/gas/aarch64/diagnostic.l b/gas/testsuite/gas/aarch64/diagnostic.l
+index b5f304af70b..5158d41cd43 100644
+--- a/gas/testsuite/gas/aarch64/diagnostic.l
++++ b/gas/testsuite/gas/aarch64/diagnostic.l
+@@ -175,11 +175,11 @@
+ [^:]*:304: Warning: unpredictable: identical transfer and status registers --`stlxrb w26,w26,\[x0\]'
+ [^:]*:305: Warning: unpredictable: identical transfer and status registers --`stlxrh w26,w26,\[x1\]'
+ [^:]*:306: Warning: unpredictable: identical transfer and status registers --`stlxr w26,w26,\[x2\]'
+-[^:]*:307: Warning: unpredictable: identical transfer and status registers --`stlxrb w26,w27,\[x26\]'
+-[^:]*:308: Warning: unpredictable: identical transfer and status registers --`stlxrh w26,w27,\[x26\]'
+-[^:]*:309: Warning: unpredictable: identical transfer and status registers --`stlxr w26,w27,\[x26\]'
+-[^:]*:310: Warning: unpredictable: identical transfer and status registers --`stlxr w26,x27,\[x26\]'
++[^:]*:307: Warning: unpredictable: identical base and status registers --`stlxrb w26,w27,\[x26\]'
++[^:]*:308: Warning: unpredictable: identical base and status registers --`stlxrh w26,w27,\[x26\]'
++[^:]*:309: Warning: unpredictable: identical base and status registers --`stlxr w26,w27,\[x26\]'
++[^:]*:310: Warning: unpredictable: identical base and status registers --`stlxr w26,x27,\[x26\]'
+ [^:]*:311: Warning: unpredictable: identical transfer and status registers --`stlxr w26,x26,\[x3\]'
+-[^:]*:312: Warning: unpredictable: identical transfer and status registers --`ldxp x26,x26,\[x5\]'
+-[^:]*:313: Warning: unpredictable: identical transfer and status registers --`ldxp x26,x1,\[x26\]'
++[^:]*:312: Warning: unpredictable load of register pair -- `ldxp x26,x26,\[x5\]'
+ [^:]*:314: Error: expected element type rather than vector type at operand 1 -- `st4 {v0\.16b-v3\.16b}\[4\],\[x0\]'
++[^:]*:315: Warning: unpredictable: identical base and status registers --`stlxp w3,w26,w26,\[x3\]'
+diff --git a/gas/testsuite/gas/aarch64/diagnostic.s b/gas/testsuite/gas/aarch64/diagnostic.s
+index 21cbc53d897..0ebe85ac59d 100644
+--- a/gas/testsuite/gas/aarch64/diagnostic.s
++++ b/gas/testsuite/gas/aarch64/diagnostic.s
+@@ -312,3 +312,4 @@
+ 	ldxp	x26, x26, [x5]
+ 	ldxp	x26, x1, [x26]
+ 	st4	{v0.16b-v3.16b}[4], [x0]
++	stlxp	w3, w26, w26, [x3]
 diff --git a/gas/testsuite/gas/all/none.d b/gas/testsuite/gas/all/none.d
 index deebab8b49c..374808a4f59 100644
 --- a/gas/testsuite/gas/all/none.d
@@ -4297,10 +4400,18 @@ index 83fdaa7db65..d2ec1ddc328 100644
  	    "Run pr22001-1a (PIC 1)" \
  	    "$NOPIE_LDFLAGS -Wl,-z,nocopyreloc,--no-as-needed tmpdir/pr22001-1.so" \
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index 206957af5e8..162fd742369 100644
+index 206957af5e8..ca9dff38798 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
-@@ -1,3 +1,30 @@
+@@ -1,3 +1,38 @@
++2021-04-09  Tejas Belagod  <tejas.belagod@arm.com>
++
++	Backported from mainline.
++	021-04-09  Tejas Belagod  <tejas.belagod@arm.com>
++
++	* aarch64-tbl.h (struct aarch64_opcode aarch64_opcode_table): Reclassify
++	LD64/ST64 instructions to lse_atomic instead of ldstexcl.
++
 +2021-02-19  Andreas Krebbel  <krebbel@linux.ibm.com>
 +
 +	* s390-mkopc.c (main): Accept arch14 as cpu string.
@@ -4331,6 +4442,25 @@ index 206957af5e8..162fd742369 100644
  2021-01-24  Nick Clifton  <nickc@redhat.com>
  
  	This is the 2.36 release.
+diff --git a/opcodes/aarch64-tbl.h b/opcodes/aarch64-tbl.h
+index f5c313138ea..4192e54d188 100644
+--- a/opcodes/aarch64-tbl.h
++++ b/opcodes/aarch64-tbl.h
+@@ -3646,10 +3646,10 @@ struct aarch64_opcode aarch64_opcode_table[] =
+   CORE_INSN ("ldrsw", 0x98000000, 0xff000000, loadlit, OP_LDRSW_LIT, OP2 (Rt, ADDR_PCREL19),    QL_X_PCREL, 0),
+   CORE_INSN ("prfm",  0xd8000000, 0xff000000, loadlit, OP_PRFM_LIT,  OP2 (PRFOP, ADDR_PCREL19), QL_PRFM_PCREL, 0),
+   /* Atomic 64-byte load/store in Armv8.7.  */
+-  _LS64_INSN ("ld64b",   0xf83fd000, 0xfffffc00, ldstexcl, OP2 (Rt_LS64, ADDR_SIMPLE), QL_X1NIL, 0),
+-  _LS64_INSN ("st64b",   0xf83f9000, 0xfffffc00, ldstexcl, OP2 (Rt_LS64, ADDR_SIMPLE), QL_X1NIL, 0),
+-  _LS64_INSN ("st64bv",  0xf820b000, 0xffe0fc00, ldstexcl, OP3 (Rs, Rt_LS64, ADDR_SIMPLE), QL_X2NIL, 0),
+-  _LS64_INSN ("st64bv0", 0xf820a000, 0xffe0fc00, ldstexcl, OP3 (Rs, Rt_LS64, ADDR_SIMPLE), QL_X2NIL, 0),
++  _LS64_INSN ("ld64b",   0xf83fd000, 0xfffffc00, lse_atomic, OP2 (Rt_LS64, ADDR_SIMPLE), QL_X1NIL, 0),
++  _LS64_INSN ("st64b",   0xf83f9000, 0xfffffc00, lse_atomic, OP2 (Rt_LS64, ADDR_SIMPLE), QL_X1NIL, 0),
++  _LS64_INSN ("st64bv",  0xf820b000, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt_LS64, ADDR_SIMPLE), QL_X2NIL, 0),
++  _LS64_INSN ("st64bv0", 0xf820a000, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt_LS64, ADDR_SIMPLE), QL_X2NIL, 0),
+   /* Logical (immediate).  */
+   CORE_INSN ("and", 0x12000000, 0x7f800000, log_imm, 0, OP3 (Rd_SP, Rn, LIMM), QL_R2NIL, F_HAS_ALIAS | F_SF),
+   CORE_INSN ("bic", 0x12000000, 0x7f800000, log_imm, OP_BIC, OP3 (Rd_SP, Rn, LIMM), QL_R2NIL, F_ALIAS | F_PSEUDO | F_SF),
 diff --git a/opcodes/configure b/opcodes/configure
 index b72f679440d..2e73c179042 100755
 --- a/opcodes/configure
