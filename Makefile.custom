@@ -1,5 +1,5 @@
 update:
-	test -d ~/git/binutils-gdb || git clone http://sourceware.org/git/binutils-gdb.git ~/git/binutils-gdb
+	test -d ~/git/binutils-gdb || git clone https://sourceware.org/git/binutils-gdb.git ~/git/binutils-gdb
 	( \
 		cd ~/git/binutils-gdb ; \
 		git remote update -p > /dev/null 2>&1 ; \
