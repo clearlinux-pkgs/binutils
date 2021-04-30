@@ -14,8 +14,9 @@ make -C ../dropwatch bump
 make -C ../dropwatch koji-nowait
 
 cp binutils-stable-branch.patch ../mingw-binutils
+cp REVISION ../mingw-binutils
 pushd ../mingw-binutils
-git commit -m "Stable branch update" binutils-stable-branch.patch
+git commit -m "Stable branch update" binutils-stable-branch.patch REVISION
 make bump
 make koji-nowait
 popd
