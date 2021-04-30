@@ -5,11 +5,11 @@
 # Source0 file verified with key 0x13FCEF89DD9E3C4F (nickc@redhat.com)
 #
 Name     : binutils
-Version  : 2.36
-Release  : 422
-URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.36.tar.xz
-Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.36.tar.xz
-Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.36.tar.xz.sig
+Version  : 2.36.1
+Release  : 423
+URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.36.1.tar.xz
+Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.36.1.tar.xz
+Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.36.1.tar.xz.sig
 Summary  : zlib compression library
 Group    : Development/Tools
 License  : BSL-1.0 GPL-2.0 GPL-3.0 GPL-3.0+ LGPL-2.0 LGPL-2.1 LGPL-3.0
@@ -25,10 +25,8 @@ BuildRequires : expect
 BuildRequires : flex
 BuildRequires : gettext
 BuildRequires : grep
-BuildRequires : pkg-config
 BuildRequires : sed
 BuildRequires : texinfo
-BuildRequires : util-linux
 BuildRequires : zlib-dev
 Patch1: binutils-stable-branch.patch
 Patch2: binutils-add-LD_AS_NEEDED-global-env.patch
@@ -117,8 +115,8 @@ staticdev components for the binutils package.
 
 
 %prep
-%setup -q -n binutils-2.36
-cd %{_builddir}/binutils-2.36
+%setup -q -n binutils-2.36.1
+cd %{_builddir}/binutils-2.36.1
 %patch1 -p1
 %patch2 -p1
 
@@ -152,7 +150,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1619202002
+export SOURCE_DATE_EPOCH=1619749191
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -172,20 +170,20 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1619202002
+export SOURCE_DATE_EPOCH=1619749191
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
-cp %{_builddir}/binutils-2.36/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
-cp %{_builddir}/binutils-2.36/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d
-cp %{_builddir}/binutils-2.36/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.36/COPYING3.LIB %{buildroot}/usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9
-cp %{_builddir}/binutils-2.36/bfd/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.36/gas/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.36/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
-cp %{_builddir}/binutils-2.36/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.36/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
-cp %{_builddir}/binutils-2.36/libiberty/copying-lib.texi %{buildroot}/usr/share/package-licenses/binutils/0533e856d64a28ae9b067604a701e3a14cf6a80c
-cp %{_builddir}/binutils-2.36/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
+cp %{_builddir}/binutils-2.36.1/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
+cp %{_builddir}/binutils-2.36.1/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d
+cp %{_builddir}/binutils-2.36.1/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.36.1/COPYING3.LIB %{buildroot}/usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9
+cp %{_builddir}/binutils-2.36.1/bfd/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.36.1/gas/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.36.1/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
+cp %{_builddir}/binutils-2.36.1/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-2.36.1/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
+cp %{_builddir}/binutils-2.36.1/libiberty/copying-lib.texi %{buildroot}/usr/share/package-licenses/binutils/0533e856d64a28ae9b067604a701e3a14cf6a80c
+cp %{_builddir}/binutils-2.36.1/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
 %make_install tooldir=/usr
 %find_lang binutils
 %find_lang gprof
@@ -444,7 +442,7 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 %files lib
 %defattr(-,root,root,-)
 /usr/lib64/bfd-plugins/libdep.so
-/usr/lib64/libbfd-2.36.1.20190203.so
+/usr/lib64/libbfd-2.36.1.so
 /usr/lib64/libbfd.so
 /usr/lib64/libctf-nobfd.so
 /usr/lib64/libctf-nobfd.so.0
@@ -452,7 +450,7 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/lib64/libctf.so
 /usr/lib64/libctf.so.0
 /usr/lib64/libctf.so.0.0.0
-/usr/lib64/libopcodes-2.36.1.20190203.so
+/usr/lib64/libopcodes-2.36.1.so
 /usr/lib64/libopcodes.so
 
 %files license
