@@ -4,19 +4,19 @@ make autospec
 make koji
 sleep 120
 
-make -C ../linux-tools bump
-make -C ../linux-tools koji-nowait
+for pkg in linux-tools gdb dropwatch; do
+	make -C ../$pkg bump
+	make -C ../$pkg koji-nowait
+done
 
-make -C ../gdb bump
-make -C ../gdb koji-nowait
+pkg=mingw-binutils
+patch=binutils-stable-branch.patch
+spec=mingw-binutils.spec
 
-make -C ../dropwatch bump
-make -C ../dropwatch koji-nowait
-
-cp binutils-stable-branch.patch ../mingw-binutils
-cp REVISION ../mingw-binutils
-pushd ../mingw-binutils
-git commit -m "Stable branch update" binutils-stable-branch.patch REVISION
-make bump
+cp $patch ../$pkg
+cp REVISION ../$pkg
+pushd ../$pkg
+make bumpnogit
+git commit -m "Stable branch update" $spec $patch release REVISION
 make koji-nowait
 popd
