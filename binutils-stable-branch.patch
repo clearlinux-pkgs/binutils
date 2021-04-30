@@ -1,8 +1,8 @@
 diff --git a/ChangeLog b/ChangeLog
-index 185bde7efbd..1a00154ef51 100644
+index 8420c77ff49..1a00154ef51 100644
 --- a/ChangeLog
 +++ b/ChangeLog
-@@ -1,3 +1,17 @@
+@@ -1,3 +1,12 @@
 +2021-03-18  Nick Alcock  <nick.alcock@oracle.com>
 +
 +	PR libctf/27482
@@ -12,19 +12,22 @@ index 185bde7efbd..1a00154ef51 100644
 +	dependency on install-libctf to join it.
 +	* Makefile.in: Regenerated.
 +
-+2021-01-26  Nick Alcock  <nick.alcock@oracle.com>
-+
-+	* Makefile.def: Add install-libctf dependency to install-ld.
-+	* Makefile.in: Regenerated.
-+
- 2021-01-09  Nick Clifton  <nickc@redhat.com>
+ 2021-01-26  Nick Alcock  <nick.alcock@oracle.com>
  
- 	* 2.36 release branch crated.
+ 	* Makefile.def: Add install-libctf dependency to install-ld.
 diff --git a/Makefile.def b/Makefile.def
-index cc429aa8628..eb15489390e 100644
+index b45e580da5b..eb15489390e 100644
 --- a/Makefile.def
 +++ b/Makefile.def
-@@ -455,6 +455,14 @@ dependencies = { module=all-ld; on=all-libctf; };
+@@ -448,7 +448,6 @@ dependencies = { module=all-binutils; on=all-intl; };
+ dependencies = { module=all-binutils; on=all-gas; };
+ dependencies = { module=all-binutils; on=all-libctf; };
+ dependencies = { module=all-ld; on=all-libctf; };
+-dependencies = { module=install-ld; on=install-libctf; };
+ 
+ // We put install-opcodes before install-binutils because the installed
+ // binutils might be on PATH, and they might need the shared opcodes
+@@ -456,6 +455,14 @@ dependencies = { module=install-ld; on=install-libctf; };
  dependencies = { module=install-binutils; on=install-opcodes; };
  dependencies = { module=install-strip-binutils; on=install-strip-opcodes; };
  
@@ -40,11 +43,14 @@ index cc429aa8628..eb15489390e 100644
  dependencies = { module=install-opcodes; on=install-bfd; };
  dependencies = { module=install-strip-opcodes; on=install-strip-bfd; };
 diff --git a/Makefile.in b/Makefile.in
-index 4fe7321786e..a63050cd3e6 100644
+index c2c852c5660..a63050cd3e6 100644
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -52113,6 +52113,12 @@ all-stageprofile-ld: maybe-all-stageprofile-libctf
+@@ -52111,9 +52111,14 @@ all-stage3-ld: maybe-all-stage3-libctf
+ all-stage4-ld: maybe-all-stage4-libctf
+ all-stageprofile-ld: maybe-all-stageprofile-libctf
  all-stagefeedback-ld: maybe-all-stagefeedback-libctf
+-install-ld: maybe-install-libctf
  install-binutils: maybe-install-opcodes
  install-strip-binutils: maybe-install-strip-opcodes
 +install-libctf: maybe-install-bfd
@@ -57,10 +63,10 @@ index 4fe7321786e..a63050cd3e6 100644
  install-strip-opcodes: maybe-install-strip-bfd
  configure-gas: maybe-configure-intl
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
-index 91a828c550a..e97150b6202 100644
+index 718e8a3e323..e97150b6202 100644
 --- a/bfd/ChangeLog
 +++ b/bfd/ChangeLog
-@@ -1,3 +1,95 @@
+@@ -1,3 +1,40 @@
 +2021-04-23  Eric Botcazou  <ebotcazou@adacore.com>
 +
 +	* elf.c (special_sections_p): Add .persistent.bss.
@@ -98,64 +104,9 @@ index 91a828c550a..e97150b6202 100644
 +
 +	(development): Set to true.
 +
-+2021-02-06  Nick Clifton  <nickc@redhat.com>
-+
-+	This is the 2.36.1 release.
-+	* version.m4: Set to 2.36.1
-+	* development.sh (development): Set to false.
-+	* configure: Regenerate.
-+	* po/bfd.pot: Regenerate.
-+
-+2021-02-05  Nelson Chu  <nelson.chu@sifive.com>
-+
-+	* elfxx-riscv.c (riscv_parse_prefixed_ext): Removed zb*.
-+
-+2021-02-04  Alan Modra  <amodra@gmail.com>
-+
-+	PR 27311
-+	* elflink.c (elf_link_add_object_symbols): Don't pull in as-needed
-+	libraries for IR references on pass over libraries after LTO
-+	recompilation.
-+
-+2021-02-03  Alan Modra  <amodra@gmail.com>
-+
-+	PR 27311
-+	* elflink.c (elf_link_add_object_symbols): Don't pull in as-needed
-+	libraries when H is an indirect symbol after calling
-+	_bfd_elf_add_default_symbol.
-+
-+2021-01-28  Alan Modra  <amodra@gmail.com>
-+
-+	PR 27259
-+	* elflink.c (_bfd_elf_gc_mark_extra_sections): Use linker_mark to
-+	prevent endless looping of linked-to sections.
-+
-+2021-01-29  Alan Modra  <amodra@gmail.com>
-+
-+	PR 27271
-+	* elflink.c (bfd_elf_link_record_dynamic_symbol): Don't segfault
-+	on symbols defined in absolute or other special sections.
-+
-+2021-01-26  Alan Modra  <amodra@gmail.com>
-+
-+	* elf32-ft32.c (ft32_reloc_type_lookup): Don't miss ft32_reloc_map[0].
-+
-+2021-01-24  H.J. Lu  <hongjiu.lu@intel.com>
-+
-+	PR binutils/27231
-+	* dwarf2.c (read_rnglists): Ignore empty range when parsing line
-+	number tables.
-+
-+2021-01-24  Nick Clifton  <nickc@redhat.com>
-+
-+	* version.m4: Set to 2.36.0.
-+	* development.sh (development): Set to true.
-+	* configure: Regenerate.
-+	* po/bfd.pot: Regenerate.
-+
- 2021-01-24  Nick Clifton  <nickc@redhat.com>
+ 2021-02-06  Nick Clifton  <nickc@redhat.com>
  
- 	This is the 2.36 release.
+ 	This is the 2.36.1 release.
 diff --git a/bfd/cofflink.c b/bfd/cofflink.c
 index 4b0aab2a4ce..d0c027f2dce 100644
 --- a/bfd/cofflink.c
@@ -182,107 +133,8 @@ index 4b0aab2a4ce..d0c027f2dce 100644
  	    const char *name;
  	    char buf[SYMNMLEN + 1];
  
-diff --git a/bfd/configure b/bfd/configure
-index 4e44eb05869..1e3ff33616d 100755
---- a/bfd/configure
-+++ b/bfd/configure
-@@ -1,6 +1,6 @@
- #! /bin/sh
- # Guess values for system-dependent variables and create Makefiles.
--# Generated by GNU Autoconf 2.69 for bfd 2.36.
-+# Generated by GNU Autoconf 2.69 for bfd 2.36.1.
- #
- #
- # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
-@@ -587,8 +587,8 @@ MAKEFLAGS=
- # Identity of this package.
- PACKAGE_NAME='bfd'
- PACKAGE_TARNAME='bfd'
--PACKAGE_VERSION='2.36'
--PACKAGE_STRING='bfd 2.36'
-+PACKAGE_VERSION='2.36.1'
-+PACKAGE_STRING='bfd 2.36.1'
- PACKAGE_BUGREPORT=''
- PACKAGE_URL=''
- 
-@@ -1392,7 +1392,7 @@ if test "$ac_init_help" = "long"; then
-   # Omit some internal or obsolete options to make the list less imposing.
-   # This message is too long to be a string in the A/UX 3.1 sh.
-   cat <<_ACEOF
--\`configure' configures bfd 2.36 to adapt to many kinds of systems.
-+\`configure' configures bfd 2.36.1 to adapt to many kinds of systems.
- 
- Usage: $0 [OPTION]... [VAR=VALUE]...
- 
-@@ -1463,7 +1463,7 @@ fi
- 
- if test -n "$ac_init_help"; then
-   case $ac_init_help in
--     short | recursive ) echo "Configuration of bfd 2.36:";;
-+     short | recursive ) echo "Configuration of bfd 2.36.1:";;
-    esac
-   cat <<\_ACEOF
- 
-@@ -1590,7 +1590,7 @@ fi
- test -n "$ac_init_help" && exit $ac_status
- if $ac_init_version; then
-   cat <<\_ACEOF
--bfd configure 2.36
-+bfd configure 2.36.1
- generated by GNU Autoconf 2.69
- 
- Copyright (C) 2012 Free Software Foundation, Inc.
-@@ -2238,7 +2238,7 @@ cat >config.log <<_ACEOF
- This file contains any messages produced by compilers while
- running configure, to aid debugging if configure makes a mistake.
- 
--It was created by bfd $as_me 2.36, which was
-+It was created by bfd $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   $ $0 $@
-@@ -4188,7 +4188,7 @@ fi
- 
- # Define the identity of the package.
-  PACKAGE='bfd'
-- VERSION='2.36'
-+ VERSION='2.36.1'
- 
- 
- cat >>confdefs.h <<_ACEOF
-@@ -16976,7 +16976,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
- # report actual input values of CONFIG_FILES etc. instead of their
- # values after options handling.
- ac_log="
--This file was extended by bfd $as_me 2.36, which was
-+This file was extended by bfd $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   CONFIG_FILES    = $CONFIG_FILES
-@@ -17042,7 +17042,7 @@ _ACEOF
- cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
- ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
- ac_cs_version="\\
--bfd config.status 2.36
-+bfd config.status 2.36.1
- configured by $0, generated by GNU Autoconf 2.69,
-   with options \\"\$ac_cs_config\\"
- 
-diff --git a/bfd/development.sh b/bfd/development.sh
-index eb9762e4426..a376b02d869 100644
---- a/bfd/development.sh
-+++ b/bfd/development.sh
-@@ -16,7 +16,7 @@
- # along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
- # Controls whether to enable development-mode features by default.
--development=false
-+development=true
- 
- # Indicate whether this is a release branch.
- experimental=false
 diff --git a/bfd/dwarf2.c b/bfd/dwarf2.c
-index 292d60c33d4..5651696c0f7 100644
+index 240138d5982..5651696c0f7 100644
 --- a/bfd/dwarf2.c
 +++ b/bfd/dwarf2.c
 @@ -1195,7 +1195,7 @@ read_attribute_value (struct attribute *  attr,
@@ -294,16 +146,6 @@ index 292d60c33d4..5651696c0f7 100644
  	{
  	  if (unit->offset_size == 4)
  	    attr->u.val = read_4_bytes (unit->abfd, info_ptr, info_ptr_end);
-@@ -3289,9 +3289,6 @@ read_rnglists (struct comp_unit *unit, struct arange *arange,
- 	  return FALSE;
- 	}
- 
--      if ((low_pc == 0 && high_pc == 0) || low_pc == high_pc)
--	return FALSE;
--
-       if (!arange_add (unit, arange, low_pc, high_pc))
- 	return FALSE;
-     }
 diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
 index 15206b4e876..2cff9f055c5 100644
 --- a/bfd/elf-bfd.h
@@ -329,20 +171,6 @@ index 84a5d942817..36733e080dd 100644
    { STRING_COMMA_LEN (".persistent"),	 -2, SHT_PROGBITS,	SHF_ALLOC + SHF_WRITE },
    { STRING_COMMA_LEN (".preinit_array"), -2, SHT_PREINIT_ARRAY, SHF_ALLOC + SHF_WRITE },
    { STRING_COMMA_LEN (".plt"),		  0, SHT_PROGBITS,	SHF_ALLOC + SHF_EXECINSTR },
-diff --git a/bfd/elf32-ft32.c b/bfd/elf32-ft32.c
-index bd0ed3e81d3..5a6ec764804 100644
---- a/bfd/elf32-ft32.c
-+++ b/bfd/elf32-ft32.c
-@@ -267,8 +267,7 @@ ft32_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
- {
-   unsigned int i;
- 
--  for (i = sizeof (ft32_reloc_map) / sizeof (ft32_reloc_map[0]);
--       --i;)
-+  for (i = 0; i < sizeof (ft32_reloc_map) / sizeof (ft32_reloc_map[0]); i++)
-     if (ft32_reloc_map [i].bfd_reloc_val == code)
-       return & ft32_elf_howto_table [ft32_reloc_map[i].ft32_reloc_val];
- 
 diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
 index 3119aaca84c..77f2c855864 100644
 --- a/bfd/elf64-ppc.c
@@ -378,21 +206,10 @@ index 3119aaca84c..77f2c855864 100644
  	    break;
  
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 27564adb8c3..08f241d79a5 100644
+index 7afbc5b1072..08f241d79a5 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -537,8 +537,10 @@ bfd_elf_link_record_dynamic_symbol (struct bfd_link_info *info,
- 	      if (!elf_hash_table (info)->is_relocatable_executable
- 		  || ((h->root.type == bfd_link_hash_defined
- 		       || h->root.type == bfd_link_hash_defweak)
-+		      && h->root.u.def.section->owner != NULL
- 		      && h->root.u.def.section->owner->no_export)
- 		  || (h->root.type == bfd_link_hash_common
-+		      && h->root.u.c.p->section->owner != NULL
- 		      && h->root.u.c.p->section->owner->no_export))
- 		return TRUE;
- 	    }
-@@ -5027,7 +5029,12 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -5029,7 +5029,12 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
  
  	  /* Plugin symbols aren't normal.  Don't set def/ref flags.  */
  	  if ((abfd->flags & BFD_PLUGIN) != 0)
@@ -406,641 +223,22 @@ index 27564adb8c3..08f241d79a5 100644
  	  else if (!dynamic)
  	    {
  	      if (! definition)
-@@ -5272,11 +5279,13 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
- 	  if (!add_needed
- 	      && matched
- 	      && definition
-+	      && h->root.type != bfd_link_hash_indirect
- 	      && ((dynsym
+@@ -5279,8 +5284,8 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
  		   && h->ref_regular_nonweak)
  		  || (old_bfd != NULL
  		      && (old_bfd->flags & BFD_PLUGIN) != 0
+-		      && !info->lto_all_symbols_read
 -		      && bind != STB_WEAK)
 +		      && h->ref_ir_nonweak
 +		      && !info->lto_all_symbols_read)
  		  || (h->ref_dynamic_nonweak
  		      && (elf_dyn_lib_class (abfd) & DYN_AS_NEEDED) != 0
  		      && !on_needed_list (elf_dt_name (abfd),
-@@ -13825,15 +13834,23 @@ _bfd_elf_gc_mark_extra_sections (struct bfd_link_info *info,
- 	      /* Since all sections, except for backend specific ones,
- 		 have been garbage collected, call mark_hook on this
- 		 section if any of its linked-to sections is marked.  */
--	      asection *linked_to_sec = elf_linked_to_section (isec);
--	      for (; linked_to_sec != NULL;
-+	      asection *linked_to_sec;
-+	      for (linked_to_sec = elf_linked_to_section (isec);
-+		   linked_to_sec != NULL && !linked_to_sec->linker_mark;
- 		   linked_to_sec = elf_linked_to_section (linked_to_sec))
--		if (linked_to_sec->gc_mark)
--		  {
--		    if (!_bfd_elf_gc_mark (info, isec, mark_hook))
--		      return FALSE;
--		    break;
--		  }
-+		{
-+		  if (linked_to_sec->gc_mark)
-+		    {
-+		      if (!_bfd_elf_gc_mark (info, isec, mark_hook))
-+			return FALSE;
-+		      break;
-+		    }
-+		  linked_to_sec->linker_mark = 1;
-+		}
-+	      for (linked_to_sec = elf_linked_to_section (isec);
-+		   linked_to_sec != NULL && linked_to_sec->linker_mark;
-+		   linked_to_sec = elf_linked_to_section (linked_to_sec))
-+		linked_to_sec->linker_mark = 0;
- 	    }
- 
- 	  if (!debug_frag_seen
-diff --git a/bfd/elfxx-riscv.c b/bfd/elfxx-riscv.c
-index 42aeed767fe..97ad51f8659 100644
---- a/bfd/elfxx-riscv.c
-+++ b/bfd/elfxx-riscv.c
-@@ -1597,7 +1597,7 @@ riscv_parse_prefixed_ext (riscv_parse_subset_t *rps,
- 
- static const char * const riscv_std_z_ext_strtab[] =
- {
--  "zicsr", "zifencei", "zihintpause", "zba", "zbb", "zbc", NULL
-+  "zicsr", "zifencei", "zihintpause", NULL
- };
- 
- static const char * const riscv_std_s_ext_strtab[] =
-diff --git a/bfd/po/bfd.pot b/bfd/po/bfd.pot
-index c00be6459e8..523b68c6071 100644
---- a/bfd/po/bfd.pot
-+++ b/bfd/po/bfd.pot
-@@ -8,7 +8,7 @@ msgid ""
- msgstr ""
- "Project-Id-Version: PACKAGE VERSION\n"
- "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
--"POT-Creation-Date: 2021-01-24 10:42+0000\n"
-+"POT-Creation-Date: 2021-02-06 09:02+0000\n"
- "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
- "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
- "Language-Team: LANGUAGE <LL@li.org>\n"
-@@ -76,7 +76,7 @@ msgstr ""
- #: elf32-cr16.c:654 elf32-cr16.c:684 elf32-cris.c:467 elf32-crx.c:429
- #: elf32-csky.c:991 elf32-d10v.c:234 elf32-d30v.c:522 elf32-d30v.c:544
- #: elf32-dlx.c:546 elf32-epiphany.c:372 elf32-fr30.c:381 elf32-frv.c:2559
--#: elf32-frv.c:6241 elf32-ft32.c:306 elf32-h8300.c:302 elf32-i386.c:400
-+#: elf32-frv.c:6241 elf32-ft32.c:305 elf32-h8300.c:302 elf32-i386.c:400
- #: elf32-ip2k.c:1240 elf32-iq2000.c:442 elf32-lm32.c:496 elf32-m32c.c:305
- #: elf32-m32r.c:1286 elf32-m32r.c:1311 elf32-m32r.c:2209 elf32-m68hc11.c:390
- #: elf32-m68hc12.c:510 elf32-m68k.c:354 elf32-mcore.c:354 elf32-mcore.c:440
-@@ -117,7 +117,7 @@ msgstr ""
- msgid "warning: writing archive was slow: rewriting timestamp"
- msgstr ""
- 
--#: archive.c:2308 archive.c:2368 elflink.c:4609 linker.c:1428
-+#: archive.c:2308 archive.c:2368 elflink.c:4611 linker.c:1428
- #, c-format
- msgid "%pB: plugin needed to handle lto object"
- msgstr ""
-@@ -493,16 +493,16 @@ msgstr ""
- msgid "<corrupt info> %s"
- msgstr ""
- 
--#: coffgen.c:2676 elflink.c:14973 linker.c:2967
-+#: coffgen.c:2676 elflink.c:14985 linker.c:2967
- msgid "%F%P: already_linked_table: %E\n"
- msgstr ""
- 
--#: coffgen.c:3017 elflink.c:13963
-+#: coffgen.c:3017 elflink.c:13975
- #, c-format
- msgid "removing unused section '%pA' in file '%pB'"
- msgstr ""
- 
--#: coffgen.c:3094 elflink.c:14180
-+#: coffgen.c:3094 elflink.c:14192
- msgid "warning: gc-sections option ignored"
- msgstr ""
- 
-@@ -511,7 +511,7 @@ msgstr ""
- msgid "warning: symbol `%s' is both section and non-section"
- msgstr ""
- 
--#: cofflink.c:471 elf64-ia64-vms.c:5202 elflink.c:5200
-+#: cofflink.c:471 elf64-ia64-vms.c:5202 elflink.c:5202
- #, c-format
- msgid "warning: type of symbol `%s' changed from %d to %d in %pB"
- msgstr ""
-@@ -521,7 +521,7 @@ msgstr ""
- msgid "%pB: relocs in section `%pA', but it has no contents"
- msgstr ""
- 
--#: cofflink.c:2415 elflink.c:11303
-+#: cofflink.c:2415 elflink.c:11307
- #, c-format
- msgid ""
- "%X`%s' referenced in section `%pA' of %pB: defined in discarded section `"
-@@ -671,31 +671,31 @@ msgstr ""
- msgid "DWARF error: unable to locate abstract instance DIE ref %<PRIu64>"
- msgstr ""
- 
--#: dwarf2.c:3101 dwarf2.c:3386 dwarf2.c:3773
-+#: dwarf2.c:3101 dwarf2.c:3383 dwarf2.c:3770
- #, c-format
- msgid "DWARF error: could not find abbrev number %u"
- msgstr ""
- 
--#: dwarf2.c:3536
-+#: dwarf2.c:3533
- #, c-format
- msgid "DWARF error: could not find variable specification at offset %lx"
- msgstr ""
- 
--#: dwarf2.c:3692
-+#: dwarf2.c:3689
- #, c-format
- msgid ""
- "DWARF error: found dwarf version '%u', this reader only handles version 2, "
- "3, 4 and 5 information"
- msgstr ""
- 
--#: dwarf2.c:3736
-+#: dwarf2.c:3733
- #, c-format
- msgid ""
- "DWARF error: found address size '%u', this reader can not handle sizes "
- "greater than '%u'"
- msgstr ""
- 
--#: dwarf2.c:3840
-+#: dwarf2.c:3837
- msgid ""
- "DWARF error: DW_AT_comp_dir attribute encountered with a non-string form"
- msgstr ""
-@@ -856,7 +856,7 @@ msgstr ""
- 
- #: elf-m10200.c:434 elf-m10300.c:2146 elf32-avr.c:1508 elf32-bfin.c:3131
- #: elf32-cr16.c:1432 elf32-cris.c:2034 elf32-crx.c:913 elf32-d10v.c:510
--#: elf32-epiphany.c:562 elf32-fr30.c:594 elf32-frv.c:4049 elf32-ft32.c:494
-+#: elf32-epiphany.c:562 elf32-fr30.c:594 elf32-frv.c:4049 elf32-ft32.c:493
- #: elf32-h8300.c:523 elf32-ip2k.c:1477 elf32-iq2000.c:691 elf32-lm32.c:1070
- #: elf32-m32c.c:624 elf32-m32r.c:2837 elf32-m68hc1x.c:1272 elf32-mep.c:522
- #: elf32-metag.c:1984 elf32-microblaze.c:1623 elf32-moxie.c:288 elf32-mt.c:402
-@@ -868,7 +868,7 @@ msgstr ""
- 
- #: elf-m10200.c:438 elf-m10300.c:2150 elf32-avr.c:1512 elf32-bfin.c:3135
- #: elf32-cr16.c:1436 elf32-cris.c:2038 elf32-crx.c:917 elf32-d10v.c:514
--#: elf32-fr30.c:598 elf32-frv.c:4053 elf32-ft32.c:498 elf32-h8300.c:527
-+#: elf32-fr30.c:598 elf32-frv.c:4053 elf32-ft32.c:497 elf32-h8300.c:527
- #: elf32-iq2000.c:695 elf32-lm32.c:1074 elf32-m32c.c:628 elf32-m32r.c:2841
- #: elf32-m68hc1x.c:1276 elf32-mep.c:526 elf32-metag.c:1988
- #: elf32-microblaze.c:1627 elf32-moxie.c:292 elf32-msp430.c:1510
-@@ -888,7 +888,7 @@ msgstr ""
- 
- #: elf-m10200.c:446 elf-m10300.c:2167 elf32-avr.c:1520 elf32-bfin.c:3143
- #: elf32-cr16.c:1444 elf32-cris.c:2046 elf32-crx.c:925 elf32-d10v.c:522
--#: elf32-epiphany.c:577 elf32-fr30.c:606 elf32-frv.c:4061 elf32-ft32.c:506
-+#: elf32-epiphany.c:577 elf32-fr30.c:606 elf32-frv.c:4061 elf32-ft32.c:505
- #: elf32-h8300.c:535 elf32-ip2k.c:1492 elf32-iq2000.c:703 elf32-lm32.c:1082
- #: elf32-m32c.c:636 elf32-m32r.c:2849 elf32-m68hc1x.c:1284 elf32-mep.c:534
- #: elf32-metag.c:1996 elf32-microblaze.c:1635 elf32-moxie.c:300
-@@ -2029,7 +2029,7 @@ msgstr ""
- msgid "errors encountered processing file %pB"
- msgstr ""
- 
--#: elf32-arm.c:17323 elflink.c:13156 elflink.c:13203
-+#: elf32-arm.c:17323 elflink.c:13160 elflink.c:13207
- #, c-format
- msgid "could not find section %s"
- msgstr ""
-@@ -2125,7 +2125,7 @@ msgid "warning: %pB does not support interworking, whereas %pB does"
- msgstr ""
- 
- #: elf32-avr.c:1516 elf32-bfin.c:3139 elf32-cris.c:2042 elf32-epiphany.c:573
--#: elf32-fr30.c:602 elf32-frv.c:4057 elf32-ft32.c:502 elf32-ip2k.c:1488
-+#: elf32-fr30.c:602 elf32-frv.c:4057 elf32-ft32.c:501 elf32-ip2k.c:1488
- #: elf32-iq2000.c:699 elf32-m32c.c:632 elf32-mep.c:530 elf32-metag.c:1992
- #: elf32-moxie.c:296 elf32-msp430.c:1514 elf32-mt.c:406 elf32-or1k.c:1823
- #: elf32-tilepro.c:3380 elf32-v850.c:2302 elf32-visium.c:688
-@@ -4211,7 +4211,7 @@ msgstr ""
- msgid "GPDISP relocation did not find ldah and lda instructions"
- msgstr ""
- 
--#: elf64-alpha.c:2001 elf64-alpha.c:2696 elflink.c:15234
-+#: elf64-alpha.c:2001 elf64-alpha.c:2696 elflink.c:15246
- #, c-format
- msgid "%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"
- msgstr ""
-@@ -4379,19 +4379,19 @@ msgstr ""
- msgid "%pB: linking auto-pic files with non-auto-pic files"
- msgstr ""
- 
--#: elf64-ia64-vms.c:5152 elflink.c:5141
-+#: elf64-ia64-vms.c:5152 elflink.c:5143
- #, c-format
- msgid ""
- "warning: alignment %u of common symbol `%s' in %pB is greater than the "
- "alignment (%u) of its section %pA"
- msgstr ""
- 
--#: elf64-ia64-vms.c:5159 elflink.c:5148
-+#: elf64-ia64-vms.c:5159 elflink.c:5150
- #, c-format
- msgid "warning: alignment %u of symbol `%s' in %pB is smaller than %u in %pB"
- msgstr ""
- 
--#: elf64-ia64-vms.c:5175 elflink.c:5165
-+#: elf64-ia64-vms.c:5175 elflink.c:5167
- #, c-format
- msgid ""
- "warning: size of symbol `%s' changed from %<PRIu64> in %pB to %<PRIu64> in "
-@@ -4817,7 +4817,7 @@ msgid ""
- "section `%pA' is out of range"
- msgstr ""
- 
--#: elf64-x86-64.c:3417 elflink.c:13613
-+#: elf64-x86-64.c:3417 elflink.c:13617
- msgid "%F%P: corrupt input: %pB\n"
- msgstr ""
- 
-@@ -4867,310 +4867,310 @@ msgid ""
- "%<PRIu64>"
- msgstr ""
- 
--#: elflink.c:1384
-+#: elflink.c:1386
- #, c-format
- msgid ""
- "%s: TLS definition in %pB section %pA mismatches non-TLS definition in %pB "
- "section %pA"
- msgstr ""
- 
--#: elflink.c:1390
-+#: elflink.c:1392
- #, c-format
- msgid "%s: TLS reference in %pB mismatches non-TLS reference in %pB"
- msgstr ""
- 
--#: elflink.c:1396
-+#: elflink.c:1398
- #, c-format
- msgid ""
- "%s: TLS definition in %pB section %pA mismatches non-TLS reference in %pB"
- msgstr ""
- 
--#: elflink.c:1402
-+#: elflink.c:1404
- #, c-format
- msgid ""
- "%s: TLS reference in %pB mismatches non-TLS definition in %pB section %pA"
- msgstr ""
- 
--#: elflink.c:2114
-+#: elflink.c:2116
- #, c-format
- msgid "%pB: unexpected redefinition of indirect versioned symbol `%s'"
- msgstr ""
- 
--#: elflink.c:2496
-+#: elflink.c:2498
- #, c-format
- msgid "%pB: version node not found for symbol %s"
- msgstr ""
- 
--#: elflink.c:2587
-+#: elflink.c:2589
- #, c-format
- msgid ""
- "%pB: bad reloc symbol index (%#<PRIx64> >= %#lx) for offset %#<PRIx64> in "
- "section `%pA'"
- msgstr ""
- 
--#: elflink.c:2599
-+#: elflink.c:2601
- #, c-format
- msgid ""
- "%pB: non-zero symbol index (%#<PRIx64>) for offset %#<PRIx64> in section `"
- "%pA' when the object file has no symbol table"
- msgstr ""
- 
--#: elflink.c:2788
-+#: elflink.c:2790
- #, c-format
- msgid "%pB: relocation size mismatch in %pB section %pA"
- msgstr ""
- 
--#: elflink.c:3117
-+#: elflink.c:3119
- #, c-format
- msgid "warning: type and size of dynamic symbol `%s' are not defined"
- msgstr ""
- 
--#: elflink.c:3177
-+#: elflink.c:3179
- msgid "%P: copy reloc against protected `%pT' is dangerous\n"
- msgstr ""
- 
--#: elflink.c:4117
-+#: elflink.c:4119
- #, c-format
- msgid "alternate ELF machine code found (%d) in %pB, expecting %d"
- msgstr ""
- 
--#: elflink.c:4598
-+#: elflink.c:4600
- #, c-format
- msgid "%pB: invalid version offset %lx (max %lx)"
- msgstr ""
- 
--#: elflink.c:4666
-+#: elflink.c:4668
- #, c-format
- msgid "%pB: %s local symbol at index %lu (>= sh_info of %lu)"
- msgstr ""
- 
--#: elflink.c:4814
-+#: elflink.c:4816
- #, c-format
- msgid "%pB: not enough version information"
- msgstr ""
- 
--#: elflink.c:4852
-+#: elflink.c:4854
- #, c-format
- msgid "%pB: %s: invalid version %u (max %d)"
- msgstr ""
- 
--#: elflink.c:4889
-+#: elflink.c:4891
- #, c-format
- msgid "%pB: %s: invalid needed version %d"
- msgstr ""
- 
--#: elflink.c:5300
-+#: elflink.c:5304
- #, c-format
- msgid "%pB: undefined reference to symbol '%s'"
- msgstr ""
- 
--#: elflink.c:6366
-+#: elflink.c:6370
- #, c-format
- msgid "%pB: stack size specified and %s set"
- msgstr ""
- 
--#: elflink.c:6370
-+#: elflink.c:6374
- #, c-format
- msgid "%pB: %s not absolute"
- msgstr ""
- 
--#: elflink.c:6567
-+#: elflink.c:6571
- #, c-format
- msgid "%s: undefined version: %s"
- msgstr ""
- 
--#: elflink.c:7139
-+#: elflink.c:7143
- #, c-format
- msgid "%pB: .preinit_array section is not allowed in DSO"
- msgstr ""
- 
--#: elflink.c:8701
-+#: elflink.c:8705
- #, c-format
- msgid "undefined %s reference in complex symbol: %s"
- msgstr ""
- 
--#: elflink.c:8864 elflink.c:8872
-+#: elflink.c:8868 elflink.c:8876
- msgid "division by zero"
- msgstr ""
- 
--#: elflink.c:8886
-+#: elflink.c:8890
- #, c-format
- msgid "unknown operator '%c' in complex symbol"
- msgstr ""
- 
- #. PR 21524: Let the user know if a symbol was removed by garbage collection.
--#: elflink.c:9224
-+#: elflink.c:9228
- #, c-format
- msgid ""
- "%pB:%pA: error: relocation references symbol %s which was removed by garbage "
- "collection"
- msgstr ""
- 
--#: elflink.c:9227
-+#: elflink.c:9231
- #, c-format
- msgid "%pB:%pA: error: try relinking with --gc-keep-exported enabled"
- msgstr ""
- 
--#: elflink.c:9472 elflink.c:9490 elflink.c:9529 elflink.c:9547
-+#: elflink.c:9476 elflink.c:9494 elflink.c:9533 elflink.c:9551
- #, c-format
- msgid "%pB: unable to sort relocs - they are in more than one size"
- msgstr ""
- 
- #. The section size is not divisible by either -
- #. something is wrong.
--#: elflink.c:9506 elflink.c:9563
-+#: elflink.c:9510 elflink.c:9567
- #, c-format
- msgid "%pB: unable to sort relocs - they are of an unknown size"
- msgstr ""
- 
--#: elflink.c:9615
-+#: elflink.c:9619
- msgid "not enough memory to sort relocations"
- msgstr ""
- 
--#: elflink.c:9959
-+#: elflink.c:9963
- #, c-format
- msgid "%pB: too many sections: %d (>= %d)"
- msgstr ""
- 
--#: elflink.c:10235
-+#: elflink.c:10239
- #, c-format
- msgid "%pB: internal symbol `%s' in %pB is referenced by DSO"
- msgstr ""
- 
--#: elflink.c:10238
-+#: elflink.c:10242
- #, c-format
- msgid "%pB: hidden symbol `%s' in %pB is referenced by DSO"
- msgstr ""
- 
--#: elflink.c:10241
-+#: elflink.c:10245
- #, c-format
- msgid "%pB: local symbol `%s' in %pB is referenced by DSO"
- msgstr ""
- 
--#: elflink.c:10327
-+#: elflink.c:10331
- #, c-format
- msgid "%pB: could not find output section %pA for input section %pA"
- msgstr ""
- 
--#: elflink.c:10481
-+#: elflink.c:10485
- #, c-format
- msgid "%pB: protected symbol `%s' isn't defined"
- msgstr ""
- 
--#: elflink.c:10484
-+#: elflink.c:10488
- #, c-format
- msgid "%pB: internal symbol `%s' isn't defined"
- msgstr ""
- 
--#: elflink.c:10487
-+#: elflink.c:10491
- #, c-format
- msgid "%pB: hidden symbol `%s' isn't defined"
- msgstr ""
- 
--#: elflink.c:10519
-+#: elflink.c:10523
- #, c-format
- msgid "%pB: no symbol version section for versioned symbol `%s'"
- msgstr ""
- 
--#: elflink.c:10918
-+#: elflink.c:10922
- #, c-format
- msgid ""
- "warning: --enable-non-contiguous-regions discards section `%s' from '%s'\n"
- msgstr ""
- 
--#: elflink.c:11172
-+#: elflink.c:11176
- #, c-format
- msgid "error: %pB: size of section %pA is not multiple of address size"
- msgstr ""
- 
--#: elflink.c:11217
-+#: elflink.c:11221
- #, c-format
- msgid ""
- "error: %pB contains a reloc (%#<PRIx64>) for section %pA that references a "
- "non-existent global symbol"
- msgstr ""
- 
--#: elflink.c:11975
-+#: elflink.c:11979
- #, c-format
- msgid ""
- "%pA has both ordered [`%pA' in %pB] and unordered [`%pA' in %pB] sections"
- msgstr ""
- 
--#: elflink.c:11981
-+#: elflink.c:11985
- #, c-format
- msgid "%pA has both ordered and unordered sections"
- msgstr ""
- 
--#: elflink.c:12051
-+#: elflink.c:12055
- msgid "%F%P: %pA has ordered sections with incompatible alignments\n"
- msgstr ""
- 
--#: elflink.c:12125
-+#: elflink.c:12129
- #, c-format
- msgid "%pB: no symbol found for import library"
- msgstr ""
- 
--#: elflink.c:12775
-+#: elflink.c:12779
- #, c-format
- msgid "%pB: file class %s incompatible with %s"
- msgstr ""
- 
--#: elflink.c:13035
-+#: elflink.c:13039
- #, c-format
- msgid "%pB: failed to generate import library"
- msgstr ""
- 
--#: elflink.c:13161
-+#: elflink.c:13165
- #, c-format
- msgid "warning: %s section has zero size"
- msgstr ""
- 
--#: elflink.c:13209
-+#: elflink.c:13213
- #, c-format
- msgid "warning: section '%s' is being made into a note"
- msgstr ""
- 
--#: elflink.c:13302
-+#: elflink.c:13306
- msgid "%P%X: read-only segment has dynamic relocations\n"
- msgstr ""
- 
--#: elflink.c:13305
-+#: elflink.c:13309
- msgid "%P: warning: creating DT_TEXTREL in a shared object\n"
- msgstr ""
- 
--#: elflink.c:13308
-+#: elflink.c:13312
- msgid "%P: warning: creating DT_TEXTREL in a PIE\n"
- msgstr ""
- 
--#: elflink.c:13441
-+#: elflink.c:13445
- msgid "%P%X: can not read symbols: %E\n"
- msgstr ""
- 
--#: elflink.c:13846
-+#: elflink.c:13858
- msgid "%F%P: %pB(%pA): error: need linked-to section for --gc-sections\n"
- msgstr ""
- 
--#: elflink.c:14309
-+#: elflink.c:14321
- #, c-format
- msgid "%pB: %pA+%#<PRIx64>: no symbol found for INHERIT"
- msgstr ""
- 
--#: elflink.c:14350
-+#: elflink.c:14362
- #, c-format
- msgid "%pB: section '%pA': corrupt VTENTRY entry"
- msgstr ""
- 
--#: elflink.c:14493
-+#: elflink.c:14505
- #, c-format
- msgid "unrecognized INPUT_SECTION_FLAG %s\n"
- msgstr ""
- 
--#: elflink.c:15240
-+#: elflink.c:15252
- #, c-format
- msgid "%P: %pB: warning: relocation against `%s' in read-only section `%pA'\n"
- msgstr ""
- 
--#: elflink.c:15329
-+#: elflink.c:15341
- msgid ""
- "%P: warning: GNU indirect functions with DT_TEXTREL may result in a segfault "
- "at runtime; recompile with %s\n"
-diff --git a/bfd/version.m4 b/bfd/version.m4
-index 0e9d81ff8e9..a6f1d0f0700 100644
---- a/bfd/version.m4
-+++ b/bfd/version.m4
-@@ -1 +1 @@
--m4_define([BFD_VERSION], [2.36])
-+m4_define([BFD_VERSION], [2.36.1])
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index b81a7d369eb..11ff778cc35 100644
+index 8b08bd0db79..11ff778cc35 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
-@@ -1,3 +1,83 @@
+@@ -1,3 +1,67 @@
 +2021-04-15  Alan Modra  <amodra@gmail.com>
 +
 +	PR 27456
@@ -1105,27 +303,11 @@ index b81a7d369eb..11ff778cc35 100644
 +	PR 27382
 +	* objcopy.c (copy_file): Use bfd_stat.
 +
-+2021-02-06  Nick Clifton  <nickc@redhat.com>
-+
-+	This is the 2.36.1 release.
-+	* configure: Regenerate.
-+	* po/binutils.pot: Regenerate.
-+
-+2021-01-26  Frederic Cambus  <fred@statdns.com>
-+
-+	* objcopy.c (copy_main): Fix a double free happening when both
-+	--localize-symbols and --globalize-symbols options are invoked
-+	together.
-+
-+2021-01-24  Nick Clifton  <nickc@redhat.com>
-+
-+	* configure: Regenerate.
-+
- 2021-01-24  Nick Clifton  <nickc@redhat.com>
+ 2021-02-06  Nick Clifton  <nickc@redhat.com>
  
- 	This is the 2.36 release.
+ 	This is the 2.36.1 release.
 diff --git a/binutils/ar.c b/binutils/ar.c
-index 24ff0920f40..fb19b14fec5 100644
+index 45a34e3a6cf..fb19b14fec5 100644
 --- a/binutils/ar.c
 +++ b/binutils/ar.c
 @@ -25,7 +25,6 @@
@@ -1136,13 +318,11 @@ index 24ff0920f40..fb19b14fec5 100644
  #include "libiberty.h"
  #include "progress.h"
  #include "getopt.h"
-@@ -1253,24 +1252,21 @@ write_archive (bfd *iarch)
+@@ -1253,22 +1252,21 @@ write_archive (bfd *iarch)
    bfd *obfd;
    char *old_name, *new_name;
    bfd *contents_head = iarch->archive_next;
 -  int ofd = -1;
--  struct stat target_stat;
--  bfd_boolean skip_stat = FALSE;
 +  int tmpfd = -1;
  
 -  old_name = (char *) xmalloc (strlen (bfd_get_filename (iarch)) + 1);
@@ -1166,33 +346,25 @@ index 24ff0920f40..fb19b14fec5 100644
        bfd_fatal (old_name);
      }
  
-@@ -1301,14 +1297,7 @@ write_archive (bfd *iarch)
+@@ -1299,6 +1297,7 @@ write_archive (bfd *iarch)
    if (!bfd_set_archive_head (obfd, contents_head))
      bfd_fatal (old_name);
  
--#if !defined (_WIN32) || defined (__CYGWIN32__)
--  ofd = dup (ofd);
--  if (iarch == NULL || iarch->iostream == NULL)
--    skip_stat = TRUE;
--  else if (ofd == -1 || fstat (fileno ((FILE *) iarch->iostream), &target_stat) != 0)
--    bfd_fatal (old_name);
--#endif
--
 +  tmpfd = dup (tmpfd);
    if (!bfd_close (obfd))
      bfd_fatal (old_name);
  
-@@ -1318,7 +1307,7 @@ write_archive (bfd *iarch)
+@@ -1308,7 +1307,7 @@ write_archive (bfd *iarch)
    /* We don't care if this fails; we might be creating the archive.  */
    bfd_close (iarch);
  
--  if (smart_rename (new_name, old_name, ofd, skip_stat ? NULL : &target_stat, 0) != 0)
+-  if (smart_rename (new_name, old_name, 0) != 0)
 +  if (smart_rename (new_name, old_name, tmpfd, NULL, FALSE) != 0)
      xexit (1);
    free (old_name);
    free (new_name);
 diff --git a/binutils/arsup.c b/binutils/arsup.c
-index 837011bdfd2..9982484dbe0 100644
+index 5403a0c5d74..9982484dbe0 100644
 --- a/binutils/arsup.c
 +++ b/binutils/arsup.c
 @@ -42,6 +42,8 @@ extern int deterministic;
@@ -1238,31 +410,20 @@ index 837011bdfd2..9982484dbe0 100644
  
        maybequit ();
      }
-@@ -344,28 +343,31 @@ ar_save (void)
+@@ -344,16 +343,31 @@ ar_save (void)
      }
    else
      {
 -      char *ofilename = xstrdup (bfd_get_filename (obfd));
--      bfd_boolean skip_stat = FALSE;
-       struct stat target_stat;
--      int ofd = -1;
++      struct stat target_stat;
  
        if (deterministic > 0)
          obfd->flags |= BFD_DETERMINISTIC_OUTPUT;
  
--#if !defined (_WIN32) || defined (__CYGWIN32__)
--      /* It's OK to fail; at worst it will result in SMART_RENAME using a slow
--         copy fallback to write the output.  */
--      ofd = dup (fileno ((FILE *) obfd->iostream));
--      if (lstat (real_name, &target_stat) != 0)
--	skip_stat = TRUE;
--#endif
--
 +      temp_fd = dup (temp_fd);
        bfd_close (obfd);
  
--      smart_rename (ofilename, real_name, ofd,
--		    skip_stat ? NULL : &target_stat, 0);
+-      smart_rename (ofilename, real_name, 0);
 +      if (stat (real_name, &target_stat) != 0)
 +	{
 +	  /* The temp file created in ar_open has mode 0600 as per mkstemp.
@@ -1285,107 +446,22 @@ index 837011bdfd2..9982484dbe0 100644
  }
  
 diff --git a/binutils/bucomm.h b/binutils/bucomm.h
-index 7a0adfae565..f1ae47fa1b5 100644
+index 91f6a5b228f..f1ae47fa1b5 100644
 --- a/binutils/bucomm.h
 +++ b/binutils/bucomm.h
-@@ -71,7 +71,8 @@ extern void print_version (const char *);
+@@ -71,7 +71,9 @@ extern void print_version (const char *);
  /* In rename.c.  */
  extern void set_times (const char *, const struct stat *);
  
--extern int smart_rename (const char *, const char *, int, struct stat *, int);
+-extern int smart_rename (const char *, const char *, int);
 +extern int smart_rename (const char *, const char *, int,
 +			 struct stat *, bfd_boolean);
- 
++
  
  /* In libiberty.  */
-diff --git a/binutils/configure b/binutils/configure
-index 1ea0b624ed3..1bbc43adebc 100755
---- a/binutils/configure
-+++ b/binutils/configure
-@@ -1,6 +1,6 @@
- #! /bin/sh
- # Guess values for system-dependent variables and create Makefiles.
--# Generated by GNU Autoconf 2.69 for binutils 2.36.
-+# Generated by GNU Autoconf 2.69 for binutils 2.36.1.
- #
- #
- # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
-@@ -587,8 +587,8 @@ MAKEFLAGS=
- # Identity of this package.
- PACKAGE_NAME='binutils'
- PACKAGE_TARNAME='binutils'
--PACKAGE_VERSION='2.36'
--PACKAGE_STRING='binutils 2.36'
-+PACKAGE_VERSION='2.36.1'
-+PACKAGE_STRING='binutils 2.36.1'
- PACKAGE_BUGREPORT=''
- PACKAGE_URL=''
- 
-@@ -1389,7 +1389,7 @@ if test "$ac_init_help" = "long"; then
-   # Omit some internal or obsolete options to make the list less imposing.
-   # This message is too long to be a string in the A/UX 3.1 sh.
-   cat <<_ACEOF
--\`configure' configures binutils 2.36 to adapt to many kinds of systems.
-+\`configure' configures binutils 2.36.1 to adapt to many kinds of systems.
- 
- Usage: $0 [OPTION]... [VAR=VALUE]...
- 
-@@ -1460,7 +1460,7 @@ fi
- 
- if test -n "$ac_init_help"; then
-   case $ac_init_help in
--     short | recursive ) echo "Configuration of binutils 2.36:";;
-+     short | recursive ) echo "Configuration of binutils 2.36.1:";;
-    esac
-   cat <<\_ACEOF
- 
-@@ -1603,7 +1603,7 @@ fi
- test -n "$ac_init_help" && exit $ac_status
- if $ac_init_version; then
-   cat <<\_ACEOF
--binutils configure 2.36
-+binutils configure 2.36.1
- generated by GNU Autoconf 2.69
- 
- Copyright (C) 2012 Free Software Foundation, Inc.
-@@ -2251,7 +2251,7 @@ cat >config.log <<_ACEOF
- This file contains any messages produced by compilers while
- running configure, to aid debugging if configure makes a mistake.
- 
--It was created by binutils $as_me 2.36, which was
-+It was created by binutils $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   $ $0 $@
-@@ -4201,7 +4201,7 @@ fi
- 
- # Define the identity of the package.
-  PACKAGE='binutils'
-- VERSION='2.36'
-+ VERSION='2.36.1'
- 
- 
- cat >>confdefs.h <<_ACEOF
-@@ -16085,7 +16085,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
- # report actual input values of CONFIG_FILES etc. instead of their
- # values after options handling.
- ac_log="
--This file was extended by binutils $as_me 2.36, which was
-+This file was extended by binutils $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   CONFIG_FILES    = $CONFIG_FILES
-@@ -16151,7 +16151,7 @@ _ACEOF
- cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
- ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
- ac_cs_version="\\
--binutils config.status 2.36
-+binutils config.status 2.36.1
- configured by $0, generated by GNU Autoconf 2.69,
-   with options \\"\$ac_cs_config\\"
- 
+ void *xmalloc (size_t);
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index 62ee22202ff..00ef851dc5d 100644
+index 00d751522c4..00ef851dc5d 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
 @@ -20,7 +20,6 @@
@@ -1400,12 +476,20 @@ index 62ee22202ff..00ef851dc5d 100644
    /* To allow us to do "strip *" without dying on the first
       non-object file, failures are nonfatal.  */
    ibfd = bfd_openr (input_filename, input_target);
--  if (ibfd == NULL || fstat (fileno ((FILE *) ibfd->iostream), in_stat) != 0)
+-  if (ibfd == NULL || fstat (fileno (ibfd->iostream), in_stat) != 0)
 +  if (ibfd == NULL || bfd_stat (ibfd, in_stat) != 0)
      {
        bfd_nonfatal_message (input_filename, NULL, NULL, NULL);
        status = 1;
-@@ -4845,16 +4844,15 @@ strip_main (int argc, char *argv[])
+@@ -4835,6 +4834,7 @@ strip_main (int argc, char *argv[])
+       struct stat statbuf;
+       char *tmpname;
+       int tmpfd = -1;
++      int copyfd = -1;
+ 
+       if (get_file_size (argv[i]) < 1)
+ 	{
+@@ -4844,7 +4844,11 @@ strip_main (int argc, char *argv[])
  
        if (output_file == NULL
  	  || filename_cmp (argv[i], output_file) == 0)
@@ -1418,17 +502,7 @@ index 62ee22202ff..00ef851dc5d 100644
        else
  	tmpname = output_file;
  
--      if (tmpname == NULL
--#if !defined (_WIN32) || defined (__CYGWIN32__)
--	  /* Retain a copy of TMPFD since we will need it for SMART_RENAME.  */
--	  || (tmpfd >= 0 && (copyfd = dup (tmpfd)) == -1)
--#endif
--      )
-+      if (tmpname == NULL)
- 	{
- 	  bfd_nonfatal_message (argv[i], NULL, NULL,
- 				_("could not create temporary file to hold stripped copy"));
-@@ -4867,21 +4865,16 @@ strip_main (int argc, char *argv[])
+@@ -4861,17 +4865,18 @@ strip_main (int argc, char *argv[])
  		 output_target, NULL);
        if (status == 0)
  	{
@@ -1437,7 +511,7 @@ index 62ee22202ff..00ef851dc5d 100644
 -	  if (output_file != tmpname)
 -	    status = (smart_rename (tmpname,
 -				    output_file ? output_file : argv[i],
--				    copyfd, &statbuf, preserve_dates) != 0);
+-				    preserve_dates) != 0);
 +	  const char *oname = output_file ? output_file : argv[i];
 +	  status = smart_rename (tmpname, oname, copyfd,
 +				 &statbuf, preserve_dates) != 0;
@@ -1445,27 +519,27 @@ index 62ee22202ff..00ef851dc5d 100644
  	    status = hold_status;
  	}
        else
- 	{
--#if !defined (_WIN32) || defined (__CYGWIN32__)
- 	  if (copyfd >= 0)
- 	    close (copyfd);
--#endif
- 	  unlink_if_ordinary (tmpname);
- 	}
+-	unlink_if_ordinary (tmpname);
++	{
++	  if (copyfd >= 0)
++	    close (copyfd);
++	  unlink_if_ordinary (tmpname);
++	}
        if (output_file != tmpname)
-@@ -5090,8 +5083,9 @@ copy_main (int argc, char *argv[])
+ 	free (tmpname);
+     }
+@@ -5078,7 +5083,9 @@ copy_main (int argc, char *argv[])
    bfd_boolean formats_info = FALSE;
    bfd_boolean use_globalize = FALSE;
    bfd_boolean use_keep_global = FALSE;
 -  int c, tmpfd = -1;
--  int copyfd = -1;
 +  int c;
 +  int tmpfd = -1;
 +  int copyfd;
    struct stat statbuf;
    const bfd_arch_info_type *input_arch = NULL;
  
-@@ -5929,40 +5923,34 @@ copy_main (int argc, char *argv[])
+@@ -5916,10 +5923,15 @@ copy_main (int argc, char *argv[])
      }
  
    /* If there is no destination file, or the source and destination files
@@ -1483,352 +557,31 @@ index 62ee22202ff..00ef851dc5d 100644
    else
      tmpname = output_filename;
  
--  if (tmpname == NULL
--#if !defined (_WIN32) || defined (__CYGWIN32__)
--      /* Retain a copy of TMPFD since we will need it for SMART_RENAME.  */
--      || (tmpfd >= 0 && (copyfd = dup (tmpfd)) == -1)
--#endif
--  )
--    {
--      fatal (_("warning: could not create temporary file whilst copying '%s', (error: %s)"),
--	     input_filename, strerror (errno));
--    }
-+  if (tmpname == NULL)
-+    fatal (_("warning: could not create temporary file whilst copying '%s', (error: %s)"),
-+	   input_filename, strerror (errno));
- 
-   copy_file (input_filename, tmpname, tmpfd, &statbuf, input_target,
+@@ -5931,14 +5943,16 @@ copy_main (int argc, char *argv[])
  	     output_target, input_arch);
    if (status == 0)
      {
 -      if (preserve_dates)
 -	set_times (tmpname, &statbuf);
 -      if (tmpname != output_filename)
--	status = (smart_rename (tmpname, input_filename, copyfd, &statbuf,
+-	status = (smart_rename (tmpname, input_filename,
 -				preserve_dates) != 0);
 +      const char *oname = output_filename ? output_filename : input_filename;
 +      status = smart_rename (tmpname, oname, copyfd,
 +			     &statbuf, preserve_dates) != 0;
      }
    else
-     {
--#if !defined (_WIN32) || defined (__CYGWIN32__)
-       if (copyfd >= 0)
- 	close (copyfd);
--#endif
-       unlink_if_ordinary (tmpname);
-     }
+-    unlink_if_ordinary (tmpname);
++    {
++      if (copyfd >= 0)
++	close (copyfd);
++      unlink_if_ordinary (tmpname);
++    }
  
-@@ -6018,7 +6006,7 @@ copy_main (int argc, char *argv[])
-     free (keep_specific_buffer);
- 
-   if (localize_specific_buffer)
--    free (globalize_specific_buffer);
-+    free (localize_specific_buffer);
- 
-   if (globalize_specific_buffer)
-     free (globalize_specific_buffer);
-diff --git a/binutils/po/binutils.pot b/binutils/po/binutils.pot
-index b45c92c1c60..b3c2c3b0089 100644
---- a/binutils/po/binutils.pot
-+++ b/binutils/po/binutils.pot
-@@ -8,7 +8,7 @@ msgid ""
- msgstr ""
- "Project-Id-Version: PACKAGE VERSION\n"
- "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
--"POT-Creation-Date: 2021-01-09 10:56+0000\n"
-+"POT-Creation-Date: 2021-02-06 09:03+0000\n"
- "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
- "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
- "Language-Team: LANGUAGE <LL@li.org>\n"
-@@ -96,7 +96,7 @@ msgstr ""
- msgid "%s: cannot find section %s"
- msgstr ""
- 
--#: addr2line.c:444 ar.c:759 dlltool.c:3231 nm.c:1738 objcopy.c:6058
-+#: addr2line.c:444 ar.c:759 dlltool.c:3231 nm.c:1738 objcopy.c:6032
- #: objdump.c:5161 size.c:153 strings.c:291 windmc.c:960 windres.c:817
- msgid "fatal error: libbfd ABI mismatch"
- msgstr ""
-@@ -455,7 +455,7 @@ msgstr ""
- msgid "Cannot convert existing thin library %s to normal format"
- msgstr ""
- 
--#: ar.c:1091 ar.c:1188 ar.c:1520 objcopy.c:3617
-+#: ar.c:1091 ar.c:1188 ar.c:1510 objcopy.c:3617
- #, c-format
- msgid "internal stat error on %s"
- msgstr ""
-@@ -470,21 +470,21 @@ msgstr ""
- msgid "illegal output pathname for archive member: %s, using '%s' instead"
- msgstr ""
- 
--#: ar.c:1265
-+#: ar.c:1263
- msgid "could not create temporary file whilst writing archive"
- msgstr ""
- 
--#: ar.c:1423
-+#: ar.c:1413
- #, c-format
- msgid "No member named `%s'\n"
- msgstr ""
- 
--#: ar.c:1473
-+#: ar.c:1463
- #, c-format
- msgid "no entry %s in archive %s!"
- msgstr ""
- 
--#: ar.c:1633
-+#: ar.c:1623
- #, c-format
- msgid "%s: no archive map to update"
- msgstr ""
-@@ -524,27 +524,27 @@ msgstr ""
- msgid "%s: no output archive specified yet\n"
- msgstr ""
- 
--#: arsup.c:257 arsup.c:300 arsup.c:342 arsup.c:377 arsup.c:443
-+#: arsup.c:257 arsup.c:300 arsup.c:342 arsup.c:365 arsup.c:431
- #, c-format
- msgid "%s: no open output archive\n"
- msgstr ""
- 
--#: arsup.c:273 arsup.c:398 arsup.c:424
-+#: arsup.c:273 arsup.c:386 arsup.c:412
- #, c-format
- msgid "%s: can't open file %s\n"
- msgstr ""
- 
--#: arsup.c:327 arsup.c:420 arsup.c:501
-+#: arsup.c:327 arsup.c:408 arsup.c:489
- #, c-format
- msgid "%s: can't find module file %s\n"
- msgstr ""
- 
--#: arsup.c:452
-+#: arsup.c:440
- #, c-format
- msgid "Current open archive is %s\n"
- msgstr ""
- 
--#: arsup.c:476
-+#: arsup.c:464
- #, c-format
- msgid "%s: no open archive\n"
- msgstr ""
-@@ -5021,7 +5021,7 @@ msgstr ""
- msgid "cannot open '%s': %s"
- msgstr ""
- 
--#: objcopy.c:1095 objcopy.c:5070
-+#: objcopy.c:1095 objcopy.c:5058
- #, c-format
- msgid "%s: fread failed"
- msgstr ""
-@@ -5392,151 +5392,151 @@ msgstr ""
- msgid "don't know how to write debugging information for %s"
- msgstr ""
- 
--#: objcopy.c:4860
-+#: objcopy.c:4854
- msgid "could not create temporary file to hold stripped copy"
- msgstr ""
- 
--#: objcopy.c:4939
-+#: objcopy.c:4927
- #, c-format
- msgid "%s: bad version in PE subsystem"
- msgstr ""
- 
--#: objcopy.c:4969
-+#: objcopy.c:4957
- #, c-format
- msgid "unknown PE subsystem: %s"
- msgstr ""
- 
--#: objcopy.c:5023 objcopy.c:5294 objcopy.c:5374 objcopy.c:5515 objcopy.c:5547
--#: objcopy.c:5610 objcopy.c:5614 objcopy.c:5634
-+#: objcopy.c:5011 objcopy.c:5281 objcopy.c:5361 objcopy.c:5502 objcopy.c:5534
-+#: objcopy.c:5597 objcopy.c:5601 objcopy.c:5621
- #, c-format
- msgid "bad format for %s"
- msgstr ""
- 
--#: objcopy.c:5052
-+#: objcopy.c:5040
- #, c-format
- msgid "cannot open: %s: %s"
- msgstr ""
- 
--#: objcopy.c:5106
-+#: objcopy.c:5093
- msgid "byte number must be non-negative"
- msgstr ""
- 
--#: objcopy.c:5112
-+#: objcopy.c:5099
- #, c-format
- msgid "architecture %s unknown"
- msgstr ""
- 
--#: objcopy.c:5120
-+#: objcopy.c:5107
- msgid "interleave must be positive"
- msgstr ""
- 
--#: objcopy.c:5129
-+#: objcopy.c:5116
- msgid "interleave width must be positive"
- msgstr ""
- 
--#: objcopy.c:5447
-+#: objcopy.c:5434
- #, c-format
- msgid "unrecognized --compress-debug-sections type `%s'"
- msgstr ""
- 
--#: objcopy.c:5468
-+#: objcopy.c:5455
- #, c-format
- msgid "unrecognized --elf-stt-common= option `%s'"
- msgstr ""
- 
--#: objcopy.c:5484
-+#: objcopy.c:5471
- #, c-format
- msgid "Warning: truncating gap-fill from 0x%s to 0x%x"
- msgstr ""
- 
--#: objcopy.c:5570
-+#: objcopy.c:5557
- msgid "bad format for --set-section-alignment: argument needed"
- msgstr ""
- 
--#: objcopy.c:5574
-+#: objcopy.c:5561
- msgid "bad format for --set-section-alignment: numeric argument needed"
- msgstr ""
- 
- #. Number has more than on 1, i.e. wasn't a power of 2.
--#: objcopy.c:5586
-+#: objcopy.c:5573
- msgid "bad format for --set-section-alignment: alignment is not a power of two"
- msgstr ""
- 
--#: objcopy.c:5689
-+#: objcopy.c:5676
- #, c-format
- msgid "unknown long section names option '%s'"
- msgstr ""
- 
--#: objcopy.c:5712
-+#: objcopy.c:5699
- msgid "unable to parse alternative machine code"
- msgstr ""
- 
--#: objcopy.c:5761
-+#: objcopy.c:5748
- msgid "number of bytes to reverse must be positive and even"
- msgstr ""
- 
--#: objcopy.c:5764
-+#: objcopy.c:5751
- #, c-format
- msgid "Warning: ignoring previous --reverse-bytes value of %d"
- msgstr ""
- 
--#: objcopy.c:5779
-+#: objcopy.c:5766
- #, c-format
- msgid "%s: invalid reserve value for --heap"
- msgstr ""
- 
--#: objcopy.c:5785
-+#: objcopy.c:5772
- #, c-format
- msgid "%s: invalid commit value for --heap"
- msgstr ""
- 
--#: objcopy.c:5810
-+#: objcopy.c:5797
- #, c-format
- msgid "%s: invalid reserve value for --stack"
- msgstr ""
- 
--#: objcopy.c:5816
-+#: objcopy.c:5803
- #, c-format
- msgid "%s: invalid commit value for --stack"
- msgstr ""
- 
--#: objcopy.c:5825
-+#: objcopy.c:5812
- msgid "verilog data width must be at least 1 byte"
- msgstr ""
- 
--#: objcopy.c:5842
-+#: objcopy.c:5829
- msgid "--globalize-symbol(s) is incompatible with -G/--keep-global-symbol(s)"
- msgstr ""
- 
--#: objcopy.c:5854
-+#: objcopy.c:5841
- msgid "interleave start byte must be set with --byte"
- msgstr ""
- 
--#: objcopy.c:5857
-+#: objcopy.c:5844
- msgid "byte number must be less than interleave"
- msgstr ""
- 
--#: objcopy.c:5860
-+#: objcopy.c:5847
- msgid "interleave width must be less than or equal to interleave - byte`"
- msgstr ""
- 
--#: objcopy.c:5889
-+#: objcopy.c:5876
- #, c-format
- msgid "unknown input EFI target: %s"
- msgstr ""
- 
--#: objcopy.c:5920
-+#: objcopy.c:5907
- #, c-format
- msgid "unknown output EFI target: %s"
- msgstr ""
- 
--#: objcopy.c:5946
-+#: objcopy.c:5927
- #, c-format
- msgid ""
- "warning: could not create temporary file whilst copying '%s', (error: %s)"
- msgstr ""
- 
--#: objcopy.c:5987 objcopy.c:6001
-+#: objcopy.c:5961 objcopy.c:5975
- #, c-format
- msgid "%s %s%c0x%s never used"
- msgstr ""
-@@ -10861,12 +10861,12 @@ msgid "%s: cannot set time: %s"
- msgstr ""
- 
- #. We have to clean up here.
--#: rename.c:195 rename.c:232
-+#: rename.c:157 rename.c:195
- #, c-format
- msgid "unable to rename '%s'; reason: %s"
- msgstr ""
- 
--#: rename.c:240
-+#: rename.c:203
- #, c-format
- msgid "unable to copy file '%s'; reason: %s"
- msgstr ""
+   if (tmpname != output_filename)
+     free (tmpname);
 diff --git a/binutils/rename.c b/binutils/rename.c
-index fece3117915..0427348df5b 100644
+index 65ad5bf52c4..0427348df5b 100644
 --- a/binutils/rename.c
 +++ b/binutils/rename.c
 @@ -24,36 +24,29 @@
@@ -1911,7 +664,7 @@ index fece3117915..0427348df5b 100644
  
  /* Set the times of the file DESTINATION to be the same as those in
     STATBUF.  */
-@@ -91,161 +93,55 @@ void
+@@ -91,122 +93,55 @@ void
  set_times (const char *destination, const struct stat *statbuf)
  {
    int result;
@@ -1941,14 +694,6 @@ index fece3117915..0427348df5b 100644
 -#endif /* HAVE_UTIMES */
 -#endif /* ! HAVE_GOOD_UTIME_H */
 -  }
--
--  if (result != 0)
--    non_fatal (_("%s: cannot set time: %s"), destination, strerror (errno));
--}
--
--#ifndef S_ISLNK
--#ifdef S_IFLNK
--#define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
 +  struct utimbuf tb;
 +
 +  tb.actime = statbuf->st_atime;
@@ -1962,60 +707,29 @@ index fece3117915..0427348df5b 100644
 +  tv[1].tv_sec = statbuf->st_mtime;
 +  tv[1].tv_usec = 0;
 +  result = utimes (destination, tv);
- #else
--#define S_ISLNK(m) 0
--#define lstat stat
--#endif
--#endif
++#else
 +  long tb[2];
- 
--#if !defined (_WIN32) || defined (__CYGWIN32__)
--/* Try to preserve the permission bits and ownership of an existing file when
--   rename overwrites it.  FD is the file being renamed and TARGET_STAT has the
--   status of the file that was overwritten.  */
--static void
--try_preserve_permissions (int fd, struct stat *target_stat)
--{
--  struct stat from_stat;
--  int ret = 0;
++
 +  tb[0] = statbuf->st_atime;
 +  tb[1] = statbuf->st_mtime;
 +  result = utime (destination, tb);
 +#endif
  
--  if (fstat (fd, &from_stat) != 0)
--    return;
--
--  int from_mode = from_stat.st_mode & 0777;
--  int to_mode = target_stat->st_mode & 0777;
--
--  /* Fix up permissions before we potentially lose ownership with fchown.
--     Clear the setxid bits because in case the fchown below fails then we don't
--     want to end up with a sxid file owned by the invoking user.  If the user
--     hasn't changed or if fchown succeeded, we add back the sxid bits at the
--     end.  */
--  if (from_mode != to_mode)
--    fchmod (fd, to_mode);
--
--  /* Fix up ownership, this will clear the setxid bits.  */
--  if (from_stat.st_uid != target_stat->st_uid
--      || from_stat.st_gid != target_stat->st_gid)
--    ret = fchown (fd, target_stat->st_uid, target_stat->st_gid);
--
--  /* Fix up the sxid bits if either the fchown wasn't needed or it
--     succeeded.  */
--  if (ret == 0)
--    fchmod (fd, target_stat->st_mode & 07777);
-+  if (result != 0)
-+    non_fatal (_("%s: cannot set time: %s"), destination, strerror (errno));
+   if (result != 0)
+     non_fatal (_("%s: cannot set time: %s"), destination, strerror (errno));
  }
--#endif
  
--/* Rename FROM to TO, copying if TO is either a link or is not a regular file.
--   FD is an open file descriptor pointing to FROM that we can use to safely fix
--   up permissions of the file after renaming.  TARGET_STAT has the file status
--   that is used to fix up permissions and timestamps after rename.  Return 0 if
--   ok, -1 if error and FD is closed before returning.  */
+-#ifndef S_ISLNK
+-#ifdef S_IFLNK
+-#define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
+-#else
+-#define S_ISLNK(m) 0
+-#define lstat stat
+-#endif
+-#endif
+-
+-/* Rename FROM to TO, copying if TO is a link.
+-   Return 0 if ok, -1 if error.  */
 +/* Copy FROM to TO.  TARGET_STAT has the file status that, if non-NULL,
 +   is used to fix up timestamps.  Return 0 if ok, -1 if error.
 +   At one time this function renamed files, but file permissions are
@@ -2023,14 +737,15 @@ index fece3117915..0427348df5b 100644
 +   various systems.  So now we just copy.  */
  
  int
--smart_rename (const char *from, const char *to, int fd ATTRIBUTE_UNUSED,
--	      struct stat *target_stat ATTRIBUTE_UNUSED,
--	      int preserve_dates ATTRIBUTE_UNUSED)
+-smart_rename (const char *from, const char *to, int preserve_dates ATTRIBUTE_UNUSED)
 +smart_rename (const char *from, const char *to, int fromfd,
 +	      struct stat *target_stat, bfd_boolean preserve_dates)
  {
+-  bfd_boolean exists;
+-  struct stat s;
    int ret = 0;
--  bfd_boolean exists = target_stat != NULL;
+ 
+-  exists = lstat (to, &s) == 0;
 -
 -#if defined (_WIN32) && !defined (__CYGWIN32__)
 -  /* Win32, unlike unix, will not erase `to' in `rename(from, to)' but
@@ -2038,7 +753,7 @@ index fece3117915..0427348df5b 100644
 -
 -  if (exists)
 -    remove (to);
- 
+-
 -  ret = rename (from, to);
 -  if (ret != 0)
 -    {
@@ -2047,35 +762,37 @@ index fece3117915..0427348df5b 100644
 -      unlink (from);
 -    }
 -#else
--  /* Avoid a full copy and use rename if we can fix up permissions of the
--     file after renaming, i.e.:
--
--     - TO is not a symbolic link
--     - TO is a regular file with only one hard link
--     - We have permission to write to TO
--     - FD is available to safely fix up permissions to be the same as the file
--       we overwrote with the rename.
--
--     Note though that the actual file on disk that TARGET_STAT describes may
--     have changed and we're only trying to preserve the status we know about.
--     At no point do we try to interact with the new file changes, so there can
--     only be two outcomes, i.e. either the external file change survives
--     without knowledge of our change (if it happens after the rename syscall)
--     or our rename and permissions fixup survive without any knowledge of the
--     external change.  */
+-  /* Use rename only if TO is not a symbolic link and has
+-     only one hard link, and we have permission to write to it.  */
 -  if (! exists
--      || (fd >= 0
--	  && !S_ISLNK (target_stat->st_mode)
--	  && S_ISREG (target_stat->st_mode)
--	  && (target_stat->st_mode & S_IWUSR)
--	  && target_stat->st_nlink == 1)
+-      || (!S_ISLNK (s.st_mode)
+-	  && S_ISREG (s.st_mode)
+-	  && (s.st_mode & S_IWUSR)
+-	  && s.st_nlink == 1)
 -      )
--    {
++  if (to != from)
+     {
 -      ret = rename (from, to);
 -      if (ret == 0)
 -	{
 -	  if (exists)
--	    try_preserve_permissions (fd, target_stat);
+-	    {
+-	      /* Try to preserve the permission bits and ownership of
+-		 TO.  First get the mode right except for the setuid
+-		 bit.  Then change the ownership.  Then fix the setuid
+-		 bit.  We do the chmod before the chown because if the
+-		 chown succeeds, and we are a normal user, we won't be
+-		 able to do the chmod afterward.  We don't bother to
+-		 fix the setuid bit first because that might introduce
+-		 a fleeting security problem, and because the chown
+-		 will clear the setuid bit anyhow.  We only fix the
+-		 setuid bit if the chown succeeds, because we don't
+-		 want to introduce an unexpected setuid file owned by
+-		 the user running objcopy.  */
+-	      chmod (to, s.st_mode & 0777);
+-	      if (chown (to, s.st_uid, s.st_gid) >= 0)
+-		chmod (to, s.st_mode & 07777);
+-	    }
 -	}
 -      else
 -	{
@@ -2085,21 +802,18 @@ index fece3117915..0427348df5b 100644
 -	}
 -    }
 -  else
-+  if (to != from)
-     {
+-    {
 -      ret = simple_copy (from, to);
 +      ret = simple_copy (fromfd, to, target_stat);
        if (ret != 0)
 -	non_fatal (_("unable to copy file '%s'; reason: %s"), to, strerror (errno));
 -
 -      if (preserve_dates)
--	set_times (to, target_stat);
+-	set_times (to, &s);
 +	non_fatal (_("unable to copy file '%s'; reason: %s"),
 +		   to, strerror (errno));
        unlink (from);
      }
--  if (fd >= 0)
--    close (fd);
 -#endif /* _WIN32 && !__CYGWIN32__ */
 +
 +  if (preserve_dates)
@@ -2107,23 +821,11 @@ index fece3117915..0427348df5b 100644
  
    return ret;
  }
-diff --git a/elfcpp/ChangeLog b/elfcpp/ChangeLog
-index 98283babd83..404e0de5562 100644
---- a/elfcpp/ChangeLog
-+++ b/elfcpp/ChangeLog
-@@ -1,3 +1,7 @@
-+2021-02-06  Nick Clifton  <nickc@redhat.com>
-+
-+	This is the 2.36.1 release.
-+
- 2021-01-24  Nick Clifton  <nickc@redhat.com>
- 
- 	This is the 2.36 release.
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index fd17b2ba94d..bd87aca2525 100644
+index 7f37f521404..bd87aca2525 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,66 @@
+@@ -1,3 +1,27 @@
 +2021-04-23  Eric Botcazou<ebotcazou@adacore.com>
 +
 +	* testsuite/gas/elf/section25.d: Run it everywhere.
@@ -2148,48 +850,9 @@ index fd17b2ba94d..bd87aca2525 100644
 +	* testsuite/gas/s390/zarch-arch14.d: New test.
 +	* testsuite/gas/s390/zarch-arch14.s: New test.
 +
-+2021-02-06  Nick Clifton  <nickc@redhat.com>
-+
-+	This is the 2.36.1 release.
-+	* configure: Regenerate.
-+	* po/gas.pot: Regenerate.
-+
-+2021-02-05  Nelson Chu  <nelson.chu@sifive.com>
-+
-+	* config/tc-riscv.c (riscv_multi_subset_supports): Removed
-+	INSN_CLASS_ZB*.
-+	* testsuite/gas/riscv/bitmanip-insns-32.d: Removed.
-+	* testsuite/gas/riscv/bitmanip-insns-64.d: Removed.
-+	* testsuite/gas/riscv/bitmanip-insns.s: Removed.
-+
-+2021-01-26  Alan Modra  <amodra@gmail.com>
-+
-+	PR 27282
-+	* testsuite/gas/all/none.d: Replace skip with xfail, don't xfail ft32.
-+	* testsuite/gas/elf/pr27228.d: xfail hppa and allow OBJECT match.
-+
-+2021-01-26  H.J. Lu  <hongjiu.lu@intel.com>
-+
-+	PR gas/27243
-+	* config/tc-nios2.c (md_begin): Don't disable relaxation with
-+	--gdwarf-N.
-+	* testsuite/gas/nios2/relax.d: New file.
-+	* testsuite/gas/nios2/relax.s: Likewise.
-+
-+2021-01-24  H.J. Lu  <hongjiu.lu@intel.com>
-+
-+	PR gas/27228
-+	* testsuite/gas/elf/elf.exp: Run pr27228.
-+	* testsuite/gas/elf/pr27228.d: New file.
-+	* testsuite/gas/elf/pr27228.s: Likewise.
-+
-+2021-01-24  Nick Clifton  <nickc@redhat.com>
-+
-+	* configure: Regenerate.
-+
- 2021-01-24  Nick Clifton  <nickc@redhat.com>
+ 2021-02-06  Nick Clifton  <nickc@redhat.com>
  
- 	This is the 2.36 release.
+ 	This is the 2.36.1 release.
 diff --git a/gas/config/tc-aarch64.c b/gas/config/tc-aarch64.c
 index 6f782d057f8..e852e38dfb4 100644
 --- a/gas/config/tc-aarch64.c
@@ -2252,42 +915,6 @@ index 6f782d057f8..e852e38dfb4 100644
        break;
  
      default:
-diff --git a/gas/config/tc-nios2.c b/gas/config/tc-nios2.c
-index eea6687fcc4..be4536caa8a 100644
---- a/gas/config/tc-nios2.c
-+++ b/gas/config/tc-nios2.c
-@@ -3643,10 +3643,6 @@ md_begin (void)
-   nios2_as_options.noat = FALSE;
-   nios2_as_options.nobreak = FALSE;
- 
--  /* Debug information is incompatible with relaxation.  */
--  if (debug_type != DEBUG_UNSPECIFIED)
--    nios2_as_options.relax = relax_none;
--
-   /* Initialize the alignment data.  */
-   nios2_current_align_seg = now_seg;
-   nios2_last_label = NULL;
-diff --git a/gas/config/tc-riscv.c b/gas/config/tc-riscv.c
-index 8dc84cbe3df..3322f17ccba 100644
---- a/gas/config/tc-riscv.c
-+++ b/gas/config/tc-riscv.c
-@@ -253,16 +253,6 @@ riscv_multi_subset_supports (enum riscv_insn_class insn_class)
-     case INSN_CLASS_ZIHINTPAUSE:
-       return riscv_subset_supports ("zihintpause");
- 
--    case INSN_CLASS_ZBA:
--      return riscv_subset_supports ("zba");
--    case INSN_CLASS_ZBB:
--      return riscv_subset_supports ("zbb");
--    case INSN_CLASS_ZBC:
--      return riscv_subset_supports ("zbc");
--    case INSN_CLASS_ZBA_OR_ZBB:
--      return (riscv_subset_supports ("zba")
--	      || riscv_subset_supports ("zbb"));
--
-     default:
-       as_fatal ("Unreachable");
-       return FALSE;
 diff --git a/gas/config/tc-s390.c b/gas/config/tc-s390.c
 index c6daef99fde..f23d9863d3d 100644
 --- a/gas/config/tc-s390.c
@@ -2301,92 +928,6 @@ index c6daef99fde..f23d9863d3d 100644
        S390_INSTR_FLAG_HTM | S390_INSTR_FLAG_VX }
    };
    static struct
-diff --git a/gas/configure b/gas/configure
-index adf248c3419..b3c38077787 100755
---- a/gas/configure
-+++ b/gas/configure
-@@ -1,6 +1,6 @@
- #! /bin/sh
- # Guess values for system-dependent variables and create Makefiles.
--# Generated by GNU Autoconf 2.69 for gas 2.36.
-+# Generated by GNU Autoconf 2.69 for gas 2.36.1.
- #
- #
- # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
-@@ -587,8 +587,8 @@ MAKEFLAGS=
- # Identity of this package.
- PACKAGE_NAME='gas'
- PACKAGE_TARNAME='gas'
--PACKAGE_VERSION='2.36'
--PACKAGE_STRING='gas 2.36'
-+PACKAGE_VERSION='2.36.1'
-+PACKAGE_STRING='gas 2.36.1'
- PACKAGE_BUGREPORT=''
- PACKAGE_URL=''
- 
-@@ -1370,7 +1370,7 @@ if test "$ac_init_help" = "long"; then
-   # Omit some internal or obsolete options to make the list less imposing.
-   # This message is too long to be a string in the A/UX 3.1 sh.
-   cat <<_ACEOF
--\`configure' configures gas 2.36 to adapt to many kinds of systems.
-+\`configure' configures gas 2.36.1 to adapt to many kinds of systems.
- 
- Usage: $0 [OPTION]... [VAR=VALUE]...
- 
-@@ -1441,7 +1441,7 @@ fi
- 
- if test -n "$ac_init_help"; then
-   case $ac_init_help in
--     short | recursive ) echo "Configuration of gas 2.36:";;
-+     short | recursive ) echo "Configuration of gas 2.36.1:";;
-    esac
-   cat <<\_ACEOF
- 
-@@ -1577,7 +1577,7 @@ fi
- test -n "$ac_init_help" && exit $ac_status
- if $ac_init_version; then
-   cat <<\_ACEOF
--gas configure 2.36
-+gas configure 2.36.1
- generated by GNU Autoconf 2.69
- 
- Copyright (C) 2012 Free Software Foundation, Inc.
-@@ -2042,7 +2042,7 @@ cat >config.log <<_ACEOF
- This file contains any messages produced by compilers while
- running configure, to aid debugging if configure makes a mistake.
- 
--It was created by gas $as_me 2.36, which was
-+It was created by gas $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   $ $0 $@
-@@ -3989,7 +3989,7 @@ fi
- 
- # Define the identity of the package.
-  PACKAGE='gas'
-- VERSION='2.36'
-+ VERSION='2.36.1'
- 
- 
- cat >>confdefs.h <<_ACEOF
-@@ -15794,7 +15794,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
- # report actual input values of CONFIG_FILES etc. instead of their
- # values after options handling.
- ac_log="
--This file was extended by gas $as_me 2.36, which was
-+This file was extended by gas $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   CONFIG_FILES    = $CONFIG_FILES
-@@ -15860,7 +15860,7 @@ _ACEOF
- cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
- ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
- ac_cs_version="\\
--gas config.status 2.36
-+gas config.status 2.36.1
- configured by $0, generated by GNU Autoconf 2.69,
-   with options \\"\$ac_cs_config\\"
- 
 diff --git a/gas/doc/c-s390.texi b/gas/doc/c-s390.texi
 index c1b46a10c1e..53046a288bd 100644
 --- a/gas/doc/c-s390.texi
@@ -2412,396 +953,6 @@ index c1b46a10c1e..53046a288bd 100644
  
  Assembling an instruction that is not supported on the target
  processor results in an error message.
-diff --git a/gas/po/gas.pot b/gas/po/gas.pot
-index 3ad7b98ef3e..b5c9921838e 100644
---- a/gas/po/gas.pot
-+++ b/gas/po/gas.pot
-@@ -8,7 +8,7 @@ msgid ""
- msgstr ""
- "Project-Id-Version: PACKAGE VERSION\n"
- "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
--"POT-Creation-Date: 2021-01-24 10:22+0000\n"
-+"POT-Creation-Date: 2021-02-06 09:02+0000\n"
- "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
- "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
- "Language-Team: LANGUAGE <LL@li.org>\n"
-@@ -2616,8 +2616,8 @@ msgstr ""
- #: config/tc-nios2.c:3640 config/tc-ns32k.c:1906 config/tc-ppc.c:1688
- #: config/tc-ppc.c:1726 config/tc-ppc.c:1765 config/tc-ppc.c:1804
- #: config/tc-ppc.c:1822 config/tc-pru.c:1569 config/tc-pru.c:1573
--#: config/tc-riscv.c:285 config/tc-riscv.c:636 config/tc-riscv.c:693
--#: config/tc-riscv.c:1078 config/tc-s390.c:536 config/tc-s390.c:574
-+#: config/tc-riscv.c:275 config/tc-riscv.c:626 config/tc-riscv.c:683
-+#: config/tc-riscv.c:1068 config/tc-s390.c:536 config/tc-s390.c:574
- #: config/tc-sparc.c:961 config/tc-sparc.c:993 config/tc-tic30.c:121
- #: config/tc-tic30.c:131 config/tc-tic30.c:141 config/tc-tic30.c:151
- #: config/tc-tic4x.c:1215 config/tc-tilegx.c:316 config/tc-tilepro.c:252
-@@ -2714,8 +2714,8 @@ msgstr ""
- msgid "unknown architecture: %s\n"
- msgstr ""
- 
--#: config/tc-arc.c:893 config/tc-ia64.c:7476 config/tc-riscv.c:1110
--#: config/tc-riscv.c:3793 config/tc-tilegx.c:262
-+#: config/tc-arc.c:893 config/tc-ia64.c:7476 config/tc-riscv.c:1100
-+#: config/tc-riscv.c:3783 config/tc-tilegx.c:262
- msgid "Could not set architecture and machine"
- msgstr ""
- 
-@@ -7878,7 +7878,7 @@ msgstr ""
- msgid "internal error: losing opcode: `%s' \"%s\"\n"
- msgstr ""
- 
--#: config/tc-hppa.c:8263 config/tc-nios2.c:1438 config/tc-riscv.c:1089
-+#: config/tc-hppa.c:8263 config/tc-nios2.c:1438 config/tc-riscv.c:1079
- #: config/tc-sparc.c:999
- msgid "Broken assembler.  No assembly attempted."
- msgstr ""
-@@ -8390,7 +8390,7 @@ msgstr ""
- msgid "segment override on `%s' is ineffectual"
- msgstr ""
- 
--#: config/tc-i386.c:8528 config/tc-riscv.c:1185
-+#: config/tc-i386.c:8528 config/tc-riscv.c:1175
- msgid "relaxable branches not supported in absolute section"
- msgstr ""
- 
-@@ -12301,7 +12301,7 @@ msgstr ""
- msgid "la used to load 64-bit address; recommend using dla instead"
- msgstr ""
- 
--#: config/tc-mips.c:11104 config/tc-riscv.c:1490
-+#: config/tc-mips.c:11104 config/tc-riscv.c:1480
- msgid "offset too large"
- msgstr ""
- 
-@@ -12424,7 +12424,7 @@ msgstr ""
- msgid "PC-relative reference to a different section"
- msgstr ""
- 
--#: config/tc-mips.c:15911 config/tc-riscv.c:2931
-+#: config/tc-mips.c:15911 config/tc-riscv.c:2921
- msgid "TLS relocation against a constant"
- msgstr ""
- 
-@@ -14302,36 +14302,36 @@ msgid "Big-endian R2 is not supported."
- msgstr ""
- 
- #. Unrecognised instruction - error.
--#: config/tc-nios2.c:3756 config/tc-pru.c:1717
-+#: config/tc-nios2.c:3752 config/tc-pru.c:1717
- #, c-format
- msgid "unrecognised instruction %s"
- msgstr ""
- 
--#: config/tc-nios2.c:3876 config/tc-pru.c:1773
-+#: config/tc-nios2.c:3872 config/tc-pru.c:1773
- #, c-format
- msgid "can't represent relocation type %s"
- msgstr ""
- 
--#: config/tc-nios2.c:3969
-+#: config/tc-nios2.c:3965
- msgid "Bad .section directive: want a,s,w,x,M,S,G,T in string"
- msgstr ""
- 
--#: config/tc-nios2.c:3998
-+#: config/tc-nios2.c:3994
- #, c-format
- msgid "Illegal operands: %%tls_ldo in %d-byte data field"
- msgstr ""
- 
--#: config/tc-nios2.c:4010
-+#: config/tc-nios2.c:4006
- #, c-format
- msgid "Illegal operands: %%gotoff in %d-byte data field"
- msgstr ""
- 
--#: config/tc-nios2.c:4023 config/tc-nios2.c:4042 config/tc-nios2.c:4050
-+#: config/tc-nios2.c:4019 config/tc-nios2.c:4038 config/tc-nios2.c:4046
- #, c-format
- msgid "Illegal operands: %s requires arguments in ()"
- msgstr ""
- 
--#: config/tc-nios2.c:4058
-+#: config/tc-nios2.c:4054
- #, c-format
- msgid "Illegal operands: garbage after %s()"
- msgstr ""
-@@ -15372,200 +15372,200 @@ msgstr ""
- msgid "Unknown default privilege spec `%d.%d.%d' set by privilege attributes"
- msgstr ""
- 
--#: config/tc-riscv.c:777
-+#: config/tc-riscv.c:767
- #, c-format
- msgid "internal: bad RISC-V CSR class (0x%x)"
- msgstr ""
- 
--#: config/tc-riscv.c:782
-+#: config/tc-riscv.c:772
- #, c-format
- msgid "Invalid CSR `%s' for the current ISA"
- msgstr ""
- 
--#: config/tc-riscv.c:805
-+#: config/tc-riscv.c:795
- #, c-format
- msgid "Invalid CSR `%s' for the privilege spec `%s'"
- msgstr ""
- 
--#: config/tc-riscv.c:924
-+#: config/tc-riscv.c:914
- #, c-format
- msgid "internal: bad RISC-V opcode (mask error): %s %s"
- msgstr ""
- 
--#: config/tc-riscv.c:973
-+#: config/tc-riscv.c:963
- #, c-format
- msgid "internal: bad RISC-V opcode (unknown operand type `CF%c'): %s %s"
- msgstr ""
- 
--#: config/tc-riscv.c:980
-+#: config/tc-riscv.c:970
- #, c-format
- msgid "internal: bad RISC-V opcode (unknown operand type `C%c'): %s %s"
- msgstr ""
- 
--#: config/tc-riscv.c:1024 config/tc-riscv.c:1036
-+#: config/tc-riscv.c:1014 config/tc-riscv.c:1026
- #, c-format
- msgid "internal: bad RISC-V opcode (unknown operand type `F%c'): %s %s"
- msgstr ""
- 
--#: config/tc-riscv.c:1043
-+#: config/tc-riscv.c:1033
- #, c-format
- msgid "internal: bad RISC-V opcode (unknown operand type `%c'): %s %s"
- msgstr ""
- 
--#: config/tc-riscv.c:1051
-+#: config/tc-riscv.c:1041
- #, c-format
- msgid "internal: bad RISC-V opcode (bits 0x%lx undefined): %s %s"
- msgstr ""
- 
--#: config/tc-riscv.c:1199
-+#: config/tc-riscv.c:1189
- #, c-format
- msgid "Unsupported RISC-V relocation number %d"
- msgstr ""
- 
--#: config/tc-riscv.c:1284
-+#: config/tc-riscv.c:1274
- msgid "internal error: invalid macro"
- msgstr ""
- 
--#: config/tc-riscv.c:1309
-+#: config/tc-riscv.c:1299
- msgid "internal error: vasprintf failed"
- msgstr ""
- 
--#: config/tc-riscv.c:1338 config/tc-riscv.c:1414
-+#: config/tc-riscv.c:1328 config/tc-riscv.c:1404
- msgid "unsupported large constant"
- msgstr ""
- 
--#: config/tc-riscv.c:1340
-+#: config/tc-riscv.c:1330
- #, c-format
- msgid "unknown CSR `%s'"
- msgstr ""
- 
--#: config/tc-riscv.c:1343
-+#: config/tc-riscv.c:1333
- #, c-format
- msgid "Instruction %s requires absolute expression"
- msgstr ""
- 
--#: config/tc-riscv.c:1608
-+#: config/tc-riscv.c:1598
- #, c-format
- msgid "Macro %s not implemented"
- msgstr ""
- 
--#: config/tc-riscv.c:1955
-+#: config/tc-riscv.c:1945
- #, c-format
- msgid "Read-only CSR is written `%s'"
- msgstr ""
- 
--#: config/tc-riscv.c:2195
-+#: config/tc-riscv.c:2185
- msgid "bad value for funct6 field, value must be 0...64"
- msgstr ""
- 
--#: config/tc-riscv.c:2210
-+#: config/tc-riscv.c:2200
- msgid "bad value for funct4 field, value must be 0...15"
- msgstr ""
- 
--#: config/tc-riscv.c:2225 config/tc-riscv.c:2584
-+#: config/tc-riscv.c:2215 config/tc-riscv.c:2574
- msgid "bad value for funct3 field, value must be 0...7"
- msgstr ""
- 
--#: config/tc-riscv.c:2239 config/tc-riscv.c:2599
-+#: config/tc-riscv.c:2229 config/tc-riscv.c:2589
- msgid "bad value for funct2 field, value must be 0...3"
- msgstr ""
- 
--#: config/tc-riscv.c:2248
-+#: config/tc-riscv.c:2238
- #, c-format
- msgid "bad compressed FUNCT field specifier 'CF%c'\n"
- msgstr ""
- 
--#: config/tc-riscv.c:2255
-+#: config/tc-riscv.c:2245
- #, c-format
- msgid "bad RVC field specifier 'C%c'\n"
- msgstr ""
- 
--#: config/tc-riscv.c:2278 config/tc-riscv.c:2289
-+#: config/tc-riscv.c:2268 config/tc-riscv.c:2279
- #, c-format
- msgid "Improper shift amount (%lu)"
- msgstr ""
- 
--#: config/tc-riscv.c:2300
-+#: config/tc-riscv.c:2290
- #, c-format
- msgid "Improper CSRxI immediate (%lu)"
- msgstr ""
- 
--#: config/tc-riscv.c:2317
-+#: config/tc-riscv.c:2307
- #, c-format
- msgid "Improper CSR address (%lu)"
- msgstr ""
- 
--#: config/tc-riscv.c:2494
-+#: config/tc-riscv.c:2484
- msgid "lui expression not in range 0..1048575"
- msgstr ""
- 
--#: config/tc-riscv.c:2530
-+#: config/tc-riscv.c:2520
- msgid ""
- "bad value for opcode field, value must be 0...127 and lower 2 bits must be "
- "0x3"
- msgstr ""
- 
--#: config/tc-riscv.c:2546
-+#: config/tc-riscv.c:2536
- msgid "bad value for opcode field, value must be 0...2"
- msgstr ""
- 
--#: config/tc-riscv.c:2556
-+#: config/tc-riscv.c:2546
- #, c-format
- msgid "bad Opcode field specifier 'O%c'\n"
- msgstr ""
- 
--#: config/tc-riscv.c:2569
-+#: config/tc-riscv.c:2559
- msgid "bad value for funct7 field, value must be 0...127"
- msgstr ""
- 
--#: config/tc-riscv.c:2610
-+#: config/tc-riscv.c:2600
- #, c-format
- msgid "bad FUNCT field specifier 'F%c'\n"
- msgstr ""
- 
--#: config/tc-riscv.c:2624
-+#: config/tc-riscv.c:2614
- #, c-format
- msgid "internal error: bad argument type %c"
- msgstr ""
- 
--#: config/tc-riscv.c:2629
-+#: config/tc-riscv.c:2619
- msgid "illegal operands"
- msgstr ""
- 
--#: config/tc-riscv.c:3027
-+#: config/tc-riscv.c:3017
- #, c-format
- msgid "internal error: bad CFA value #%d"
- msgstr ""
- 
--#: config/tc-riscv.c:3108
-+#: config/tc-riscv.c:3098
- #, c-format
- msgid "internal error: bad relocation #%d"
- msgstr ""
- 
--#: config/tc-riscv.c:3113
-+#: config/tc-riscv.c:3103
- msgid "unsupported symbol subtraction"
- msgstr ""
- 
--#: config/tc-riscv.c:3224
-+#: config/tc-riscv.c:3214
- msgid ".option pop with no .option push"
- msgstr ""
- 
--#: config/tc-riscv.c:3234
-+#: config/tc-riscv.c:3224
- #, c-format
- msgid "Unrecognized .option directive: %s\n"
- msgstr ""
- 
--#: config/tc-riscv.c:3254
-+#: config/tc-riscv.c:3244
- #, c-format
- msgid "Unsupported use of %s"
- msgstr ""
- 
--#: config/tc-riscv.c:3409
-+#: config/tc-riscv.c:3399
- #, c-format
- msgid "cannot represent %s relocation in object file"
- msgstr ""
- 
--#: config/tc-riscv.c:3550
-+#: config/tc-riscv.c:3540
- #, c-format
- msgid ""
- "RISC-V options:\n"
-@@ -15584,26 +15584,26 @@ msgid ""
- "  -mno-arch-attr              don't generate RISC-V arch attribute\n"
- msgstr ""
- 
--#: config/tc-riscv.c:3587
-+#: config/tc-riscv.c:3577
- #, c-format
- msgid "unknown register `%s'"
- msgstr ""
- 
--#: config/tc-riscv.c:3609
-+#: config/tc-riscv.c:3599
- #, c-format
- msgid "non-constant .%cleb128 is not supported"
- msgstr ""
- 
--#: config/tc-riscv.c:3698
-+#: config/tc-riscv.c:3688
- #, c-format
- msgid "internal: bad RISC-V priv spec string (%s)"
- msgstr ""
- 
--#: config/tc-riscv.c:3784
-+#: config/tc-riscv.c:3774
- msgid ".attribute arch must set before any instructions"
- msgstr ""
- 
--#: config/tc-riscv.c:3801
-+#: config/tc-riscv.c:3791
- msgid ".attribute priv spec must set before any instructions"
- msgstr ""
- 
 diff --git a/gas/testsuite/gas/aarch64/diagnostic.l b/gas/testsuite/gas/aarch64/diagnostic.l
 index b5f304af70b..5158d41cd43 100644
 --- a/gas/testsuite/gas/aarch64/diagnostic.l
@@ -2833,56 +984,6 @@ index 21cbc53d897..0ebe85ac59d 100644
  	ldxp	x26, x1, [x26]
  	st4	{v0.16b-v3.16b}[4], [x0]
 +	stlxp	w3, w26, w26, [x3]
-diff --git a/gas/testsuite/gas/all/none.d b/gas/testsuite/gas/all/none.d
-index deebab8b49c..374808a4f59 100644
---- a/gas/testsuite/gas/all/none.d
-+++ b/gas/testsuite/gas/all/none.d
-@@ -1,7 +1,7 @@
- #objdump: -r -w
- #as: --generate-missing-build-notes=no
- # The HPPA maps R_PARISC_PCREL64 onto BFD_RELOC_NONE.
--#skip: ft32-*-* hppa*-*-*
-+#xfail: hppa*-*-*
- 
- #...
- 0+ .*(NONE|NULL|UNUSED0) +\*ABS\*
-diff --git a/gas/testsuite/gas/elf/elf.exp b/gas/testsuite/gas/elf/elf.exp
-index 4f7ff6a2e01..4a695dfbaed 100644
---- a/gas/testsuite/gas/elf/elf.exp
-+++ b/gas/testsuite/gas/elf/elf.exp
-@@ -328,4 +328,5 @@ if { [is_elf_format] } then {
- 
-     run_dump_test "bignums"
-     run_dump_test "section-symbol-redef"
-+    run_dump_test "pr27228"
- }
-diff --git a/gas/testsuite/gas/elf/pr27228.d b/gas/testsuite/gas/elf/pr27228.d
-new file mode 100644
-index 00000000000..da336ff2191
---- /dev/null
-+++ b/gas/testsuite/gas/elf/pr27228.d
-@@ -0,0 +1,10 @@
-+#as:
-+#name: .reloc against undefined local symbol (PR 27228)
-+#readelf: -sW
-+# hppa doesn't support use of any BFD_RELOC_*
-+#xfail: hppa*-*-*
-+
-+Symbol table '\.symtab' contains [0-9]+ entries:
-+#...
-+ +[a-f0-9]+: 0+ +0 (NOTYPE|OBJECT) +GLOBAL DEFAULT +UND .LTHUNK5.lto_priv.0
-+#pass
-diff --git a/gas/testsuite/gas/elf/pr27228.s b/gas/testsuite/gas/elf/pr27228.s
-new file mode 100644
-index 00000000000..5ed301d5ac7
---- /dev/null
-+++ b/gas/testsuite/gas/elf/pr27228.s
-@@ -0,0 +1,5 @@
-+	.text
-+foo:
-+	.reloc	1f,BFD_RELOC_NONE,.LTHUNK5.lto_priv.0
-+1:
-+	.nop
 diff --git a/gas/testsuite/gas/elf/section25.d b/gas/testsuite/gas/elf/section25.d
 index 09353849e5b..fa09b85074f 100644
 --- a/gas/testsuite/gas/elf/section25.d
@@ -2933,216 +1034,6 @@ index 7f986454229..aefe15d4c2c 100644
 +
  .section .gnu.linkonce.p.bar
  .word 0
-diff --git a/gas/testsuite/gas/nios2/relax.d b/gas/testsuite/gas/nios2/relax.d
-new file mode 100644
-index 00000000000..ca01a4f926a
---- /dev/null
-+++ b/gas/testsuite/gas/nios2/relax.d
-@@ -0,0 +1,25 @@
-+#source: relax.s
-+#as: --gdwarf-5
-+#objdump: -w -WL -dr --prefix-addresses --show-raw-insn
-+#name: NIOS2 relax with --gdwarf-5
-+
-+# Test relaxation with assembler generated debug info.
-+.*:     file format elf32-littlenios2
-+
-+Contents of the .debug_line section:
-+
-+CU: ./relax.s:
-+File +name +Line +number +Starting +address +View +Stmt
-+relax.s +2 +0 +x
-+relax.s +5 +0x10018 +x
-+relax.s +- +0x1001c
-+
-+Disassembly of section .text:
-+0x00000000 21400526 	beq	r4,r5,0x00000018
-+0x00000004 0002e03a 	nextpc	at
-+0x00000008 085fffc4 	addi	at,at,32767
-+0x0000000c 085fffc4 	addi	at,at,32767
-+0x00000010 08400484 	addi	at,at,18
-+0x00000014 0800683a 	jmp	at
-+	...
-+0x00010018 f800283a 	ret
-diff --git a/gas/testsuite/gas/nios2/relax.s b/gas/testsuite/gas/nios2/relax.s
-new file mode 100644
-index 00000000000..ef417fdc33b
---- /dev/null
-+++ b/gas/testsuite/gas/nios2/relax.s
-@@ -0,0 +1,5 @@
-+	.text
-+	bne	r4, r5, 1f
-+	.zero 0x10000
-+1:
-+	ret
-diff --git a/gas/testsuite/gas/riscv/bitmanip-insns-32.d b/gas/testsuite/gas/riscv/bitmanip-insns-32.d
-deleted file mode 100644
-index b218f96e948..00000000000
---- a/gas/testsuite/gas/riscv/bitmanip-insns-32.d
-+++ /dev/null
-@@ -1,37 +0,0 @@
--#as: -march=rv32i_zba_zbb_zbc
--#source: bitmanip-insns.s
--#objdump: -dr -Mno-aliases
--
--.*:[ 	]+file format .*
--
--
--Disassembly of section .text:
--
--0+000 <.text>:
--[ 	]+[0-9a-f]+:[ 	]+0805c533[ 	]+zext.h[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+6985d513[ 	]+rev8[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+2875d513[ 	]+orc.b[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+20c5a533[ 	]+sh1add[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+20c5c533[ 	]+sh2add[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+20c5e533[ 	]+sh3add[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+60059513[ 	]+clz[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+60159513[ 	]+ctz[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+60259513[ 	]+cpop[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+0ac5c533[ 	]+min[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac5e533[ 	]+max[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac5d533[ 	]+minu[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac5f533[ 	]+maxu[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+60459513[ 	]+sext.b[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+60559513[ 	]+sext.h[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+40c5f533[ 	]+andn[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+40c5e533[ 	]+orn[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+00c5c533[ 	]+xor[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+6005d513[ 	]+rori[ 	]+a0,a1,0x0
--[ 	]+[0-9a-f]+:[ 	]+61f5d513[ 	]+rori[ 	]+a0,a1,0x1f
--[ 	]+[0-9a-f]+:[ 	]+60c5d533[ 	]+ror[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+6005d513[ 	]+rori[ 	]+a0,a1,0x0
--[ 	]+[0-9a-f]+:[ 	]+61f5d513[ 	]+rori[ 	]+a0,a1,0x1f
--[ 	]+[0-9a-f]+:[ 	]+60c59533[ 	]+rol[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac59533[ 	]+clmul[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac5b533[ 	]+clmulh[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac5a533[ 	]+clmulr[ 	]+a0,a1,a2
-diff --git a/gas/testsuite/gas/riscv/bitmanip-insns-64.d b/gas/testsuite/gas/riscv/bitmanip-insns-64.d
-deleted file mode 100644
-index 9914f3e5571..00000000000
---- a/gas/testsuite/gas/riscv/bitmanip-insns-64.d
-+++ /dev/null
-@@ -1,55 +0,0 @@
--#as: -march=rv64i_zba_zbb_zbc -defsym __64_bit__=1
--#source: bitmanip-insns.s
--#objdump: -dr -Mno-aliases
--
--.*:[ 	]+file format .*
--
--
--Disassembly of section .text:
--
--0+000 <.text>:
--[ 	]+[0-9a-f]+:[ 	]+0805c53b[ 	]+zext.h[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+6b85d513[ 	]+rev8[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+2875d513[ 	]+orc.b[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+0805853b[ 	]+add.uw[ 	]+a0,a1,zero
--[ 	]+[0-9a-f]+:[ 	]+20c5a533[ 	]+sh1add[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+20c5c533[ 	]+sh2add[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+20c5e533[ 	]+sh3add[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+20c5a53b[ 	]+sh1add.uw[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+20c5c53b[ 	]+sh2add.uw[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+20c5e53b[ 	]+sh3add.uw[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+08c5853b[ 	]+add.uw[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0805951b[ 	]+slli.uw[ 	]+a0,a1,0x0
--[ 	]+[0-9a-f]+:[ 	]+0bf5951b[ 	]+slli.uw[ 	]+a0,a1,0x3f
--[ 	]+[0-9a-f]+:[ 	]+60059513[ 	]+clz[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+60159513[ 	]+ctz[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+60259513[ 	]+cpop[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+0ac5c533[ 	]+min[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac5e533[ 	]+max[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac5d533[ 	]+minu[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac5f533[ 	]+maxu[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+60459513[ 	]+sext.b[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+60559513[ 	]+sext.h[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+40c5f533[ 	]+andn[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+40c5e533[ 	]+orn[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+00c5c533[ 	]+xor[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+6005d513[ 	]+rori[ 	]+a0,a1,0x0
--[ 	]+[0-9a-f]+:[ 	]+61f5d513[ 	]+rori[ 	]+a0,a1,0x1f
--[ 	]+[0-9a-f]+:[ 	]+60c5d533[ 	]+ror[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+6005d513[ 	]+rori[ 	]+a0,a1,0x0
--[ 	]+[0-9a-f]+:[ 	]+61f5d513[ 	]+rori[ 	]+a0,a1,0x1f
--[ 	]+[0-9a-f]+:[ 	]+60c59533[ 	]+rol[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+6005951b[ 	]+clzw[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+6015951b[ 	]+ctzw[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+6025951b[ 	]+cpopw[ 	]+a0,a1
--[ 	]+[0-9a-f]+:[ 	]+63f5d513[ 	]+rori[ 	]+a0,a1,0x3f
--[ 	]+[0-9a-f]+:[ 	]+63f5d513[ 	]+rori[ 	]+a0,a1,0x3f
--[ 	]+[0-9a-f]+:[ 	]+6005d51b[ 	]+roriw[ 	]+a0,a1,0x0
--[ 	]+[0-9a-f]+:[ 	]+61f5d51b[ 	]+roriw[ 	]+a0,a1,0x1f
--[ 	]+[0-9a-f]+:[ 	]+60c5d53b[ 	]+rorw[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+6005d51b[ 	]+roriw[ 	]+a0,a1,0x0
--[ 	]+[0-9a-f]+:[ 	]+61f5d51b[ 	]+roriw[ 	]+a0,a1,0x1f
--[ 	]+[0-9a-f]+:[ 	]+60c5953b[ 	]+rolw[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac59533[ 	]+clmul[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac5b533[ 	]+clmulh[ 	]+a0,a1,a2
--[ 	]+[0-9a-f]+:[ 	]+0ac5a533[ 	]+clmulr[ 	]+a0,a1,a2
-diff --git a/gas/testsuite/gas/riscv/bitmanip-insns.s b/gas/testsuite/gas/riscv/bitmanip-insns.s
-deleted file mode 100644
-index b14e89c1d4c..00000000000
---- a/gas/testsuite/gas/riscv/bitmanip-insns.s
-+++ /dev/null
-@@ -1,58 +0,0 @@
--	# pseudo/aliaese
--	zext.h	a0, a1
--	rev8	a0, a1
--	orc.b	a0, a1
--.ifdef __64_bit__
--	zext.w	a0, a1
--.endif
--
--	# ZBA
--	sh1add	a0, a1, a2
--	sh2add	a0, a1, a2
--	sh3add	a0, a1, a2
--.ifdef __64_bit__
--	sh1add.uw	a0, a1, a2
--	sh2add.uw	a0, a1, a2
--	sh3add.uw	a0, a1, a2
--	add.uw		a0, a1, a2
--	slli.uw		a0, a1, 0
--	slli.uw		a0, a1, 63
--.endif
--
--	# ZBB
--	clz	a0, a1
--	ctz	a0, a1
--	cpop	a0, a1
--	min	a0, a1, a2
--	max	a0, a1, a2
--	minu	a0, a1, a2
--	maxu	a0, a1, a2
--	sext.b	a0, a1
--	sext.h	a0, a1
--	andn	a0, a1, a2
--	orn	a0, a1, a2
--	xor	a0, a1, a2
--	rori	a0, a1, 0
--	rori	a0, a1, 31
--	ror	a0, a1, a2
--	ror	a0, a1, 0
--	ror	a0, a1, 31
--	rol	a0, a1, a2
--.ifdef __64_bit__
--	clzw	a0, a1
--	ctzw	a0, a1
--	cpopw	a0, a1
--	rori	a0, a1, 63
--	ror	a0, a1, 63
--	roriw	a0, a1, 0
--	roriw	a0, a1, 31
--	rorw	a0, a1, a2
--	rorw	a0, a1, 0
--	rorw	a0, a1, 31
--	rolw	a0, a1, a2
--.endif
--
--	# ZBC
--	clmul	a0, a1, a2
--	clmulh	a0, a1, a2
--	clmulr	a0, a1, a2
 diff --git a/gas/testsuite/gas/s390/s390.exp b/gas/testsuite/gas/s390/s390.exp
 index f87a09a8633..d03555a7aef 100644
 --- a/gas/testsuite/gas/s390/s390.exp
@@ -3222,319 +1113,19 @@ index 00000000000..830382f0ac5
 +	lpswey	-10000(%r6),253
 +	lbear	4000(%r6)
 +	stbear	4000(%r6)
-diff --git a/gold/ChangeLog b/gold/ChangeLog
-index 94443eeaaa4..8f57acfd6ba 100644
---- a/gold/ChangeLog
-+++ b/gold/ChangeLog
-@@ -1,3 +1,14 @@
-+2021-02-06  Nick Clifton  <nickc@redhat.com>
-+
-+	This is the 2.36.1 release.
-+	* po/gold.pot: Regenerate.
-+
-+2021-01-28  H.J. Lu  <hongjiu.lu@intel.com>
-+
-+	PR gold/27246
-+	* dwarf_reader.cc (Sized_dwarf_line_info::read_header_prolog):
-+	Skip address size and segment selector for DWARF5.
-+
- 2021-01-24  Nick Clifton  <nickc@redhat.com>
- 
- 	This is the 2.36 release.
-diff --git a/gold/dwarf_reader.cc b/gold/dwarf_reader.cc
-index 487376965db..f0e6b89bde2 100644
---- a/gold/dwarf_reader.cc
-+++ b/gold/dwarf_reader.cc
-@@ -1658,6 +1658,10 @@ Sized_dwarf_line_info<size, big_endian>::read_header_prolog(
-   header_.version = elfcpp::Swap_unaligned<16, big_endian>::readval(lineptr);
-   lineptr += 2;
- 
-+  // Skip address size and segment selector for DWARF5.
-+  if (header_.version >= 5)
-+    lineptr += 2;
-+
-   if (header_.offset_size == 4)
-     header_.prologue_length = elfcpp::Swap_unaligned<32, big_endian>::readval(lineptr);
-   else
-diff --git a/gold/po/gold.pot b/gold/po/gold.pot
-index b1be33a00cd..454da26d97e 100644
---- a/gold/po/gold.pot
-+++ b/gold/po/gold.pot
-@@ -8,7 +8,7 @@ msgid ""
- msgstr ""
- "Project-Id-Version: PACKAGE VERSION\n"
- "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
--"POT-Creation-Date: 2021-01-24 10:23+0000\n"
-+"POT-Creation-Date: 2021-02-06 09:03+0000\n"
- "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
- "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
- "Language-Team: LANGUAGE <LL@li.org>\n"
-diff --git a/gprof/ChangeLog b/gprof/ChangeLog
-index 39c939f2d14..02c07607bf1 100644
---- a/gprof/ChangeLog
-+++ b/gprof/ChangeLog
-@@ -1,3 +1,12 @@
-+2021-02-06  Nick Clifton  <nickc@redhat.com>
-+
-+	This is the 2.36.1 release.
-+	* configure: Regenerate.
-+
-+2021-01-24  Nick Clifton  <nickc@redhat.com>
-+
-+	* configure: Regenerate.
-+
- 2021-01-24  Nick Clifton  <nickc@redhat.com>
- 
- 	This is the 2.36 release.
-diff --git a/gprof/configure b/gprof/configure
-index 0089913632d..ee19d71d6c4 100755
---- a/gprof/configure
-+++ b/gprof/configure
-@@ -1,6 +1,6 @@
- #! /bin/sh
- # Guess values for system-dependent variables and create Makefiles.
--# Generated by GNU Autoconf 2.69 for gprof 2.36.
-+# Generated by GNU Autoconf 2.69 for gprof 2.36.1.
- #
- #
- # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
-@@ -587,8 +587,8 @@ MAKEFLAGS=
- # Identity of this package.
- PACKAGE_NAME='gprof'
- PACKAGE_TARNAME='gprof'
--PACKAGE_VERSION='2.36'
--PACKAGE_STRING='gprof 2.36'
-+PACKAGE_VERSION='2.36.1'
-+PACKAGE_STRING='gprof 2.36.1'
- PACKAGE_BUGREPORT=''
- PACKAGE_URL=''
- 
-@@ -1338,7 +1338,7 @@ if test "$ac_init_help" = "long"; then
-   # Omit some internal or obsolete options to make the list less imposing.
-   # This message is too long to be a string in the A/UX 3.1 sh.
-   cat <<_ACEOF
--\`configure' configures gprof 2.36 to adapt to many kinds of systems.
-+\`configure' configures gprof 2.36.1 to adapt to many kinds of systems.
- 
- Usage: $0 [OPTION]... [VAR=VALUE]...
- 
-@@ -1409,7 +1409,7 @@ fi
- 
- if test -n "$ac_init_help"; then
-   case $ac_init_help in
--     short | recursive ) echo "Configuration of gprof 2.36:";;
-+     short | recursive ) echo "Configuration of gprof 2.36.1:";;
-    esac
-   cat <<\_ACEOF
- 
-@@ -1520,7 +1520,7 @@ fi
- test -n "$ac_init_help" && exit $ac_status
- if $ac_init_version; then
-   cat <<\_ACEOF
--gprof configure 2.36
-+gprof configure 2.36.1
- generated by GNU Autoconf 2.69
- 
- Copyright (C) 2012 Free Software Foundation, Inc.
-@@ -1885,7 +1885,7 @@ cat >config.log <<_ACEOF
- This file contains any messages produced by compilers while
- running configure, to aid debugging if configure makes a mistake.
- 
--It was created by gprof $as_me 2.36, which was
-+It was created by gprof $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   $ $0 $@
-@@ -3832,7 +3832,7 @@ fi
- 
- # Define the identity of the package.
-  PACKAGE='gprof'
-- VERSION='2.36'
-+ VERSION='2.36.1'
- 
- 
- cat >>confdefs.h <<_ACEOF
-@@ -13118,7 +13118,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
- # report actual input values of CONFIG_FILES etc. instead of their
- # values after options handling.
- ac_log="
--This file was extended by gprof $as_me 2.36, which was
-+This file was extended by gprof $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   CONFIG_FILES    = $CONFIG_FILES
-@@ -13184,7 +13184,7 @@ _ACEOF
- cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
- ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
- ac_cs_version="\\
--gprof config.status 2.36
-+gprof config.status 2.36.1
- configured by $0, generated by GNU Autoconf 2.69,
-   with options \\"\$ac_cs_config\\"
- 
 diff --git a/include/ChangeLog b/include/ChangeLog
-index 14c508f84ec..f692e379026 100644
+index 733174b56b0..f692e379026 100644
 --- a/include/ChangeLog
 +++ b/include/ChangeLog
-@@ -1,3 +1,17 @@
+@@ -1,3 +1,8 @@
 +2021-02-19  Andreas Krebbel  <krebbel@linux.ibm.com>
 +
 +	* opcode/s390.h (enum s390_opcode_cpu_val): Add
 +	S390_OPCODE_ARCH14.
 +
-+2021-02-06  Nick Clifton  <nickc@redhat.com>
-+
-+	This is the 2.36.1 release.
-+
-+2021-02-05  Nelson Chu  <nelson.chu@sifive.com>
-+
-+	* opcode/riscv-opc.h: Removed macros for zb* extensions.
-+	* opcode/riscv.h (riscv_insn_class): Removed INSN_CLASS_ZB*.
-+
- 2021-01-24  Nick Clifton  <nickc@redhat.com>
+ 2021-02-06  Nick Clifton  <nickc@redhat.com>
  
- 	This is the 2.36 release.
-diff --git a/include/opcode/riscv-opc.h b/include/opcode/riscv-opc.h
-index 38ce41d8430..b0e549a0f2f 100644
---- a/include/opcode/riscv-opc.h
-+++ b/include/opcode/riscv-opc.h
-@@ -191,78 +191,6 @@
- #define MASK_REMW  0xfe00707f
- #define MATCH_REMUW 0x200703b
- #define MASK_REMUW  0xfe00707f
--#define MATCH_GREVI 0x68005013
--#define MASK_GREVI  0xfc00707f
--#define MATCH_GORCI 0x28005013
--#define MASK_GORCI  0xfc00707f
--#define MATCH_PACK 0x8004033
--#define MASK_PACK  0xfe00707f
--#define MATCH_PACKW 0x800403b
--#define MASK_PACKW  0xfe00707f
--#define MATCH_SH1ADD 0x20002033
--#define MASK_SH1ADD  0xfe00707f
--#define MATCH_SH2ADD 0x20004033
--#define MASK_SH2ADD  0xfe00707f
--#define MATCH_SH3ADD 0x20006033
--#define MASK_SH3ADD  0xfe00707f
--#define MATCH_SH1ADD_UW 0x2000203b
--#define MASK_SH1ADD_UW  0xfe00707f
--#define MATCH_SH2ADD_UW 0x2000403b
--#define MASK_SH2ADD_UW  0xfe00707f
--#define MATCH_SH3ADD_UW 0x2000603b
--#define MASK_SH3ADD_UW  0xfe00707f
--#define MATCH_ADD_UW 0x800003b
--#define MASK_ADD_UW  0xfe00707f
--#define MATCH_SLLI_UW 0x800101b
--#define MASK_SLLI_UW  0xfc00707f
--#define MATCH_CLZ 0x60001013
--#define MASK_CLZ  0xfff0707f
--#define MATCH_CTZ 0x60101013
--#define MASK_CTZ  0xfff0707f
--#define MATCH_CPOP 0x60201013
--#define MASK_CPOP  0xfff0707f
--#define MATCH_MIN 0xa004033
--#define MASK_MIN  0xfe00707f
--#define MATCH_MAX 0xa006033
--#define MASK_MAX  0xfe00707f
--#define MATCH_MINU 0xa005033
--#define MASK_MINU  0xfe00707f
--#define MATCH_MAXU 0xa007033
--#define MASK_MAXU  0xfe00707f
--#define MATCH_SEXT_B 0x60401013
--#define MASK_SEXT_B  0xfff0707f
--#define MATCH_SEXT_H 0x60501013
--#define MASK_SEXT_H  0xfff0707f
--#define MATCH_ANDN 0x40007033
--#define MASK_ANDN  0xfe00707f
--#define MATCH_ORN 0x40006033
--#define MASK_ORN  0xfe00707f
--#define MATCH_XNOR 0x40004033
--#define MASK_XNOR  0xfe00707f
--#define MATCH_RORI 0x60005013
--#define MASK_RORI  0xfc00707f
--#define MATCH_ROR 0x60005033
--#define MASK_ROR  0xfe00707f
--#define MATCH_ROL 0x60001033
--#define MASK_ROL  0xfe00707f
--#define MATCH_CLZW 0x6000101b
--#define MASK_CLZW  0xfff0707f
--#define MATCH_CTZW 0x6010101b
--#define MASK_CTZW  0xfff0707f
--#define MATCH_CPOPW 0x6020101b
--#define MASK_CPOPW  0xfff0707f
--#define MATCH_RORIW 0x6000501b
--#define MASK_RORIW  0xfe00707f
--#define MATCH_RORW 0x6000503b
--#define MASK_RORW  0xfe00707f
--#define MATCH_ROLW 0x6000103b
--#define MASK_ROLW  0xfe00707f
--#define MATCH_CLMUL 0xa001033
--#define MASK_CLMUL  0xfe00707f
--#define MATCH_CLMULH 0xa003033
--#define MASK_CLMULH  0xfe00707f
--#define MATCH_CLMULR 0xa002033
--#define MASK_CLMULR  0xfe00707f
- #define MATCH_AMOADD_W 0x202f
- #define MASK_AMOADD_W  0xf800707f
- #define MATCH_AMOXOR_W 0x2000202f
-@@ -1002,42 +930,6 @@ DECLARE_INSN(divw, MATCH_DIVW, MASK_DIVW)
- DECLARE_INSN(divuw, MATCH_DIVUW, MASK_DIVUW)
- DECLARE_INSN(remw, MATCH_REMW, MASK_REMW)
- DECLARE_INSN(remuw, MATCH_REMUW, MASK_REMUW)
--DECLARE_INSN(grevi, MATCH_GREVI, MASK_GREVI)
--DECLARE_INSN(gorci, MATCH_GORCI, MASK_GORCI)
--DECLARE_INSN(pack, MATCH_PACK, MASK_PACK)
--DECLARE_INSN(packw, MATCH_PACKW, MASK_PACKW)
--DECLARE_INSN(sh1add, MATCH_SH1ADD, MASK_SH1ADD)
--DECLARE_INSN(sh2add, MATCH_SH2ADD, MASK_SH2ADD)
--DECLARE_INSN(sh3add, MATCH_SH3ADD, MASK_SH3ADD)
--DECLARE_INSN(sh1add_uw, MATCH_SH1ADD_UW, MASK_SH1ADD_UW)
--DECLARE_INSN(sh2add_uw, MATCH_SH2ADD_UW, MASK_SH2ADD_UW)
--DECLARE_INSN(sh3add_uw, MATCH_SH3ADD_UW, MASK_SH3ADD_UW)
--DECLARE_INSN(add_uw, MATCH_ADD_UW, MASK_ADD_UW)
--DECLARE_INSN(slli_uw, MATCH_SLLI_UW, MASK_SLLI_UW)
--DECLARE_INSN(clz, MATCH_CLZ, MASK_CLZ)
--DECLARE_INSN(ctz, MATCH_CTZ, MASK_CTZ)
--DECLARE_INSN(cpop, MATCH_CPOP, MASK_CPOP)
--DECLARE_INSN(min, MATCH_MIN, MASK_MIN)
--DECLARE_INSN(max, MATCH_MAX, MASK_MAX)
--DECLARE_INSN(minu, MATCH_MINU, MASK_MINU)
--DECLARE_INSN(maxu, MATCH_MAXU, MASK_MAXU)
--DECLARE_INSN(sext_b, MATCH_SEXT_B, MASK_SEXT_B)
--DECLARE_INSN(sext_h, MATCH_SEXT_H, MASK_SEXT_H)
--DECLARE_INSN(andn, MATCH_ANDN, MASK_ANDN)
--DECLARE_INSN(orn, MATCH_ORN, MASK_ORN)
--DECLARE_INSN(xnor, MATCH_XNOR, MASK_XNOR)
--DECLARE_INSN(rori, MATCH_RORI, MASK_RORI)
--DECLARE_INSN(ror, MATCH_ROR, MASK_ROR)
--DECLARE_INSN(rol, MATCH_ROL, MASK_ROL)
--DECLARE_INSN(clzw, MATCH_CLZW, MASK_CLZW)
--DECLARE_INSN(ctzw, MATCH_CTZW, MASK_CTZW)
--DECLARE_INSN(cpopw, MATCH_CPOPW, MASK_CPOPW)
--DECLARE_INSN(roriw, MATCH_RORIW, MASK_RORIW)
--DECLARE_INSN(rorw, MATCH_RORW, MASK_RORW)
--DECLARE_INSN(rolw, MATCH_ROLW, MASK_ROLW)
--DECLARE_INSN(clmul, MATCH_CLMUL, MASK_CLMUL)
--DECLARE_INSN(clmulr, MATCH_CLMULR, MASK_CLMULR)
--DECLARE_INSN(clmulh, MATCH_CLMULH, MASK_CLMULH)
- DECLARE_INSN(amoadd_w, MATCH_AMOADD_W, MASK_AMOADD_W)
- DECLARE_INSN(amoxor_w, MATCH_AMOXOR_W, MASK_AMOXOR_W)
- DECLARE_INSN(amoor_w, MATCH_AMOOR_W, MASK_AMOOR_W)
-diff --git a/include/opcode/riscv.h b/include/opcode/riscv.h
-index 33ef290bb27..caaaea51629 100644
---- a/include/opcode/riscv.h
-+++ b/include/opcode/riscv.h
-@@ -312,10 +312,6 @@ enum riscv_insn_class
-    INSN_CLASS_ZICSR,
-    INSN_CLASS_ZIFENCEI,
-    INSN_CLASS_ZIHINTPAUSE,
--   INSN_CLASS_ZBA,
--   INSN_CLASS_ZBB,
--   INSN_CLASS_ZBC,
--   INSN_CLASS_ZBA_OR_ZBB,
-   };
- 
- /* This structure holds information for a particular instruction.  */
+ 	This is the 2.36.1 release.
 diff --git a/include/opcode/s390.h b/include/opcode/s390.h
 index cc112b01588..868ae2f02dc 100644
 --- a/include/opcode/s390.h
@@ -3548,10 +1139,10 @@ index cc112b01588..868ae2f02dc 100644
    };
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 1a2a60e70e7..8156b6d9260 100644
+index 97fef18c28e..8156b6d9260 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -1,3 +1,97 @@
+@@ -1,3 +1,37 @@
 +2021-04-01  Tamar Christina  <tamar.christina@arm.com>
 +
 +	Backported from mainline
@@ -3586,257 +1177,9 @@ index 1a2a60e70e7..8156b6d9260 100644
 +	tests.
 +	* testsuite/ld-x86-64/x86-64.exp: Likewise.
 +
-+2021-02-06  Nick Clifton  <nickc@redhat.com>
-+
-+	This is the 2.36.1 release.
-+	* configure: Regenerate.
-+	* po/ld.pot: Regenerate.
-+
-+2021-02-04  H.J. Lu  <hongjiu.lu@intel.com>
-+
-+	PR ld/15146
-+	* testsuite/ld-plugin/lto.exp: Run PR ld/15146 tests.
-+	* testsuite/ld-plugin/pr15146.d: Restored.
-+	* testsuite/ld-plugin/pr15146a.c: Likewise.
-+	* testsuite/ld-plugin/pr15146b.c: Likewise.
-+	* testsuite/ld-plugin/pr15146c.c: Likewise.
-+	* testsuite/ld-plugin/pr15146d.c: Likewise.
-+
-+2021-02-04  Alan Modra  <amodra@gmail.com>
-+
-+	* testsuite/ld-plugin/pr27311d.c: New test.
-+	* testsuite/ld-plugin/lto.exp: Rename pr27311 to pr27311-1, compile
-+	and link new test as pr27311-2.
-+
-+2021-02-03  Alan Modra  <amodra@gmail.com>
-+
-+	Apply from mainline
-+	2021-02-03  Alan Modra  <amodra@gmail.com>
-+	* testsuite/ld-ifunc/ifunc.exp (libpr16467b.so, libpr16467bn.so):
-+	Link with --as-needed.
-+
-+	2021-02-02  Alan Modra  <amodra@gmail.com>
-+	* testsuite/ld-plugin/pr27311.d,
-+	* testsuite/ld-plugin/pr27311.ver,
-+	* testsuite/ld-plugin/pr27311a.c,
-+	* testsuite/ld-plugin/pr27311b.c,
-+	* testsuite/ld-plugin/pr27311c.c: New testcase.
-+	* testsuite/ld-plugin/lto.exp: Run it.  Correct PR14918 and
-+	PR12982 entries.
-+
-+2021-01-28  Alan Modra  <amodra@gmail.com>
-+
-+	PR 27259
-+	* ldelf.c (ldelf_before_place_orphans): Use linker_mark to
-+	prevent endless looping of linked-to sections.
-+
-+2021-01-29  Alan Modra  <amodra@gmail.com>
-+
-+	* testsuite/ld-tic6x/tic6x.exp: Add pr27271 test.
-+
-+2021-01-27  Nick Clifton  <nickc@redhat.com>
-+
-+	Import from mainline:
-+	2021-01-25  Fangrui Song  <maskray@google.com>
-+
-+	PR ld/27230
-+	* scripttempl/DWARF.sc: Add DWARF-5 .debug_* sections.
-+
-+2021-01-24  Nick Clifton  <nickc@redhat.com>
-+
-+	* configure: Regenerate.
-+
- 2021-01-24  Nick Clifton  <nickc@redhat.com>
+ 2021-02-06  Nick Clifton  <nickc@redhat.com>
  
- 	This is the 2.36 release.
-diff --git a/ld/configure b/ld/configure
-index a8d248eab58..b0969791959 100755
---- a/ld/configure
-+++ b/ld/configure
-@@ -1,6 +1,6 @@
- #! /bin/sh
- # Guess values for system-dependent variables and create Makefiles.
--# Generated by GNU Autoconf 2.69 for ld 2.36.
-+# Generated by GNU Autoconf 2.69 for ld 2.36.1.
- #
- #
- # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
-@@ -587,8 +587,8 @@ MAKEFLAGS=
- # Identity of this package.
- PACKAGE_NAME='ld'
- PACKAGE_TARNAME='ld'
--PACKAGE_VERSION='2.36'
--PACKAGE_STRING='ld 2.36'
-+PACKAGE_VERSION='2.36.1'
-+PACKAGE_STRING='ld 2.36.1'
- PACKAGE_BUGREPORT=''
- PACKAGE_URL=''
- 
-@@ -1399,7 +1399,7 @@ if test "$ac_init_help" = "long"; then
-   # Omit some internal or obsolete options to make the list less imposing.
-   # This message is too long to be a string in the A/UX 3.1 sh.
-   cat <<_ACEOF
--\`configure' configures ld 2.36 to adapt to many kinds of systems.
-+\`configure' configures ld 2.36.1 to adapt to many kinds of systems.
- 
- Usage: $0 [OPTION]... [VAR=VALUE]...
- 
-@@ -1470,7 +1470,7 @@ fi
- 
- if test -n "$ac_init_help"; then
-   case $ac_init_help in
--     short | recursive ) echo "Configuration of ld 2.36:";;
-+     short | recursive ) echo "Configuration of ld 2.36.1:";;
-    esac
-   cat <<\_ACEOF
- 
-@@ -1612,7 +1612,7 @@ fi
- test -n "$ac_init_help" && exit $ac_status
- if $ac_init_version; then
-   cat <<\_ACEOF
--ld configure 2.36
-+ld configure 2.36.1
- generated by GNU Autoconf 2.69
- 
- Copyright (C) 2012 Free Software Foundation, Inc.
-@@ -2327,7 +2327,7 @@ cat >config.log <<_ACEOF
- This file contains any messages produced by compilers while
- running configure, to aid debugging if configure makes a mistake.
- 
--It was created by ld $as_me 2.36, which was
-+It was created by ld $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   $ $0 $@
-@@ -4278,7 +4278,7 @@ fi
- 
- # Define the identity of the package.
-  PACKAGE='ld'
-- VERSION='2.36'
-+ VERSION='2.36.1'
- 
- 
- cat >>confdefs.h <<_ACEOF
-@@ -18373,7 +18373,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
- # report actual input values of CONFIG_FILES etc. instead of their
- # values after options handling.
- ac_log="
--This file was extended by ld $as_me 2.36, which was
-+This file was extended by ld $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   CONFIG_FILES    = $CONFIG_FILES
-@@ -18439,7 +18439,7 @@ _ACEOF
- cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
- ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
- ac_cs_version="\\
--ld config.status 2.36
-+ld config.status 2.36.1
- configured by $0, generated by GNU Autoconf 2.69,
-   with options \\"\$ac_cs_config\\"
- 
-diff --git a/ld/ldelf.c b/ld/ldelf.c
-index f7407ab55a7..28974968251 100644
---- a/ld/ldelf.c
-+++ b/ld/ldelf.c
-@@ -2188,14 +2188,21 @@ ldelf_before_place_orphans (void)
- 	       been discarded.  */
- 	    asection *linked_to_sec;
- 	    for (linked_to_sec = elf_linked_to_section (isec);
--		 linked_to_sec != NULL;
-+		 linked_to_sec != NULL && !linked_to_sec->linker_mark;
- 		 linked_to_sec = elf_linked_to_section (linked_to_sec))
--	      if (discarded_section (linked_to_sec))
--		{
--		  isec->output_section = bfd_abs_section_ptr;
--		  isec->flags |= SEC_EXCLUDE;
--		  break;
--		}
-+	      {
-+		if (discarded_section (linked_to_sec))
-+		  {
-+		    isec->output_section = bfd_abs_section_ptr;
-+		    isec->flags |= SEC_EXCLUDE;
-+		    break;
-+		  }
-+		linked_to_sec->linker_mark = 1;
-+	      }
-+	    for (linked_to_sec = elf_linked_to_section (isec);
-+		 linked_to_sec != NULL && linked_to_sec->linker_mark;
-+		 linked_to_sec = elf_linked_to_section (linked_to_sec))
-+	      linked_to_sec->linker_mark = 0;
- 	  }
-       }
- }
-diff --git a/ld/po/ld.pot b/ld/po/ld.pot
-index 4f094c5e046..d24a95e1ec0 100644
---- a/ld/po/ld.pot
-+++ b/ld/po/ld.pot
-@@ -8,7 +8,7 @@ msgid ""
- msgstr ""
- "Project-Id-Version: PACKAGE VERSION\n"
- "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
--"POT-Creation-Date: 2021-01-24 10:34+0000\n"
-+"POT-Creation-Date: 2021-02-06 09:03+0000\n"
- "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
- "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
- "Language-Team: LANGUAGE <LL@li.org>\n"
-diff --git a/ld/scripttempl/DWARF.sc b/ld/scripttempl/DWARF.sc
-index 37c14caa36e..dfcdf7aa587 100644
---- a/ld/scripttempl/DWARF.sc
-+++ b/ld/scripttempl/DWARF.sc
-@@ -9,19 +9,19 @@ cat <<EOF
-      Symbols in the DWARF debugging sections are relative to the beginning
-      of the section so we begin them at 0.  */
- 
--  /* DWARF 1 */
-+  /* DWARF 1.  */
-   .debug          0 : { *(.debug) }
-   .line           0 : { *(.line) }
- 
--  /* GNU DWARF 1 extensions */
-+  /* GNU DWARF 1 extensions.  */
-   .debug_srcinfo  0 : { *(.debug_srcinfo) }
-   .debug_sfnames  0 : { *(.debug_sfnames) }
- 
--  /* DWARF 1.1 and DWARF 2 */
-+  /* DWARF 1.1 and DWARF 2.  */
-   .debug_aranges  0 : { *(.debug_aranges) }
-   .debug_pubnames 0 : { *(.debug_pubnames) }
- 
--  /* DWARF 2 */
-+  /* DWARF 2.  */
-   .debug_info     0 : { *(.debug_info${RELOCATING+ .gnu.linkonce.wi.*}) }
-   .debug_abbrev   0 : { *(.debug_abbrev) }
-   .debug_line     0 : { *(.debug_line${RELOCATING+ .debug_line.* .debug_line_end}) }
-@@ -30,17 +30,23 @@ cat <<EOF
-   .debug_loc      0 : { *(.debug_loc) }
-   .debug_macinfo  0 : { *(.debug_macinfo) }
- 
--  /* SGI/MIPS DWARF 2 extensions */
-+  /* SGI/MIPS DWARF 2 extensions.  */
-   .debug_weaknames 0 : { *(.debug_weaknames) }
-   .debug_funcnames 0 : { *(.debug_funcnames) }
-   .debug_typenames 0 : { *(.debug_typenames) }
-   .debug_varnames  0 : { *(.debug_varnames) }
- 
--  /* DWARF 3 */
-+  /* DWARF 3.  */
-   .debug_pubtypes 0 : { *(.debug_pubtypes) }
-   .debug_ranges   0 : { *(.debug_ranges) }
- 
--  /* DWARF Extension.  */
--  .debug_macro    0 : { *(.debug_macro) }
-+  /* DWARF 5.  */
-   .debug_addr     0 : { *(.debug_addr) }
-+  .debug_line_str 0 : { *(.debug_line_str) }
-+  .debug_loclists 0 : { *(.debug_loclists) }
-+  .debug_macro    0 : { *(.debug_macro) }
-+  .debug_names    0 : { *(.debug_names) }
-+  .debug_rnglists 0 : { *(.debug_rnglists) }
-+  .debug_str_offsets 0 : { *(.debug_str_offsets) }
-+  .debug_sup      0 : { *(.debug_sup) }
- EOF
+ 	This is the 2.36.1 release.
 diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
 index 9bfc70c9fb9..24700f81352 100644
 --- a/ld/testsuite/ld-i386/i386.exp
@@ -3911,28 +1254,6 @@ index 9bfc70c9fb9..24700f81352 100644
      ]
  
      undefined_weak "$NOPIE_CFLAGS" "$NOPIE_LDFLAGS"
-diff --git a/ld/testsuite/ld-ifunc/ifunc.exp b/ld/testsuite/ld-ifunc/ifunc.exp
-index 9d3ace65216..45b47d7d6a8 100644
---- a/ld/testsuite/ld-ifunc/ifunc.exp
-+++ b/ld/testsuite/ld-ifunc/ifunc.exp
-@@ -397,7 +397,7 @@ run_cc_link_tests [list \
-     ] \
-     [list \
- 	"Build libpr16467b.so" \
--	"-shared tmpdir/pr16467b.o tmpdir/libpr16467a.so \
-+	"-shared -Wl,--as-needed tmpdir/pr16467b.o tmpdir/libpr16467a.so \
- 	 -Wl,--version-script=pr16467b.map" \
- 	"-fPIC" \
- 	{ dummy.c } \
-@@ -422,7 +422,7 @@ run_cc_link_tests [list \
-     ] \
-     [list \
- 	"Build libpr16467bn.so" \
--	"-shared tmpdir/pr16467b.o tmpdir/libpr16467an.so \
-+	"-shared -Wl,--as-needed tmpdir/pr16467b.o tmpdir/libpr16467an.so \
- 	 -Wl,--version-script=pr16467b.map" \
- 	"-fPIC" \
- 	{ dummy.c } \
 diff --git a/ld/testsuite/ld-pe/pe.exp b/ld/testsuite/ld-pe/pe.exp
 index de9e104f0f6..5b04b6b8075 100644
 --- a/ld/testsuite/ld-pe/pe.exp
@@ -4027,206 +1348,6 @@ index 00000000000..7a42759e752
 +.refptr.bar1:
 +        .quad   bar1
 +
-diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
-index 3c129760498..ec339ee1495 100644
---- a/ld/testsuite/ld-plugin/lto.exp
-+++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -304,6 +304,21 @@ set lto_link_elf_tests [list \
-   [list "PR ld/13244" \
-    "-shared -O2 -fPIC -flto -fuse-linker-plugin -nostdlib" "-O2 -fno-early-inlining -flto" \
-    {pr13244.c} {{"readelf" {-s --wide} "pr13244.d"}} "pr13244.so" "c"] \
-+  [list "Build libpr15146a.a" \
-+   "$plug_opt" "-flto -O2" \
-+   {pr15146a.c} {} "lib15146a.a"] \
-+  [list "Build pr15146b.so" \
-+   "-shared" "-O2 -fpic" \
-+   {pr15146b.c} {} "pr15146b.so" "c"] \
-+  [list "Build pr15146c.so" \
-+   "-shared -Wl,--no-as-needed tmpdir/pr15146b.so" "-O2 -fpic $no_lto" \
-+   {pr15146c.c} {} "pr15146c.so" "c"] \
-+  [list "PR ld/15146 (1)" \
-+   "-O2 -flto -fuse-linker-plugin -Wl,-rpath-link,. -Wl,--no-copy-dt-needed-entries -Wl,--no-as-needed tmpdir/pr15146a.o tmpdir/pr15146c.so" "" \
-+   {dummy.c} {{"readelf" {-d} "pr15146.d"}} "pr15146a.exe"] \
-+  [list "Build libpr15146d.a" \
-+   "$plug_opt" "-flto -O2" \
-+   {pr15146d.c} {} "lib15146d.a"] \
-   [list "Build libpr16746a.a" \
-    "" "" \
-    {pr16746a.c pr16746b.c} {} "lib15146a.a"] \
-@@ -415,6 +430,24 @@ set lto_link_elf_tests [list \
-   [list {pr26806.so} \
-    {-shared} {-fpic -O2 -flto} \
-    {pr26806.c} {{nm {-D} pr26806.d}} {pr26806.so}] \
-+  [list {pr27311a.so} \
-+   {-shared -Wl,--version-script=pr27311.ver} {-fPIC} \
-+   {pr27311a.c} {} {pr27311a.so}] \
-+  [list {pr27311b.so} \
-+   {-shared -Wl,--no-as-needed tmpdir/pr27311a.so} {-fPIC} \
-+   {pr27311b.c} {} {pr27311b.so}] \
-+  [list {pr27311c.o} \
-+   {} {-flto} \
-+   {pr27311c.c} {} {} {c}] \
-+  [list {pr27311d.o} \
-+   {} {-flto} \
-+   {pr27311d.c} {} {} {c}] \
-+  [list {pr27311-1} \
-+   {tmpdir/pr27311c.o -Wl,--no-as-needed,--rpath-link=. tmpdir/pr27311b.so} {} \
-+   {dummy.c} {{readelf {--dyn-syms --wide} pr27311.d}} {pr27311-1}] \
-+  [list {pr27311-2} \
-+   {tmpdir/pr27311d.o -Wl,--no-as-needed,--rpath-link=. tmpdir/pr27311b.so} {} \
-+   {dummy.c} {{readelf {--dyn-syms --wide} pr27311.d}} {pr27311-2}] \
- ]
- 
- # PR 14918 checks that libgcc is not spuriously included in a shared link of
-@@ -423,11 +456,10 @@ set lto_link_elf_tests [list \
- # __aeabi_unwind_cpp_pr0@@GCC_3.5 which is provided by libgcc_s.so.1, so the
- # test fails.  Hence this code to skip the test.
- if { ! [istarget "arm*-*-*"] } {
--    lappend lto_link_elf_tests [list \
-+    lappend lto_link_elf_tests \
-   [list "PR ld/14918" \
-    "-flto" "-flto" \
--   {pr14918.c} {{"readelf" {-d --wide} "pr14918.d"}} "pr14918.exe" "c"] \
--  ]
-+   {pr14918.c} {{"readelf" {-d --wide} "pr14918.d"}} "pr14918.exe" "c"]
- }
- 
- # PR 12982 checks that an executable stack is not created by default
-@@ -435,11 +467,10 @@ if { ! [istarget "arm*-*-*"] } {
- # executable stack for syscall restarts and signal returns, so we
- # skip this test for that target.
- if { ! [istarget "hppa*-*-*"] } {
--    lappend lto_link_elf_tests [list \
-+    lappend lto_link_elf_tests \
-   [list "PR ld/12982" \
-    "-O2 -flto -fuse-linker-plugin" "-O2 -flto" \
--   {pr12982.c} {{"readelf" {-l --wide} "pr12982.d"}} "pr12982.exe"] \
--  ]
-+   {pr12982.c} {{"readelf" {-l --wide} "pr12982.d"}} "pr12982.exe"]
- }
- 
- # Check final symbols in executables.
-@@ -621,6 +652,13 @@ run_cc_link_tests $lto_compile_elf_tests
- # Restrict these to ELF targets that support shared libs and PIC.
- if { [is_elf_format] && [check_lto_shared_available] } {
-     run_cc_link_tests $lto_link_elf_tests
-+    set testname "PR ld/15146 (2)"
-+    set exec_output [run_host_cmd "$CC" "-O2 -flto -fuse-linker-plugin -Wl,-rpath-link,. -Wl,--no-copy-dt-needed-entries -Wl,--no-as-needed tmpdir/pr15146d.o tmpdir/pr15146c.so"]
-+    if { [ regexp "undefined reference to symbol '\\.?xxx'" $exec_output ] } {
-+	pass $testname
-+    } {
-+	fail $testname
-+    }
-     set testname "PR ld/16746 (3)"
-     set exec_output [run_host_cmd "$CC" "-O2 -flto -fuse-linker-plugin tmpdir/pr16746b.o tmpdir/pr16746d.o"]
-     if { [ regexp "warning: \\.?foobar" $exec_output ] && ![ regexp "symbol from plugin" $exec_output ] } {
-diff --git a/ld/testsuite/ld-plugin/pr15146.d b/ld/testsuite/ld-plugin/pr15146.d
-new file mode 100644
-index 00000000000..48d4b854466
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/pr15146.d
-@@ -0,0 +1,4 @@
-+#failif
-+#...
-+ +0x[0-9a-f]+ +\(NEEDED\) +Shared library: +\[.*pr15146b.so\]
-+#...
-diff --git a/ld/testsuite/ld-plugin/pr15146a.c b/ld/testsuite/ld-plugin/pr15146a.c
-new file mode 100644
-index 00000000000..d85fe973cbc
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/pr15146a.c
-@@ -0,0 +1,13 @@
-+extern int xxx;
-+
-+int
-+bar (void)
-+{
-+  return xxx;
-+}
-+
-+int
-+main ()
-+{
-+  return 0;
-+}
-diff --git a/ld/testsuite/ld-plugin/pr15146b.c b/ld/testsuite/ld-plugin/pr15146b.c
-new file mode 100644
-index 00000000000..90eb21ea556
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/pr15146b.c
-@@ -0,0 +1 @@
-+int xxx = 3;
-diff --git a/ld/testsuite/ld-plugin/pr15146c.c b/ld/testsuite/ld-plugin/pr15146c.c
-new file mode 100644
-index 00000000000..e69de29bb2d
-diff --git a/ld/testsuite/ld-plugin/pr15146d.c b/ld/testsuite/ld-plugin/pr15146d.c
-new file mode 100644
-index 00000000000..3986ff62457
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/pr15146d.c
-@@ -0,0 +1,7 @@
-+extern int xxx;
-+
-+int
-+main ()
-+{
-+  return xxx;
-+}
-diff --git a/ld/testsuite/ld-plugin/pr27311.d b/ld/testsuite/ld-plugin/pr27311.d
-new file mode 100644
-index 00000000000..debf41cdc7f
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/pr27311.d
-@@ -0,0 +1,4 @@
-+#failif
-+#...
-+.* _*inlib1.*
-+#...
-diff --git a/ld/testsuite/ld-plugin/pr27311.ver b/ld/testsuite/ld-plugin/pr27311.ver
-new file mode 100644
-index 00000000000..324daf0c5b6
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/pr27311.ver
-@@ -0,0 +1,3 @@
-+LIBFOO {
-+  *;
-+};
-diff --git a/ld/testsuite/ld-plugin/pr27311a.c b/ld/testsuite/ld-plugin/pr27311a.c
-new file mode 100644
-index 00000000000..314984781db
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/pr27311a.c
-@@ -0,0 +1 @@
-+void inlib1(void) {}
-diff --git a/ld/testsuite/ld-plugin/pr27311b.c b/ld/testsuite/ld-plugin/pr27311b.c
-new file mode 100644
-index 00000000000..ed9c8a7048e
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/pr27311b.c
-@@ -0,0 +1 @@
-+void inlib2(void) {}
-diff --git a/ld/testsuite/ld-plugin/pr27311c.c b/ld/testsuite/ld-plugin/pr27311c.c
-new file mode 100644
-index 00000000000..6712499130e
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/pr27311c.c
-@@ -0,0 +1,5 @@
-+void inlib1(void) {}
-+int main()
-+{
-+  return 0;
-+}
-diff --git a/ld/testsuite/ld-plugin/pr27311d.c b/ld/testsuite/ld-plugin/pr27311d.c
-new file mode 100644
-index 00000000000..11e4ba4d6dd
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/pr27311d.c
-@@ -0,0 +1,5 @@
-+__attribute__((visibility("hidden"))) void inlib1(void) {}
-+int main()
-+{
-+  return 0;
-+}
 diff --git a/ld/testsuite/ld-powerpc/powerpc.exp b/ld/testsuite/ld-powerpc/powerpc.exp
 index 45485e6c5d1..8aa0eccfa0e 100644
 --- a/ld/testsuite/ld-powerpc/powerpc.exp
@@ -4360,22 +1481,6 @@ index 00000000000..dcc91f1879a
 +#...
 +.* 0+ +0 NOTYPE +WEAK +DEFAULT +UND x1
 +#pass
-diff --git a/ld/testsuite/ld-tic6x/tic6x.exp b/ld/testsuite/ld-tic6x/tic6x.exp
-index e11699bed31..0a913da25d9 100644
---- a/ld/testsuite/ld-tic6x/tic6x.exp
-+++ b/ld/testsuite/ld-tic6x/tic6x.exp
-@@ -130,6 +130,11 @@ set shlibtests {
-       {objdump -sj.got static-app-1rb.sd}
-       {objdump -R static-app-1rb.od}}
-      "static-app-1rb"}
-+
-+    {"C6X shared library with --export-dynamic"
-+     "-shared --export-dynamic -Tdsbt.ld --dsbt-size=3 --hash-style=sysv" ""
-+     "-mdsbt -mpic -mpid=near" {shlib-1.s shlib-2.s}
-+     {} "pr27271.so"}
- }
- 
- run_ld_link_tests $shlibtests
 diff --git a/ld/testsuite/ld-x86-64/pr27587.err b/ld/testsuite/ld-x86-64/pr27587.err
 new file mode 100644
 index 00000000000..fa870790813
@@ -4480,10 +1585,10 @@ index 83fdaa7db65..d2ec1ddc328 100644
  	    "Run pr22001-1a (PIC 1)" \
  	    "$NOPIE_LDFLAGS -Wl,-z,nocopyreloc,--no-as-needed tmpdir/pr22001-1.so" \
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index 206957af5e8..ca9dff38798 100644
+index 6046ffe395b..ca9dff38798 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
-@@ -1,3 +1,38 @@
+@@ -1,3 +1,16 @@
 +2021-04-09  Tejas Belagod  <tejas.belagod@arm.com>
 +
 +	Backported from mainline.
@@ -4497,31 +1602,9 @@ index 206957af5e8..ca9dff38798 100644
 +	* s390-mkopc.c (main): Accept arch14 as cpu string.
 +	* s390-opc.txt: Add new arch14 instructions.
 +
-+2021-02-06  Nick Clifton  <nickc@redhat.com>
-+
-+	This is the 2.36.1 release.
-+	* configure: Regenerate.
-+	* po/opcodes.pot: Regenerate.
-+
-+2021-02-05  Nelson Chu  <nelson.chu@sifive.com>
-+
-+	* riscv-opc.c (MASK_RVB_IMM): Removed.
-+	(riscv_opcodes): Removed zb* instructions.
-+	(riscv_ext_version_table): Removed versions for zb*.
-+
-+2021-01-26  Alan Modra  <amodra@gmail.com>
-+
-+	* i386-gen.c (parse_template): Ensure entire template_instance
-+	is initialised.
-+
-+2021-01-24  Nick Clifton  <nickc@redhat.com>
-+
-+	* configure: Regenerate.
-+	* po/opercodes.pot: Regenerate.
-+
- 2021-01-24  Nick Clifton  <nickc@redhat.com>
+ 2021-02-06  Nick Clifton  <nickc@redhat.com>
  
- 	This is the 2.36 release.
+ 	This is the 2.36.1 release.
 diff --git a/opcodes/aarch64-tbl.h b/opcodes/aarch64-tbl.h
 index f5c313138ea..4192e54d188 100644
 --- a/opcodes/aarch64-tbl.h
@@ -4541,260 +1624,6 @@ index f5c313138ea..4192e54d188 100644
    /* Logical (immediate).  */
    CORE_INSN ("and", 0x12000000, 0x7f800000, log_imm, 0, OP3 (Rd_SP, Rn, LIMM), QL_R2NIL, F_HAS_ALIAS | F_SF),
    CORE_INSN ("bic", 0x12000000, 0x7f800000, log_imm, OP_BIC, OP3 (Rd_SP, Rn, LIMM), QL_R2NIL, F_ALIAS | F_PSEUDO | F_SF),
-diff --git a/opcodes/configure b/opcodes/configure
-index b72f679440d..2e73c179042 100755
---- a/opcodes/configure
-+++ b/opcodes/configure
-@@ -1,6 +1,6 @@
- #! /bin/sh
- # Guess values for system-dependent variables and create Makefiles.
--# Generated by GNU Autoconf 2.69 for opcodes 2.36.
-+# Generated by GNU Autoconf 2.69 for opcodes 2.36.1.
- #
- #
- # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
-@@ -587,8 +587,8 @@ MAKEFLAGS=
- # Identity of this package.
- PACKAGE_NAME='opcodes'
- PACKAGE_TARNAME='opcodes'
--PACKAGE_VERSION='2.36'
--PACKAGE_STRING='opcodes 2.36'
-+PACKAGE_VERSION='2.36.1'
-+PACKAGE_STRING='opcodes 2.36.1'
- PACKAGE_BUGREPORT=''
- PACKAGE_URL=''
- 
-@@ -1356,7 +1356,7 @@ if test "$ac_init_help" = "long"; then
-   # Omit some internal or obsolete options to make the list less imposing.
-   # This message is too long to be a string in the A/UX 3.1 sh.
-   cat <<_ACEOF
--\`configure' configures opcodes 2.36 to adapt to many kinds of systems.
-+\`configure' configures opcodes 2.36.1 to adapt to many kinds of systems.
- 
- Usage: $0 [OPTION]... [VAR=VALUE]...
- 
-@@ -1427,7 +1427,7 @@ fi
- 
- if test -n "$ac_init_help"; then
-   case $ac_init_help in
--     short | recursive ) echo "Configuration of opcodes 2.36:";;
-+     short | recursive ) echo "Configuration of opcodes 2.36.1:";;
-    esac
-   cat <<\_ACEOF
- 
-@@ -1539,7 +1539,7 @@ fi
- test -n "$ac_init_help" && exit $ac_status
- if $ac_init_version; then
-   cat <<\_ACEOF
--opcodes configure 2.36
-+opcodes configure 2.36.1
- generated by GNU Autoconf 2.69
- 
- Copyright (C) 2012 Free Software Foundation, Inc.
-@@ -1950,7 +1950,7 @@ cat >config.log <<_ACEOF
- This file contains any messages produced by compilers while
- running configure, to aid debugging if configure makes a mistake.
- 
--It was created by opcodes $as_me 2.36, which was
-+It was created by opcodes $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   $ $0 $@
-@@ -3897,7 +3897,7 @@ fi
- 
- # Define the identity of the package.
-  PACKAGE='opcodes'
-- VERSION='2.36'
-+ VERSION='2.36.1'
- 
- 
- cat >>confdefs.h <<_ACEOF
-@@ -13523,7 +13523,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
- # report actual input values of CONFIG_FILES etc. instead of their
- # values after options handling.
- ac_log="
--This file was extended by opcodes $as_me 2.36, which was
-+This file was extended by opcodes $as_me 2.36.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   CONFIG_FILES    = $CONFIG_FILES
-@@ -13589,7 +13589,7 @@ _ACEOF
- cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
- ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
- ac_cs_version="\\
--opcodes config.status 2.36
-+opcodes config.status 2.36.1
- configured by $0, generated by GNU Autoconf 2.69,
-   with options \\"\$ac_cs_config\\"
- 
-diff --git a/opcodes/i386-gen.c b/opcodes/i386-gen.c
-index b3c87dbbd66..44cdc661985 100644
---- a/opcodes/i386-gen.c
-+++ b/opcodes/i386-gen.c
-@@ -1576,6 +1576,8 @@ parse_template (char *buf, int lineno)
-       *end++ = '\0';
- 
-       inst = xmalloc (sizeof (*inst));
-+      inst->next = NULL;
-+      inst->args = NULL;
- 
-       cur = next_field (buf, ':', &next, end);
-       inst->name = xstrdup (cur);
-diff --git a/opcodes/po/opcodes.pot b/opcodes/po/opcodes.pot
-index 12e4ddfe091..300948fe5d9 100644
---- a/opcodes/po/opcodes.pot
-+++ b/opcodes/po/opcodes.pot
-@@ -8,7 +8,7 @@ msgid ""
- msgstr ""
- "Project-Id-Version: PACKAGE VERSION\n"
- "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
--"POT-Creation-Date: 2021-01-24 10:43+0000\n"
-+"POT-Creation-Date: 2021-02-06 09:02+0000\n"
- "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
- "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
- "Language-Team: LANGUAGE <LL@li.org>\n"
-@@ -1173,37 +1173,37 @@ msgstr ""
- msgid "%s: %s: invalid opcode length: %s\n"
- msgstr ""
- 
--#: i386-gen.c:1888
-+#: i386-gen.c:1890
- #, c-format
- msgid "can't find i386-reg.tbl for reading, errno = %s\n"
- msgstr ""
- 
--#: i386-gen.c:1966
-+#: i386-gen.c:1968
- #, c-format
- msgid "can't create i386-init.h, errno = %s\n"
- msgstr ""
- 
--#: i386-gen.c:2056 ia64-gen.c:2829
-+#: i386-gen.c:2058 ia64-gen.c:2829
- #, c-format
- msgid "unable to change directory to \"%s\", errno = %s\n"
- msgstr ""
- 
--#: i386-gen.c:2070 i386-gen.c:2075
-+#: i386-gen.c:2072 i386-gen.c:2077
- #, c-format
- msgid "CpuMax != %d!\n"
- msgstr ""
- 
--#: i386-gen.c:2079
-+#: i386-gen.c:2081
- #, c-format
- msgid "%d unused bits in i386_cpu_flags.\n"
- msgstr ""
- 
--#: i386-gen.c:2094
-+#: i386-gen.c:2096
- #, c-format
- msgid "%d unused bits in i386_operand_type.\n"
- msgstr ""
- 
--#: i386-gen.c:2108
-+#: i386-gen.c:2110
- #, c-format
- msgid "can't create i386-tbl.h, errno = %s\n"
- msgstr ""
-diff --git a/opcodes/riscv-opc.c b/opcodes/riscv-opc.c
-index 7c262ddf531..a2ea66a723e 100644
---- a/opcodes/riscv-opc.c
-+++ b/opcodes/riscv-opc.c
-@@ -79,7 +79,6 @@ const char * const riscv_fpr_names_abi[NFPR] = {
- #define MASK_AQ (OP_MASK_AQ << OP_SH_AQ)
- #define MASK_RL (OP_MASK_RL << OP_SH_RL)
- #define MASK_AQRL (MASK_AQ | MASK_RL)
--#define MASK_RVB_IMM (OP_MASK_SHAMT << OP_SH_SHAMT)
- 
- static int
- match_opcode (const struct riscv_opcode *op, insn_t insn)
-@@ -239,7 +238,10 @@ const struct riscv_opcode riscv_opcodes[] =
- {"mv",          0, INSN_CLASS_I,   "d,s",  MATCH_ADDI, MASK_ADDI | MASK_IMM, match_opcode, INSN_ALIAS },
- {"move",        0, INSN_CLASS_C,   "d,CV",  MATCH_C_MV, MASK_C_MV, match_c_add, INSN_ALIAS },
- {"move",        0, INSN_CLASS_I,   "d,s",  MATCH_ADDI, MASK_ADDI | MASK_IMM, match_opcode, INSN_ALIAS },
-+{"sext.b",      0, INSN_CLASS_I,   "d,s",  0, (int) M_SEXTB, match_never, INSN_MACRO },
-+{"sext.h",      0, INSN_CLASS_I,   "d,s",  0, (int) M_SEXTH, match_never, INSN_MACRO },
- {"zext.b",      0, INSN_CLASS_I,   "d,s",  MATCH_ANDI | ENCODE_ITYPE_IMM (255), MASK_ANDI | MASK_IMM, match_opcode, INSN_ALIAS },
-+{"zext.h",      0, INSN_CLASS_I,   "d,s",  0, (int) M_ZEXTH, match_never, INSN_MACRO },
- {"andi",        0, INSN_CLASS_C,   "Cs,Cw,Co",  MATCH_C_ANDI, MASK_C_ANDI, match_opcode, INSN_ALIAS },
- {"andi",        0, INSN_CLASS_I,   "d,s,j",  MATCH_ANDI, MASK_ANDI, match_opcode, 0 },
- {"and",         0, INSN_CLASS_C,   "Cs,Cw,Ct",  MATCH_C_AND, MASK_C_AND, match_opcode, INSN_ALIAS },
-@@ -373,6 +375,7 @@ const struct riscv_opcode riscv_opcodes[] =
- {"sd",         64, INSN_CLASS_C, "Ct,Cl(Cs)",  MATCH_C_SD, MASK_C_SD, match_opcode, INSN_ALIAS|INSN_DREF|INSN_8_BYTE },
- {"sd",         64, INSN_CLASS_I, "t,q(s)",  MATCH_SD, MASK_SD, match_opcode, INSN_DREF|INSN_8_BYTE },
- {"sd",         64, INSN_CLASS_I, "t,A,s",  0, (int) M_SD, match_never, INSN_MACRO },
-+{"zext.w",     64, INSN_CLASS_I, "d,s",    0, (int) M_ZEXTW, match_never, INSN_MACRO },
- {"sext.w",     64, INSN_CLASS_C, "d,CU",  MATCH_C_ADDIW, MASK_C_ADDIW | MASK_RVC_IMM, match_rd_nonzero, INSN_ALIAS },
- {"sext.w",     64, INSN_CLASS_I, "d,s",  MATCH_ADDIW, MASK_ADDIW | MASK_IMM, match_opcode, INSN_ALIAS },
- {"addiw",      64, INSN_CLASS_C, "d,CU,Co",  MATCH_C_ADDIW, MASK_C_ADDIW, match_rd_nonzero, INSN_ALIAS },
-@@ -500,54 +503,6 @@ const struct riscv_opcode riscv_opcodes[] =
- {"remw",     64, INSN_CLASS_M, "d,s,t",  MATCH_REMW, MASK_REMW, match_opcode, 0 },
- {"remuw",    64, INSN_CLASS_M, "d,s,t",  MATCH_REMUW, MASK_REMUW, match_opcode, 0 },
- 
--/* Bitmanip instruction subset - ZBA/ZBB/ZBC  */
--{"sh1add",    0, INSN_CLASS_ZBA,   "d,s,t",  MATCH_SH1ADD, MASK_SH1ADD, match_opcode, 0 },
--{"sh2add",    0, INSN_CLASS_ZBA,   "d,s,t",  MATCH_SH2ADD, MASK_SH2ADD, match_opcode, 0 },
--{"sh3add",    0, INSN_CLASS_ZBA,   "d,s,t",  MATCH_SH3ADD, MASK_SH3ADD, match_opcode, 0 },
--{"sh1add.uw",64, INSN_CLASS_ZBA,   "d,s,t",  MATCH_SH1ADD_UW, MASK_SH1ADD_UW, match_opcode, 0 },
--{"sh2add.uw",64, INSN_CLASS_ZBA,   "d,s,t",  MATCH_SH2ADD_UW, MASK_SH2ADD_UW, match_opcode, 0 },
--{"sh3add.uw",64, INSN_CLASS_ZBA,   "d,s,t",  MATCH_SH3ADD_UW, MASK_SH3ADD_UW, match_opcode, 0 },
--{"zext.w",   64, INSN_CLASS_ZBA_OR_ZBB,   "d,s",    MATCH_ADD_UW, MASK_ADD_UW | MASK_RS2, match_opcode, INSN_ALIAS },
--{"zext.w",   64, INSN_CLASS_I,     "d,s",    0, (int) M_ZEXTW,  match_never, INSN_MACRO },
--{"add.uw",   64, INSN_CLASS_ZBA,   "d,s,t",  MATCH_ADD_UW, MASK_ADD_UW, match_opcode, 0 },
--{"slli.uw",  64, INSN_CLASS_ZBA,   "d,s,>",  MATCH_SLLI_UW, MASK_SLLI_UW, match_opcode, 0 },
--
--{"clz",       0, INSN_CLASS_ZBB,   "d,s",  MATCH_CLZ, MASK_CLZ, match_opcode, 0 },
--{"ctz",       0, INSN_CLASS_ZBB,   "d,s",  MATCH_CTZ, MASK_CTZ, match_opcode, 0 },
--{"cpop",      0, INSN_CLASS_ZBB,   "d,s",  MATCH_CPOP, MASK_CPOP, match_opcode, 0 },
--{"min",       0, INSN_CLASS_ZBB,   "d,s,t",  MATCH_MIN, MASK_MIN, match_opcode, 0 },
--{"max",       0, INSN_CLASS_ZBB,   "d,s,t",  MATCH_MAX, MASK_MAX, match_opcode, 0 },
--{"minu",      0, INSN_CLASS_ZBB,   "d,s,t",  MATCH_MINU, MASK_MINU, match_opcode, 0 },
--{"maxu",      0, INSN_CLASS_ZBB,   "d,s,t",  MATCH_MAXU, MASK_MAXU, match_opcode, 0 },
--{"sext.b",    0, INSN_CLASS_ZBB,   "d,s",  MATCH_SEXT_B, MASK_SEXT_B, match_opcode, 0 },
--{"sext.b",    0, INSN_CLASS_I,     "d,s",  0, (int) M_SEXTB,  match_never, INSN_MACRO },
--{"sext.h",    0, INSN_CLASS_ZBB,   "d,s",  MATCH_SEXT_H, MASK_SEXT_H, match_opcode, 0 },
--{"sext.h",    0, INSN_CLASS_I,     "d,s",  0, (int) M_SEXTH,  match_never, INSN_MACRO },
--{"zext.h",   32, INSN_CLASS_ZBB,   "d,s",  MATCH_PACK, MASK_PACK | MASK_RS2, match_opcode, 0 },
--{"zext.h",   64, INSN_CLASS_ZBB,   "d,s",  MATCH_PACKW, MASK_PACKW | MASK_RS2, match_opcode, 0 },
--{"zext.h",    0, INSN_CLASS_I,     "d,s",  0, (int) M_ZEXTH,  match_never, INSN_MACRO },
--{"andn",      0, INSN_CLASS_ZBB,   "d,s,t",  MATCH_ANDN, MASK_ANDN, match_opcode, 0 },
--{"orn",       0, INSN_CLASS_ZBB,   "d,s,t",  MATCH_ORN, MASK_ORN, match_opcode, 0 },
--{"xnor",      0, INSN_CLASS_ZBB,   "d,s,t",  MATCH_XNOR, MASK_XNOR, match_opcode, 0 },
--{"rori",      0, INSN_CLASS_ZBB,   "d,s,>",  MATCH_RORI, MASK_RORI, match_opcode, 0 },
--{"ror",       0, INSN_CLASS_ZBB,   "d,s,t",  MATCH_ROR, MASK_ROR, match_opcode, 0 },
--{"ror",       0, INSN_CLASS_ZBB,   "d,s,>",  MATCH_RORI, MASK_RORI, match_opcode, INSN_ALIAS },
--{"rol",       0, INSN_CLASS_ZBB,   "d,s,t",  MATCH_ROL, MASK_ROL, match_opcode, 0 },
--{"clzw",     64, INSN_CLASS_ZBB,   "d,s",  MATCH_CLZW, MASK_CLZW, match_opcode, 0 },
--{"ctzw",     64, INSN_CLASS_ZBB,   "d,s",  MATCH_CTZW, MASK_CTZW, match_opcode, 0 },
--{"cpopw",    64, INSN_CLASS_ZBB,   "d,s",  MATCH_CPOPW, MASK_CPOPW, match_opcode, 0 },
--{"roriw",    64, INSN_CLASS_ZBB,   "d,s,<",  MATCH_RORIW, MASK_RORIW, match_opcode, 0 },
--{"rorw",     64, INSN_CLASS_ZBB,   "d,s,t",  MATCH_RORW, MASK_RORW, match_opcode, 0 },
--{"rorw",     64, INSN_CLASS_ZBB,   "d,s,<",  MATCH_RORIW, MASK_RORIW, match_opcode, INSN_ALIAS },
--{"rolw",     64, INSN_CLASS_ZBB,   "d,s,t",  MATCH_ROLW, MASK_ROLW, match_opcode, 0 },
--{"rev8",     32, INSN_CLASS_ZBB,   "d,s",  MATCH_GREVI | ENCODE_ITYPE_IMM (0x18), MASK_GREVI | MASK_RVB_IMM, match_opcode, 0 },
--{"rev8",     64, INSN_CLASS_ZBB,   "d,s",  MATCH_GREVI | ENCODE_ITYPE_IMM (0x38), MASK_GREVI | MASK_RVB_IMM, match_opcode, 0 },
--{"orc.b",     0, INSN_CLASS_ZBB,   "d,s",  MATCH_GORCI | ENCODE_ITYPE_IMM (0x7), MASK_GORCI | MASK_RVB_IMM, match_opcode, 0 },
--
--{"clmul",     0, INSN_CLASS_ZBC,   "d,s,t",  MATCH_CLMUL, MASK_CLMUL, match_opcode, 0 },
--{"clmulh",    0, INSN_CLASS_ZBC,   "d,s,t",  MATCH_CLMULH, MASK_CLMULH, match_opcode, 0 },
--{"clmulr",    0, INSN_CLASS_ZBC,   "d,s,t",  MATCH_CLMULR, MASK_CLMULR, match_opcode, 0 },
--
- /* Single-precision floating-point instruction subset */
- {"frcsr",     0, INSN_CLASS_F,   "d",  MATCH_FRCSR, MASK_FRCSR, match_opcode, INSN_ALIAS },
- {"frsr",      0, INSN_CLASS_F,   "d",  MATCH_FRCSR, MASK_FRCSR, match_opcode, INSN_ALIAS },
-@@ -980,10 +935,6 @@ const struct riscv_ext_version riscv_ext_version_table[] =
- 
- {"zihintpause", ISA_SPEC_CLASS_DRAFT, 1, 0},
- 
--{"zba", ISA_SPEC_CLASS_DRAFT, 0, 93},
--{"zbb", ISA_SPEC_CLASS_DRAFT, 0, 93},
--{"zbc", ISA_SPEC_CLASS_DRAFT, 0, 93},
--
- /* Terminate the list.  */
- {NULL, 0, 0, 0}
- };
 diff --git a/opcodes/s390-mkopc.c b/opcodes/s390-mkopc.c
 index bf2ef41d13a..bcd453314a1 100644
 --- a/opcodes/s390-mkopc.c
