@@ -1,5 +1,5 @@
 BINUTILS_GIT = ~/git/binutils-gdb
-BINUTILS_VER = 2.36
+BINUTILS_VER = 2.36.1
 
 BINUTILS_TAG = binutils-$(subst .,_,$(BINUTILS_VER))
 BINUTILS_BRANCH = origin/binutils-$(shell echo $(BINUTILS_VER) | sed -re "s|([0-9]+)\.([0-9]+)(\.[0-9]+)?|\1_\2|")-branch
