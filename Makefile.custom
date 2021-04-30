@@ -13,6 +13,5 @@ update:
 	! diff binutils-stable-branch.patch new.patch~ > /dev/null
 	mv new.patch~ binutils-stable-branch.patch
 	git -C $(BINUTILS_GIT) describe --abbrev=10 --match 'binutils-*' $(BINUTILS_BRANCH) > REVISION
-	$(MAKE) bumpnogit
 	git commit -m "stable update to `cat REVISION`" -a
 	test -n "$(NO_KOJI)" || bash ./update.sh
