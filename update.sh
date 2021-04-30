@@ -1,6 +1,5 @@
 #!/bin/bash
 
-git commit -m "Stable branch update" binutils-stable-branch.patch
 make autospec
 make koji
 sleep 120
@@ -15,7 +14,7 @@ make -C ../dropwatch bump
 make -C ../dropwatch koji-nowait
 
 cp binutils-stable-branch.patch ../mingw-binutils
-pushd ../mingw-binutils 
+pushd ../mingw-binutils
 git commit -m "Stable branch update" binutils-stable-branch.patch
 make bump
 make koji-nowait
