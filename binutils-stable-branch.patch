@@ -840,10 +840,18 @@ index 65ad5bf52c4..0427348df5b 100644
    return ret;
  }
 diff --git a/gas/ChangeLog b/gas/ChangeLog
-index 7f37f521404..bd87aca2525 100644
+index 7f37f521404..e747d7dd8a9 100644
 --- a/gas/ChangeLog
 +++ b/gas/ChangeLog
-@@ -1,3 +1,27 @@
+@@ -1,3 +1,35 @@
++2021-05-19  Alex Coplan  <alex.coplan@arm.com>
++
++	* config/tc-arm.c (do_mve_mov): Only reject vmov if we're moving
++	into the same GPR twice.
++	* testsuite/gas/arm/mve-vmov-bad-2.l: Tweak error message.
++	* testsuite/gas/arm/mve-vmov-3.d: New test.
++	* testsuite/gas/arm/mve-vmov-3.s: New test.
++
 +2021-04-23  Eric Botcazou<ebotcazou@adacore.com>
 +
 +	* testsuite/gas/elf/section25.d: Run it everywhere.
@@ -933,6 +941,21 @@ index 6f782d057f8..e852e38dfb4 100644
        break;
  
      default:
+diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
+index ff962daf749..d59e14930c3 100644
+--- a/gas/config/tc-arm.c
++++ b/gas/config/tc-arm.c
+@@ -20013,8 +20013,8 @@ do_mve_mov (int toQ)
+   constraint (inst.operands[Q0].reg != inst.operands[Q1].reg + 2,
+ 	      _("Index one must be [2,3] and index two must be two less than"
+ 		" index one."));
+-  constraint (inst.operands[Rt].reg == inst.operands[Rt2].reg,
+-	      _("General purpose registers may not be the same"));
++  constraint (!toQ && inst.operands[Rt].reg == inst.operands[Rt2].reg,
++	      _("Destination registers may not be the same"));
+   constraint (inst.operands[Rt].reg == REG_SP
+ 	      || inst.operands[Rt2].reg == REG_SP,
+ 	      BAD_SP);
 diff --git a/gas/config/tc-s390.c b/gas/config/tc-s390.c
 index c6daef99fde..f23d9863d3d 100644
 --- a/gas/config/tc-s390.c
@@ -1002,6 +1025,358 @@ index 21cbc53d897..0ebe85ac59d 100644
  	ldxp	x26, x1, [x26]
  	st4	{v0.16b-v3.16b}[4], [x0]
 +	stlxp	w3, w26, w26, [x3]
+diff --git a/gas/testsuite/gas/arm/mve-vmov-3.d b/gas/testsuite/gas/arm/mve-vmov-3.d
+new file mode 100644
+index 00000000000..5355b4ac4cb
+--- /dev/null
++++ b/gas/testsuite/gas/arm/mve-vmov-3.d
+@@ -0,0 +1,169 @@
++# name: MVE vmov (between two 32-bit vector lanes and two GPRs)
++# as: -march=armv8.1-m.main+mve
++# objdump: -dr -marmv8.1-m.main
++
++.*: +file format .*arm.*
++
++Disassembly of section .text:
++
++0+ <.*>:
++.*:	ec01 2f00 	vmov	r0, r1, q1\[2\], q1\[0\]
++.*:	ec01 4f00 	vmov	r0, r1, q2\[2\], q2\[0\]
++.*:	ec01 6f00 	vmov	r0, r1, q3\[2\], q3\[0\]
++.*:	ec01 8f00 	vmov	r0, r1, q4\[2\], q4\[0\]
++.*:	ec01 af00 	vmov	r0, r1, q5\[2\], q5\[0\]
++.*:	ec01 cf00 	vmov	r0, r1, q6\[2\], q6\[0\]
++.*:	ec01 ef00 	vmov	r0, r1, q7\[2\], q7\[0\]
++.*:	ec00 0f01 	vmov	r1, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f02 	vmov	r2, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f03 	vmov	r3, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f04 	vmov	r4, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f05 	vmov	r5, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f06 	vmov	r6, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f07 	vmov	r7, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f08 	vmov	r8, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f09 	vmov	r9, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f0a 	vmov	sl, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f0b 	vmov	fp, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f0c 	vmov	ip, r0, q0\[2\], q0\[0\]
++.*:	ec00 0f0e 	vmov	lr, r0, q0\[2\], q0\[0\]
++.*:	ec01 0f00 	vmov	r0, r1, q0\[2\], q0\[0\]
++.*:	ec02 0f00 	vmov	r0, r2, q0\[2\], q0\[0\]
++.*:	ec03 0f00 	vmov	r0, r3, q0\[2\], q0\[0\]
++.*:	ec04 0f00 	vmov	r0, r4, q0\[2\], q0\[0\]
++.*:	ec05 0f00 	vmov	r0, r5, q0\[2\], q0\[0\]
++.*:	ec06 0f00 	vmov	r0, r6, q0\[2\], q0\[0\]
++.*:	ec07 0f00 	vmov	r0, r7, q0\[2\], q0\[0\]
++.*:	ec08 0f00 	vmov	r0, r8, q0\[2\], q0\[0\]
++.*:	ec09 0f00 	vmov	r0, r9, q0\[2\], q0\[0\]
++.*:	ec0a 0f00 	vmov	r0, sl, q0\[2\], q0\[0\]
++.*:	ec0b 0f00 	vmov	r0, fp, q0\[2\], q0\[0\]
++.*:	ec0c 0f00 	vmov	r0, ip, q0\[2\], q0\[0\]
++.*:	ec0e 0f00 	vmov	r0, lr, q0\[2\], q0\[0\]
++.*:	ec01 2f10 	vmov	r0, r1, q1\[3\], q1\[1\]
++.*:	ec01 4f10 	vmov	r0, r1, q2\[3\], q2\[1\]
++.*:	ec01 6f10 	vmov	r0, r1, q3\[3\], q3\[1\]
++.*:	ec01 8f10 	vmov	r0, r1, q4\[3\], q4\[1\]
++.*:	ec01 af10 	vmov	r0, r1, q5\[3\], q5\[1\]
++.*:	ec01 cf10 	vmov	r0, r1, q6\[3\], q6\[1\]
++.*:	ec01 ef10 	vmov	r0, r1, q7\[3\], q7\[1\]
++.*:	ec00 0f11 	vmov	r1, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f12 	vmov	r2, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f13 	vmov	r3, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f14 	vmov	r4, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f15 	vmov	r5, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f16 	vmov	r6, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f17 	vmov	r7, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f18 	vmov	r8, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f19 	vmov	r9, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f1a 	vmov	sl, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f1b 	vmov	fp, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f1c 	vmov	ip, r0, q0\[3\], q0\[1\]
++.*:	ec00 0f1e 	vmov	lr, r0, q0\[3\], q0\[1\]
++.*:	ec01 0f10 	vmov	r0, r1, q0\[3\], q0\[1\]
++.*:	ec02 0f10 	vmov	r0, r2, q0\[3\], q0\[1\]
++.*:	ec03 0f10 	vmov	r0, r3, q0\[3\], q0\[1\]
++.*:	ec04 0f10 	vmov	r0, r4, q0\[3\], q0\[1\]
++.*:	ec05 0f10 	vmov	r0, r5, q0\[3\], q0\[1\]
++.*:	ec06 0f10 	vmov	r0, r6, q0\[3\], q0\[1\]
++.*:	ec07 0f10 	vmov	r0, r7, q0\[3\], q0\[1\]
++.*:	ec08 0f10 	vmov	r0, r8, q0\[3\], q0\[1\]
++.*:	ec09 0f10 	vmov	r0, r9, q0\[3\], q0\[1\]
++.*:	ec0a 0f10 	vmov	r0, sl, q0\[3\], q0\[1\]
++.*:	ec0b 0f10 	vmov	r0, fp, q0\[3\], q0\[1\]
++.*:	ec0c 0f10 	vmov	r0, ip, q0\[3\], q0\[1\]
++.*:	ec0e 0f10 	vmov	r0, lr, q0\[3\], q0\[1\]
++.*:	ec11 2f00 	vmov	q1\[2\], q1\[0\], r0, r1
++.*:	ec11 4f00 	vmov	q2\[2\], q2\[0\], r0, r1
++.*:	ec11 6f00 	vmov	q3\[2\], q3\[0\], r0, r1
++.*:	ec11 8f00 	vmov	q4\[2\], q4\[0\], r0, r1
++.*:	ec11 af00 	vmov	q5\[2\], q5\[0\], r0, r1
++.*:	ec11 cf00 	vmov	q6\[2\], q6\[0\], r0, r1
++.*:	ec11 ef00 	vmov	q7\[2\], q7\[0\], r0, r1
++.*:	ec10 0f00 	vmov	q0\[2\], q0\[0\], r0, r0
++.*:	ec10 0f01 	vmov	q0\[2\], q0\[0\], r1, r0
++.*:	ec10 0f02 	vmov	q0\[2\], q0\[0\], r2, r0
++.*:	ec10 0f03 	vmov	q0\[2\], q0\[0\], r3, r0
++.*:	ec10 0f04 	vmov	q0\[2\], q0\[0\], r4, r0
++.*:	ec10 0f05 	vmov	q0\[2\], q0\[0\], r5, r0
++.*:	ec10 0f06 	vmov	q0\[2\], q0\[0\], r6, r0
++.*:	ec10 0f07 	vmov	q0\[2\], q0\[0\], r7, r0
++.*:	ec10 0f08 	vmov	q0\[2\], q0\[0\], r8, r0
++.*:	ec10 0f09 	vmov	q0\[2\], q0\[0\], r9, r0
++.*:	ec10 0f0a 	vmov	q0\[2\], q0\[0\], sl, r0
++.*:	ec10 0f0b 	vmov	q0\[2\], q0\[0\], fp, r0
++.*:	ec10 0f0c 	vmov	q0\[2\], q0\[0\], ip, r0
++.*:	ec10 0f0e 	vmov	q0\[2\], q0\[0\], lr, r0
++.*:	ec11 0f00 	vmov	q0\[2\], q0\[0\], r0, r1
++.*:	ec12 0f00 	vmov	q0\[2\], q0\[0\], r0, r2
++.*:	ec13 0f00 	vmov	q0\[2\], q0\[0\], r0, r3
++.*:	ec14 0f00 	vmov	q0\[2\], q0\[0\], r0, r4
++.*:	ec15 0f00 	vmov	q0\[2\], q0\[0\], r0, r5
++.*:	ec16 0f00 	vmov	q0\[2\], q0\[0\], r0, r6
++.*:	ec17 0f00 	vmov	q0\[2\], q0\[0\], r0, r7
++.*:	ec18 0f00 	vmov	q0\[2\], q0\[0\], r0, r8
++.*:	ec19 0f00 	vmov	q0\[2\], q0\[0\], r0, r9
++.*:	ec1a 0f00 	vmov	q0\[2\], q0\[0\], r0, sl
++.*:	ec1b 0f00 	vmov	q0\[2\], q0\[0\], r0, fp
++.*:	ec1c 0f00 	vmov	q0\[2\], q0\[0\], r0, ip
++.*:	ec1e 0f00 	vmov	q0\[2\], q0\[0\], r0, lr
++.*:	ec11 0f01 	vmov	q0\[2\], q0\[0\], r1, r1
++.*:	ec12 0f02 	vmov	q0\[2\], q0\[0\], r2, r2
++.*:	ec13 0f03 	vmov	q0\[2\], q0\[0\], r3, r3
++.*:	ec14 0f04 	vmov	q0\[2\], q0\[0\], r4, r4
++.*:	ec15 0f05 	vmov	q0\[2\], q0\[0\], r5, r5
++.*:	ec16 0f06 	vmov	q0\[2\], q0\[0\], r6, r6
++.*:	ec17 0f07 	vmov	q0\[2\], q0\[0\], r7, r7
++.*:	ec18 0f08 	vmov	q0\[2\], q0\[0\], r8, r8
++.*:	ec19 0f09 	vmov	q0\[2\], q0\[0\], r9, r9
++.*:	ec1a 0f0a 	vmov	q0\[2\], q0\[0\], sl, sl
++.*:	ec1b 0f0b 	vmov	q0\[2\], q0\[0\], fp, fp
++.*:	ec1c 0f0c 	vmov	q0\[2\], q0\[0\], ip, ip
++.*:	ec1e 0f0e 	vmov	q0\[2\], q0\[0\], lr, lr
++.*:	ec11 2f10 	vmov	q1\[3\], q1\[1\], r0, r1
++.*:	ec11 4f10 	vmov	q2\[3\], q2\[1\], r0, r1
++.*:	ec11 6f10 	vmov	q3\[3\], q3\[1\], r0, r1
++.*:	ec11 8f10 	vmov	q4\[3\], q4\[1\], r0, r1
++.*:	ec11 af10 	vmov	q5\[3\], q5\[1\], r0, r1
++.*:	ec11 cf10 	vmov	q6\[3\], q6\[1\], r0, r1
++.*:	ec11 ef10 	vmov	q7\[3\], q7\[1\], r0, r1
++.*:	ec10 0f10 	vmov	q0\[3\], q0\[1\], r0, r0
++.*:	ec10 0f11 	vmov	q0\[3\], q0\[1\], r1, r0
++.*:	ec10 0f12 	vmov	q0\[3\], q0\[1\], r2, r0
++.*:	ec10 0f13 	vmov	q0\[3\], q0\[1\], r3, r0
++.*:	ec10 0f14 	vmov	q0\[3\], q0\[1\], r4, r0
++.*:	ec10 0f15 	vmov	q0\[3\], q0\[1\], r5, r0
++.*:	ec10 0f16 	vmov	q0\[3\], q0\[1\], r6, r0
++.*:	ec10 0f17 	vmov	q0\[3\], q0\[1\], r7, r0
++.*:	ec10 0f18 	vmov	q0\[3\], q0\[1\], r8, r0
++.*:	ec10 0f19 	vmov	q0\[3\], q0\[1\], r9, r0
++.*:	ec10 0f1a 	vmov	q0\[3\], q0\[1\], sl, r0
++.*:	ec10 0f1b 	vmov	q0\[3\], q0\[1\], fp, r0
++.*:	ec10 0f1c 	vmov	q0\[3\], q0\[1\], ip, r0
++.*:	ec10 0f1e 	vmov	q0\[3\], q0\[1\], lr, r0
++.*:	ec11 0f10 	vmov	q0\[3\], q0\[1\], r0, r1
++.*:	ec12 0f10 	vmov	q0\[3\], q0\[1\], r0, r2
++.*:	ec13 0f10 	vmov	q0\[3\], q0\[1\], r0, r3
++.*:	ec14 0f10 	vmov	q0\[3\], q0\[1\], r0, r4
++.*:	ec15 0f10 	vmov	q0\[3\], q0\[1\], r0, r5
++.*:	ec16 0f10 	vmov	q0\[3\], q0\[1\], r0, r6
++.*:	ec17 0f10 	vmov	q0\[3\], q0\[1\], r0, r7
++.*:	ec18 0f10 	vmov	q0\[3\], q0\[1\], r0, r8
++.*:	ec19 0f10 	vmov	q0\[3\], q0\[1\], r0, r9
++.*:	ec1a 0f10 	vmov	q0\[3\], q0\[1\], r0, sl
++.*:	ec1b 0f10 	vmov	q0\[3\], q0\[1\], r0, fp
++.*:	ec1c 0f10 	vmov	q0\[3\], q0\[1\], r0, ip
++.*:	ec1e 0f10 	vmov	q0\[3\], q0\[1\], r0, lr
++.*:	ec11 0f11 	vmov	q0\[3\], q0\[1\], r1, r1
++.*:	ec12 0f12 	vmov	q0\[3\], q0\[1\], r2, r2
++.*:	ec13 0f13 	vmov	q0\[3\], q0\[1\], r3, r3
++.*:	ec14 0f14 	vmov	q0\[3\], q0\[1\], r4, r4
++.*:	ec15 0f15 	vmov	q0\[3\], q0\[1\], r5, r5
++.*:	ec16 0f16 	vmov	q0\[3\], q0\[1\], r6, r6
++.*:	ec17 0f17 	vmov	q0\[3\], q0\[1\], r7, r7
++.*:	ec18 0f18 	vmov	q0\[3\], q0\[1\], r8, r8
++.*:	ec19 0f19 	vmov	q0\[3\], q0\[1\], r9, r9
++.*:	ec1a 0f1a 	vmov	q0\[3\], q0\[1\], sl, sl
++.*:	ec1b 0f1b 	vmov	q0\[3\], q0\[1\], fp, fp
++.*:	ec1c 0f1c 	vmov	q0\[3\], q0\[1\], ip, ip
++.*:	ec1e 0f1e 	vmov	q0\[3\], q0\[1\], lr, lr
+diff --git a/gas/testsuite/gas/arm/mve-vmov-3.s b/gas/testsuite/gas/arm/mve-vmov-3.s
+new file mode 100644
+index 00000000000..caf09576acd
+--- /dev/null
++++ b/gas/testsuite/gas/arm/mve-vmov-3.s
+@@ -0,0 +1,160 @@
++vmov	r0, r1, q1[2], q1[0]
++vmov	r0, r1, q2[2], q2[0]
++vmov	r0, r1, q3[2], q3[0]
++vmov	r0, r1, q4[2], q4[0]
++vmov	r0, r1, q5[2], q5[0]
++vmov	r0, r1, q6[2], q6[0]
++vmov	r0, r1, q7[2], q7[0]
++vmov	r1, r0, q0[2], q0[0]
++vmov	r2, r0, q0[2], q0[0]
++vmov	r3, r0, q0[2], q0[0]
++vmov	r4, r0, q0[2], q0[0]
++vmov	r5, r0, q0[2], q0[0]
++vmov	r6, r0, q0[2], q0[0]
++vmov	r7, r0, q0[2], q0[0]
++vmov	r8, r0, q0[2], q0[0]
++vmov	r9, r0, q0[2], q0[0]
++vmov	sl, r0, q0[2], q0[0]
++vmov	fp, r0, q0[2], q0[0]
++vmov	ip, r0, q0[2], q0[0]
++vmov	lr, r0, q0[2], q0[0]
++vmov	r0, r1, q0[2], q0[0]
++vmov	r0, r2, q0[2], q0[0]
++vmov	r0, r3, q0[2], q0[0]
++vmov	r0, r4, q0[2], q0[0]
++vmov	r0, r5, q0[2], q0[0]
++vmov	r0, r6, q0[2], q0[0]
++vmov	r0, r7, q0[2], q0[0]
++vmov	r0, r8, q0[2], q0[0]
++vmov	r0, r9, q0[2], q0[0]
++vmov	r0, sl, q0[2], q0[0]
++vmov	r0, fp, q0[2], q0[0]
++vmov	r0, ip, q0[2], q0[0]
++vmov	r0, lr, q0[2], q0[0]
++vmov	r0, r1, q1[3], q1[1]
++vmov	r0, r1, q2[3], q2[1]
++vmov	r0, r1, q3[3], q3[1]
++vmov	r0, r1, q4[3], q4[1]
++vmov	r0, r1, q5[3], q5[1]
++vmov	r0, r1, q6[3], q6[1]
++vmov	r0, r1, q7[3], q7[1]
++vmov	r1, r0, q0[3], q0[1]
++vmov	r2, r0, q0[3], q0[1]
++vmov	r3, r0, q0[3], q0[1]
++vmov	r4, r0, q0[3], q0[1]
++vmov	r5, r0, q0[3], q0[1]
++vmov	r6, r0, q0[3], q0[1]
++vmov	r7, r0, q0[3], q0[1]
++vmov	r8, r0, q0[3], q0[1]
++vmov	r9, r0, q0[3], q0[1]
++vmov	sl, r0, q0[3], q0[1]
++vmov	fp, r0, q0[3], q0[1]
++vmov	ip, r0, q0[3], q0[1]
++vmov	lr, r0, q0[3], q0[1]
++vmov	r0, r1, q0[3], q0[1]
++vmov	r0, r2, q0[3], q0[1]
++vmov	r0, r3, q0[3], q0[1]
++vmov	r0, r4, q0[3], q0[1]
++vmov	r0, r5, q0[3], q0[1]
++vmov	r0, r6, q0[3], q0[1]
++vmov	r0, r7, q0[3], q0[1]
++vmov	r0, r8, q0[3], q0[1]
++vmov	r0, r9, q0[3], q0[1]
++vmov	r0, sl, q0[3], q0[1]
++vmov	r0, fp, q0[3], q0[1]
++vmov	r0, ip, q0[3], q0[1]
++vmov	r0, lr, q0[3], q0[1]
++vmov	q1[2], q1[0], r0, r1
++vmov	q2[2], q2[0], r0, r1
++vmov	q3[2], q3[0], r0, r1
++vmov	q4[2], q4[0], r0, r1
++vmov	q5[2], q5[0], r0, r1
++vmov	q6[2], q6[0], r0, r1
++vmov	q7[2], q7[0], r0, r1
++vmov	q0[2], q0[0], r0, r0
++vmov	q0[2], q0[0], r1, r0
++vmov	q0[2], q0[0], r2, r0
++vmov	q0[2], q0[0], r3, r0
++vmov	q0[2], q0[0], r4, r0
++vmov	q0[2], q0[0], r5, r0
++vmov	q0[2], q0[0], r6, r0
++vmov	q0[2], q0[0], r7, r0
++vmov	q0[2], q0[0], r8, r0
++vmov	q0[2], q0[0], r9, r0
++vmov	q0[2], q0[0], sl, r0
++vmov	q0[2], q0[0], fp, r0
++vmov	q0[2], q0[0], ip, r0
++vmov	q0[2], q0[0], lr, r0
++vmov	q0[2], q0[0], r0, r1
++vmov	q0[2], q0[0], r0, r2
++vmov	q0[2], q0[0], r0, r3
++vmov	q0[2], q0[0], r0, r4
++vmov	q0[2], q0[0], r0, r5
++vmov	q0[2], q0[0], r0, r6
++vmov	q0[2], q0[0], r0, r7
++vmov	q0[2], q0[0], r0, r8
++vmov	q0[2], q0[0], r0, r9
++vmov	q0[2], q0[0], r0, sl
++vmov	q0[2], q0[0], r0, fp
++vmov	q0[2], q0[0], r0, ip
++vmov	q0[2], q0[0], r0, lr
++vmov	q0[2], q0[0], r1, r1
++vmov	q0[2], q0[0], r2, r2
++vmov	q0[2], q0[0], r3, r3
++vmov	q0[2], q0[0], r4, r4
++vmov	q0[2], q0[0], r5, r5
++vmov	q0[2], q0[0], r6, r6
++vmov	q0[2], q0[0], r7, r7
++vmov	q0[2], q0[0], r8, r8
++vmov	q0[2], q0[0], r9, r9
++vmov	q0[2], q0[0], sl, sl
++vmov	q0[2], q0[0], fp, fp
++vmov	q0[2], q0[0], ip, ip
++vmov	q0[2], q0[0], lr, lr
++vmov	q1[3], q1[1], r0, r1
++vmov	q2[3], q2[1], r0, r1
++vmov	q3[3], q3[1], r0, r1
++vmov	q4[3], q4[1], r0, r1
++vmov	q5[3], q5[1], r0, r1
++vmov	q6[3], q6[1], r0, r1
++vmov	q7[3], q7[1], r0, r1
++vmov	q0[3], q0[1], r0, r0
++vmov	q0[3], q0[1], r1, r0
++vmov	q0[3], q0[1], r2, r0
++vmov	q0[3], q0[1], r3, r0
++vmov	q0[3], q0[1], r4, r0
++vmov	q0[3], q0[1], r5, r0
++vmov	q0[3], q0[1], r6, r0
++vmov	q0[3], q0[1], r7, r0
++vmov	q0[3], q0[1], r8, r0
++vmov	q0[3], q0[1], r9, r0
++vmov	q0[3], q0[1], sl, r0
++vmov	q0[3], q0[1], fp, r0
++vmov	q0[3], q0[1], ip, r0
++vmov	q0[3], q0[1], lr, r0
++vmov	q0[3], q0[1], r0, r1
++vmov	q0[3], q0[1], r0, r2
++vmov	q0[3], q0[1], r0, r3
++vmov	q0[3], q0[1], r0, r4
++vmov	q0[3], q0[1], r0, r5
++vmov	q0[3], q0[1], r0, r6
++vmov	q0[3], q0[1], r0, r7
++vmov	q0[3], q0[1], r0, r8
++vmov	q0[3], q0[1], r0, r9
++vmov	q0[3], q0[1], r0, sl
++vmov	q0[3], q0[1], r0, fp
++vmov	q0[3], q0[1], r0, ip
++vmov	q0[3], q0[1], r0, lr
++vmov	q0[3], q0[1], r1, r1
++vmov	q0[3], q0[1], r2, r2
++vmov	q0[3], q0[1], r3, r3
++vmov	q0[3], q0[1], r4, r4
++vmov	q0[3], q0[1], r5, r5
++vmov	q0[3], q0[1], r6, r6
++vmov	q0[3], q0[1], r7, r7
++vmov	q0[3], q0[1], r8, r8
++vmov	q0[3], q0[1], r9, r9
++vmov	q0[3], q0[1], sl, sl
++vmov	q0[3], q0[1], fp, fp
++vmov	q0[3], q0[1], ip, ip
++vmov	q0[3], q0[1], lr, lr
+diff --git a/gas/testsuite/gas/arm/mve-vmov-bad-2.l b/gas/testsuite/gas/arm/mve-vmov-bad-2.l
+index 2f4bdc8293a..7c9226cf8ea 100644
+--- a/gas/testsuite/gas/arm/mve-vmov-bad-2.l
++++ b/gas/testsuite/gas/arm/mve-vmov-bad-2.l
+@@ -1,5 +1,5 @@
+ [^:]*: Assembler messages:
+-[^:]*:3: Error: General purpose registers may not be the same -- `vmov r0,r0,q0\[2\],q0\[0\]'
++[^:]*:3: Error: Destination registers may not be the same -- `vmov r0,r0,q0\[2\],q0\[0\]'
+ [^:]*:4: Error: r13 not allowed here -- `vmov sp,r0,q0\[2\],q0\[0\]'
+ [^:]*:5: Error: r13 not allowed here -- `vmov r0,sp,q0\[2\],q0\[0\]'
+ [^:]*:6: Error: r15 not allowed here -- `vmov pc,r0,q0\[2\],q0\[0\]'
 diff --git a/gas/testsuite/gas/elf/section25.d b/gas/testsuite/gas/elf/section25.d
 index 09353849e5b..fa09b85074f 100644
 --- a/gas/testsuite/gas/elf/section25.d
@@ -1603,10 +1978,19 @@ index 83fdaa7db65..d2ec1ddc328 100644
  	    "Run pr22001-1a (PIC 1)" \
  	    "$NOPIE_LDFLAGS -Wl,-z,nocopyreloc,--no-as-needed tmpdir/pr22001-1.so" \
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
-index 6046ffe395b..ca9dff38798 100644
+index 6046ffe395b..43cd9bef661 100644
 --- a/opcodes/ChangeLog
 +++ b/opcodes/ChangeLog
-@@ -1,3 +1,16 @@
+@@ -1,3 +1,25 @@
++2021-05-19  Alex Coplan  <alex.coplan@arm.com>
++
++	* arm-dis.c (mve_opcodes): Fix disassembly of
++	MVE_VMOV2_GP_TO_VEC_LANE when idx == 1.
++	(is_mve_encoding_conflict): MVE vector loads should not match
++	when P = W = 0.
++	(is_mve_unpredictable): It's not unpredictable to use the same
++	source register twice (for MVE_VMOV2_GP_TO_VEC_LANE).
++
 +2021-04-09  Tejas Belagod  <tejas.belagod@arm.com>
 +
 +	Backported from mainline.
@@ -1642,6 +2026,38 @@ index f5c313138ea..4192e54d188 100644
    /* Logical (immediate).  */
    CORE_INSN ("and", 0x12000000, 0x7f800000, log_imm, 0, OP3 (Rd_SP, Rn, LIMM), QL_R2NIL, F_HAS_ALIAS | F_SF),
    CORE_INSN ("bic", 0x12000000, 0x7f800000, log_imm, OP_BIC, OP3 (Rd_SP, Rn, LIMM), QL_R2NIL, F_ALIAS | F_PSEUDO | F_SF),
+diff --git a/opcodes/arm-dis.c b/opcodes/arm-dis.c
+index f16a5902479..97632693803 100644
+--- a/opcodes/arm-dis.c
++++ b/opcodes/arm-dis.c
+@@ -2959,7 +2959,7 @@ static const struct mopcode32 mve_opcodes[] =
+   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+    MVE_VMOV2_GP_TO_VEC_LANE,
+    0xec100f10, 0xffb01ff0,
+-   "vmov%c\t%13-15,22Q[2], %13-15,22Q[0], %0-3r, %16-19r"},
++   "vmov%c\t%13-15,22Q[3], %13-15,22Q[1], %0-3r, %16-19r"},
+ 
+   /* Vector VMOV Vector lane to gpr.  */
+   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+@@ -5727,6 +5727,9 @@ is_mve_encoding_conflict (unsigned long given,
+       else
+ 	return FALSE;
+ 
++    case MVE_VLDRB_T1:
++    case MVE_VLDRH_T2:
++    case MVE_VLDRW_T7:
+     case MVE_VSTRB_T5:
+     case MVE_VSTRH_T6:
+     case MVE_VSTRW_T7:
+@@ -6661,7 +6664,7 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
+ 	    *unpredictable_code = UNPRED_R15;
+ 	    return TRUE;
+ 	  }
+-	else if (rt == rt2)
++	else if (rt == rt2 && matched_insn != MVE_VMOV2_GP_TO_VEC_LANE)
+ 	  {
+ 	    *unpredictable_code = UNPRED_GP_REGS_EQUAL;
+ 	    return TRUE;
 diff --git a/opcodes/s390-mkopc.c b/opcodes/s390-mkopc.c
 index bf2ef41d13a..bcd453314a1 100644
 --- a/opcodes/s390-mkopc.c
