@@ -942,7 +942,7 @@ index 6f782d057f8..e852e38dfb4 100644
  
      default:
 diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
-index ff962daf749..d59e14930c3 100644
+index ff962daf749..1280921d890 100644
 --- a/gas/config/tc-arm.c
 +++ b/gas/config/tc-arm.c
 @@ -20013,8 +20013,8 @@ do_mve_mov (int toQ)
@@ -956,6 +956,31 @@ index ff962daf749..d59e14930c3 100644
    constraint (inst.operands[Rt].reg == REG_SP
  	      || inst.operands[Rt2].reg == REG_SP,
  	      BAD_SP);
+@@ -26827,6 +26827,14 @@ md_convert_frag (bfd *abfd, segT asec ATTRIBUTE_UNUSED, fragS *fragp)
+       pc_rel = (opcode == T_MNEM_ldr_pc2);
+       break;
+     case T_MNEM_adr:
++      /* Thumb bits should be set in the frag handling so we process them
++	 after all symbols have been seen.  PR gas/25235.  */
++      if (exp.X_op == O_symbol
++	  && exp.X_add_symbol != NULL
++	  && S_IS_DEFINED (exp.X_add_symbol)
++	  && THUMB_IS_FUNC (exp.X_add_symbol))
++	exp.X_add_number |= 1;
++
+       if (fragp->fr_var == 4)
+ 	{
+ 	  insn = THUMB_OP32 (opcode);
+@@ -27024,7 +27032,8 @@ relax_adr (fragS *fragp, asection *sec, long stretch)
+   if (fragp->fr_symbol == NULL
+       || !S_IS_DEFINED (fragp->fr_symbol)
+       || sec != S_GET_SEGMENT (fragp->fr_symbol)
+-      || S_IS_WEAK (fragp->fr_symbol))
++      || S_IS_WEAK (fragp->fr_symbol)
++      || THUMB_IS_FUNC (fragp->fr_symbol))
+     return 4;
+ 
+   val = relaxed_symbol_addr (fragp, stretch);
 diff --git a/gas/config/tc-s390.c b/gas/config/tc-s390.c
 index c6daef99fde..f23d9863d3d 100644
 --- a/gas/config/tc-s390.c
@@ -1377,6 +1402,72 @@ index 2f4bdc8293a..7c9226cf8ea 100644
  [^:]*:4: Error: r13 not allowed here -- `vmov sp,r0,q0\[2\],q0\[0\]'
  [^:]*:5: Error: r13 not allowed here -- `vmov r0,sp,q0\[2\],q0\[0\]'
  [^:]*:6: Error: r15 not allowed here -- `vmov pc,r0,q0\[2\],q0\[0\]'
+diff --git a/gas/testsuite/gas/arm/pr25235.d b/gas/testsuite/gas/arm/pr25235.d
+new file mode 100644
+index 00000000000..12695038701
+--- /dev/null
++++ b/gas/testsuite/gas/arm/pr25235.d
+@@ -0,0 +1,24 @@
++#skip: *-*-pe *-*-wince *-*-vxworks
++#objdump: -dr
++#name: PR25235: Thumb forward references error
++
++.*: +file format .*arm.*
++
++Disassembly of section .text:
++
++00000000 <f1>:
++   0:	46c0      	nop			; \(mov r8, r8\)
++   2:	46c0      	nop			; \(mov r8, r8\)
++
++00000004 <f2>:
++   4:	f2af 0107 	subw	r1, pc, #7
++   8:	f20f 0305 	addw	r3, pc, #5
++   c:	a401      	add	r4, pc, #4	; \(adr r4, 14 <f4>\)
++   e:	46c0      	nop			; \(mov r8, r8\)
++
++00000010 <f3>:
++  10:	46c0      	nop			; \(mov r8, r8\)
++  12:	46c0      	nop			; \(mov r8, r8\)
++
++00000014 <f4>:
++  14:	e1a00000 	nop			; \(mov r0, r0\)
+diff --git a/gas/testsuite/gas/arm/pr25235.s b/gas/testsuite/gas/arm/pr25235.s
+new file mode 100644
+index 00000000000..77637392f1c
+--- /dev/null
++++ b/gas/testsuite/gas/arm/pr25235.s
+@@ -0,0 +1,30 @@
++    .syntax unified
++    .thumb
++
++    .align 2
++    .type f1, %function
++    .thumb_func
++    f1:
++        nop
++
++    .align 2
++    .type f2, %function
++    .thumb_func
++    f2:
++        adr r1, f1
++        adr r3, f3
++        adr r4, f4
++
++
++    .align 2
++    .type f3, %function
++    .thumb_func
++    f3:
++        nop
++
++    .align 2
++    .type f3, %function
++    .arm
++    f4:
++        nop
++
 diff --git a/gas/testsuite/gas/elf/section25.d b/gas/testsuite/gas/elf/section25.d
 index 09353849e5b..fa09b85074f 100644
 --- a/gas/testsuite/gas/elf/section25.d
