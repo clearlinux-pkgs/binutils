@@ -36,12 +36,7 @@ Configure miss: sysctl
 Configure miss: sysmp
 Configure miss: whether compiling a cross-assembler
 Configure miss: whether declaration is required for environ
-Configure miss: whether declaration is required for errno
 Configure miss: whether declaration is required for ffs
-Configure miss: whether declaration is required for free
-Configure miss: whether declaration is required for malloc
-Configure miss: whether declaration is required for sbrk
-Configure miss: whether declaration is required for strstr
 Configure miss: whether errno must be declared
 Configure miss: whether static linking works
 Configure miss: whether to use debuginfod

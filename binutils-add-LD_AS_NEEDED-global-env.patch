@@ -54,7 +54,7 @@ index 86a033a3..7a96f57d 100644
    ldemul_add_options (is, &shortopts, il, &longopts, irl, &really_longopts);
  
 +  if (getenv ("LD_AS_NEEDED") != NULL)
-+    input_flags.add_DT_NEEDED_for_regular = TRUE;
++    input_flags.add_DT_NEEDED_for_regular = true;
 +
    /* The -G option is ambiguous on different platforms.  Sometimes it
       specifies the largest data size to put into the small data
