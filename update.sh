@@ -2,7 +2,8 @@
 
 make autospec
 make koji
-sleep 120
+nvr=$(rpmspec --srpm --query --queryformat='%{NVR}\n' binutils.spec)
+koji wait-repo --build=$nvr dist-clear-build || exit 1
 
 for pkg in linux-tools gdb dropwatch; do
 	make -C ../$pkg bump
