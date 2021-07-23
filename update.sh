@@ -1,7 +1,7 @@
 #!/bin/bash
 
-make autospec
-make koji
+make autospec || exit 1
+make koji || exit 1
 nvr=$(rpmspec --srpm --query --queryformat='%{NVR}\n' binutils.spec)
 koji wait-repo --build=$nvr dist-clear-build || exit 1
 
