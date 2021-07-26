@@ -15,6 +15,40 @@ index 75ca29c09b9..b7ec6eafa23 100644
  2021-07-18  Nick Clifton  <nickc@redhat.com>
  
  	* 2.37 release.
+diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
+index 34a6b3fd837..93fbadf61bc 100644
+--- a/bfd/elf32-ppc.c
++++ b/bfd/elf32-ppc.c
+@@ -19,8 +19,10 @@
+    Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+    Boston, MA 02110-1301, USA.  */
+ 
+-/* Don't generate unused section symbols.  */
+-#define TARGET_KEEP_UNUSED_SECTION_SYMBOLS false
++/* The assembler should generate a full set of section symbols even
++   when they appear unused.  The linux kernel build tool recordmcount
++   needs them.  */
++#define TARGET_KEEP_UNUSED_SECTION_SYMBOLS true
+ 
+ #include "sysdep.h"
+ #include <stdarg.h>
+diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
+index a4a05302a6a..55c5e500d06 100644
+--- a/bfd/elf64-ppc.c
++++ b/bfd/elf64-ppc.c
+@@ -25,8 +25,10 @@
+    http://www.linuxbase.org/spec/ELF/ppc64/PPC-elf64abi.txt, and
+    http://www.linuxbase.org/spec/ELF/ppc64/spec/book1.html  */
+ 
+-/* Don't generate unused section symbols.  */
+-#define TARGET_KEEP_UNUSED_SECTION_SYMBOLS false
++/* The assembler should generate a full set of section symbols even
++   when they appear unused.  The linux kernel build tool recordmcount
++   needs them.  */
++#define TARGET_KEEP_UNUSED_SECTION_SYMBOLS true
+ 
+ #include "sysdep.h"
+ #include <stdarg.h>
 diff --git a/bfd/po/ru.po b/bfd/po/ru.po
 index 5e3211cfe78..ede20f1ecbc 100644
 --- a/bfd/po/ru.po
@@ -10210,6 +10244,42 @@ index a1a9968a298..c5bb62347f8 100644
 @@ -1 +1 @@
 -m4_define([BFD_VERSION], [2.37])
 +m4_define([BFD_VERSION], [2.37.0])
+diff --git a/gas/testsuite/gas/ppc/power4.d b/gas/testsuite/gas/ppc/power4.d
+index fd277a2a286..e4d9ea97918 100644
+--- a/gas/testsuite/gas/ppc/power4.d
++++ b/gas/testsuite/gas/ppc/power4.d
+@@ -21,6 +21,7 @@ Idx Name +Size +VMA +LMA +File off +Algn
+ SYMBOL TABLE:
+ 0+ l +d +\.text	0+ (|\.text)
+ 0+ l +d +\.data	0+ (|\.data)
++0+ l +d +\.bss	0+ (|\.bss)
+ 0+ l +\.data	0+ dsym0
+ 0+10 l +\.data	0+ dsym1
+ 0+ l +d +\.toc	0+ (|\.toc)
+diff --git a/gas/testsuite/gas/ppc/test1elf32.d b/gas/testsuite/gas/ppc/test1elf32.d
+index fee834e0f32..d8d6835c270 100644
+--- a/gas/testsuite/gas/ppc/test1elf32.d
++++ b/gas/testsuite/gas/ppc/test1elf32.d
+@@ -18,6 +18,7 @@ Idx Name +Size +VMA +LMA +File off +Algn
+ SYMBOL TABLE:
+ 0+0000 l    d  \.text	0+0000 (|\.text)
+ 0+0000 l    d  \.data	0+0000 (|\.data)
++0+0000 l    d  \.bss	0+0000 (|\.bss)
+ 0+0000 l       \.data	0+0000 dsym0
+ 0+0004 l       \.data	0+0000 dsym1
+ 0+0004 l       \.data	0+0000 usym0
+diff --git a/gas/testsuite/gas/ppc/test1elf64.d b/gas/testsuite/gas/ppc/test1elf64.d
+index 24b75bc3f74..4df9e00a157 100644
+--- a/gas/testsuite/gas/ppc/test1elf64.d
++++ b/gas/testsuite/gas/ppc/test1elf64.d
+@@ -21,6 +21,7 @@ Idx Name          Size      VMA               LMA               File off  Algn
+ SYMBOL TABLE:
+ 0000000000000000 l    d  \.text	0000000000000000 (|\.text)
+ 0000000000000000 l    d  \.data	0000000000000000 (|\.data)
++0000000000000000 l    d  \.bss	0000000000000000 (|\.bss)
+ 0000000000000000 l       \.data	0000000000000000 dsym0
+ 0000000000000008 l       \.data	0000000000000000 dsym1
+ 0000000000000000 l    d  \.toc	0000000000000000 (|\.toc)
 diff --git a/gold/ChangeLog b/gold/ChangeLog
 index 79207900dfc..deb0aa504b5 100644
 --- a/gold/ChangeLog
@@ -10246,6 +10316,492 @@ index 6ebd81f3fd0..4a1368f5abe 100644
                (*symvec).push_back(gsym);
  	      (*addendvec).push_back(std::make_pair(
  					static_cast<long long>(symvalue),
+diff --git a/ld/ldgram.y b/ld/ldgram.y
+index dd911f46169..acfa2742ff3 100644
+--- a/ld/ldgram.y
++++ b/ld/ldgram.y
+@@ -96,8 +96,7 @@ static int error_index;
+ %type <wildcard_list> section_name_list
+ %type <flag_info_list> sect_flag_list
+ %type <flag_info> sect_flags
+-%type <name> memspec_opt casesymlist
+-%type <name> memspec_at_opt
++%type <name> memspec_opt memspec_at_opt paren_script_name casesymlist
+ %type <cname> wildcard_name
+ %type <wildcard> section_name_spec filename_spec wildcard_maybe_exclude
+ %token <bigint> INT
+@@ -905,6 +904,10 @@ nocrossref_list:
+ 		}
+ 	;
+ 
++paren_script_name:
++		{ ldlex_script (); } '(' NAME  { ldlex_popstate (); } ')'
++			{ $$ = $3; }
++
+ mustbe_exp:		 { ldlex_expression (); }
+ 		exp
+ 			 { ldlex_popstate (); $$=$2;}
+@@ -969,14 +972,14 @@ exp	:
+ 	|	SIZEOF_HEADERS
+ 			{ $$ = exp_nameop (SIZEOF_HEADERS,0); }
+ 
+-	|	ALIGNOF '(' NAME ')'
+-			{ $$ = exp_nameop (ALIGNOF,$3); }
+-	|	SIZEOF '(' NAME ')'
+-			{ $$ = exp_nameop (SIZEOF,$3); }
+-	|	ADDR '(' NAME ')'
+-			{ $$ = exp_nameop (ADDR,$3); }
+-	|	LOADADDR '(' NAME ')'
+-			{ $$ = exp_nameop (LOADADDR,$3); }
++	|	ALIGNOF paren_script_name
++			{ $$ = exp_nameop (ALIGNOF, $2); }
++	|	SIZEOF	paren_script_name
++			{ $$ = exp_nameop (SIZEOF, $2); }
++	|	ADDR	paren_script_name
++			{ $$ = exp_nameop (ADDR, $2); }
++	|	LOADADDR paren_script_name
++			{ $$ = exp_nameop (LOADADDR, $2); }
+ 	|	CONSTANT '(' NAME ')'
+ 			{ $$ = exp_nameop (CONSTANT,$3); }
+ 	|	ABSOLUTE '(' exp ')'
+@@ -991,15 +994,16 @@ exp	:
+ 			{ $$ = exp_binop (DATA_SEGMENT_RELRO_END, $5, $3); }
+ 	|	DATA_SEGMENT_END '(' exp ')'
+ 			{ $$ = exp_unop (DATA_SEGMENT_END, $3); }
+-	|	SEGMENT_START '(' NAME ',' exp ')'
++	|	SEGMENT_START { ldlex_script (); } '(' NAME
++			{ ldlex_popstate (); } ',' exp ')'
+ 			{ /* The operands to the expression node are
+ 			     placed in the opposite order from the way
+ 			     in which they appear in the script as
+ 			     that allows us to reuse more code in
+ 			     fold_binary.  */
+ 			  $$ = exp_binop (SEGMENT_START,
+-					  $5,
+-					  exp_nameop (NAME, $3)); }
++					  $7,
++					  exp_nameop (NAME, $4)); }
+ 	|	BLOCK '(' exp ')'
+ 			{ $$ = exp_unop (ALIGN_K,$3); }
+ 	|	NAME
+@@ -1184,13 +1188,17 @@ overlay_section:
+ 	|	overlay_section
+ 		NAME
+ 			{
+-			  ldlex_script ();
+ 			  lang_enter_overlay_section ($2);
+ 			}
+ 		'{' statement_list_opt '}'
+-			{ ldlex_popstate (); ldlex_expression (); }
++			{ ldlex_expression (); }
+ 		phdr_opt fill_opt
+ 			{
++			  if (yychar == NAME)
++			    {
++			      yyclearin;
++			      ldlex_backup ();
++			    }
+ 			  ldlex_popstate ();
+ 			  lang_leave_overlay_section ($9, $8);
+ 			}
+diff --git a/ld/testsuite/ld-elf/overlay.s b/ld/testsuite/ld-elf/overlay.s
+index f153044e31b..20d8f4154dc 100644
+--- a/ld/testsuite/ld-elf/overlay.s
++++ b/ld/testsuite/ld-elf/overlay.s
+@@ -2,5 +2,9 @@
+ 	.space 0x10
+ 	.section .text2,"ax",%progbits
+ 	.space 0x20
++	.section .silly-name1,"ax",%progbits
++	.space 0x10
++	.section .silly-name2,"ax",%progbits
++	.space 0x20
+ 	.text
+ 	.space 0x30
+diff --git a/ld/testsuite/ld-elf/overlay.t b/ld/testsuite/ld-elf/overlay.t
+index dd374bb68b8..2c50a6b1a48 100644
+--- a/ld/testsuite/ld-elf/overlay.t
++++ b/ld/testsuite/ld-elf/overlay.t
+@@ -6,6 +6,10 @@ SECTIONS
+   {
+     .text1 {*(.text1)}
+     .text2 {*(.text2)}
+-  } 
++    .silly-name1 { *(.silly-name1) }
++    .silly-name2 { *(.silly-name2) }
++  }
+   /DISCARD/ : { *(.*) }
++  ASSERT(ADDR(.text1)==ADDR(.text2), "overlay error")
++  ASSERT(ADDR(.silly-name1)==ADDR(.silly-name2), "silly overlay error")
+ }
+diff --git a/ld/testsuite/ld-powerpc/tlsexe.r b/ld/testsuite/ld-powerpc/tlsexe.r
+index 13c3efb12d5..bae5aac0664 100644
+--- a/ld/testsuite/ld-powerpc/tlsexe.r
++++ b/ld/testsuite/ld-powerpc/tlsexe.r
+@@ -70,6 +70,19 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* 0+ +0 +NOTYPE +LOCAL +DEFAULT +UND *
++.* SECTION +LOCAL +DEFAULT +1 \.interp
++.* SECTION +LOCAL +DEFAULT +2 \.hash
++.* SECTION +LOCAL +DEFAULT +3 \.dynsym
++.* SECTION +LOCAL +DEFAULT +4 \.dynstr
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +6 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +7 \.text
++.* SECTION +LOCAL +DEFAULT +8 \.tdata
++.* SECTION +LOCAL +DEFAULT +9 \.tbss
++.* SECTION +LOCAL +DEFAULT +10 \.dynamic
++.* SECTION +LOCAL +DEFAULT +11 \.opd
++.* SECTION +LOCAL +DEFAULT +12 \.got
++.* SECTION +LOCAL +DEFAULT +13 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* NOTYPE +LOCAL +DEFAULT +ABS TLSMARK
+ .* TLS +LOCAL +DEFAULT +8 gd4
+diff --git a/ld/testsuite/ld-powerpc/tlsexe32.r b/ld/testsuite/ld-powerpc/tlsexe32.r
+index 9017069ad84..43db7379a4c 100644
+--- a/ld/testsuite/ld-powerpc/tlsexe32.r
++++ b/ld/testsuite/ld-powerpc/tlsexe32.r
+@@ -69,6 +69,18 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* NOTYPE +LOCAL +DEFAULT +UND 
++.* SECTION +LOCAL +DEFAULT +1 \.interp
++.* SECTION +LOCAL +DEFAULT +2 \.hash
++.* SECTION +LOCAL +DEFAULT +3 \.dynsym
++.* SECTION +LOCAL +DEFAULT +4 \.dynstr
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +6 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +7 \.text
++.* SECTION +LOCAL +DEFAULT +8 \.tdata
++.* SECTION +LOCAL +DEFAULT +9 \.tbss
++.* SECTION +LOCAL +DEFAULT +10 \.dynamic
++.* SECTION +LOCAL +DEFAULT +11 \.got
++.* SECTION +LOCAL +DEFAULT +12 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* NOTYPE +LOCAL +DEFAULT +ABS TLSMARK
+ .* TLS +LOCAL +DEFAULT +8 gd4
+diff --git a/ld/testsuite/ld-powerpc/tlsexe32no.r b/ld/testsuite/ld-powerpc/tlsexe32no.r
+index 9715b6bc631..e254eeadf71 100644
+--- a/ld/testsuite/ld-powerpc/tlsexe32no.r
++++ b/ld/testsuite/ld-powerpc/tlsexe32no.r
+@@ -70,6 +70,18 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* NOTYPE +LOCAL +DEFAULT +UND 
++.* SECTION +LOCAL +DEFAULT +1 \.interp
++.* SECTION +LOCAL +DEFAULT +2 \.hash
++.* SECTION +LOCAL +DEFAULT +3 \.dynsym
++.* SECTION +LOCAL +DEFAULT +4 \.dynstr
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +6 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +7 \.text
++.* SECTION +LOCAL +DEFAULT +8 \.tdata
++.* SECTION +LOCAL +DEFAULT +9 \.tbss
++.* SECTION +LOCAL +DEFAULT +10 \.dynamic
++.* SECTION +LOCAL +DEFAULT +11 \.got
++.* SECTION +LOCAL +DEFAULT +12 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* NOTYPE +LOCAL +DEFAULT +ABS TLSMARK
+ .* TLS +LOCAL +DEFAULT +8 gd4
+diff --git a/ld/testsuite/ld-powerpc/tlsexeno.r b/ld/testsuite/ld-powerpc/tlsexeno.r
+index d4dcebf4ec2..59e2f89ffd9 100644
+--- a/ld/testsuite/ld-powerpc/tlsexeno.r
++++ b/ld/testsuite/ld-powerpc/tlsexeno.r
+@@ -71,6 +71,19 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* 0+ +0 +NOTYPE +LOCAL +DEFAULT +UND *
++.* SECTION +LOCAL +DEFAULT +1 \.interp
++.* SECTION +LOCAL +DEFAULT +2 \.hash
++.* SECTION +LOCAL +DEFAULT +3 \.dynsym
++.* SECTION +LOCAL +DEFAULT +4 \.dynstr
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +6 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +7 \.text
++.* SECTION +LOCAL +DEFAULT +8 \.tdata
++.* SECTION +LOCAL +DEFAULT +9 \.tbss
++.* SECTION +LOCAL +DEFAULT +10 \.dynamic
++.* SECTION +LOCAL +DEFAULT +11 \.opd
++.* SECTION +LOCAL +DEFAULT +12 \.got
++.* SECTION +LOCAL +DEFAULT +13 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* NOTYPE +LOCAL +DEFAULT +ABS TLSMARK
+ .* TLS +LOCAL +DEFAULT +8 gd4
+diff --git a/ld/testsuite/ld-powerpc/tlsexenors.r b/ld/testsuite/ld-powerpc/tlsexenors.r
+index aec6a8dec88..3a9af781c0d 100644
+--- a/ld/testsuite/ld-powerpc/tlsexenors.r
++++ b/ld/testsuite/ld-powerpc/tlsexenors.r
+@@ -71,6 +71,19 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* 0+ +0 +NOTYPE +LOCAL +DEFAULT +UND *
++.* SECTION +LOCAL +DEFAULT +1 \.interp
++.* SECTION +LOCAL +DEFAULT +2 \.hash
++.* SECTION +LOCAL +DEFAULT +3 \.dynsym
++.* SECTION +LOCAL +DEFAULT +4 \.dynstr
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +6 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +7 \.text
++.* SECTION +LOCAL +DEFAULT +8 \.tdata
++.* SECTION +LOCAL +DEFAULT +9 \.tbss
++.* SECTION +LOCAL +DEFAULT +10 \.dynamic
++.* SECTION +LOCAL +DEFAULT +11 \.opd
++.* SECTION +LOCAL +DEFAULT +12 \.got
++.* SECTION +LOCAL +DEFAULT +13 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* NOTYPE +LOCAL +DEFAULT +ABS TLSMARK
+ .* TLS +LOCAL +DEFAULT +8 gd4
+diff --git a/ld/testsuite/ld-powerpc/tlsexers.r b/ld/testsuite/ld-powerpc/tlsexers.r
+index bb852310574..0c623b6eaa9 100644
+--- a/ld/testsuite/ld-powerpc/tlsexers.r
++++ b/ld/testsuite/ld-powerpc/tlsexers.r
+@@ -70,6 +70,19 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* 0+ +0 +NOTYPE +LOCAL +DEFAULT +UND *
++.* SECTION +LOCAL +DEFAULT +1 \.interp
++.* SECTION +LOCAL +DEFAULT +2 \.hash
++.* SECTION +LOCAL +DEFAULT +3 \.dynsym
++.* SECTION +LOCAL +DEFAULT +4 \.dynstr
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +6 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +7 \.text
++.* SECTION +LOCAL +DEFAULT +8 \.tdata
++.* SECTION +LOCAL +DEFAULT +9 \.tbss
++.* SECTION +LOCAL +DEFAULT +10 \.dynamic
++.* SECTION +LOCAL +DEFAULT +11 \.opd
++.* SECTION +LOCAL +DEFAULT +12 \.got
++.* SECTION +LOCAL +DEFAULT +13 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* NOTYPE +LOCAL +DEFAULT +ABS TLSMARK
+ .* TLS +LOCAL +DEFAULT +8 gd4
+diff --git a/ld/testsuite/ld-powerpc/tlsexetoc.r b/ld/testsuite/ld-powerpc/tlsexetoc.r
+index 6e676e15dfc..4c6b9189bbb 100644
+--- a/ld/testsuite/ld-powerpc/tlsexetoc.r
++++ b/ld/testsuite/ld-powerpc/tlsexetoc.r
+@@ -71,6 +71,19 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* NOTYPE +LOCAL +DEFAULT +UND *
++.* SECTION +LOCAL +DEFAULT +1 \.interp
++.* SECTION +LOCAL +DEFAULT +2 \.hash
++.* SECTION +LOCAL +DEFAULT +3 \.dynsym
++.* SECTION +LOCAL +DEFAULT +4 \.dynstr
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +6 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +7 \.text
++.* SECTION +LOCAL +DEFAULT +8 \.tdata
++.* SECTION +LOCAL +DEFAULT +9 \.tbss
++.* SECTION +LOCAL +DEFAULT +10 \.dynamic
++.* SECTION +LOCAL +DEFAULT +11 \.opd
++.* SECTION +LOCAL +DEFAULT +12 \.got
++.* SECTION +LOCAL +DEFAULT +13 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* TLS +LOCAL +DEFAULT +8 gd4
+ .* TLS +LOCAL +DEFAULT +8 ld4
+diff --git a/ld/testsuite/ld-powerpc/tlsexetocrs.r b/ld/testsuite/ld-powerpc/tlsexetocrs.r
+index 36919c7aedc..a41fd2e10a5 100644
+--- a/ld/testsuite/ld-powerpc/tlsexetocrs.r
++++ b/ld/testsuite/ld-powerpc/tlsexetocrs.r
+@@ -71,6 +71,19 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* NOTYPE +LOCAL +DEFAULT +UND *
++.* SECTION +LOCAL +DEFAULT +1 \.interp
++.* SECTION +LOCAL +DEFAULT +2 \.hash
++.* SECTION +LOCAL +DEFAULT +3 \.dynsym
++.* SECTION +LOCAL +DEFAULT +4 \.dynstr
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +6 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +7 \.text
++.* SECTION +LOCAL +DEFAULT +8 \.tdata
++.* SECTION +LOCAL +DEFAULT +9 \.tbss
++.* SECTION +LOCAL +DEFAULT +10 \.dynamic
++.* SECTION +LOCAL +DEFAULT +11 \.opd
++.* SECTION +LOCAL +DEFAULT +12 \.got
++.* SECTION +LOCAL +DEFAULT +13 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* TLS +LOCAL +DEFAULT +8 gd4
+ .* TLS +LOCAL +DEFAULT +8 ld4
+diff --git a/ld/testsuite/ld-powerpc/tlsget.d b/ld/testsuite/ld-powerpc/tlsget.d
+index 31ee8482d9e..f419fca4d29 100644
+--- a/ld/testsuite/ld-powerpc/tlsget.d
++++ b/ld/testsuite/ld-powerpc/tlsget.d
+@@ -8,6 +8,16 @@
+ 
+ Disassembly of section \.text:
+ 
++.* <.*\.plt_call\..*>:
++.*:	(04 10 .. ..|.. .. 10 04) 	pld     r12,.*
++.*:	(e5 80 .. ..|.. .. 80 e5) 
++.*:	(7d 89 03 a6|a6 03 89 7d) 	mtctr   r12
++.*:	(4e 80 04 20|20 04 80 4e) 	bctr
++.*:	(f8 41 00 18|18 00 41 f8) 	std     r2,24\(r1\)
++.*:	(e9 82 .. ..|.. .. 82 e9) 	ld      r12,.*\(r2\)
++.*:	(7d 89 03 a6|a6 03 89 7d) 	mtctr   r12
++.*:	(4e 80 04 20|20 04 80 4e) 	bctr
++
+ .* <.*\.plt_call\.__tls_get_addr_opt.*>:
+ .*:	(e8 03 00 00|00 00 03 e8) 	ld      r0,0\(r3\)
+ .*:	(e9 83 00 08|08 00 83 e9) 	ld      r12,8\(r3\)
+@@ -38,17 +48,6 @@ Disassembly of section \.text:
+ .*:	(e8 01 00 08|08 00 01 e8) 	ld      r0,8\(r1\)
+ .*:	(7c 08 03 a6|a6 03 08 7c) 	mtlr    r0
+ .*:	(4e 80 00 20|20 00 80 4e) 	blr
+-
+-.* <.*\.plt_call\..*>:
+-.*:	(60 00 00 00|00 00 00 60) 	nop
+-.*:	(04 10 .. ..|.. .. 10 04) 	pld     r12,.*
+-.*:	(e5 80 .. ..|.. .. 80 e5) 
+-.*:	(7d 89 03 a6|a6 03 89 7d) 	mtctr   r12
+-.*:	(4e 80 04 20|20 04 80 4e) 	bctr
+-.*:	(f8 41 00 18|18 00 41 f8) 	std     r2,24\(r1\)
+-.*:	(e9 82 .. ..|.. .. 82 e9) 	ld      r12,.*\(r2\)
+-.*:	(7d 89 03 a6|a6 03 89 7d) 	mtctr   r12
+-.*:	(4e 80 04 20|20 04 80 4e) 	bctr
+ #...
+ 
+ .* <_start>:
+@@ -60,7 +59,7 @@ Disassembly of section \.text:
+ .*:	(4b ff .. ..|.. .. ff 4b) 	bl      .* <.*\.plt_call\.__tls_get_addr_opt.*\+0x30>
+ .*:	(60 00 00 00|00 00 00 60) 	nop
+ .*:	(4b ff .. ..|.. .. ff 4b) 	bl      .* <.*\.plt_call\..*:[^\+]*>
+-.*:	(4b ff .. ..|.. .. ff 4b) 	bl      .* <.*.plt_call\..*:.*\+0x14>
++.*:	(4b ff .. ..|.. .. ff 4b) 	bl      .* <.*.plt_call\..*:.*\+0x10>
+ .*:	(e8 41 00 18|18 00 41 e8) 	ld      r2,24\(r1\)
+ 
+ .* <fun>:
+diff --git a/ld/testsuite/ld-powerpc/tlsget.wf b/ld/testsuite/ld-powerpc/tlsget.wf
+index 181bb397f97..bc9ccadf442 100644
+--- a/ld/testsuite/ld-powerpc/tlsget.wf
++++ b/ld/testsuite/ld-powerpc/tlsget.wf
+@@ -9,8 +9,8 @@ Contents of the .eh_frame section:
+   Augmentation data:     1b
+   DW_CFA_def_cfa: r1 ofs 0
+ 
+-0+14 0+14 0+18 FDE cie=0+ pc=0+280..0+318
+-  DW_CFA_advance_loc: 96 to 0+2e0
++0+14 0+14 0+18 FDE cie=0+ pc=0+280..0+314
++  DW_CFA_advance_loc: 128 to 0+300
+   DW_CFA_offset_extended_sf: r65 at cfa\+8
+   DW_CFA_advance_loc: 16 to .*
+   DW_CFA_restore_extended: r65
+diff --git a/ld/testsuite/ld-powerpc/tlsget2.d b/ld/testsuite/ld-powerpc/tlsget2.d
+index 03798075942..13dc64b595e 100644
+--- a/ld/testsuite/ld-powerpc/tlsget2.d
++++ b/ld/testsuite/ld-powerpc/tlsget2.d
+@@ -8,6 +8,14 @@
+ 
+ Disassembly of section \.text:
+ 
++.* <.*\.plt_call\..*>:
++.*:	(f8 41 00 18|18 00 41 f8) 	std     r2,24\(r1\)
++.*:	(60 00 00 00|00 00 00 60) 	nop
++.*:	(04 10 .. ..|.. .. 10 04) 	pld     r12,.*
++.*:	(e5 80 .. ..|.. .. 80 e5) 
++.*:	(7d 89 03 a6|a6 03 89 7d) 	mtctr   r12
++.*:	(4e 80 04 20|20 04 80 4e) 	bctr
++
+ .* <.*\.plt_call\.__tls_get_addr_opt.*>:
+ .*:	(e8 03 00 00|00 00 03 e8) 	ld      r0,0\(r3\)
+ .*:	(e9 83 00 08|08 00 83 e9) 	ld      r12,8\(r3\)
+@@ -27,14 +35,6 @@ Disassembly of section \.text:
+ .*:	(e8 01 00 08|08 00 01 e8) 	ld      r0,8\(r1\)
+ .*:	(7c 08 03 a6|a6 03 08 7c) 	mtlr    r0
+ .*:	(4e 80 00 20|20 00 80 4e) 	blr
+-
+-.* <.*\.plt_call\..*>:
+-.*:	(f8 41 00 18|18 00 41 f8) 	std     r2,24\(r1\)
+-.*:	(60 00 00 00|00 00 00 60) 	nop
+-.*:	(04 10 .. ..|.. .. 10 04) 	pld     r12,.*
+-.*:	(e5 80 .. ..|.. .. 80 e5) 
+-.*:	(7d 89 03 a6|a6 03 89 7d) 	mtctr   r12
+-.*:	(4e 80 04 20|20 04 80 4e) 	bctr
+ #...
+ 
+ .* <_start>:
+diff --git a/ld/testsuite/ld-powerpc/tlsget2.wf b/ld/testsuite/ld-powerpc/tlsget2.wf
+index 0d09c701760..359e62de760 100644
+--- a/ld/testsuite/ld-powerpc/tlsget2.wf
++++ b/ld/testsuite/ld-powerpc/tlsget2.wf
+@@ -10,7 +10,7 @@ Contents of the .eh_frame section:
+   DW_CFA_def_cfa: r1 ofs 0
+ 
+ 0+14 0+14 0+18 FDE cie=0+ pc=0+280..0+2e0
+-  DW_CFA_advance_loc: 52 to 0+2b4
++  DW_CFA_advance_loc: 76 to 0+2cc
+   DW_CFA_offset_extended_sf: r65 at cfa\+8
+   DW_CFA_advance_loc: 16 to .*
+   DW_CFA_restore_extended: r65
+diff --git a/ld/testsuite/ld-powerpc/tlsso.r b/ld/testsuite/ld-powerpc/tlsso.r
+index d56b2a046c6..b0453fb1967 100644
+--- a/ld/testsuite/ld-powerpc/tlsso.r
++++ b/ld/testsuite/ld-powerpc/tlsso.r
+@@ -91,6 +91,18 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* NOTYPE +LOCAL +DEFAULT +UND *
++.* SECTION +LOCAL +DEFAULT +1 \.hash
++.* SECTION +LOCAL +DEFAULT +2 \.dynsym
++.* SECTION +LOCAL +DEFAULT +3 \.dynstr
++.* SECTION +LOCAL +DEFAULT +4 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +6 \.text
++.* SECTION +LOCAL +DEFAULT +7 \.tdata
++.* SECTION +LOCAL +DEFAULT +8 \.tbss
++.* SECTION +LOCAL +DEFAULT +9 \.dynamic
++.* SECTION +LOCAL +DEFAULT +10 \.opd
++.* SECTION +LOCAL +DEFAULT +11 \.got
++.* SECTION +LOCAL +DEFAULT +12 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* NOTYPE +LOCAL +DEFAULT +ABS TLSMARK
+ .* TLS +LOCAL +DEFAULT +7 gd4
+diff --git a/ld/testsuite/ld-powerpc/tlsso32.r b/ld/testsuite/ld-powerpc/tlsso32.r
+index 0202440be9f..3f92f8066cf 100644
+--- a/ld/testsuite/ld-powerpc/tlsso32.r
++++ b/ld/testsuite/ld-powerpc/tlsso32.r
+@@ -89,6 +89,17 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* NOTYPE +LOCAL +DEFAULT +UND 
++.* SECTION +LOCAL +DEFAULT +1 \.hash
++.* SECTION +LOCAL +DEFAULT +2 \.dynsym
++.* SECTION +LOCAL +DEFAULT +3 \.dynstr
++.* SECTION +LOCAL +DEFAULT +4 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +6 \.text
++.* SECTION +LOCAL +DEFAULT +7 \.tdata
++.* SECTION +LOCAL +DEFAULT +8 \.tbss
++.* SECTION +LOCAL +DEFAULT +9 \.dynamic
++.* SECTION +LOCAL +DEFAULT +10 \.got
++.* SECTION +LOCAL +DEFAULT +11 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* NOTYPE +LOCAL +DEFAULT +ABS TLSMARK
+ .* TLS +LOCAL +DEFAULT +7 gd4
+diff --git a/ld/testsuite/ld-powerpc/tlstocso.r b/ld/testsuite/ld-powerpc/tlstocso.r
+index 026d483fcac..1011b7c347f 100644
+--- a/ld/testsuite/ld-powerpc/tlstocso.r
++++ b/ld/testsuite/ld-powerpc/tlstocso.r
+@@ -84,6 +84,18 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
+ Symbol table '\.symtab' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+ .* NOTYPE +LOCAL +DEFAULT +UND *
++.* SECTION +LOCAL +DEFAULT +1 \.hash
++.* SECTION +LOCAL +DEFAULT +2 \.dynsym
++.* SECTION +LOCAL +DEFAULT +3 \.dynstr
++.* SECTION +LOCAL +DEFAULT +4 \.rela\.dyn
++.* SECTION +LOCAL +DEFAULT +5 \.rela\.plt
++.* SECTION +LOCAL +DEFAULT +6 \.text
++.* SECTION +LOCAL +DEFAULT +7 \.tdata
++.* SECTION +LOCAL +DEFAULT +8 \.tbss
++.* SECTION +LOCAL +DEFAULT +9 \.dynamic
++.* SECTION +LOCAL +DEFAULT +10 \.opd
++.* SECTION +LOCAL +DEFAULT +11 \.got
++.* SECTION +LOCAL +DEFAULT +12 \.plt
+ .* FILE +LOCAL +DEFAULT +ABS .*
+ .* TLS +LOCAL +DEFAULT +7 gd4
+ .* TLS +LOCAL +DEFAULT +7 ld4
 diff --git a/libiberty/ChangeLog b/libiberty/ChangeLog
 index 8e39fd28eba..3f749455f05 100644
 --- a/libiberty/ChangeLog
