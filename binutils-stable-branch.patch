@@ -10244,6 +10244,63 @@ index a1a9968a298..c5bb62347f8 100644
 @@ -1 +1 @@
 -m4_define([BFD_VERSION], [2.37])
 +m4_define([BFD_VERSION], [2.37.0])
+diff --git a/cpu/mep.opc b/cpu/mep.opc
+index 5a4c93dc3ab..6ad0c5879e8 100644
+--- a/cpu/mep.opc
++++ b/cpu/mep.opc
+@@ -626,7 +626,7 @@ typedef struct
+   int len;
+ } arg;
+ 
+-macro macros[] =
++static macro const macros[] =
+ {
+   { "sizeof", "(`1.end + (- `1))"},
+   { "startof", "(`1 | 0)" },
+@@ -659,10 +659,10 @@ str_append (char *dest, const char *input, int len)
+   return strncat (new_dest, input, len);
+ }
+ 
+-static macro *
++static const macro *
+ lookup_macro (const char *name)
+ {
+-  macro *m;
++  const macro *m;
+ 
+   for (m = macros; m->name; ++m)
+     if (strncmp (m->name, name, strlen(m->name)) == 0)
+@@ -672,7 +672,7 @@ lookup_macro (const char *name)
+ }
+ 
+ static char *
+-expand_macro (arg *args, int narg, macro *mac)
++expand_macro (arg *args, int narg, const macro *mac)
+ {
+   char *result = 0, *rescanned_result = 0;
+   char *e = mac->expansion;
+@@ -722,7 +722,7 @@ expand_string (const char *in, int first_only)
+   arg args[MAXARGS];
+   int state = IN_TEXT;
+   const char *mark = in;
+-  macro *pmacro = NULL;
++  const macro *pmacro = NULL;
+   char *expansion = 0;
+   char *result = 0;
+ 
+diff --git a/etc/texi2pod.pl b/etc/texi2pod.pl
+index 11f70d156be..dcf2b437640 100644
+--- a/etc/texi2pod.pl
++++ b/etc/texi2pod.pl
+@@ -59,6 +59,8 @@ while ($_ = shift) {
+ 	    $flag = shift;
+ 	}
+         push (@ipath, $flag);
++    } elsif (/^--no-split$/) {
++	# ignore option for makeinfo compatibility
+     } elsif (/^-/) {
+ 	usage();
+     } else {
 diff --git a/gas/testsuite/gas/ppc/power4.d b/gas/testsuite/gas/ppc/power4.d
 index fd277a2a286..e4d9ea97918 100644
 --- a/gas/testsuite/gas/ppc/power4.d
