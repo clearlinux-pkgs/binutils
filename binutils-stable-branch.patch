@@ -10263,6 +10263,26 @@ index a1a9968a298..c5bb62347f8 100644
 @@ -1 +1 @@
 -m4_define([BFD_VERSION], [2.37])
 +m4_define([BFD_VERSION], [2.37.0])
+diff --git a/binutils/rename.c b/binutils/rename.c
+index 8826917c18c..48ae3014806 100644
+--- a/binutils/rename.c
++++ b/binutils/rename.c
+@@ -131,6 +131,7 @@ get_stat_mtime_ns (struct stat const *st ATTRIBUTE_UNUSED)
+ # endif
+ }
+ 
++#if defined HAVE_UTIMENSAT
+ /* Return *ST's access time.  */
+ static inline struct timespec
+ get_stat_atime (struct stat const *st)
+@@ -158,6 +159,7 @@ get_stat_mtime (struct stat const *st)
+   return t;
+ #endif
+ }
++#endif
+ /* End FIXME.  */
+ 
+ /* Set the times of the file DESTINATION to be the same as those in
 diff --git a/cpu/mep.opc b/cpu/mep.opc
 index 5a4c93dc3ab..6ad0c5879e8 100644
 --- a/cpu/mep.opc
