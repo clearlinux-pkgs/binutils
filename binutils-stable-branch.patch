@@ -10376,6 +10376,33 @@ index 24b75bc3f74..4df9e00a157 100644
  0000000000000000 l       \.data	0000000000000000 dsym0
  0000000000000008 l       \.data	0000000000000000 dsym1
  0000000000000000 l    d  \.toc	0000000000000000 (|\.toc)
+diff --git a/gas/testsuite/gas/s390/zarch-arch14.d b/gas/testsuite/gas/s390/zarch-arch14.d
+index 97c4fd54719..62db69ccb2d 100644
+--- a/gas/testsuite/gas/s390/zarch-arch14.d
++++ b/gas/testsuite/gas/s390/zarch-arch14.d
+@@ -25,7 +25,8 @@ Disassembly of section .text:
+ .*:	e6 f1 00 0c d4 55 [	 ]*vcnf	%v15,%v17,13,12
+ .*:	b9 8b 90 6b [	 ]*rdp	%r6,%r9,%r11
+ .*:	b9 8b 9d 6b [	 ]*rdp	%r6,%r9,%r11,13
+-.*:	eb fd 68 f0 fd 71 [	 ]*lpswey	-10000\(%r6\),253
++.*:	eb 00 68 f0 fd 71 [	 ]*lpswey	-10000\(%r6\)
+ .*:	b2 00 6f a0 [	 ]*lbear	4000\(%r6\)
+ .*:	b2 01 6f a0 [	 ]*stbear	4000\(%r6\)
++.*:	b2 8f 5f ff [	 ]*qpaci	4095\(%r5\)
+ .*:	07 07 [	 ]*nopr	%r7
+diff --git a/gas/testsuite/gas/s390/zarch-arch14.s b/gas/testsuite/gas/s390/zarch-arch14.s
+index 830382f0ac5..c887a8895bb 100644
+--- a/gas/testsuite/gas/s390/zarch-arch14.s
++++ b/gas/testsuite/gas/s390/zarch-arch14.s
+@@ -19,6 +19,7 @@ foo:
+ 	vcnf	%v15,%v17,13,12
+ 	rdp	%r6,%r9,%r11
+ 	rdp	%r6,%r9,%r11,13
+-	lpswey	-10000(%r6),253
++	lpswey	-10000(%r6)
+ 	lbear	4000(%r6)
+ 	stbear	4000(%r6)
++	qpaci	4095(%r5)
 diff --git a/gold/ChangeLog b/gold/ChangeLog
 index 79207900dfc..deb0aa504b5 100644
 --- a/gold/ChangeLog
@@ -11084,3 +11111,37 @@ index df09b7b8fdd..ac1eb8eb02c 100644
  
    uint64_t bound_lifetime_depth;
  };
+diff --git a/opcodes/s390-opc.c b/opcodes/s390-opc.c
+index 5545dacffff..64453d945f8 100644
+--- a/opcodes/s390-opc.c
++++ b/opcodes/s390-opc.c
+@@ -442,6 +442,7 @@ const struct s390_operand s390_operands[] =
+ #define INSTR_RX_URRD      4, { U4_8,D_20,X_12,B_16,0,0 }        /* e.g. bc    */
+ #define INSTR_SI_RD        4, { D_20,B_16,0,0,0,0 }              /* e.g. lpsw  */
+ #define INSTR_SI_URD       4, { D_20,B_16,U8_8,0,0,0 }           /* e.g. cli   */
++#define INSTR_SIY_RD       6, { D20_20,B_16,0,0,0,0 }            /* e.g. lpswey*/
+ #define INSTR_SIY_URD      6, { D20_20,B_16,U8_8,0,0,0 }         /* e.g. tmy   */
+ #define INSTR_SIY_IRD      6, { D20_20,B_16,I8_8,0,0,0 }         /* e.g. asi   */
+ #define INSTR_SIL_RDI      6, { D_20,B_16,I16_32,0,0,0 }         /* e.g. chhsi */
+@@ -664,6 +665,7 @@ const struct s390_operand s390_operands[] =
+ #define MASK_RX_URRD      { 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 }
+ #define MASK_SI_RD        { 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 }
+ #define MASK_SI_URD       { 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 }
++#define MASK_SIY_RD       { 0xff, 0xff, 0x00, 0x00, 0x00, 0xff }
+ #define MASK_SIY_URD      { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
+ #define MASK_SIY_IRD      { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
+ #define MASK_SIL_RDI      { 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 }
+diff --git a/opcodes/s390-opc.txt b/opcodes/s390-opc.txt
+index aa00b4f3b69..ad4b6aebc2b 100644
+--- a/opcodes/s390-opc.txt
++++ b/opcodes/s390-opc.txt
+@@ -2041,6 +2041,8 @@ e60000000055 vcnf VRR_VV0UU2 " " arch14 zarch
+ 
+ b98B rdp RRF_RURR2 " " arch14 zarch optparm
+ 
+-eb0000000071 lpswey SIY_URD " " arch14 zarch
++eb0000000071 lpswey SIY_RD " " arch14 zarch
+ b200 lbear S_RD " " arch14 zarch
+ b201 stbear S_RD " " arch14 zarch
++
++b28f qpaci S_RD " " arch14 zarch
