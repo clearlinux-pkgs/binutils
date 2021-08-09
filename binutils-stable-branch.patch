@@ -15,6 +15,19 @@ index 75ca29c09b9..b7ec6eafa23 100644
  2021-07-18  Nick Clifton  <nickc@redhat.com>
  
  	* 2.37 release.
+diff --git a/bfd/elf.c b/bfd/elf.c
+index de5abafabf0..9c3f34c415b 100644
+--- a/bfd/elf.c
++++ b/bfd/elf.c
+@@ -7984,7 +7984,7 @@ _bfd_elf_fixup_group_sections (bfd *ibfd, asection *discarded)
+ 		    isec->flags |= SEC_EXCLUDE;
+ 		  }
+ 	      }
+-	    else
++	    else if (isec->output_section != NULL)
+ 	      {
+ 		/* Adjust the output section size when called from
+ 		   objcopy. */
 diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
 index 34a6b3fd837..93fbadf61bc 100644
 --- a/bfd/elf32-ppc.c
