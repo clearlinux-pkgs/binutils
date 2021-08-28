@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.37
-Release  : 442
+Release  : 443
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.37.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.37.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.37.tar.xz.sig
@@ -125,6 +125,12 @@ rm -rf gdb libdecnumber readline sim
 export SOURCE_DATE_EPOCH=1549215809
 sed -i -e "s/#define BFD_VERSION_DATE.*/#define BFD_VERSION_DATE 20190203/g" bfd/version.h
 
+# Force all man pages to regenerate... they were truncated in the 2.37 release
+touch binutils/doc/binutils.texi
+touch gas/doc/as.texi
+touch gprof/gprof.texi
+touch ld/ld.texi
+
 # Do not use a macro - breaks toolchain
 ./configure \
 --prefix=/usr \
@@ -149,7 +155,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1629383293
+export SOURCE_DATE_EPOCH=1630129260
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -169,7 +175,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1629383293
+export SOURCE_DATE_EPOCH=1630129260
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-2.37/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
