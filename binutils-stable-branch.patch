@@ -10334,6 +10334,32 @@ index 7869e1b9d2c..eaa17e80f02 100644
  2021-07-16  Nick Clifton  <nickc@redhat.com>
  
  	* po/sv.po: Updated Swedish translation.
+diff --git a/binutils/ar.c b/binutils/ar.c
+index 5d6976c7027..8885585ef75 100644
+--- a/binutils/ar.c
++++ b/binutils/ar.c
+@@ -1180,6 +1180,9 @@ extract_file (bfd *abfd)
+   bfd_size_type size;
+   struct stat buf;
+ 
++  if (preserve_dates)
++    memset (&buf, 0, sizeof (buf));
++
+   if (bfd_stat_arch_elt (abfd, &buf) != 0)
+     /* xgettext:c-format */
+     fatal (_("internal stat error on %s"), bfd_get_filename (abfd));
+diff --git a/binutils/objcopy.c b/binutils/objcopy.c
+index a6c2e0dcc26..fd7557fe433 100644
+--- a/binutils/objcopy.c
++++ b/binutils/objcopy.c
+@@ -3600,6 +3600,7 @@ copy_archive (bfd *ibfd, bfd *obfd, const char *output_target,
+ 
+       if (preserve_dates)
+ 	{
++	  memset (&buf, 0, sizeof (buf));
+ 	  stat_status = bfd_stat_arch_elt (this_element, &buf);
+ 
+ 	  if (stat_status != 0)
 diff --git a/binutils/readelf.c b/binutils/readelf.c
 index a6073f7ec80..af10bcd0e17 100644
 --- a/binutils/readelf.c
