@@ -4,7 +4,6 @@ Configure miss: elf-hints.h presence
 Configure miss: elf-hints.h usability
 Configure miss: fls
 Configure miss: gcc version with buggy 64-bit support
-Configure miss: glibc ifunc support
 Configure miss: isl 0.15 or later
 Configure miss: lwpstatus_t in sys/procfs.h
 Configure miss: lwpstatus_t.pr_context in sys/procfs.h
@@ -34,11 +33,11 @@ Configure miss: sys_nerr
 Configure miss: sys_siglist
 Configure miss: sysctl
 Configure miss: sysmp
+Configure miss: whether a statically linked program can dlopen itself
 Configure miss: whether compiling a cross-assembler
 Configure miss: whether declaration is required for environ
 Configure miss: whether declaration is required for ffs
 Configure miss: whether errno must be declared
-Configure miss: whether static linking works
 Configure miss: whether to use debuginfod
 Configure miss: win32_pstatus_t in sys/procfs.h
 Configure miss: windmc

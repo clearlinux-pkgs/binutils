@@ -2,3 +2,8 @@
 # picked up automatically. One name per line, no whitespace.
 zlib-dev
 expect
+zstd-dev
+lzo-dev
+lz4-dev
+xz-dev
+glibc-staticdev
