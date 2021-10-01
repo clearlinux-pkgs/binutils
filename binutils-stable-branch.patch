@@ -11926,10 +11926,19 @@ index 0cca28673dd..7eefef9c7c4 100644
  /* Note segments for core files on dir-style procfs systems.  */
  
 diff --git a/ld/ChangeLog b/ld/ChangeLog
-index 79304e12103..5048b5b6a17 100644
+index 79304e12103..ee3259a06de 100644
 --- a/ld/ChangeLog
 +++ b/ld/ChangeLog
-@@ -999,20 +999,6 @@
+@@ -1,3 +1,8 @@
++2021-09-30  Dimitar Dimitrov  <dimitar@dinux.eu>
++
++	* scripttempl/pru.sc (.resource_table): Align the output
++	section, not the first symbol.
++
+ 2021-07-18  Nick Clifton  <nickc@redhat.com>
+ 
+ 	* 2.37 release.
+@@ -999,20 +1004,6 @@
  
  	* configure.tgt: Add *-*-genode* as a target for AArch64 and x86.
  
@@ -12105,6 +12114,25 @@ index c1b15263587..237892c0ec3 100644
 -
  /* Return the current file name, or the previous file if no file is
     current.  */
+ 
+diff --git a/ld/scripttempl/pru.sc b/ld/scripttempl/pru.sc
+index b2c941b7911..97d8be0a0a4 100644
+--- a/ld/scripttempl/pru.sc
++++ b/ld/scripttempl/pru.sc
+@@ -151,11 +151,10 @@ SECTIONS
+     ${RELOCATING+ PROVIDE (_data_end = .) ; }
+   } ${RELOCATING+ > dmem }
+ 
+-  .resource_table ${RELOCATING-0} :
++  /* Linux remoteproc loader requires the resource_table section
++     start address to be aligned to 8 bytes.  */
++  .resource_table ${RELOCATING-0} ${RELOCATING+ ALIGN(8)} :
+   {
+-    /* Linux remoteproc loader requires the resource table address
+-       to be aligned to 8 bytes.  */
+-    ${RELOCATING+. = ALIGN(8);}
+     KEEP (*(.resource_table))
+   } ${RELOCATING+ > dmem}
  
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 index def69e43ab3..999d911ce6a 100644
