@@ -104,6 +104,18 @@ index a4a05302a6a..55c5e500d06 100644
  
  #include "sysdep.h"
  #include <stdarg.h>
+diff --git a/bfd/format.c b/bfd/format.c
+index 5d08d1d642c..408c984690e 100644
+--- a/bfd/format.c
++++ b/bfd/format.c
+@@ -151,6 +151,7 @@ bfd_reinit (bfd *abfd, unsigned int section_id, bfd_cleanup cleanup)
+   abfd->tdata.any = NULL;
+   abfd->arch_info = &bfd_default_arch_struct;
+   abfd->flags &= BFD_FLAGS_SAVED;
++  abfd->build_id = NULL;
+   bfd_section_list_clear (abfd);
+ }
+ 
 diff --git a/bfd/plugin.c b/bfd/plugin.c
 index 6cfa2b66470..3bab8febe88 100644
 --- a/bfd/plugin.c
