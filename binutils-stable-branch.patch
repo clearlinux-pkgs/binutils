@@ -10360,6 +10360,18 @@ index 5d6976c7027..8885585ef75 100644
    if (bfd_stat_arch_elt (abfd, &buf) != 0)
      /* xgettext:c-format */
      fatal (_("internal stat error on %s"), bfd_get_filename (abfd));
+diff --git a/binutils/dwarf.c b/binutils/dwarf.c
+index 1e7f4db7b7c..e73078f496f 100644
+--- a/binutils/dwarf.c
++++ b/binutils/dwarf.c
+@@ -7727,7 +7727,6 @@ display_debug_ranges (struct dwarf_section *section,
+ 	      return 0;
+ 	    }
+ 	}
+-      finish = start + initial_length;
+ 
+       /* Get and check the version number.  */
+       SAFE_BYTE_GET_AND_INC (version, start, 2, finish);
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
 index a6c2e0dcc26..fd7557fe433 100644
 --- a/binutils/objcopy.c
