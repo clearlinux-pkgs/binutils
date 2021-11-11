@@ -10709,6 +10709,40 @@ index ab258dd1896..327a1527a29 100644
    return os->name();
  }
  
+diff --git a/gold/layout.cc b/gold/layout.cc
+index a27cb071c75..38e9bceec7e 100644
+--- a/gold/layout.cc
++++ b/gold/layout.cc
+@@ -3245,7 +3245,8 @@ Layout::create_note(const char* name, int note_type,
+   if (allocate)
+     {
+       flags = elfcpp::SHF_ALLOC;
+-      order = ORDER_RO_NOTE;
++      order = (note_type == elfcpp::NT_GNU_PROPERTY_TYPE_0
++	       ?  ORDER_PROPERTY_NOTE : ORDER_RO_NOTE);
+     }
+   Output_section* os = this->choose_output_section(NULL, section_name,
+ 						   elfcpp::SHT_NOTE,
+diff --git a/gold/layout.h b/gold/layout.h
+index 0b378003679..05c31714e47 100644
+--- a/gold/layout.h
++++ b/gold/layout.h
+@@ -399,8 +399,13 @@ enum Output_section_order
+   // linker can pick it up quickly.
+   ORDER_INTERP,
+ 
+-  // Loadable read-only note sections come next so that the PT_NOTE
+-  // segment is on the first page of the executable.
++  // The .note.gnu.property section comes next so that the PT_NOTE
++  // segment is on the first page of the executable and it won't be
++  // placed between other note sections with different alignments.
++  ORDER_PROPERTY_NOTE,
++
++  // Loadable read-only note sections come after the .note.gnu.property
++  // section.
+   ORDER_RO_NOTE,
+ 
+   // Put read-only sections used by the dynamic linker early in the
 diff --git a/gold/object.cc b/gold/object.cc
 index 45cf30d4aaf..b7a2a6cfdfa 100644
 --- a/gold/object.cc
