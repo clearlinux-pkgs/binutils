@@ -183,6 +183,34 @@ index a4a05302a6a..38c2ccf78be 100644
        opt_fd = elf_link_hash_lookup (&htab->elf, "__tls_get_addr_opt",
  				     false, false, true);
        if (opt_fd != NULL
+diff --git a/bfd/elfxx-x86.c b/bfd/elfxx-x86.c
+index 088f6e5c536..6f8d342cae4 100644
+--- a/bfd/elfxx-x86.c
++++ b/bfd/elfxx-x86.c
+@@ -933,9 +933,9 @@ _bfd_elf_x86_valid_reloc_p (asection *input_section,
+       irel = *rel;
+ 
+       /* Only allow relocations against absolute symbol, which can be
+-	 resolved as absolute value + addend.  GOTPCREL relocations
+-	 are allowed since absolute value + addend is stored in the
+-	 GOT slot.  */
++	 resolved as absolute value + addend.  GOTPCREL and GOT32
++	 relocations are allowed since absolute value + addend is
++	 stored in the GOT slot.  */
+       if (bed->target_id == X86_64_ELF_DATA)
+ 	{
+ 	  r_type &= ~R_X86_64_converted_reloc_bit;
+@@ -956,7 +956,9 @@ _bfd_elf_x86_valid_reloc_p (asection *input_section,
+       else
+ 	valid_p = (r_type == R_386_32
+ 		   || r_type == R_386_16
+-		   || r_type == R_386_8);
++		   || r_type == R_386_8
++		   || r_type == R_386_GOT32
++		   || r_type == R_386_GOT32X);
+ 
+       if (valid_p)
+ 	*no_dynreloc_p = true;
 diff --git a/bfd/format.c b/bfd/format.c
 index 5d08d1d642c..408c984690e 100644
 --- a/bfd/format.c
@@ -13593,6 +13621,46 @@ index b2c941b7911..97d8be0a0a4 100644
      KEEP (*(.resource_table))
    } ${RELOCATING+ > dmem}
  
+diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
+index ceb60002d13..68ea023df08 100644
+--- a/ld/testsuite/ld-i386/i386.exp
++++ b/ld/testsuite/ld-i386/i386.exp
+@@ -493,6 +493,7 @@ run_dump_test "property-x86-isa3"
+ run_dump_test "property-x86-isa4"
+ run_dump_test "pr26869"
+ run_dump_test "code16"
++run_dump_test "pr28870"
+ 
+ if { !([istarget "i?86-*-linux*"]
+        || [istarget "i?86-*-gnu*"]
+diff --git a/ld/testsuite/ld-i386/pr28870.d b/ld/testsuite/ld-i386/pr28870.d
+new file mode 100644
+index 00000000000..8e9b9fb82eb
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr28870.d
+@@ -0,0 +1,10 @@
++#as: --32
++#ld: --no-dynamic-linker -m elf_i386 -pie
++#readelf: -s --wide
++
++#...
++Symbol table '.symtab' contains [0-9]+ entries:
++   Num:    Value  Size Type    Bind   Vis      Ndx Name
++#...
++ +[a-f0-9]+: 00000002     0 NOTYPE  LOCAL  DEFAULT  ABS foo
++#pass
+diff --git a/ld/testsuite/ld-i386/pr28870.s b/ld/testsuite/ld-i386/pr28870.s
+new file mode 100644
+index 00000000000..8e320470e2d
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr28870.s
+@@ -0,0 +1,6 @@
++	.text
++	.globl _start
++_start:
++	addl	foo@GOT(%ebx), %eax
++	cmpl	$0, foo@GOT(%ebx)
++foo = 2
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 index def69e43ab3..999d911ce6a 100644
 --- a/ld/testsuite/ld-plugin/lto.exp
