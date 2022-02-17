@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.38
-Release  : 459
+Release  : 460
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.38.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.38.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.38.tar.xz.sig
@@ -160,7 +160,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1645036841
+export SOURCE_DATE_EPOCH=1645110260
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -180,7 +180,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1645036841
+export SOURCE_DATE_EPOCH=1645110260
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-2.38/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
@@ -192,6 +192,7 @@ cp %{_builddir}/binutils-2.38/gas/COPYING %{buildroot}/usr/share/package-license
 cp %{_builddir}/binutils-2.38/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
 cp %{_builddir}/binutils-2.38/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
 cp %{_builddir}/binutils-2.38/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
+cp %{_builddir}/binutils-2.38/libiberty/copying-lib.texi %{buildroot}/usr/share/package-licenses/binutils/beb56348433d183b962b87b5bff2b67047cc8bc3
 cp %{_builddir}/binutils-2.38/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
 %make_install tooldir=/usr
 %find_lang binutils
@@ -469,6 +470,7 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
 /usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
 /usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
+/usr/share/package-licenses/binutils/beb56348433d183b962b87b5bff2b67047cc8bc3
 /usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9
 
 %files man
