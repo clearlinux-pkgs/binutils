@@ -1,5 +1,7 @@
-Alan Modra (1):
+Alan Modra (3):
       PR28882, build failure with gcc-4.2 due to use of 0b literals
+      binutils 2.38 vs. ppc32 linux kernel
+      Revert "Check thin archive element file size against archive header"
 
 H.J. Lu (3):
       x86: Disallow invalid relocation against protected symbol
@@ -27,6 +29,29 @@ index 36cb81dd7f3..4671dc30cf0 100644
  2022-02-09  Nick Clifton  <nickc@redhat.com>
  
  	2.38 release.
+diff --git a/bfd/archive.c b/bfd/archive.c
+index ffaec7e2231..9ad61adc615 100644
+--- a/bfd/archive.c
++++ b/bfd/archive.c
+@@ -717,17 +717,7 @@ _bfd_get_elt_at_filepos (bfd *archive, file_ptr filepos,
+ 	 open the external file as a bfd.  */
+       bfd_set_error (bfd_error_no_error);
+       n_bfd = open_nested_file (filename, archive);
+-      if (n_bfd != NULL)
+-	{
+-	  ufile_ptr size = bfd_get_size (n_bfd);
+-	  if (size != 0 && size != new_areldata->parsed_size)
+-	    {
+-	      bfd_set_error (bfd_error_malformed_archive);
+-	      bfd_close (n_bfd);
+-	      n_bfd = NULL;
+-	    }
+-	}
+-      else
++      if (n_bfd == NULL)
+ 	{
+ 	  switch (bfd_get_error ())
+ 	    {
 diff --git a/bfd/elf-properties.c b/bfd/elf-properties.c
 index bf4f70d6256..d67aadde16b 100644
 --- a/bfd/elf-properties.c
@@ -8498,6 +8523,42 @@ index f611cacaa29..1b8f4a3cbaa 100644
 @@ -1 +1 @@
 -m4_define([BFD_VERSION], [2.38])
 +m4_define([BFD_VERSION], [2.38.0])
+diff --git a/gas/config/tc-ppc.c b/gas/config/tc-ppc.c
+index 054f9c72161..89bc7d3f9b9 100644
+--- a/gas/config/tc-ppc.c
++++ b/gas/config/tc-ppc.c
+@@ -5965,7 +5965,30 @@ ppc_machine (int ignore ATTRIBUTE_UNUSED)
+ 	     options do not count as a new machine, instead they add
+ 	     to currently selected opcodes.  */
+ 	  ppc_cpu_t machine_sticky = 0;
+-	  new_cpu = ppc_parse_cpu (ppc_cpu, &machine_sticky, cpu_string);
++	  /* Unfortunately, some versions of gcc emit a .machine
++	     directive very near the start of the compiler's assembly
++	     output file.  This is bad because it overrides user -Wa
++	     cpu selection.  Worse, there are versions of gcc that
++	     emit the *wrong* cpu, not even respecting the -mcpu given
++	     to gcc.  See gcc pr101393.  And to compound the problem,
++	     as of 20220222 gcc doesn't pass the correct cpu option to
++	     gas on the command line.  See gcc pr59828.  Hack around
++	     this by keeping sticky options for an early .machine.  */
++	  asection *sec;
++	  for (sec = stdoutput->sections; sec != NULL; sec = sec->next)
++	    {
++	      segment_info_type *info = seg_info (sec);
++	      /* Are the frags for this section perturbed from their
++		 initial state?  Even .align will count here.  */
++	      if (info != NULL
++		  && (info->frchainP->frch_root != info->frchainP->frch_last
++		      || info->frchainP->frch_root->fr_type != rs_fill
++		      || info->frchainP->frch_root->fr_fix != 0))
++		break;
++	    }
++	  new_cpu = ppc_parse_cpu (ppc_cpu,
++				   sec == NULL ? &sticky : &machine_sticky,
++				   cpu_string);
+ 	  if (new_cpu != 0)
+ 	    ppc_cpu = new_cpu;
+ 	  else
 diff --git a/gold/ChangeLog b/gold/ChangeLog
 index 7edad5d2b97..b16a6c23944 100644
 --- a/gold/ChangeLog
