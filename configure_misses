@@ -40,4 +40,6 @@ Configure miss: whether declaration is required for ffs
 Configure miss: whether errno must be declared
 Configure miss: whether to use debuginfod
 Configure miss: win32_pstatus_t in sys/procfs.h
+Configure miss: windres
+Configure miss: windres
 Configure miss: x86_64-generic-linux-pkg-config
