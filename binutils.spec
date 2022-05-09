@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.38
-Release  : 467
+Release  : 468
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.38.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.38.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.38.tar.xz.sig
@@ -160,7 +160,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1652115348
+export SOURCE_DATE_EPOCH=1652117971
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -180,7 +180,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1652115348
+export SOURCE_DATE_EPOCH=1652117971
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-2.38/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
@@ -202,6 +202,23 @@ cp %{_builddir}/binutils-2.38/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/
 %find_lang opcodes
 %find_lang gas
 %find_lang gold
+## Remove excluded files
+rm -f %{buildroot}*/usr/bin/dlltool
+rm -f %{buildroot}*/usr/bin/windres
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pe.x
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pe.xa
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pe.xbn
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pe.xe
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pe.xn
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pe.xr
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pe.xu
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.x
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.xa
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.xbn
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.xe
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.xn
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.xr
+rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.xu
 ## install_append content
 install -d %{buildroot}/usr/include
 
@@ -4197,13 +4214,6 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/lib/ldscripts/i386nto.xu
 /usr/lib/ldscripts/i386nto.xw
 /usr/lib/ldscripts/i386nto.xwe
-/usr/lib/ldscripts/i386pe.x
-/usr/lib/ldscripts/i386pe.xa
-/usr/lib/ldscripts/i386pe.xbn
-/usr/lib/ldscripts/i386pe.xe
-/usr/lib/ldscripts/i386pe.xn
-/usr/lib/ldscripts/i386pe.xr
-/usr/lib/ldscripts/i386pe.xu
 /usr/lib/ldscripts/i386pe_posix.x
 /usr/lib/ldscripts/i386pe_posix.xa
 /usr/lib/ldscripts/i386pe_posix.xbn
@@ -4211,13 +4221,6 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/lib/ldscripts/i386pe_posix.xn
 /usr/lib/ldscripts/i386pe_posix.xr
 /usr/lib/ldscripts/i386pe_posix.xu
-/usr/lib/ldscripts/i386pep.x
-/usr/lib/ldscripts/i386pep.xa
-/usr/lib/ldscripts/i386pep.xbn
-/usr/lib/ldscripts/i386pep.xe
-/usr/lib/ldscripts/i386pep.xn
-/usr/lib/ldscripts/i386pep.xr
-/usr/lib/ldscripts/i386pep.xu
 /usr/lib/ldscripts/m32relf.x
 /usr/lib/ldscripts/m32relf.xbn
 /usr/lib/ldscripts/m32relf.xc
@@ -4916,7 +4919,6 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/bin/as
 /usr/bin/c++filt
 /usr/bin/coffdump
-/usr/bin/dlltool
 /usr/bin/dllwrap
 /usr/bin/dwp
 /usr/bin/elfedit
@@ -4934,7 +4936,6 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/bin/strip
 /usr/bin/sysdump
 /usr/bin/windmc
-/usr/bin/windres
 
 %files dev
 %defattr(-,root,root,-)

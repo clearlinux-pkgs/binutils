@@ -1,2 +1,18 @@
 # This file contains the output files that need %exclude. Full path
 # names, one per line.
+/usr/bin/dlltool
+/usr/bin/windres
+/usr/lib/ldscripts/i386pe.x
+/usr/lib/ldscripts/i386pe.xa
+/usr/lib/ldscripts/i386pe.xbn
+/usr/lib/ldscripts/i386pe.xe
+/usr/lib/ldscripts/i386pe.xn
+/usr/lib/ldscripts/i386pe.xr
+/usr/lib/ldscripts/i386pe.xu
+/usr/lib/ldscripts/i386pep.x
+/usr/lib/ldscripts/i386pep.xa
+/usr/lib/ldscripts/i386pep.xbn
+/usr/lib/ldscripts/i386pep.xe
+/usr/lib/ldscripts/i386pep.xn
+/usr/lib/ldscripts/i386pep.xr
+/usr/lib/ldscripts/i386pep.xu
