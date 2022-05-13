@@ -1,4 +1,4 @@
-Alan Modra (7):
+Alan Modra (8):
       PR28882, build failure with gcc-4.2 due to use of 0b literals
       binutils 2.38 vs. ppc32 linux kernel
       Revert "Check thin archive element file size against archive header"
@@ -6,6 +6,7 @@ Alan Modra (7):
       PowerPC64 DT_RELR relative reloc addresses
       PR28959, obdump doesn't disassemble mftb instruction
       Adjust ld ctf test for 32-bit targets
+      PR29142, segv in ar with empty archive and libdeps specified
 
 Andreas Krebbel (1):
       IBM zSystems: Add support for z16 as CPU name.
@@ -9088,6 +9089,34 @@ index 1372f182d92..9b6bac7accb 100644
  2022-02-09  Nick Clifton  <nickc@redhat.com>
  
  	2.38 release.
+diff --git a/binutils/ar.c b/binutils/ar.c
+index 0d4c7cf16a6..6f3f1d6946f 100644
+--- a/binutils/ar.c
++++ b/binutils/ar.c
+@@ -894,14 +894,16 @@ main (int argc, char **argv)
+ 	     being operated on.  We shouldn't use 1st slot, but we want
+ 	     to avoid having to search all the way to the end of an
+ 	     archive with a large number of members at link time.  */
+-	  new_files = xmalloc ((file_count + 2) * sizeof (char *));
+-	  new_files[0] = files[0];
+-	  new_files[1] = LIBDEPS;
+-	  for (i = 1; i < file_count; i++)
+-	    new_files[i+1] = files[i];
+-	  file_count = ++i;
++	  new_files = xmalloc ((file_count + 2) * sizeof (*new_files));
++	  if (file_count)
++	    {
++	      new_files[0] = files[0];
++	      memcpy (new_files + 1, files, file_count * sizeof (*files));
++	    }
++	  new_files[file_count != 0] = LIBDEPS;
++	  file_count++;
++	  new_files[file_count] = NULL;
+ 	  files = new_files;
+-	  files[i] = NULL;
+ 	}
+ 
+       switch (operation)
 diff --git a/binutils/dlltool.c b/binutils/dlltool.c
 index d95bf3f5470..89871510b45 100644
 --- a/binutils/dlltool.c
