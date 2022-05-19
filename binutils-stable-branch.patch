@@ -36,6 +36,9 @@ Stefan Liebler (2):
       s390: Avoid dynamic TLS relocs in PIE
       s390: Add DT_JMPREL pointing to .rela.[i]plt with static-pie
 
+Tamar Christina (1):
+      AArch64: Enable FP16 by default for Armv9-A.
+
 diff --git a/bfd/ChangeLog b/bfd/ChangeLog
 index 36cb81dd7f3..4671dc30cf0 100644
 --- a/bfd/ChangeLog
@@ -22253,6 +22256,18 @@ index b835a3e98c7..b7aa4ff069c 100644
 +  (!((EF_LOONGARCH_ABI(abi) & EF_LOONGARCH_ABI_FLOAT_MASK) ^ EF_LOONGARCH_ABI_DOUBLE_FLOAT_MASK))
  
  #endif /* _ELF_LOONGARCH_H */
+diff --git a/include/opcode/aarch64.h b/include/opcode/aarch64.h
+index a4912930c8f..8fe27900cba 100644
+--- a/include/opcode/aarch64.h
++++ b/include/opcode/aarch64.h
+@@ -140,6 +140,7 @@ typedef uint32_t aarch64_insn;
+ 					 | AARCH64_FEATURE_HBC)
+ 
+ #define AARCH64_ARCH_V9_FEATURES	(AARCH64_FEATURE_V9		\
++					 | AARCH64_FEATURE_F16          \
+ 					 | AARCH64_FEATURE_SVE		\
+ 					 | AARCH64_FEATURE_SVE2)
+ #define AARCH64_ARCH_V9_1_FEATURES	(AARCH64_ARCH_V8_6_FEATURES)
 diff --git a/ld/ChangeLog b/ld/ChangeLog
 index 47b14f41257..3be5c5c76a4 100644
 --- a/ld/ChangeLog
