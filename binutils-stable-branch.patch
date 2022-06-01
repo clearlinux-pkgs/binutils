@@ -11,11 +11,12 @@ Alan Modra (8):
 Andreas Krebbel (1):
       IBM zSystems: Add support for z16 as CPU name.
 
-H.J. Lu (4):
+H.J. Lu (5):
       x86: Disallow invalid relocation against protected symbol
       i386: Update I386_NEED_DYNAMIC_RELOC_TYPE_P for DT_TEXTREL
       ld: Keep indirect symbol from IR if referenced from shared object
       x86: Properly handle function pointer reference
+      x86: Properly handle IFUNC function pointer reference
 
 Liuzhen Song (1):
       LoongArch: Update ABI eflag in elf header.
@@ -100,10 +101,10 @@ index bf4f70d6256..d67aadde16b 100644
  		      /* GNU_PROPERTY_NO_COPY_ON_PROTECTED is implied.  */
  		      elf_has_no_copy_on_protected (abfd) = true;
 diff --git a/bfd/elf32-i386.c b/bfd/elf32-i386.c
-index 25977cc56bd..b034154fb97 100644
+index 25977cc56bd..3bc710096aa 100644
 --- a/bfd/elf32-i386.c
 +++ b/bfd/elf32-i386.c
-@@ -1772,11 +1772,14 @@ elf_i386_scan_relocs (bfd *abfd,
+@@ -1772,11 +1772,20 @@ elf_i386_scan_relocs (bfd *abfd,
  		}
  	      else
  		{
@@ -115,12 +116,18 @@ index 25977cc56bd..b034154fb97 100644
  		  if (r_type == R_386_32
  		      && (sec->flags & SEC_READONLY) == 0)
  		    func_pointer_ref = true;
-+		  else
++
++		  /* IFUNC symbol needs pointer equality in PDE so that
++		     function pointer reference will be resolved to its
++		     PLT entry directly.  */
++		  if (!func_pointer_ref
++		      || (bfd_link_pde (info)
++			  && h->type == STT_GNU_IFUNC))
 +		    h->pointer_equality_needed = 1;
  		}
  
  	      if (!func_pointer_ref)
-@@ -1798,6 +1801,23 @@ elf_i386_scan_relocs (bfd *abfd,
+@@ -1798,6 +1807,23 @@ elf_i386_scan_relocs (bfd *abfd,
  		  if (!h->def_regular
  		      || (sec->flags & (SEC_CODE | SEC_READONLY)) != 0)
  		    h->plt.refcount = 1;
@@ -615,10 +622,10 @@ index e780efa7181..0b851f7ac0e 100644
  		  unsigned int insn0, insn1;
  
 diff --git a/bfd/elf64-x86-64.c b/bfd/elf64-x86-64.c
-index 02ca55200bb..7cf7959cdb1 100644
+index 02ca55200bb..16229b39dca 100644
 --- a/bfd/elf64-x86-64.c
 +++ b/bfd/elf64-x86-64.c
-@@ -2211,16 +2211,18 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
+@@ -2211,16 +2211,24 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
  	      else if (r_type != R_X86_64_PC32_BND
  		       && r_type != R_X86_64_PC64)
  		{
@@ -634,12 +641,18 @@ index 02ca55200bb..7cf7959cdb1 100644
  			      && (r_type == R_X86_64_32
  				  || r_type == R_X86_64_32S))))
  		    func_pointer_ref = true;
-+		  else
++
++		  /* IFUNC symbol needs pointer equality in PDE so that
++		     function pointer reference will be resolved to its
++		     PLT entry directly.  */
++		  if (!func_pointer_ref
++		      || (bfd_link_pde (info)
++			  && h->type == STT_GNU_IFUNC))
 +		    h->pointer_equality_needed = 1;
  		}
  
  	      if (!func_pointer_ref)
-@@ -2242,6 +2244,23 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
+@@ -2242,6 +2250,23 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
  		  if (!h->def_regular
  		      || (sec->flags & (SEC_CODE | SEC_READONLY)) != 0)
  		    h->plt.refcount = 1;
@@ -28382,6 +28395,94 @@ index 00000000000..1d3e3f37f3e
 +	.hidden foo
 +foo:
 +	.byte 0
+diff --git a/ld/testsuite/ld-ifunc/ifunc.exp b/ld/testsuite/ld-ifunc/ifunc.exp
+index 1cd8d388b26..fdb65d01f9f 100644
+--- a/ld/testsuite/ld-ifunc/ifunc.exp
++++ b/ld/testsuite/ld-ifunc/ifunc.exp
+@@ -714,6 +714,15 @@ run_ld_link_exec_tests [list \
+ 	"pr18841cn" \
+ 	"pr18841.out" \
+     ] \
++    [list \
++	"Run pr29216" \
++	"$NOPIE_LDFLAGS" \
++	"" \
++	{ pr29216.c } \
++	"pr29216" \
++	"pass.out" \
++	"-fPIC" \
++    ] \
+ ]
+ 
+ # The pr23169 testcase is not valid.  In general, you can't call ifunc
+diff --git a/ld/testsuite/ld-ifunc/pr29216.c b/ld/testsuite/ld-ifunc/pr29216.c
+new file mode 100644
+index 00000000000..5019c723c2b
+--- /dev/null
++++ b/ld/testsuite/ld-ifunc/pr29216.c
+@@ -0,0 +1,62 @@
++#include <stdio.h>
++
++static int
++one (void)
++{
++  return -30;
++}
++
++int foo (void) __attribute__ ((ifunc ("resolve_foo")));
++
++void *
++resolve_foo (void)
++{
++  return (void *) one;
++}
++
++typedef int (*foo_p) (void);
++
++foo_p foo_ptr = foo;
++
++foo_p
++__attribute__ ((noinline))
++get_foo_p (void)
++{
++  return foo_ptr;
++}
++
++foo_p
++__attribute__ ((noinline))
++get_foo (void)
++{
++  return foo;
++}
++
++int
++main (void)
++{
++  foo_p p;
++
++  p = get_foo ();
++  if (p != foo)
++    __builtin_abort ();
++  if ((*p) () != -30)
++    __builtin_abort ();
++
++  p = get_foo_p ();
++  if (p != foo)
++    __builtin_abort ();
++  if ((*p) () != -30)
++    __builtin_abort ();
++
++  if (foo_ptr != foo)
++    __builtin_abort ();
++  if ((*foo_ptr) () != -30)
++    __builtin_abort ();
++  if (foo () != -30)
++    __builtin_abort ();
++
++  printf ("PASS\n");
++
++  return 0;
++}
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 index a70a84562b8..64b880265ee 100644
 --- a/ld/testsuite/ld-plugin/lto.exp
