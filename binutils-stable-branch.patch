@@ -1,4 +1,4 @@
-Alan Modra (8):
+Alan Modra (9):
       PR28882, build failure with gcc-4.2 due to use of 0b literals
       binutils 2.38 vs. ppc32 linux kernel
       Revert "Check thin archive element file size against archive header"
@@ -7,6 +7,7 @@ Alan Modra (8):
       PR28959, obdump doesn't disassemble mftb instruction
       Adjust ld ctf test for 32-bit targets
       PR29142, segv in ar with empty archive and libdeps specified
+      PowerPC64: fix assertion in ppc_build_one_stub with -Os code
 
 Andreas Krebbel (1):
       IBM zSystems: Add support for z16 as CPU name.
@@ -152,7 +153,7 @@ index 25977cc56bd..3bc710096aa 100644
  	    }
  
 diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
-index e7a9ffef089..cb12ed476d8 100644
+index e7a9ffef089..df503341fe9 100644
 --- a/bfd/elf64-ppc.c
 +++ b/bfd/elf64-ppc.c
 @@ -3270,10 +3270,14 @@ struct ppc_link_hash_table
@@ -202,7 +203,17 @@ index e7a9ffef089..cb12ed476d8 100644
  	{
  	  struct got_entry **pent, *ent;
  
-@@ -12828,22 +12828,18 @@ ppc64_elf_layout_multitoc (struct bfd_link_info *info)
+@@ -11700,7 +11700,8 @@ ppc_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
+   if (htab == NULL)
+     return false;
+ 
+-  BFD_ASSERT (stub_entry->stub_offset >= stub_entry->group->stub_sec->size);
++  BFD_ASSERT (stub_entry->stub_offset >= stub_entry->group->stub_sec->size
++	      || stub_entry->type.main == ppc_stub_save_res);
+   loc = stub_entry->group->stub_sec->contents + stub_entry->stub_offset;
+ 
+   htab->stub_count[stub_entry->type.main - 1] += 1;
+@@ -12828,22 +12829,18 @@ ppc64_elf_layout_multitoc (struct bfd_link_info *info)
        local_plt = (struct plt_entry **) end_lgot_ents;
        end_local_plt = local_plt + locsymcount;
        lgot_masks = (unsigned char *) end_local_plt;
@@ -232,7 +243,7 @@ index e7a9ffef089..cb12ed476d8 100644
  	{
  	  struct got_entry *ent;
  
-@@ -13419,16 +13415,11 @@ maybe_strip_output (struct bfd_link_info *info, asection *isec)
+@@ -13419,16 +13416,11 @@ maybe_strip_output (struct bfd_link_info *info, asection *isec)
      }
  }
  
@@ -252,7 +263,7 @@ index e7a9ffef089..cb12ed476d8 100644
  {
    if (htab->relr_count >= htab->relr_alloc)
      {
-@@ -13436,16 +13427,51 @@ append_relr_off (struct ppc_link_hash_table *htab, bfd_vma off)
+@@ -13436,16 +13428,51 @@ append_relr_off (struct ppc_link_hash_table *htab, bfd_vma off)
  	htab->relr_alloc = 4096;
        else
  	htab->relr_alloc *= 2;
@@ -309,7 +320,7 @@ index e7a9ffef089..cb12ed476d8 100644
  static bool
  got_and_plt_relr_for_local_syms (struct bfd_link_info *info)
  {
-@@ -13493,10 +13519,7 @@ got_and_plt_relr_for_local_syms (struct bfd_link_info *info)
+@@ -13493,10 +13520,7 @@ got_and_plt_relr_for_local_syms (struct bfd_link_info *info)
  	      && isym->st_shndx != SHN_ABS)
  	    {
  	      asection *got = ppc64_elf_tdata (gent->owner)->got;
@@ -321,7 +332,7 @@ index e7a9ffef089..cb12ed476d8 100644
  		{
  		  htab->stub_error = true;
  		  return false;
-@@ -13511,10 +13534,7 @@ got_and_plt_relr_for_local_syms (struct bfd_link_info *info)
+@@ -13511,10 +13535,7 @@ got_and_plt_relr_for_local_syms (struct bfd_link_info *info)
  	    if (pent->plt.offset != (bfd_vma) -1
  		&& ELF_ST_TYPE (isym->st_info) != STT_GNU_IFUNC)
  	      {
@@ -333,7 +344,7 @@ index e7a9ffef089..cb12ed476d8 100644
  		  {
  		    if (symtab_hdr->contents != (unsigned char *) local_syms)
  		      free (local_syms);
-@@ -13534,6 +13554,9 @@ got_and_plt_relr_for_local_syms (struct bfd_link_info *info)
+@@ -13534,6 +13555,9 @@ got_and_plt_relr_for_local_syms (struct bfd_link_info *info)
    return true;
  }
  
@@ -343,7 +354,7 @@ index e7a9ffef089..cb12ed476d8 100644
  static bool
  got_and_plt_relr (struct elf_link_hash_entry *h, void *inf)
  {
-@@ -13565,10 +13588,7 @@ got_and_plt_relr (struct elf_link_hash_entry *h, void *inf)
+@@ -13565,10 +13589,7 @@ got_and_plt_relr (struct elf_link_hash_entry *h, void *inf)
  	      && gent->got.offset != (bfd_vma) -1)
  	    {
  	      asection *got = ppc64_elf_tdata (gent->owner)->got;
@@ -355,7 +366,7 @@ index e7a9ffef089..cb12ed476d8 100644
  		{
  		  htab->stub_error = true;
  		  return false;
-@@ -13580,10 +13600,7 @@ got_and_plt_relr (struct elf_link_hash_entry *h, void *inf)
+@@ -13580,10 +13601,7 @@ got_and_plt_relr (struct elf_link_hash_entry *h, void *inf)
  	for (pent = h->plt.plist; pent != NULL; pent = pent->next)
  	  if (pent->plt.offset != (bfd_vma) -1)
  	    {
@@ -367,7 +378,7 @@ index e7a9ffef089..cb12ed476d8 100644
  		{
  		  htab->stub_error = true;
  		  return false;
-@@ -13861,9 +13878,7 @@ ppc64_elf_size_stubs (struct bfd_link_info *info)
+@@ -13861,9 +13879,7 @@ ppc64_elf_size_stubs (struct bfd_link_info *info)
  							  irela->r_offset);
  		      if (r_offset >= (bfd_vma) -2)
  			continue;
@@ -378,7 +389,7 @@ index e7a9ffef089..cb12ed476d8 100644
  			goto error_ret_free_internal;
  		      continue;
  		    }
-@@ -14214,9 +14229,7 @@ ppc64_elf_size_stubs (struct bfd_link_info *info)
+@@ -14214,9 +14230,7 @@ ppc64_elf_size_stubs (struct bfd_link_info *info)
  	  bfd_vma r_offset;
  
  	  for (r_offset = 0; r_offset < htab->brlt->size; r_offset += 8)
@@ -389,7 +400,7 @@ index e7a9ffef089..cb12ed476d8 100644
  	      return false;
  
  	  if (!got_and_plt_relr_for_local_syms (info))
-@@ -14225,28 +14238,28 @@ ppc64_elf_size_stubs (struct bfd_link_info *info)
+@@ -14225,28 +14239,28 @@ ppc64_elf_size_stubs (struct bfd_link_info *info)
  	  if (htab->stub_error)
  	    return false;
  
@@ -425,7 +436,7 @@ index e7a9ffef089..cb12ed476d8 100644
  		    i++;
  		  if (i == start_i)
  		    break;
-@@ -14254,6 +14267,7 @@ ppc64_elf_size_stubs (struct bfd_link_info *info)
+@@ -14254,6 +14268,7 @@ ppc64_elf_size_stubs (struct bfd_link_info *info)
  		  base += 63 * 8;
  		}
  	    }
@@ -433,7 +444,7 @@ index e7a9ffef089..cb12ed476d8 100644
  	}
  
        for (group = htab->group; group != NULL; group = group->next)
-@@ -15193,17 +15207,21 @@ ppc64_elf_build_stubs (struct bfd_link_info *info,
+@@ -15193,17 +15208,21 @@ ppc64_elf_build_stubs (struct bfd_link_info *info,
        if (htab->elf.srelrdyn->contents == NULL)
  	return false;
  
@@ -457,7 +468,7 @@ index e7a9ffef089..cb12ed476d8 100644
  	    {
  	      htab->stub_error = true;
  	      i++;
-@@ -15213,10 +15231,10 @@ ppc64_elf_build_stubs (struct bfd_link_info *info,
+@@ -15213,10 +15232,10 @@ ppc64_elf_build_stubs (struct bfd_link_info *info,
  	    {
  	      bfd_vma bits = 0;
  	      while (i < htab->relr_count
@@ -471,7 +482,7 @@ index e7a9ffef089..cb12ed476d8 100644
  		  i++;
  		}
  	      if (bits == 0)
-@@ -15226,6 +15244,7 @@ ppc64_elf_build_stubs (struct bfd_link_info *info,
+@@ -15226,6 +15245,7 @@ ppc64_elf_build_stubs (struct bfd_link_info *info,
  	      base += 63 * 8;
  	    }
  	}
