@@ -22,8 +22,10 @@ H.J. Lu (5):
 Liuzhen Song (1):
       LoongArch: Update ABI eflag in elf header.
 
-Nick Alcock (1):
+Nick Alcock (3):
       libctf, ld: diagnose corrupted CTF header cth_strlen
+      libctf: fix linking together multiple objects derived from the same source
+      libctf: tests: prune warnings from compiler output
 
 Nick Clifton (4):
       Re-enable development on the 2.38 branch
@@ -28721,6 +28723,341 @@ index 3bfc5e6e467..6135670538f 100644
  	[list \
  	    "Run protected-data-1a without PIE" \
  	    "$NOPIE_LDFLAGS -Wl,--no-as-needed tmpdir/libprotected-data-1a.so" \
+diff --git a/libctf/ctf-dedup.c b/libctf/ctf-dedup.c
+index b2fb0a13441..f0b9c366a3e 100644
+--- a/libctf/ctf-dedup.c
++++ b/libctf/ctf-dedup.c
+@@ -2652,6 +2652,8 @@ ctf_dedup_emit_type (const char *hval, ctf_dict_t *output, ctf_dict_t **inputs,
+ 	  ctf_parent_name_set (target, _CTF_SECTION);
+ 
+ 	  input->ctf_dedup.cd_output = target;
++	  input->ctf_link_in_out = target;
++	  target->ctf_link_in_out = input;
+ 	}
+       output_num = input_num;
+     }
+diff --git a/libctf/ctf-impl.h b/libctf/ctf-impl.h
+index f749b839ab3..abdbdc82400 100644
+--- a/libctf/ctf-impl.h
++++ b/libctf/ctf-impl.h
+@@ -449,6 +449,10 @@ struct ctf_dict
+   ctf_dynhash_t *ctf_link_inputs; /* Inputs to this link.  */
+   ctf_dynhash_t *ctf_link_outputs; /* Additional outputs from this link.  */
+ 
++  /* If a link input CU, points at the corresponding per-CU output (if any);
++     if an output, points at the input (if any).  */
++  ctf_dict_t *ctf_link_in_out;
++
+   /* Map input types to output types for ctf_add_type.  Key is a
+      ctf_link_type_key_t: value is a type ID.  */
+   ctf_dynhash_t *ctf_link_type_mapping;
+diff --git a/libctf/ctf-link.c b/libctf/ctf-link.c
+index ee836054463..8d2fb792ced 100644
+--- a/libctf/ctf-link.c
++++ b/libctf/ctf-link.c
+@@ -72,7 +72,7 @@ ctf_unnamed_cuname (ctf_dict_t *fp)
+    never gets explicitly freed in the ctf_link_input.  */
+ typedef struct ctf_link_input
+ {
+-  const char *clin_filename;
++  char *clin_filename;
+   ctf_archive_t *clin_arc;
+   ctf_dict_t *clin_fp;
+   int n;
+@@ -84,6 +84,7 @@ ctf_link_input_close (void *input)
+   ctf_link_input_t *i = (ctf_link_input_t *) input;
+   if (i->clin_arc)
+     ctf_arc_close (i->clin_arc);
++  free (i->clin_filename);
+   free (i);
+ }
+ 
+@@ -93,27 +94,50 @@ static int
+ ctf_link_add_ctf_internal (ctf_dict_t *fp, ctf_archive_t *ctf,
+ 			   ctf_dict_t *fp_input, const char *name)
+ {
+-  ctf_link_input_t *input = NULL;
+-  char *dupname = NULL;
++  int existing = 0;
++  ctf_link_input_t *input;
++  char *filename, *keyname;
+ 
+-  if ((input = calloc (1, sizeof (ctf_link_input_t))) == NULL)
++  /* Existing: return it, or (if a different dict with the same name
++     is already there) make up a new unique name.  Always use the actual name
++     for the filename, because that needs to be ctf_open()ed.  */
++
++  if ((input = ctf_dynhash_lookup (fp->ctf_link_inputs, name)) != NULL)
++    {
++      if ((fp_input != NULL && (input->clin_fp == fp_input))
++	  || (ctf != NULL && (input->clin_arc == ctf)))
++	return 0;
++      existing = 1;
++    }
++
++  if ((filename = strdup (name)) == NULL)
+     goto oom;
+ 
+-  if ((dupname = strdup (name)) == NULL)
++  if ((input = calloc (1, sizeof (ctf_link_input_t))) == NULL)
+     goto oom;
+ 
+   input->clin_arc = ctf;
+   input->clin_fp = fp_input;
+-  input->clin_filename = dupname;
++  input->clin_filename = filename;
+   input->n = ctf_dynhash_elements (fp->ctf_link_inputs);
+ 
+-  if (ctf_dynhash_insert (fp->ctf_link_inputs, dupname, input) < 0)
++  if (existing)
++    {
++      if (asprintf (&keyname, "%s#%li", name, (long int)
++		    ctf_dynhash_elements (fp->ctf_link_inputs)) < 0)
++	goto oom;
++    }
++  else if ((keyname = strdup (name)) == NULL)
++    goto oom;
++
++  if (ctf_dynhash_insert (fp->ctf_link_inputs, keyname, input) < 0)
+     goto oom;
+ 
+   return 0;
+  oom:
+   free (input);
+-  free (dupname);
++  free (filename);
++  free (keyname);
+   return ctf_set_errno (fp, ENOMEM);
+ }
+ 
+@@ -133,6 +157,10 @@ ctf_link_add_ctf_internal (ctf_dict_t *fp, ctf_archive_t *ctf,
+     The order of calls to this function influences the order of types in the
+     final link output, but otherwise is not important.
+ 
++    Repeated additions of the same NAME have no effect; repeated additions of
++    different dicts with the same NAME add all the dicts with unique NAMEs
++    derived from NAME.
++
+     Private for now, but may in time become public once support for BUF is
+     implemented.  */
+ 
+@@ -235,20 +263,50 @@ ctf_link_lazy_open (ctf_dict_t *fp, ctf_link_input_t *input)
+   return (ssize_t) count;
+ }
+ 
+-/* Return a per-CU output CTF dictionary suitable for the given CU, creating and
+-   interning it if need be.  */
++/* Find a non-clashing unique name for a per-CU output dict, to prevent distinct
++   members corresponding to inputs with identical cunames from overwriting each
++   other.  The name should be something like NAME.  */
++
++static char *
++ctf_new_per_cu_name (ctf_dict_t *fp, const char *name)
++{
++  char *dynname;
++  long int i = 0;
++
++  if ((dynname = strdup (name)) == NULL)
++    return NULL;
++
++  while ((ctf_dynhash_lookup (fp->ctf_link_outputs, dynname)) != NULL)
++    {
++      free (dynname);
++      if (asprintf (&dynname, "%s#%li", name, i++) < 0)
++	return NULL;
++    }
++
++  return dynname;
++}
++
++/* Return a per-CU output CTF dictionary suitable for the given INPUT or CU,
++   creating and interning it if need be.  */
+ 
+-_libctf_nonnull_((1,2))
+ static ctf_dict_t *
+-ctf_create_per_cu (ctf_dict_t *fp, const char *cu_name)
++ctf_create_per_cu (ctf_dict_t *fp, ctf_dict_t *input, const char *cu_name)
+ {
+   ctf_dict_t *cu_fp;
+   const char *ctf_name = NULL;
+   char *dynname = NULL;
+ 
+-  /* First, check the mapping table and translate the per-CU name we use
++  /* Already has a per-CU mapping?  Just return it.  */
++
++  if (input && input->ctf_link_in_out)
++    return input->ctf_link_in_out;
++
++  /* Check the mapping table and translate the per-CU name we use
+      accordingly.  */
+ 
++  if (cu_name == NULL)
++    cu_name = ctf_unnamed_cuname (input);
++
+   if (fp->ctf_link_in_cu_mapping)
+     {
+       if ((ctf_name = ctf_dynhash_lookup (fp->ctf_link_in_cu_mapping,
+@@ -259,7 +317,12 @@ ctf_create_per_cu (ctf_dict_t *fp, const char *cu_name)
+   if (ctf_name == NULL)
+     ctf_name = cu_name;
+ 
+-  if ((cu_fp = ctf_dynhash_lookup (fp->ctf_link_outputs, ctf_name)) == NULL)
++  /* Look up the per-CU dict.  If we don't know of one, or it is for
++     a different input CU which just happens to have the same name,
++     create a new one.  */
++
++  if ((cu_fp = ctf_dynhash_lookup (fp->ctf_link_outputs, ctf_name)) == NULL
++      || cu_fp->ctf_link_in_out != fp)
+     {
+       int err;
+ 
+@@ -271,14 +334,19 @@ ctf_create_per_cu (ctf_dict_t *fp, const char *cu_name)
+ 	  return NULL;
+ 	}
+ 
+-      if ((dynname = strdup (ctf_name)) == NULL)
+-	goto oom;
+-      if (ctf_dynhash_insert (fp->ctf_link_outputs, dynname, cu_fp) < 0)
++      ctf_import_unref (cu_fp, fp);
++
++      if ((dynname = ctf_new_per_cu_name (fp, ctf_name)) == NULL)
+ 	goto oom;
+ 
+-      ctf_import_unref (cu_fp, fp);
+       ctf_cuname_set (cu_fp, cu_name);
++
+       ctf_parent_name_set (cu_fp, _CTF_SECTION);
++      cu_fp->ctf_link_in_out = fp;
++      fp->ctf_link_in_out = cu_fp;
++
++      if (ctf_dynhash_insert (fp->ctf_link_outputs, dynname, cu_fp) < 0)
++	goto oom;
+     }
+   return cu_fp;
+ 
+@@ -304,6 +372,10 @@ ctf_link_add_cu_mapping (ctf_dict_t *fp, const char *from, const char *to)
+   char *f = NULL, *t = NULL;
+   ctf_dynhash_t *one_out;
+ 
++  /* Mappings cannot be set up if per-CU output dicts already exist.  */
++  if (fp->ctf_link_outputs && ctf_dynhash_elements (fp->ctf_link_outputs) != 0)
++      return (ctf_set_errno (fp, ECTF_LINKADDEDLATE));
++
+   if (fp->ctf_link_in_cu_mapping == NULL)
+     fp->ctf_link_in_cu_mapping = ctf_dynhash_create (ctf_hash_string,
+ 						     ctf_hash_eq_string, free,
+@@ -481,7 +553,7 @@ ctf_link_one_variable (ctf_dict_t *fp, ctf_dict_t *in_fp, const char *name,
+       return 0;
+     }
+ 
+-  if ((per_cu_out_fp = ctf_create_per_cu (fp, ctf_unnamed_cuname (in_fp))) == NULL)
++  if ((per_cu_out_fp = ctf_create_per_cu (fp, in_fp, NULL)) == NULL)
+     return -1;					/* errno is set for us.  */
+ 
+   /* If the type was not found, check for it in the child too.  */
+@@ -917,7 +989,7 @@ ctf_link_deduplicating_one_symtypetab (ctf_dict_t *fp, ctf_dict_t *input,
+ 	  continue;
+ 	}
+ 
+-      if ((per_cu_out_fp = ctf_create_per_cu (fp, ctf_unnamed_cuname (input))) == NULL)
++      if ((per_cu_out_fp = ctf_create_per_cu (fp, input, NULL)) == NULL)
+ 	return -1;				/* errno is set for us.  */
+ 
+       /* If the type was not found, check for it in the child too.  */
+@@ -1222,6 +1294,31 @@ ctf_link_deduplicating_per_cu (ctf_dict_t *fp)
+   return 0;
+ }
+ 
++/* Empty all the ctf_link_outputs.  */
++static int
++ctf_link_empty_outputs (ctf_dict_t *fp)
++{
++  ctf_next_t *i = NULL;
++  void *v;
++  int err;
++
++  ctf_dynhash_empty (fp->ctf_link_outputs);
++
++  while ((err = ctf_dynhash_next (fp->ctf_link_inputs, &i, NULL, &v)) == 0)
++    {
++      ctf_dict_t *in = (ctf_dict_t *) v;
++      in->ctf_link_in_out = NULL;
++    }
++  if (err != ECTF_NEXT_END)
++    {
++      fp->ctf_flags &= ~LCTF_LINKING;
++      ctf_err_warn (fp, 1, err, _("iteration error removing old outputs"));
++      ctf_set_errno (fp, err);
++      return -1;
++    }
++  return 0;
++}
++
+ /* Do a deduplicating link using the ctf-dedup machinery.  */
+ static void
+ ctf_link_deduplicating (ctf_dict_t *fp)
+@@ -1285,7 +1382,7 @@ ctf_link_deduplicating (ctf_dict_t *fp)
+ 	  continue;
+ 	}
+ 
+-      if ((dynname = strdup (ctf_cuname (outputs[i]))) == NULL)
++      if ((dynname = ctf_new_per_cu_name (fp, ctf_cuname (outputs[i]))) == NULL)
+ 	goto oom_one_output;
+ 
+       if (ctf_dynhash_insert (fp->ctf_link_outputs, dynname, outputs[i]) < 0)
+@@ -1339,20 +1436,15 @@ ctf_link_deduplicating (ctf_dict_t *fp)
+   return;
+ 
+  err_clean_outputs:
+-  for (i = 1; i < noutputs; i++)
+-    {
+-      ctf_dynhash_remove (fp->ctf_link_outputs, ctf_cuname (outputs[i]));
+-      ctf_dict_close (outputs[i]);
+-    }
++  ctf_link_empty_outputs (fp);
+   goto err;
+ }
+ 
+ /* Merge types and variable sections in all dicts added to the link together.
+-   All the added dicts are closed.  */
++   The result of any previous link is discarded.  */
+ int
+ ctf_link (ctf_dict_t *fp, int flags)
+ {
+-  ctf_next_t *i = NULL;
+   int err;
+ 
+   fp->ctf_link_flags = flags;
+@@ -1360,7 +1452,9 @@ ctf_link (ctf_dict_t *fp, int flags)
+   if (fp->ctf_link_inputs == NULL)
+     return 0;					/* Nothing to do. */
+ 
+-  if (fp->ctf_link_outputs == NULL)
++  if (fp->ctf_link_outputs != NULL)
++    ctf_link_empty_outputs (fp);
++  else
+     fp->ctf_link_outputs = ctf_dynhash_create (ctf_hash_string,
+ 					       ctf_hash_eq_string, free,
+ 					       (ctf_hash_free_fun)
+@@ -1376,13 +1470,14 @@ ctf_link (ctf_dict_t *fp, int flags)
+   fp->ctf_flags |= LCTF_LINKING;
+   if (fp->ctf_link_out_cu_mapping && (flags & CTF_LINK_EMPTY_CU_MAPPINGS))
+     {
+-      void *v;
++      ctf_next_t *i = NULL;
++      void *k;
+ 
+-      while ((err = ctf_dynhash_next (fp->ctf_link_out_cu_mapping, &i, &v,
++      while ((err = ctf_dynhash_next (fp->ctf_link_out_cu_mapping, &i, &k,
+ 				      NULL)) == 0)
+ 	{
+-	  const char *to = (const char *) v;
+-	  if (ctf_create_per_cu (fp, to) == NULL)
++	  const char *to = (const char *) k;
++	  if (ctf_create_per_cu (fp, NULL, to) == NULL)
+ 	    {
+ 	      fp->ctf_flags &= ~LCTF_LINKING;
+ 	      ctf_next_destroy (i);
 diff --git a/libctf/ctf-open.c b/libctf/ctf-open.c
 index c7ca37e5249..3f8d336f895 100644
 --- a/libctf/ctf-open.c
@@ -28781,6 +29118,209 @@ index c7ca37e5249..3f8d336f895 100644
      }
  
    /* Once we have uncompressed and validated the CTF data buffer, we can
+diff --git a/libctf/testsuite/config/default.exp b/libctf/testsuite/config/default.exp
+index f3239468ac8..29d31363071 100644
+--- a/libctf/testsuite/config/default.exp
++++ b/libctf/testsuite/config/default.exp
+@@ -55,6 +55,13 @@ if {![info exists CC_FOR_TARGET]} {
+ if {![info exists CFLAGS_FOR_TARGET]} {
+     set CFLAGS_FOR_TARGET $CFLAGS
+ }
++if ![info exists AR] then {
++    set AR [findfile $base_dir/../binutils/ar]
++}
++
++if {![info exists OBJDUMP]} {
++    set OBJDUMP [findfile $base_dir/../binutils/objdump]
++}
+ 
+ # load the utility procedures
+ load_lib ctf-lib.exp
+diff --git a/libctf/testsuite/lib/ctf-lib.exp b/libctf/testsuite/lib/ctf-lib.exp
+index e7552ed6ec7..6c55bbe52aa 100644
+--- a/libctf/testsuite/lib/ctf-lib.exp
++++ b/libctf/testsuite/lib/ctf-lib.exp
+@@ -181,7 +181,7 @@ proc run_lookup_test { name } {
+     }
+ 
+     # Compile and link the lookup program.
+-    set comp_output [compile_link_one_host_cc $opts(lookup) "tmpdir/lookup" "libctf.la"]
++    set comp_output [prune_warnings [compile_link_one_host_cc $opts(lookup) "tmpdir/lookup" "libctf.la"]]
+ 
+     if { $comp_output != ""} {
+ 	send_log "compilation of lookup program $opts(lookup) failed with <$comp_output>"
+@@ -217,7 +217,7 @@ proc run_lookup_test { name } {
+ 	    }
+ 	}
+ 
+-	set comp_output [run_host_cmd "$CC_FOR_TARGET" "$CFLAGS_FOR_TARGET $lookup_flags [concat $src] -o $lookup_output"]
++	set comp_output [prune_warnings [run_host_cmd "$CC_FOR_TARGET" "$CFLAGS_FOR_TARGET $lookup_flags [concat $src] -o $lookup_output"]]
+ 
+ 	if { $comp_output != ""} {
+ 	    send_log "compilation of CTF program [concat $src] failed with <$comp_output>"
+diff --git a/libctf/testsuite/libctf-regression/libctf-repeat-cu-lib.c b/libctf/testsuite/libctf-regression/libctf-repeat-cu-lib.c
+new file mode 100644
+index 00000000000..7ebdb09b84c
+--- /dev/null
++++ b/libctf/testsuite/libctf-regression/libctf-repeat-cu-lib.c
+@@ -0,0 +1,9 @@
++#ifdef INT
++typedef int ret_t;
++#elif CHAR
++typedef char *ret_t;
++#else
++typedef short *ret_t;
++#endif
++
++ret_t FUN (void) { return 0; }
+diff --git a/libctf/testsuite/libctf-regression/libctf-repeat-cu-main.c b/libctf/testsuite/libctf-regression/libctf-repeat-cu-main.c
+new file mode 100644
+index 00000000000..bfbaf0cc8dc
+--- /dev/null
++++ b/libctf/testsuite/libctf-regression/libctf-repeat-cu-main.c
+@@ -0,0 +1,5 @@
++typedef short ret_t;
++int a (void);
++int b (void);
++int c (void);
++int blah (void) { a(); b(); c(); }
+diff --git a/libctf/testsuite/libctf-regression/libctf-repeat-cu.d b/libctf/testsuite/libctf-regression/libctf-repeat-cu.d
+new file mode 100644
+index 00000000000..81df80442ad
+--- /dev/null
++++ b/libctf/testsuite/libctf-regression/libctf-repeat-cu.d
+@@ -0,0 +1,7 @@
++#...
++CTF archive member: .*/libctf-repeat-cu-lib.c:
++#...
++CTF archive member: .*/libctf-repeat-cu-lib.c#0:
++#...
++CTF archive member: .*/libctf-repeat-cu-lib.c#1:
++#...
+diff --git a/libctf/testsuite/libctf-regression/libctf-repeat-cu.exp b/libctf/testsuite/libctf-regression/libctf-repeat-cu.exp
+new file mode 100644
+index 00000000000..4a5d2d1d03b
+--- /dev/null
++++ b/libctf/testsuite/libctf-regression/libctf-repeat-cu.exp
+@@ -0,0 +1,118 @@
++# Copyright (C) 2021-2022 Free Software Foundation, Inc.
++#
++# This file is part of the GNU Binutils.
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software
++# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
++# MA 02110-1301, USA.
++#
++
++load_file $srcdir/../../ld/testsuite/lib/ld-lib.exp
++
++global srcdir subdir OBJDUMP
++global testname
++global subsrcdir
++
++set subsrcdir "$srcdir/$subdir/"
++set testname "$dir/libctf-repeat-cu.exp"
++
++if ![is_elf_format] {
++    unsupported "CTF needs bfd changes to be emitted on non-ELF"
++    return 0
++}
++
++if {![check_ctf_available]} {
++    unsupported "no CTF format support in the compiler"
++    return 0
++}
++
++if {[info exists env(LC_ALL)]} {
++    set old_lc_all $env(LC_ALL)
++}
++set env(LC_ALL) "C"
++
++# Compile one SRC to OBJ and put it into ARCHIVE.
++proc one_lib_compile { src flags obj archive } {
++    global CC_FOR_TARGET CFLAGS_FOR_TARGET AR subsrcdir
++
++    if [is_remote host] {
++	set src [remote_download host [file join $subsrcdir $src]]
++    } else {
++	set src [file join $subsrcdir $src]
++    }
++
++    set comp_output [prune_warnings [run_host_cmd "$CC_FOR_TARGET" "$CFLAGS_FOR_TARGET $flags -gctf -fPIC -c -o $obj $src"]]
++    if { $comp_output != "" } {
++	return $comp_output
++    }
++
++    set ar_output [prune_warnings [run_host_cmd "$AR" "rc $archive $obj"]]
++    return $comp_output
++}
++
++# Compile one SRC to OBJ and put it into ARCHIVE: error-check the result.
++proc one_lib_compile_check { src flags obj archive } {
++    global testname
++
++    set comp_output [one_lib_compile $src $flags $obj $archive]
++
++    if { $comp_output != ""} {
++	send_log "compilation of $src with $flags failed with <$comp_output>"
++	perror "compilation of $src with $flags failed"
++	fail $testname
++	return 0
++    }
++    return 1
++}
++
++if { ! [one_lib_compile_check libctf-repeat-cu-lib.c "-DINT -DFUN=a" tmpdir/libctf-repeat-cu-lib.o tmpdir/a.a] } {
++    return 0
++}
++
++if { ! [one_lib_compile_check libctf-repeat-cu-lib.c "-DCHAR -DFUN=b" tmpdir/libctf-repeat-cu-lib.o tmpdir/b.a] } {
++    return 0
++}
++
++if { ! [one_lib_compile_check libctf-repeat-cu-lib.c "-DFUN=c" tmpdir/libctf-repeat-cu-lib.o tmpdir/c.a] } {
++    return 0
++}
++
++if [is_remote host] {
++    set src [remote_download host [file join $subsrcdir libctf-repeat-cu-main.c]]
++} else {
++    set src [file join $subsrcdir libctf-repeat-cu-main.c]
++}
++
++set comp_output [prune_warnings [run_host_cmd "$CC_FOR_TARGET" "$CFLAGS_FOR_TARGET -gctf -fPIC -shared -o tmpdir/libctf-repeat-cu-main.so $src tmpdir/a.a tmpdir/b.a tmpdir/c.a"]]
++if { $comp_output != "" } {
++    send_log "compilation of tmpdir/libctf-repeat-cu-main.so failed"
++    perror "compilation of tmpdir/libctf-repeat-cu-main.so failed"
++    fail $testname
++    return $comp_output
++}
++
++set comp_output [prune_warnings [run_host_cmd "$OBJDUMP" "--ctf tmpdir/libctf-repeat-cu-main.so > tmpdir/dump.out"]]
++
++if { [regexp_diff "tmpdir/dump.out"  [file join $subsrcdir libctf-repeat-cu.d] ] } {
++    fail $testname
++    if { $verbose == 2 } then { verbose "output is [file_contents tmpdir/dump.out]" 2 }
++}
++
++pass $testname
++
++if {[info exists old_lc_all]} {
++    set env(LC_ALL) $old_lc_all
++} else {
++    unset env(LC_ALL)
++}
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
 index 7d2099c599a..0c52667b1dd 100644
 --- a/opcodes/ChangeLog
