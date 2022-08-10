@@ -5,11 +5,11 @@
 # Source0 file verified with key 0x13FCEF89DD9E3C4F (nickc@redhat.com)
 #
 Name     : binutils
-Version  : 2.38
-Release  : 474
-URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.38.tar.xz
-Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.38.tar.xz
-Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.38.tar.xz.sig
+Version  : 2.39
+Release  : 475
+URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz
+Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz
+Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz.sig
 Summary  : zlib compression library
 Group    : Development/Tools
 License  : BSL-1.0 GPL-2.0 GPL-3.0 GPL-3.0+ LGPL-2.0 LGPL-2.1 LGPL-3.0
@@ -25,15 +25,17 @@ BuildRequires : expect
 BuildRequires : flex
 BuildRequires : glibc-staticdev
 BuildRequires : grep
+BuildRequires : help2man
 BuildRequires : lz4-dev
 BuildRequires : lzo-dev
+BuildRequires : pkgconfig(jansson)
+BuildRequires : pkgconfig(msgpack)
 BuildRequires : sed
 BuildRequires : texinfo
 BuildRequires : xz-dev
 BuildRequires : zlib-dev
 BuildRequires : zstd-dev
-Patch1: binutils-stable-branch.patch
-Patch2: binutils-add-LD_AS_NEEDED-global-env.patch
+Patch1: binutils-add-LD_AS_NEEDED-global-env.patch
 
 %description
 This directory contains various GNU compilers, assemblers, linkers,
@@ -119,10 +121,9 @@ staticdev components for the binutils package.
 
 
 %prep
-%setup -q -n binutils-2.38
-cd %{_builddir}/binutils-2.38
+%setup -q -n binutils-2.39
+cd %{_builddir}/binutils-2.39
 %patch1 -p1
-%patch2 -p1
 
 %build
 ## build_prepend content
@@ -160,7 +161,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1656436046
+export SOURCE_DATE_EPOCH=1660090089
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -180,20 +181,20 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1656436046
+export SOURCE_DATE_EPOCH=1660090089
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
-cp %{_builddir}/binutils-2.38/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
-cp %{_builddir}/binutils-2.38/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d
-cp %{_builddir}/binutils-2.38/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.38/COPYING3.LIB %{buildroot}/usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9
-cp %{_builddir}/binutils-2.38/bfd/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.38/gas/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.38/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
-cp %{_builddir}/binutils-2.38/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
-cp %{_builddir}/binutils-2.38/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
-cp %{_builddir}/binutils-2.38/libiberty/copying-lib.texi %{buildroot}/usr/share/package-licenses/binutils/beb56348433d183b962b87b5bff2b67047cc8bc3
-cp %{_builddir}/binutils-2.38/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
+cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
+cp %{_builddir}/binutils-%{version}/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d
+cp %{_builddir}/binutils-%{version}/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-%{version}/COPYING3.LIB %{buildroot}/usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9
+cp %{_builddir}/binutils-%{version}/bfd/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-%{version}/gas/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-%{version}/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1
+cp %{_builddir}/binutils-%{version}/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02
+cp %{_builddir}/binutils-%{version}/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d
+cp %{_builddir}/binutils-%{version}/libiberty/copying-lib.texi %{buildroot}/usr/share/package-licenses/binutils/beb56348433d183b962b87b5bff2b67047cc8bc3
+cp %{_builddir}/binutils-%{version}/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0
 %make_install tooldir=/usr
 %find_lang binutils
 %find_lang gprof
@@ -219,6 +220,7 @@ rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.xe
 rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.xn
 rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.xr
 rm -f %{buildroot}*/usr/lib/ldscripts/i386pep.xu
+rm -f %{buildroot}*/usr/etc/gprofng.rc
 ## install_append content
 install -d %{buildroot}/usr/include
 
@@ -2800,24 +2802,6 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/lib/ldscripts/elf32visium.xn
 /usr/lib/ldscripts/elf32visium.xr
 /usr/lib/ldscripts/elf32visium.xu
-/usr/lib/ldscripts/elf32xc16x.x
-/usr/lib/ldscripts/elf32xc16x.xbn
-/usr/lib/ldscripts/elf32xc16x.xe
-/usr/lib/ldscripts/elf32xc16x.xn
-/usr/lib/ldscripts/elf32xc16x.xr
-/usr/lib/ldscripts/elf32xc16x.xu
-/usr/lib/ldscripts/elf32xc16xl.x
-/usr/lib/ldscripts/elf32xc16xl.xbn
-/usr/lib/ldscripts/elf32xc16xl.xe
-/usr/lib/ldscripts/elf32xc16xl.xn
-/usr/lib/ldscripts/elf32xc16xl.xr
-/usr/lib/ldscripts/elf32xc16xl.xu
-/usr/lib/ldscripts/elf32xc16xs.x
-/usr/lib/ldscripts/elf32xc16xs.xbn
-/usr/lib/ldscripts/elf32xc16xs.xe
-/usr/lib/ldscripts/elf32xc16xs.xn
-/usr/lib/ldscripts/elf32xc16xs.xr
-/usr/lib/ldscripts/elf32xc16xs.xu
 /usr/lib/ldscripts/elf32xstormy16.x
 /usr/lib/ldscripts/elf32xstormy16.xbn
 /usr/lib/ldscripts/elf32xstormy16.xe
@@ -3696,94 +3680,6 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/lib/ldscripts/elf_iamcu.xu
 /usr/lib/ldscripts/elf_iamcu.xw
 /usr/lib/ldscripts/elf_iamcu.xwe
-/usr/lib/ldscripts/elf_k1om.x
-/usr/lib/ldscripts/elf_k1om.xbn
-/usr/lib/ldscripts/elf_k1om.xc
-/usr/lib/ldscripts/elf_k1om.xce
-/usr/lib/ldscripts/elf_k1om.xd
-/usr/lib/ldscripts/elf_k1om.xdc
-/usr/lib/ldscripts/elf_k1om.xdce
-/usr/lib/ldscripts/elf_k1om.xde
-/usr/lib/ldscripts/elf_k1om.xdw
-/usr/lib/ldscripts/elf_k1om.xdwe
-/usr/lib/ldscripts/elf_k1om.xe
-/usr/lib/ldscripts/elf_k1om.xn
-/usr/lib/ldscripts/elf_k1om.xr
-/usr/lib/ldscripts/elf_k1om.xs
-/usr/lib/ldscripts/elf_k1om.xsc
-/usr/lib/ldscripts/elf_k1om.xsce
-/usr/lib/ldscripts/elf_k1om.xse
-/usr/lib/ldscripts/elf_k1om.xsw
-/usr/lib/ldscripts/elf_k1om.xswe
-/usr/lib/ldscripts/elf_k1om.xu
-/usr/lib/ldscripts/elf_k1om.xw
-/usr/lib/ldscripts/elf_k1om.xwe
-/usr/lib/ldscripts/elf_k1om_fbsd.x
-/usr/lib/ldscripts/elf_k1om_fbsd.xbn
-/usr/lib/ldscripts/elf_k1om_fbsd.xc
-/usr/lib/ldscripts/elf_k1om_fbsd.xce
-/usr/lib/ldscripts/elf_k1om_fbsd.xd
-/usr/lib/ldscripts/elf_k1om_fbsd.xdc
-/usr/lib/ldscripts/elf_k1om_fbsd.xdce
-/usr/lib/ldscripts/elf_k1om_fbsd.xde
-/usr/lib/ldscripts/elf_k1om_fbsd.xdw
-/usr/lib/ldscripts/elf_k1om_fbsd.xdwe
-/usr/lib/ldscripts/elf_k1om_fbsd.xe
-/usr/lib/ldscripts/elf_k1om_fbsd.xn
-/usr/lib/ldscripts/elf_k1om_fbsd.xr
-/usr/lib/ldscripts/elf_k1om_fbsd.xs
-/usr/lib/ldscripts/elf_k1om_fbsd.xsc
-/usr/lib/ldscripts/elf_k1om_fbsd.xsce
-/usr/lib/ldscripts/elf_k1om_fbsd.xse
-/usr/lib/ldscripts/elf_k1om_fbsd.xsw
-/usr/lib/ldscripts/elf_k1om_fbsd.xswe
-/usr/lib/ldscripts/elf_k1om_fbsd.xu
-/usr/lib/ldscripts/elf_k1om_fbsd.xw
-/usr/lib/ldscripts/elf_k1om_fbsd.xwe
-/usr/lib/ldscripts/elf_l1om.x
-/usr/lib/ldscripts/elf_l1om.xbn
-/usr/lib/ldscripts/elf_l1om.xc
-/usr/lib/ldscripts/elf_l1om.xce
-/usr/lib/ldscripts/elf_l1om.xd
-/usr/lib/ldscripts/elf_l1om.xdc
-/usr/lib/ldscripts/elf_l1om.xdce
-/usr/lib/ldscripts/elf_l1om.xde
-/usr/lib/ldscripts/elf_l1om.xdw
-/usr/lib/ldscripts/elf_l1om.xdwe
-/usr/lib/ldscripts/elf_l1om.xe
-/usr/lib/ldscripts/elf_l1om.xn
-/usr/lib/ldscripts/elf_l1om.xr
-/usr/lib/ldscripts/elf_l1om.xs
-/usr/lib/ldscripts/elf_l1om.xsc
-/usr/lib/ldscripts/elf_l1om.xsce
-/usr/lib/ldscripts/elf_l1om.xse
-/usr/lib/ldscripts/elf_l1om.xsw
-/usr/lib/ldscripts/elf_l1om.xswe
-/usr/lib/ldscripts/elf_l1om.xu
-/usr/lib/ldscripts/elf_l1om.xw
-/usr/lib/ldscripts/elf_l1om.xwe
-/usr/lib/ldscripts/elf_l1om_fbsd.x
-/usr/lib/ldscripts/elf_l1om_fbsd.xbn
-/usr/lib/ldscripts/elf_l1om_fbsd.xc
-/usr/lib/ldscripts/elf_l1om_fbsd.xce
-/usr/lib/ldscripts/elf_l1om_fbsd.xd
-/usr/lib/ldscripts/elf_l1om_fbsd.xdc
-/usr/lib/ldscripts/elf_l1om_fbsd.xdce
-/usr/lib/ldscripts/elf_l1om_fbsd.xde
-/usr/lib/ldscripts/elf_l1om_fbsd.xdw
-/usr/lib/ldscripts/elf_l1om_fbsd.xdwe
-/usr/lib/ldscripts/elf_l1om_fbsd.xe
-/usr/lib/ldscripts/elf_l1om_fbsd.xn
-/usr/lib/ldscripts/elf_l1om_fbsd.xr
-/usr/lib/ldscripts/elf_l1om_fbsd.xs
-/usr/lib/ldscripts/elf_l1om_fbsd.xsc
-/usr/lib/ldscripts/elf_l1om_fbsd.xsce
-/usr/lib/ldscripts/elf_l1om_fbsd.xse
-/usr/lib/ldscripts/elf_l1om_fbsd.xsw
-/usr/lib/ldscripts/elf_l1om_fbsd.xswe
-/usr/lib/ldscripts/elf_l1om_fbsd.xu
-/usr/lib/ldscripts/elf_l1om_fbsd.xw
-/usr/lib/ldscripts/elf_l1om_fbsd.xwe
 /usr/lib/ldscripts/elf_mipsel_haiku.x
 /usr/lib/ldscripts/elf_mipsel_haiku.xbn
 /usr/lib/ldscripts/elf_mipsel_haiku.xc
@@ -4922,7 +4818,13 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/bin/dllwrap
 /usr/bin/dwp
 /usr/bin/elfedit
+/usr/bin/gp-archive
+/usr/bin/gp-collect-app
+/usr/bin/gp-display-html
+/usr/bin/gp-display-src
+/usr/bin/gp-display-text
 /usr/bin/gprof
+/usr/bin/gprofng
 /usr/bin/ld
 /usr/bin/ld.bfd
 /usr/bin/nm
@@ -4942,16 +4844,20 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/include/ansidecl.h
 /usr/include/bfd.h
 /usr/include/bfdlink.h
+/usr/include/collectorAPI.h
 /usr/include/ctf-api.h
 /usr/include/ctf.h
 /usr/include/diagnostics.h
 /usr/include/dis-asm.h
+/usr/include/libcollector.h
+/usr/include/libfcollector.h
 /usr/include/libiberty.h
 /usr/include/libiberty/alloca-conf.h
 /usr/include/libiberty/ansidecl.h
 /usr/include/libiberty/bfdlink.h
 /usr/include/libiberty/binary-io.h
 /usr/include/libiberty/bout.h
+/usr/include/libiberty/collectorAPI.h
 /usr/include/libiberty/ctf-api.h
 /usr/include/libiberty/ctf.h
 /usr/include/libiberty/demangle.h
@@ -4974,6 +4880,8 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/include/libiberty/hashtab.h
 /usr/include/libiberty/hp-symtab.h
 /usr/include/libiberty/leb128.h
+/usr/include/libiberty/libcollector.h
+/usr/include/libiberty/libfcollector.h
 /usr/include/libiberty/libiberty.h
 /usr/include/libiberty/longlong.h
 /usr/include/libiberty/lto-symtab.h
@@ -5012,12 +4920,21 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/share/info/binutils.info
 /usr/share/info/ctf-spec.info
 /usr/share/info/gprof.info
+/usr/share/info/gprofng.info
 /usr/share/info/ld.info
 
 %files lib
 %defattr(-,root,root,-)
 /usr/lib64/bfd-plugins/libdep.so
-/usr/lib64/libbfd-2.38.so
+/usr/lib64/gprofng/libgp-collector.so
+/usr/lib64/gprofng/libgp-collectorAPI.so
+/usr/lib64/gprofng/libgp-heap.so
+/usr/lib64/gprofng/libgp-iotrace.so
+/usr/lib64/gprofng/libgp-sync.so
+/usr/lib64/gprofng/libgprofng.so
+/usr/lib64/gprofng/libgprofng.so.0
+/usr/lib64/gprofng/libgprofng.so.0.0.0
+/usr/lib64/libbfd-2.39.so
 /usr/lib64/libbfd.so
 /usr/lib64/libctf-nobfd.so
 /usr/lib64/libctf-nobfd.so.0
@@ -5025,7 +4942,7 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/lib64/libctf.so
 /usr/lib64/libctf.so.0
 /usr/lib64/libctf.so.0.0.0
-/usr/lib64/libopcodes-2.38.so
+/usr/lib64/libopcodes-2.39.so
 /usr/lib64/libopcodes.so
 
 %files license
@@ -5046,7 +4963,13 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/share/man/man1/c++filt.1
 /usr/share/man/man1/dlltool.1
 /usr/share/man/man1/elfedit.1
+/usr/share/man/man1/gp-archive.1
+/usr/share/man/man1/gp-collect-app.1
+/usr/share/man/man1/gp-display-html.1
+/usr/share/man/man1/gp-display-src.1
+/usr/share/man/man1/gp-display-text.1
 /usr/share/man/man1/gprof.1
+/usr/share/man/man1/gprofng.1
 /usr/share/man/man1/ld.1
 /usr/share/man/man1/nm.1
 /usr/share/man/man1/objcopy.1

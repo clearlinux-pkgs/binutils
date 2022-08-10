@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/bash -x
 set -e -o pipefail
 
 BINUTILS_GIT=~/git/binutils-gdb
-BINUTILS_VER=2.38
+BINUTILS_VER=2.39
 
 BINUTILS_TAG="binutils-${BINUTILS_VER}"
 BINUTILS_BRANCH=origin/binutils-$(echo "${BINUTILS_VER}" | sed -re "s|([0-9]+)\.([0-9]+)(\.[0-9]+)?|\1_\2|")-branch

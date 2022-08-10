@@ -5,6 +5,7 @@ Configure miss: elf-hints.h usability
 Configure miss: fls
 Configure miss: gcc version with buggy 64-bit support
 Configure miss: isl 0.15 or later
+Configure miss: jni.h
 Configure miss: lwpstatus_t in sys/procfs.h
 Configure miss: lwpstatus_t.pr_context in sys/procfs.h
 Configure miss: lwpstatus_t.pr_fpreg in sys/procfs.h
