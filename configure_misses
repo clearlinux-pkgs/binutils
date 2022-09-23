@@ -1,3 +1,4 @@
+Configure miss: -fcf-protection
 Configure miss: chsize
 Configure miss: elf-hints.h
 Configure miss: elf-hints.h presence
