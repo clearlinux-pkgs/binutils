@@ -1,9 +1,10 @@
-Alan Modra (5):
+Alan Modra (6):
       PR29462, internal error in relocate, at powerpc.cc:10796
       PR29466, APP/NO_APP with .linefile
       Re: PR29466, APP/NO_APP with linefile
       PowerPC64 pcrel got relocs against local symbols
       Re: PowerPC64 pcrel got relocs against local symbols
+      PR29542, PowerPC gold internal error in get_output_view,
 
 H.J. Lu (1):
       elf: Reset alignment for each PT_LOAD segment
@@ -1108,10 +1109,20 @@ index 915c45d74f6..7a45af4a308 100644
  run_list_test badarg ""
  
 diff --git a/gold/powerpc.cc b/gold/powerpc.cc
-index 86e2b99be4e..22c0462326d 100644
+index 86e2b99be4e..b950869d0b6 100644
 --- a/gold/powerpc.cc
 +++ b/gold/powerpc.cc
-@@ -7675,22 +7675,18 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
+@@ -4338,7 +4338,8 @@ template<int size, bool big_endian>
+ void
+ Output_data_plt_powerpc<size, big_endian>::do_write(Output_file* of)
+ {
+-  if (!this->sym_ents_.empty())
++  if (!this->sym_ents_.empty()
++      && !parameters->options().output_is_position_independent())
+     {
+       const section_size_type offset = this->offset();
+       const section_size_type oview_size
+@@ -7675,22 +7676,18 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
  
    switch (r_type)
      {
@@ -1138,7 +1149,7 @@ index 86e2b99be4e..22c0462326d 100644
      case elfcpp::R_PPC64_ADDR16_HIGHER34:
      case elfcpp::R_PPC64_ADDR16_HIGHERA34:
      case elfcpp::R_PPC64_ADDR16_HIGHEST34:
-@@ -7700,6 +7696,16 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
+@@ -7700,6 +7697,16 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
      case elfcpp::R_PPC64_D34_HI30:
      case elfcpp::R_PPC64_D34_HA30:
      case elfcpp::R_PPC64_D28:
@@ -1155,7 +1166,7 @@ index 86e2b99be4e..22c0462326d 100644
        ref = Symbol::ABSOLUTE_REF;
        break;
  
-@@ -7710,13 +7716,14 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
+@@ -7710,13 +7717,14 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
        ref = Symbol::FUNCTION_CALL | Symbol::ABSOLUTE_REF;
        break;
  
@@ -1176,7 +1187,7 @@ index 86e2b99be4e..22c0462326d 100644
      case elfcpp::R_PPC64_REL16_HIGH:
      case elfcpp::R_PPC64_REL16_HIGHA:
      case elfcpp::R_PPC64_REL16_HIGHER:
-@@ -7729,36 +7736,45 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
+@@ -7729,36 +7737,45 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
      case elfcpp::R_PPC64_REL16_HIGHEST34:
      case elfcpp::R_PPC64_REL16_HIGHESTA34:
      case elfcpp::R_PPC64_PCREL28:
@@ -1234,7 +1245,7 @@ index 86e2b99be4e..22c0462326d 100644
      case elfcpp::R_PPC64_GOT16_DS:
      case elfcpp::R_PPC64_GOT16_LO_DS:
      case elfcpp::R_PPC64_GOT_PCREL34:
-@@ -7768,11 +7784,16 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
+@@ -7768,11 +7785,16 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
      case elfcpp::R_PPC64_TOC16_HA:
      case elfcpp::R_PPC64_TOC16_DS:
      case elfcpp::R_PPC64_TOC16_LO_DS:
@@ -1253,7 +1264,7 @@ index 86e2b99be4e..22c0462326d 100644
      case elfcpp::R_PPC64_TLSGD:
      case elfcpp::R_PPC64_TLSLD:
      case elfcpp::R_PPC64_TPREL34:
-@@ -7781,6 +7802,11 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
+@@ -7781,6 +7803,11 @@ Target_powerpc<size, big_endian>::Scan::get_reference_flags(
      case elfcpp::R_PPC64_GOT_TLSLD_PCREL34:
      case elfcpp::R_PPC64_GOT_TPREL_PCREL34:
      case elfcpp::R_PPC64_GOT_DTPREL_PCREL34:
@@ -1265,7 +1276,7 @@ index 86e2b99be4e..22c0462326d 100644
        ref = Symbol::TLS_REF;
        break;
  
-@@ -10671,10 +10697,8 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+@@ -10671,10 +10698,8 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
    bool has_stub_value = false;
    bool localentry0 = false;
    unsigned int r_sym = elfcpp::elf_r_sym<size>(rela.get_r_info());
@@ -1278,7 +1289,7 @@ index 86e2b99be4e..22c0462326d 100644
    if (is_plt16_reloc<size>(r_type)
        || r_type == elfcpp::R_PPC64_PLT_PCREL34
        || r_type == elfcpp::R_PPC64_PLT_PCREL34_NOTOC
-@@ -10688,21 +10712,18 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+@@ -10688,21 +10713,18 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
        // that the decision depends on the PLTCALL reloc, and we don't
        // know the address of that instruction when processing others
        // in the sequence.  So the decision needs to be made in
@@ -1312,7 +1323,7 @@ index 86e2b99be4e..22c0462326d 100644
      {
        if (size == 64
  	  && gsym != NULL
-@@ -10796,9 +10817,9 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+@@ -10796,9 +10818,9 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
        gold_assert(has_stub_value || !(os->flags() & elfcpp::SHF_ALLOC));
      }
  
@@ -1325,7 +1336,7 @@ index 86e2b99be4e..22c0462326d 100644
      {
        const Output_data_plt_powerpc<size, big_endian>* plt;
        if (gsym)
-@@ -10826,7 +10847,7 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+@@ -10826,7 +10848,7 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
  	    value -= target->toc_pointer();
  	}
      }
@@ -1334,7 +1345,7 @@ index 86e2b99be4e..22c0462326d 100644
  	   && (is_plt16_reloc<size>(r_type)
  	       || r_type == elfcpp::R_POWERPC_PLTSEQ
  	       || r_type == elfcpp::R_PPC64_PLTSEQ_NOTOC))
-@@ -10835,7 +10856,7 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+@@ -10835,7 +10857,7 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
        elfcpp::Swap<32, big_endian>::writeval(iview, nop);
        r_type = elfcpp::R_POWERPC_NONE;
      }
@@ -1343,7 +1354,7 @@ index 86e2b99be4e..22c0462326d 100644
  	   && (r_type == elfcpp::R_PPC64_PLT_PCREL34
  	       || r_type == elfcpp::R_PPC64_PLT_PCREL34_NOTOC))
      {
-@@ -11316,8 +11337,8 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
+@@ -11316,8 +11338,8 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
      }
    else if (!has_stub_value)
      {
