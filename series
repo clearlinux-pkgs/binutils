@@ -1,2 +1,3 @@
 binutils-stable-branch.patch
 binutils-add-LD_AS_NEEDED-global-env.patch
+compilespeed.patch
