@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.39
-Release  : 479
+Release  : 480
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz.sig
@@ -14,6 +14,7 @@ Summary  : zlib compression library
 Group    : Development/Tools
 License  : BSL-1.0 GPL-2.0 GPL-3.0 GPL-3.0+ LGPL-2.0 LGPL-2.1 LGPL-3.0
 Requires: binutils-bin = %{version}-%{release}
+Requires: binutils-filemap = %{version}-%{release}
 Requires: binutils-info = %{version}-%{release}
 Requires: binutils-lib = %{version}-%{release}
 Requires: binutils-license = %{version}-%{release}
@@ -46,6 +47,7 @@ debuggers, etc., plus their support routines, definitions, and documentation.
 Summary: bin components for the binutils package.
 Group: Binaries
 Requires: binutils-license = %{version}-%{release}
+Requires: binutils-filemap = %{version}-%{release}
 
 %description bin
 bin components for the binutils package.
@@ -71,6 +73,14 @@ Group: Default
 extras components for the binutils package.
 
 
+%package filemap
+Summary: filemap components for the binutils package.
+Group: Default
+
+%description filemap
+filemap components for the binutils package.
+
+
 %package info
 Summary: info components for the binutils package.
 Group: Default
@@ -83,6 +93,7 @@ info components for the binutils package.
 Summary: lib components for the binutils package.
 Group: Libraries
 Requires: binutils-license = %{version}-%{release}
+Requires: binutils-filemap = %{version}-%{release}
 
 %description lib
 lib components for the binutils package.
@@ -126,6 +137,9 @@ staticdev components for the binutils package.
 cd %{_builddir}/binutils-2.39
 %patch1 -p1
 %patch2 -p1
+pushd ..
+cp -a binutils-2.39 buildavx2
+popd
 
 %build
 ## build_prepend content
@@ -163,7 +177,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1664889240
+export SOURCE_DATE_EPOCH=1667761626
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -174,6 +188,45 @@ export FFLAGS="$FFLAGS -O3 -ffat-lto-objects -flto=auto "
 export CXXFLAGS="$CXXFLAGS -O3 -ffat-lto-objects -flto=auto "
 make  %{?_smp_mflags}  -O tooldir=/usr
 
+pushd ../buildavx2
+## build_prepend content
+rm -rf gdb libdecnumber readline sim
+export SOURCE_DATE_EPOCH=1549215809
+sed -i -e "s/#define BFD_VERSION_DATE.*/#define BFD_VERSION_DATE 20190203/g" bfd/version.h
+
+# Force all man pages to regenerate... they were truncated in the 2.37 release
+touch binutils/doc/binutils.texi
+touch gas/doc/as.texi
+touch gprof/gprof.texi
+touch ld/ld.texi
+
+# Do not use a macro - breaks toolchain
+./configure \
+--prefix=/usr \
+--libdir=/usr/lib64 \
+--includedir=/usr/include \
+--with-lib-path=/usr/lib64:/usr/lib32:/usr/lib \
+--enable-shared --disable-static \
+--target=x86_64-generic-linux \
+--build=x86_64-generic-linux \
+--enable-targets=all \
+--enable-deterministic-archives \
+--enable-lto \
+--enable-plugins \
+--enable-gold \
+--enable-secureplt \
+--disable-werror \
+--enable-64-bit-bfd \
+--with-system-zlib \
+--without-debuginfod
+## build_prepend end
+export CFLAGS="$CFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3"
+export CXXFLAGS="$CXXFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3"
+export FFLAGS="$FFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3"
+export FCFLAGS="$FCFLAGS -m64 -march=x86-64-v3"
+export LDFLAGS="$LDFLAGS -m64 -march=x86-64-v3"
+make  %{?_smp_mflags}  -O tooldir=/usr
+popd
 
 %check
 export LANG=C.UTF-8
@@ -183,7 +236,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1664889240
+export SOURCE_DATE_EPOCH=1667761626
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
@@ -197,6 +250,9 @@ cp %{_builddir}/binutils-%{version}/include/COPYING3 %{buildroot}/usr/share/pack
 cp %{_builddir}/binutils-%{version}/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d || :
 cp %{_builddir}/binutils-%{version}/libiberty/copying-lib.texi %{buildroot}/usr/share/package-licenses/binutils/beb56348433d183b962b87b5bff2b67047cc8bc3 || :
 cp %{_builddir}/binutils-%{version}/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0 || :
+pushd ../buildavx2/
+%make_install_v3 tooldir=/usr
+popd
 %make_install tooldir=/usr
 %find_lang binutils
 %find_lang gprof
@@ -236,7 +292,11 @@ install -m 644 include/plugin-api.h %{buildroot}/usr/include/
 
 install -d %{buildroot}/usr/include/libiberty
 install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
+
+install -d %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12/
+cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12/as
 ## install_append end
+/usr/bin/elf-move.py avx2 %{buildroot}-v3 %{buildroot} %{buildroot}/usr/share/clear/filemap/filemap-%{name}
 
 %files
 %defattr(-,root,root,-)
@@ -4809,6 +4869,7 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/lib/ldscripts/z8002.xn
 /usr/lib/ldscripts/z8002.xr
 /usr/lib/ldscripts/z8002.xu
+/usr/lib64/gcc/x86_64-generic-linux/12/as
 
 %files bin
 %defattr(-,root,root,-)
@@ -4840,6 +4901,7 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/bin/strip
 /usr/bin/sysdump
 /usr/bin/windmc
+/usr/share/clear/optimized-elf/bin*
 
 %files dev
 %defattr(-,root,root,-)
@@ -4915,6 +4977,10 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 %defattr(-,root,root,-)
 /usr/bin/ld.gold
 
+%files filemap
+%defattr(-,root,root,-)
+/usr/share/clear/filemap/filemap-binutils
+
 %files info
 %defattr(0644,root,root,0755)
 /usr/share/info/as.info
@@ -4928,6 +4994,16 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 %files lib
 %defattr(-,root,root,-)
 /usr/lib64/bfd-plugins/libdep.so
+/usr/lib64/glibc-hwcaps/x86-64-v3/libbfd-2.39.0.so
+/usr/lib64/glibc-hwcaps/x86-64-v3/libbfd.so
+/usr/lib64/glibc-hwcaps/x86-64-v3/libctf-nobfd.so
+/usr/lib64/glibc-hwcaps/x86-64-v3/libctf-nobfd.so.0
+/usr/lib64/glibc-hwcaps/x86-64-v3/libctf-nobfd.so.0.0.0
+/usr/lib64/glibc-hwcaps/x86-64-v3/libctf.so
+/usr/lib64/glibc-hwcaps/x86-64-v3/libctf.so.0
+/usr/lib64/glibc-hwcaps/x86-64-v3/libctf.so.0.0.0
+/usr/lib64/glibc-hwcaps/x86-64-v3/libopcodes-2.39.0.so
+/usr/lib64/glibc-hwcaps/x86-64-v3/libopcodes.so
 /usr/lib64/gprofng/libgp-collector.so
 /usr/lib64/gprofng/libgp-collectorAPI.so
 /usr/lib64/gprofng/libgp-heap.so
@@ -4946,6 +5022,7 @@ install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
 /usr/lib64/libctf.so.0.0.0
 /usr/lib64/libopcodes-2.39.0.so
 /usr/lib64/libopcodes.so
+/usr/share/clear/optimized-elf/other*
 
 %files license
 %defattr(0644,root,root,0755)

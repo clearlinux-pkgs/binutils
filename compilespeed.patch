@@ -1,0 +1,16 @@
+--- binutils-2.39/gas/as.c~	2022-07-08 09:46:47.000000000 +0000
++++ binutils-2.39/gas/as.c	2022-11-06 19:04:06.769936497 +0000
+@@ -1273,13 +1273,6 @@
+   start_time = get_run_time ();
+   signal_init ();
+ 
+-#ifdef HAVE_LC_MESSAGES
+-  setlocale (LC_MESSAGES, "");
+-#endif
+-  setlocale (LC_CTYPE, "");
+-  bindtextdomain (PACKAGE, LOCALEDIR);
+-  textdomain (PACKAGE);
+-
+   if (debug_memory)
+     chunksize = 64;
+ 

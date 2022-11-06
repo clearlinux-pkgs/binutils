@@ -10,3 +10,6 @@ install -m 644 include/plugin-api.h %{buildroot}/usr/include/
 
 install -d %{buildroot}/usr/include/libiberty
 install -m 644 include/*.h %{buildroot}/usr/include/libiberty/
+
+install -d %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12/
+cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12/as
