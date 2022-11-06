@@ -8,6 +8,10 @@ touch gas/doc/as.texi
 touch gprof/gprof.texi
 touch ld/ld.texi
 
+
+# relro costs quite a bit for compile time
+export CFLAGS="$CFLAGS -Wl,-z,norelro"
+
 # Do not use a macro - breaks toolchain
 ./configure \
 	--prefix=/usr \
