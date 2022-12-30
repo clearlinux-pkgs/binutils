@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.39
-Release  : 484
+Release  : 485
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz.sig
@@ -36,6 +36,9 @@ BuildRequires : texinfo
 BuildRequires : xz-dev
 BuildRequires : zlib-dev
 BuildRequires : zstd-dev
+# Suppress stripping binaries
+%define __strip /bin/true
+%define debug_package %{nil}
 Patch1: binutils-stable-branch.patch
 Patch2: binutils-add-LD_AS_NEEDED-global-env.patch
 Patch3: compilespeed.patch
@@ -185,15 +188,15 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1671646308
+export SOURCE_DATE_EPOCH=1672415559
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
 export NM=gcc-nm
-export CFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=auto "
-export FCFLAGS="$FFLAGS -O3 -ffat-lto-objects -flto=auto "
-export FFLAGS="$FFLAGS -O3 -ffat-lto-objects -flto=auto "
-export CXXFLAGS="$CXXFLAGS -O3 -ffat-lto-objects -flto=auto "
+export CFLAGS="$CFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz "
+export FCFLAGS="$FFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz "
+export FFLAGS="$FFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz "
+export CXXFLAGS="$CXXFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz "
 make  %{?_smp_mflags}  -O tooldir=/usr
 
 pushd ../buildavx2
@@ -248,7 +251,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1671646308
+export SOURCE_DATE_EPOCH=1672415559
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
