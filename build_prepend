@@ -11,6 +11,7 @@ touch ld/ld.texi
 
 # relro costs quite a bit for compile time
 export CFLAGS="$CFLAGS -Wl,-z,norelro  -g1 -gno-column-info -gno-variable-location-views -gz"
+export CXXFLAGS="$CXXFLAGS -Wl,-z,norelro  -g1 -gno-column-info -gno-variable-location-views -gz"
 
 # Do not use a macro - breaks toolchain
 ./configure \
