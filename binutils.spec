@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.39
-Release  : 489
+Release  : 490
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.39.tar.xz.sig
