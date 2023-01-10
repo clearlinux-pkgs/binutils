@@ -19,6 +19,9 @@ Martin Liska (1):
 Nick Clifton (1):
       reset development to true.  update version number
 
+Stefan Schulze Frielinghaus (1):
+      IBM zSystems: Fix offset relative to static TLS
+
 Victor Do Nascimento (1):
       arm: Use DWARF numbering convention for pseudo-register representation
 
@@ -150,6 +153,50 @@ index 89484ceb233..8bd572d712e 100644
  
        if (m->count == 0)
  	p->p_vaddr = m->p_vaddr_offset * opb;
+diff --git a/bfd/elf32-s390.c b/bfd/elf32-s390.c
+index 45b4581f8a2..6f9f4cf0cf6 100644
+--- a/bfd/elf32-s390.c
++++ b/bfd/elf32-s390.c
+@@ -2706,7 +2706,7 @@ elf_s390_relocate_section (bfd *output_bfd,
+ 	      /* This relocation gets optimized away by the local exec
+ 		 access optimization.  */
+ 	      BFD_ASSERT (! unresolved_reloc);
+-	      bfd_put_32 (output_bfd, -tpoff (info, relocation),
++	      bfd_put_32 (output_bfd, -tpoff (info, relocation) + rel->r_addend,
+ 			  contents + rel->r_offset);
+ 	      continue;
+ 	    }
+@@ -2901,7 +2901,7 @@ elf_s390_relocate_section (bfd *output_bfd,
+ 	  else
+ 	    {
+ 	      BFD_ASSERT (! unresolved_reloc);
+-	      bfd_put_32 (output_bfd, -tpoff (info, relocation),
++	      bfd_put_32 (output_bfd, -tpoff (info, relocation) + rel->r_addend,
+ 			  contents + rel->r_offset);
+ 	    }
+ 	  continue;
+diff --git a/bfd/elf64-s390.c b/bfd/elf64-s390.c
+index c1ed3d619d6..4530197a540 100644
+--- a/bfd/elf64-s390.c
++++ b/bfd/elf64-s390.c
+@@ -2714,7 +2714,7 @@ elf_s390_relocate_section (bfd *output_bfd,
+ 	      /* This relocation gets optimized away by the local exec
+ 		 access optimization.  */
+ 	      BFD_ASSERT (! unresolved_reloc);
+-	      bfd_put_64 (output_bfd, -tpoff (info, relocation),
++	      bfd_put_64 (output_bfd, -tpoff (info, relocation) + rel->r_addend,
+ 			  contents + rel->r_offset);
+ 	      continue;
+ 	    }
+@@ -2907,7 +2907,7 @@ elf_s390_relocate_section (bfd *output_bfd,
+ 	  else
+ 	    {
+ 	      BFD_ASSERT (! unresolved_reloc);
+-	      bfd_put_64 (output_bfd, -tpoff (info, relocation),
++	      bfd_put_64 (output_bfd, -tpoff (info, relocation) + rel->r_addend,
+ 			  contents + rel->r_offset);
+ 	    }
+ 	  continue;
 diff --git a/bfd/elfnn-loongarch.c b/bfd/elfnn-loongarch.c
 index 5b44901b9e0..fafdc7c7458 100644
 --- a/bfd/elfnn-loongarch.c
@@ -2199,6 +2246,38 @@ index 00000000000..c0cc2fc30d2
 +]
 +
 +run_ld_link_tests $link_tests
+diff --git a/ld/testsuite/ld-s390/reloctlsle-1.d b/ld/testsuite/ld-s390/reloctlsle-1.d
+new file mode 100644
+index 00000000000..a24c3d60c25
+--- /dev/null
++++ b/ld/testsuite/ld-s390/reloctlsle-1.d
+@@ -0,0 +1,6 @@
++#as: -m64 -mzarch -march=z900
++#ld: -m elf64_s390 -static
++#readelf: -x .data
++
++Hex dump of section '.data':
++  0x[0-9a-f]+ ffffffff fffffff0 ffffffff fffffff8 ................
+diff --git a/ld/testsuite/ld-s390/reloctlsle-1.s b/ld/testsuite/ld-s390/reloctlsle-1.s
+new file mode 100644
+index 00000000000..c8f351dd6e6
+--- /dev/null
++++ b/ld/testsuite/ld-s390/reloctlsle-1.s
+@@ -0,0 +1,14 @@
++	.text
++	.globl	_start
++_start:
++	larl	%r0,bar
++
++	.section .tbss,"awT",@nobits
++	.align	8
++foo:	.zero	8
++	.zero	8
++
++	.data
++	.align	8
++	.quad	foo@NTPOFF
++bar:	.quad	foo@NTPOFF+8
 diff --git a/opcodes/configure b/opcodes/configure
 index 2a88987096b..db023b48c28 100755
 --- a/opcodes/configure
