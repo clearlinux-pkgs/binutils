@@ -4,3 +4,4 @@ libm.so.6
 libmsgpackc.so.2
 libstdc++.so.6
 libz.so.1
+libzstd.so.1
