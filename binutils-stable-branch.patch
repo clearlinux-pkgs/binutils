@@ -4,10 +4,11 @@ Enze Li (1):
 Indu Bhagat (1):
       toplevel: Makefile.def: add install-strip dependency on libsframe
 
-Nick Clifton (3):
+Nick Clifton (4):
       Re-enable development.  Update version to 2.40.0
       Updated translations for the gas and binutils sub-directories
       Fix version number snafu in some configuration files: 2.40.00 should be 2.40
+      Updated Swedish translation for the binutils sub-directory
 
 diff --git a/Makefile.def b/Makefile.def
 index f549d5741ee..2f51f83b043 100644
@@ -60,10 +61,14 @@ index be6c77bb224..81737d8f9c7 100644
 -m4_define([BFD_VERSION], [2.40])
 +m4_define([BFD_VERSION], [2.40.0])
 diff --git a/binutils/ChangeLog b/binutils/ChangeLog
-index 3f27b5f5802..d28d00ed036 100644
+index 3f27b5f5802..93563006aa5 100644
 --- a/binutils/ChangeLog
 +++ b/binutils/ChangeLog
-@@ -1,3 +1,7 @@
+@@ -1,3 +1,11 @@
++2023-01-23  Nick Clifton  <nickc@redhat.com>
++
++	* po/sv.po: Updated Swedish translation.
++
 +2023-01-16  Nick Clifton  <nickc@redhat.com>
 +
 +	* po/sv.po: Updated Swedish translation.
@@ -158,7 +163,7 @@ index 1367c88f52d..3cb797c2b8d 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/binutils/po/sv.po b/binutils/po/sv.po
-index e3cd39683f8..f848dcc1d8c 100644
+index e3cd39683f8..1134cd2b2d2 100644
 --- a/binutils/po/sv.po
 +++ b/binutils/po/sv.po
 @@ -1,18 +1,18 @@
@@ -181,7 +186,7 @@ index e3cd39683f8..f848dcc1d8c 100644
 -"POT-Creation-Date: 2022-07-08 11:02+0100\n"
 -"PO-Revision-Date: 2022-07-11 11:47+0200\n"
 +"POT-Creation-Date: 2022-12-31 12:19+0000\n"
-+"PO-Revision-Date: 2023-01-15 13:15+0100\n"
++"PO-Revision-Date: 2023-01-22 16:13+0100\n"
  "Last-Translator: Göran Uddeborg <goeran@uddeborg.se>\n"
  "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
  "Language: sv\n"
@@ -363,7 +368,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "Report bugs to %s.\n"
  msgstr ""
-@@ -1114,286 +1114,318 @@ msgstr "debug_get_real_type: %s har cirkulär felsökningsinformation\n"
+@@ -1114,286 +1114,316 @@ msgstr "debug_get_real_type: %s har cirkulär felsökningsinformation\n"
  msgid "debug_write_type: illegal type encountered"
  msgstr "debug_write_type: påträffade en ogiltig typ"
  
@@ -701,16 +706,14 @@ index e3cd39683f8..f848dcc1d8c 100644
 +msgstr "      --non-deterministic-libraries\n"
 +
 +#: dlltool.c:3688
-+#, fuzzy, c-format
-+#| msgid "  [U]          - use actual timestamps and uids/gids\n"
++#, c-format
 +msgid "                             Use actual timestamps and uids/gids in output libraries\n"
-+msgstr "  [D]          - använd verkliga tidsstämplar och uid/gid\n"
++msgstr "                             Använd verkliga tidsstämplar och uid/gid i utmatade bibliotek\n"
 +
 +#: dlltool.c:3690
-+#, fuzzy, c-format
-+#| msgid "  [U]          - use actual timestamps and uids/gids (default)\n"
++#, c-format
 +msgid "                             Use actual timestamps and uids/gids in output libraries (default)\n"
-+msgstr "  [D]          - använd verkliga tidsstämplar och uid/gid (standard)\n"
++msgstr "                             Använd verkliga tidsstämplar och uid/gid i utmatade bibliotek (standard)\n"
 +
 +#: dlltool.c:3691
  #, c-format
@@ -740,7 +743,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "      --export-all-symbols   Export all symbols to .def\n"
  msgstr "      --export-all-symbols   Exportera alla symboler till .def\n"
-@@ -1402,7 +1434,7 @@ msgstr "      --export-all-symbols   Exportera alla symboler till .def\n"
+@@ -1402,7 +1432,7 @@ msgstr "      --export-all-symbols   Exportera alla symboler till .def\n"
  #  extra i den engelska texten för att två flaggor är för långa. I den
  #  svenska översättningen är de indenterade tre tecken extra för att
  #  den ena flaggan blev ytterligare ett tecken för lång.
@@ -749,7 +752,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "      --no-export-all-symbols  Only export listed symbols\n"
  msgstr "      --no-export-all-symbols   Exportera endast anvisade symboler\n"
-@@ -1411,173 +1443,173 @@ msgstr "      --no-export-all-symbols   Exportera endast anvisade symboler\n"
+@@ -1411,173 +1441,173 @@ msgstr "      --no-export-all-symbols   Exportera endast anvisade symboler\n"
  #  extra i den engelska texten för att två flaggor är för långa. I den
  #  svenska översättningen är de indenterade tre tecken extra för att
  #  den ena flaggan blev ytterligare ett tecken för lång.
@@ -957,7 +960,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "Using file: %s"
  msgstr "Använder fil: %s"
-@@ -1852,19 +1884,23 @@ msgstr "ENHET namn        : %s\n"
+@@ -1852,19 +1882,23 @@ msgstr "ENHET namn        : %s\n"
  msgid "DRIVER options  : %s\n"
  msgstr "ENHET flaggor     : %s\n"
  
@@ -984,7 +987,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #. Read AMOUNT bytes from PTR and store them in VAL.
  #. Checks to make sure that the read will not reach or pass END.
  #. FUNC chooses whether the value read is unsigned or signed, and may
-@@ -1873,23 +1909,23 @@ msgstr "Kodad storlek på 0 är för liten för att läsa\n"
+@@ -1873,23 +1907,23 @@ msgstr "Kodad storlek på 0 är för liten för att läsa\n"
  #. This macro cannot protect against PTR values derived from user input.
  #. The C standard sections 6.5.6 and 6.5.8 say attempts to do so using
  #. pointers is undefined behaviour.
@@ -1012,27 +1015,25 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "End of Sequence\n"
-@@ -1898,36 +1934,39 @@ msgstr ""
+@@ -1898,36 +1932,36 @@ msgstr ""
  "Slut på sekvensen\n"
  "\n"
  
 -#: dwarf.c:499
--#, c-format
--msgid "Length (%lu) of DW_LNE_set_address op is too long\n"
 +#: dwarf.c:448
-+#, fuzzy, c-format
-+#| msgid "Length (%lu) of DW_LNE_set_address op is too long\n"
+ #, c-format
+-msgid "Length (%lu) of DW_LNE_set_address op is too long\n"
+-msgstr "Längden (%lu) på DW_LNE_set_address op är för lång\n"
 +msgid "Length (%zu) of DW_LNE_set_address op is too long\n"
- msgstr "Längden (%lu) på DW_LNE_set_address op är för lång\n"
++msgstr "Längden (%zu) på DW_LNE_set_address op är för lång\n"
  
 -#: dwarf.c:505
--#, c-format
--msgid "set Address to 0x%s\n"
 +#: dwarf.c:454
-+#, fuzzy, c-format
-+#| msgid "set Address to 0x%s\n"
+ #, c-format
+-msgid "set Address to 0x%s\n"
+-msgstr "sätt Adress till 0x%s\n"
 +msgid "set Address to %#<PRIx64>\n"
- msgstr "sätt Adress till 0x%s\n"
++msgstr "sätt adress till %#<PRIx64>\n"
  
 -#: dwarf.c:512
 +#: dwarf.c:461
@@ -1052,20 +1053,19 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "DW_LNE_define_file: Felaktig opkod-längd\n"
  
 -#: dwarf.c:539
--#, c-format
--msgid "set Discriminator to %s\n"
 +#: dwarf.c:488
-+#, fuzzy, c-format
-+#| msgid "set Discriminator to %s\n"
+ #, c-format
+-msgid "set Discriminator to %s\n"
+-msgstr "sätt diskriminator till %s\n"
 +msgid "set Discriminator to %<PRIu64>\n"
- msgstr "sätt diskriminator till %s\n"
++msgstr "sätt diskriminator till %<PRIu64>\n"
  
 -#: dwarf.c:605
 +#: dwarf.c:554
  #, c-format
  msgid "    UNKNOWN DW_LNE_HP_SFC opcode (%u)\n"
  msgstr "    OKÄND DW_LNE_HP_SFC-opkod (%u)\n"
-@@ -1936,485 +1975,530 @@ msgstr "    OKÄND DW_LNE_HP_SFC-opkod (%u)\n"
+@@ -1936,485 +1970,495 @@ msgstr "    OKÄND DW_LNE_HP_SFC-opkod (%u)\n"
  #. the limited range of the unsigned char data type used
  #. for op_code.
  #. && op_code <= DW_LNE_hi_user
@@ -1093,13 +1093,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "<ingen .debug_str-sektion>"
  
 -#: dwarf.c:647
--#, c-format
--msgid "DW_FORM_strp offset too big: 0x%s\n"
 +#: dwarf.c:596
-+#, fuzzy, c-format
-+#| msgid "DW_FORM_strp offset too big: 0x%s\n"
+ #, c-format
+-msgid "DW_FORM_strp offset too big: 0x%s\n"
+-msgstr "DW_FORM_strp-avstånd är för stort: 0x%s\n"
 +msgid "DW_FORM_strp offset too big: %#<PRIx64>\n"
- msgstr "DW_FORM_strp-avstånd är för stort: 0x%s\n"
++msgstr "DW_FORM_strp-avstånd är för stort: %#<PRIx64>\n"
  
 -#: dwarf.c:649 dwarf.c:677 dwarf.c:1843
 +#: dwarf.c:597 dwarf.c:624 dwarf.c:1821
@@ -1117,13 +1116,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "<ingen .debug_line_str-sektion>"
  
 -#: dwarf.c:675
--#, c-format
--msgid "DW_FORM_line_strp offset too big: 0x%s\n"
 +#: dwarf.c:623
-+#, fuzzy, c-format
-+#| msgid "DW_FORM_line_strp offset too big: 0x%s\n"
+ #, c-format
+-msgid "DW_FORM_line_strp offset too big: 0x%s\n"
+-msgstr "DW_FORM_line_strp-avstånd är för stort: 0x%s\n"
 +msgid "DW_FORM_line_strp offset too big: %#<PRIx64>\n"
- msgstr "DW_FORM_line_strp-avstånd är för stort: 0x%s\n"
++msgstr "DW_FORM_line_strp-avstånd är för stort: %<PRIx64>\n"
  
 -#: dwarf.c:687
 +#: dwarf.c:634
@@ -1146,13 +1144,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "<ingen .debug_str.dwo-sektion>"
  
 -#: dwarf.c:724
--#, c-format
--msgid "string index of %s converts to an offset of 0x%s which is too big for section %s"
 +#: dwarf.c:671
-+#, fuzzy, c-format
-+#| msgid "string index of %s converts to an offset of 0x%s which is too big for section %s"
+ #, c-format
+-msgid "string index of %s converts to an offset of 0x%s which is too big for section %s"
+-msgstr "ett strängindex på %s konverterar till ett avstånd på 0x%s vilket är för stort för sektionen %s"
 +msgid "string index of %<PRIu64> converts to an offset of %#<PRIx64> which is too big for section %s"
- msgstr "ett strängindex på %s konverterar till ett avstånd på 0x%s vilket är för stort för sektionen %s"
++msgstr "ett strängindex på %<PRIu64> konverterar till ett avstånd på %#<PRIx64> vilket är för stort för sektionen %s"
  
 -#: dwarf.c:729
 +#: dwarf.c:675
@@ -1160,13 +1157,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "<strängindexet är för stort>"
  
 -#: dwarf.c:742
--#, c-format
--msgid "indirect offset too big: 0x%s\n"
 +#: dwarf.c:688
-+#, fuzzy, c-format
-+#| msgid "indirect offset too big: 0x%s\n"
+ #, c-format
+-msgid "indirect offset too big: 0x%s\n"
+-msgstr "indirekt avstånd är för stort: 0x%s\n"
 +msgid "indirect offset too big: %#<PRIx64>\n"
- msgstr "indirekt avstånd är för stort: 0x%s\n"
++msgstr "indirekt avstånd är för stort: %#<PRIx64>\n"
  
 -#: dwarf.c:744
 +#: dwarf.c:689
@@ -1184,13 +1180,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Det går inte att hämta den indexerade adressen: sektionen .debug_addr saknas\n"
  
 -#: dwarf.c:772 dwarf.c:821
--#, c-format
--msgid "Offset into section %s too big: 0x%s\n"
 +#: dwarf.c:717 dwarf.c:773
-+#, fuzzy, c-format
-+#| msgid "Offset into section %s too big: 0x%s\n"
+ #, c-format
+-msgid "Offset into section %s too big: 0x%s\n"
+-msgstr "Avstånd in i sektionen %s är för stort: 0x%s\n"
 +msgid "Offset into section %s too big: %#<PRIx64>\n"
- msgstr "Avstånd in i sektionen %s är för stort: 0x%s\n"
++msgstr "Avstånd in i sektionen %s är för stort: %#<PRIx64>\n"
  
 -#: dwarf.c:793
 +#: dwarf.c:738
@@ -1198,60 +1193,54 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgid "Unable to locate %s section\n"
  msgstr "Kan inte hitta sektionen %s\n"
  
-+#: dwarf.c:744
-+#, fuzzy, c-format
-+#| msgid "Section %s is too small to contain a CU/TU header\n"
-+msgid "Section %s is too small to contain an value indexed from another section!\n"
-+msgstr "Sektionen %s är för liten för att innehålla ett CU-/TU-huvud\n"
-+
-+#. Report the missing single zero which ends the section.
-+#: dwarf.c:1051
-+#, fuzzy, c-format
-+#| msgid ".debug_macro section not zero terminated\n"
-+msgid "%s section not zero terminated\n"
-+msgstr "sektionen .debug_macro är inte nollterminerad\n"
-+
- #. PR 17531: file:4bcd9ce9.
+-#. PR 17531: file:4bcd9ce9.
 -#: dwarf.c:1052
--#, c-format
++#: dwarf.c:744
+ #, c-format
 -msgid "Debug info is corrupted, abbrev size (%lx) is larger than abbrev section size (%lx)\n"
-+#: dwarf.c:1079
-+#, fuzzy, c-format
-+#| msgid "Debug info is corrupted, abbrev size (%lx) is larger than abbrev section size (%lx)\n"
-+msgid "Debug info is corrupted, abbrev size (%#<PRIx64>) is larger than abbrev section size (%#<PRIx64>)\n"
- msgstr "Felsökningsinfo är trasig, abbrev-storlek (%lx) är större än abbrev-sektionstorleken (%lx)\n"
+-msgstr "Felsökningsinfo är trasig, abbrev-storlek (%lx) är större än abbrev-sektionstorleken (%lx)\n"
++msgid "Section %s is too small to contain an value indexed from another section!\n"
++msgstr "Sektionen %s är för liten för att innehålla ett värde indexerat från en annan sektion!\n"
  
 -#: dwarf.c:1060
--#, c-format
++#. Report the missing single zero which ends the section.
++#: dwarf.c:1051
+ #, c-format
 -msgid "Debug info is corrupted, abbrev offset (%lx) is larger than abbrev section size (%lx)\n"
-+#: dwarf.c:1086
-+#, fuzzy, c-format
-+#| msgid "Debug info is corrupted, abbrev offset (%lx) is larger than abbrev section size (%lx)\n"
-+msgid "Debug info is corrupted, abbrev offset (%#<PRIx64>) is larger than abbrev section size (%#<PRIx64>)\n"
- msgstr "Felsökningsinfo är trasig, abbrev-avstånd (%lx) är större än abbrev-sektionstorleken (%lx)\n"
+-msgstr "Felsökningsinfo är trasig, abbrev-avstånd (%lx) är större än abbrev-sektionstorleken (%lx)\n"
++msgid "%s section not zero terminated\n"
++msgstr "sektionen %s är inte nollterminerad\n"
  
 -#. Report the missing single zero which ends the section.
 -#: dwarf.c:1122
 -msgid ".debug_abbrev section not zero terminated\n"
 -msgstr "sektionen .debug_abbrev är inte nollterminerad\n"
--
++#. PR 17531: file:4bcd9ce9.
++#: dwarf.c:1079
++#, c-format
++msgid "Debug info is corrupted, abbrev size (%#<PRIx64>) is larger than abbrev section size (%#<PRIx64>)\n"
++msgstr "Felsökningsinfo är trasig, abbrev-storlek (%#<PRIx64>) är större än abbrev-sektionstorleken (%#<PRIx64>)\n"
+ 
 -#: dwarf.c:1137
--#, c-format
++#: dwarf.c:1086
+ #, c-format
 -msgid "User TAG value: %#lx"
-+#: dwarf.c:1119
-+#, fuzzy, c-format
-+#| msgid "User TAG value: %#lx"
-+msgid "User TAG value: %#<PRIx64>"
- msgstr "Användar-TAG-värde: %#lx"
+-msgstr "Användar-TAG-värde: %#lx"
++msgid "Debug info is corrupted, abbrev offset (%#<PRIx64>) is larger than abbrev section size (%#<PRIx64>)\n"
++msgstr "Felsökningsinfo är trasig, abbrev-avstånd (%#<PRIx64>) är större än abbrev-sektionstorleken (%<PRIx64>)\n"
  
 -#: dwarf.c:1139
--#, c-format
--msgid "Unknown TAG value: %#lx"
++#: dwarf.c:1119
++#, c-format
++msgid "User TAG value: %#<PRIx64>"
++msgstr "Användar-TAG-värde: %#<PRIx64>"
++
 +#: dwarf.c:1122
-+#, fuzzy, c-format
-+#| msgid "Unknown TAG value: %#lx"
+ #, c-format
+-msgid "Unknown TAG value: %#lx"
+-msgstr "Okänt TAG-värde: %#lx"
 +msgid "Unknown TAG value: %#<PRIx64>"
- msgstr "Okänt TAG-värde: %#lx"
++msgstr "Okänt TAG-värde: %#<PRIx64>"
  
 -#: dwarf.c:1159
 +#: dwarf.c:1143
@@ -1266,13 +1255,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Okänt IDX-värde: %lx"
  
 -#: dwarf.c:1189
--#, c-format
--msgid "%c%s byte block: "
 +#: dwarf.c:1175
-+#, fuzzy, c-format
-+#| msgid "%c%s byte block: "
+ #, c-format
+-msgid "%c%s byte block: "
+-msgstr "%c%s byte-block: "
 +msgid "%c%<PRIu64> byte block: "
- msgstr "%c%s byte-block: "
++msgstr "%c%<PRIu64> byte-block: "
  
 -#: dwarf.c:1533
 +#: dwarf.c:1512
@@ -1281,22 +1269,20 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "(DW_OP_call_ref i raminformation)"
  
 -#: dwarf.c:1556
--#, c-format
--msgid "size: %s "
 +#: dwarf.c:1535
-+#, fuzzy, c-format
-+#| msgid "size: %s "
+ #, c-format
+-msgid "size: %s "
+-msgstr "storlek: %s "
 +msgid "size: %<PRIu64> "
- msgstr "storlek: %s "
++msgstr "storlek: %<PRIu64> "
  
 -#: dwarf.c:1558
--#, c-format
--msgid "offset: %s "
 +#: dwarf.c:1537
-+#, fuzzy, c-format
-+#| msgid "offset: %s "
+ #, c-format
+-msgid "offset: %s "
+-msgstr "avstånd: %s "
 +msgid "offset: %<PRIu64> "
- msgstr "avstånd: %s "
++msgstr "avstånd: %<PRIu64> "
  
 -#: dwarf.c:1574
 +#: dwarf.c:1553
@@ -1317,22 +1303,20 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "(DW_OP_GNU_variable_value i raminformation)"
  
 -#: dwarf.c:1756
--#, c-format
--msgid "(User defined location op 0x%x)"
 +#: dwarf.c:1734
-+#, fuzzy, c-format
-+#| msgid "(User defined location op 0x%x)"
+ #, c-format
+-msgid "(User defined location op 0x%x)"
+-msgstr "(Användardefinierad plats-op 0x%x)"
 +msgid "(User defined location op %#x)"
- msgstr "(Användardefinierad plats-op 0x%x)"
++msgstr "(Användardefinierad plats-op %#x)"
  
 -#: dwarf.c:1758
--#, c-format
--msgid "(Unknown location op 0x%x)"
 +#: dwarf.c:1736
-+#, fuzzy, c-format
-+#| msgid "(Unknown location op 0x%x)"
+ #, c-format
+-msgid "(Unknown location op 0x%x)"
+-msgstr "(Okänd plats-op 0x%x)"
 +msgid "(Unknown location op %#x)"
- msgstr "(Okänd plats-op 0x%x)"
++msgstr "(Okänd plats-op %#x)"
  
 -#: dwarf.c:1812
 +#: dwarf.c:1790
@@ -1345,13 +1329,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "<ingen NUL-byte vid slutet av alternativ .debug_str-sektion>"
  
 -#: dwarf.c:1841
--#, c-format
--msgid "DW_FORM_GNU_strp_alt offset (%s) too big or no string sections available\n"
 +#: dwarf.c:1819
-+#, fuzzy, c-format
-+#| msgid "DW_FORM_GNU_strp_alt offset (%s) too big or no string sections available\n"
+ #, c-format
+-msgid "DW_FORM_GNU_strp_alt offset (%s) too big or no string sections available\n"
+-msgstr "DW_FORM_GNU_strp_alt-avstånd (%s) är för stort eller ingen strängsektion tillgänglig\n"
 +msgid "DW_FORM_GNU_strp_alt offset (%#<PRIx64>) too big or no string sections available\n"
- msgstr "DW_FORM_GNU_strp_alt-avstånd (%s) är för stort eller ingen strängsektion tillgänglig\n"
++msgstr "DW_FORM_GNU_strp_alt-avstånd (%#<PRIx64>) är för stort eller ingen strängsektion tillgänglig\n"
  
 -#: dwarf.c:1864
 +#: dwarf.c:1842
@@ -1360,31 +1343,28 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Okänt AT-värde: %lx"
  
 -#: dwarf.c:1930
--#, c-format
--msgid "Corrupt attribute block length: %lx\n"
 +#: dwarf.c:1908
-+#, fuzzy, c-format
-+#| msgid "Corrupt attribute block length: %lx\n"
+ #, c-format
+-msgid "Corrupt attribute block length: %lx\n"
+-msgstr "trasigt längd på attributblock: %lx\n"
 +msgid "Corrupt attribute block length: %#<PRIx64>\n"
- msgstr "trasigt längd på attributblock: %lx\n"
++msgstr "trasigt längd på attributblock: %#<PRIx64>\n"
  
 -#: dwarf.c:2112
--#, c-format
--msgid "Unable to resolve ref_addr form: uvalue %lx > section size %lx (%s)\n"
 +#: dwarf.c:2090
-+#, fuzzy, c-format
-+#| msgid "Unable to resolve ref_addr form: uvalue %lx > section size %lx (%s)\n"
+ #, c-format
+-msgid "Unable to resolve ref_addr form: uvalue %lx > section size %lx (%s)\n"
+-msgstr "Kan inte slå upp ref_addr-form: uvalue %lx > sektionsstorleken %lx (%s)\n"
 +msgid "Unable to resolve ref_addr form: uvalue %lx > section size %<PRIx64> (%s)\n"
- msgstr "Kan inte slå upp ref_addr-form: uvalue %lx > sektionsstorleken %lx (%s)\n"
++msgstr "Kan inte slå upp ref_addr-form: uvalue %lx > sektionsstorleken %<PRIx64> (%s)\n"
  
 -#: dwarf.c:2129
--#, c-format
--msgid "Unable to resolve ref form: uvalue %lx + cu_offset %lx > CU size %lx\n"
 +#: dwarf.c:2109
-+#, fuzzy, c-format
-+#| msgid "Unable to resolve ref form: uvalue %lx + cu_offset %lx > CU size %lx\n"
+ #, c-format
+-msgid "Unable to resolve ref form: uvalue %lx + cu_offset %lx > CU size %lx\n"
+-msgstr "Kan inte slå upp ref-form: uvalue %lx + cu_offset %lx > CU-storlek %lx\n"
 +msgid "Unable to resolve ref form: uvalue %lx + cu_offset %<PRIx64> > CU size %tx\n"
- msgstr "Kan inte slå upp ref-form: uvalue %lx + cu_offset %lx > CU-storlek %lx\n"
++msgstr "Kan inte slå upp ref-form: uvalue %lx + cu_offset %<PRIx64> > CU-storlek %tx\n"
  
 -#: dwarf.c:2139
 +#: dwarf.c:2120
@@ -1443,112 +1423,101 @@ index e3cd39683f8..f848dcc1d8c 100644
  
  #. We have already displayed the form name.
 -#: dwarf.c:2662 dwarf.c:2677 dwarf.c:2703
--#, c-format
--msgid "%c(offset: 0x%s): %s"
 +#: dwarf.c:2648 dwarf.c:2661 dwarf.c:2685
-+#, fuzzy, c-format
-+#| msgid "%c(offset: 0x%s): %s"
+ #, c-format
+-msgid "%c(offset: 0x%s): %s"
+-msgstr "%c(avstånd: 0x%s): %s"
 +msgid "%c(offset: %#<PRIx64>): %s"
- msgstr "%c(avstånd: 0x%s): %s"
++msgstr "%c(avstånd: %#<PRIx64>): %s"
  
 -#: dwarf.c:2666
--#, c-format
--msgid "%c(indirect string, offset: 0x%s): %s"
 +#: dwarf.c:2651
-+#, fuzzy, c-format
-+#| msgid "%c(indirect string, offset: 0x%s): %s"
+ #, c-format
+-msgid "%c(indirect string, offset: 0x%s): %s"
+-msgstr "%c(indirekt sträng, avstånd: 0x%s): %s"
 +msgid "%c(indirect string, offset: %#<PRIx64>): %s"
- msgstr "%c(indirekt sträng, avstånd: 0x%s): %s"
++msgstr "%c(indirekt sträng, avstånd: %#<PRIx64>): %s"
  
 -#: dwarf.c:2681
--#, c-format
--msgid "%c(indirect line string, offset: 0x%s): %s"
 +#: dwarf.c:2664
-+#, fuzzy, c-format
-+#| msgid "%c(indirect line string, offset: 0x%s): %s"
+ #, c-format
+-msgid "%c(indirect line string, offset: 0x%s): %s"
+-msgstr "%c(indirekt radsträng, avstånd: 0x%s): %s"
 +msgid "%c(indirect line string, offset: %#<PRIx64>): %s"
- msgstr "%c(indirekt radsträng, avstånd: 0x%s): %s"
++msgstr "%c(indirekt radsträng, avstånd: %#<PRIx64>): %s"
  
 -#: dwarf.c:2706
--#, c-format
--msgid "%c(indexed string: 0x%s): %s"
 +#: dwarf.c:2688
-+#, fuzzy, c-format
-+#| msgid "%c(indexed string: 0x%s): %s"
+ #, c-format
+-msgid "%c(indexed string: 0x%s): %s"
+-msgstr "%c(indexerad sträng: 0x%s): %s"
 +msgid "%c(indexed string: %#<PRIx64>): %s"
- msgstr "%c(indexerad sträng: 0x%s): %s"
++msgstr "%c(indexerad sträng: %#<PRIx64>): %s"
  
  #. We have already displayed the form name.
 -#: dwarf.c:2716
--#, c-format
--msgid "%c(offset: 0x%s) %s"
 +#: dwarf.c:2698
-+#, fuzzy, c-format
-+#| msgid "%c(offset: 0x%s) %s"
+ #, c-format
+-msgid "%c(offset: 0x%s) %s"
+-msgstr "%c(avstånd: 0x%s) %s"
 +msgid "%c(offset: %#<PRIx64>) %s"
- msgstr "%c(avstånd: 0x%s) %s"
++msgstr "%c(avstånd: %#<PRIx64>) %s"
  
 -#: dwarf.c:2720
--#, c-format
--msgid "%c(alt indirect string, offset: 0x%s) %s"
 +#: dwarf.c:2701
-+#, fuzzy, c-format
-+#| msgid "%c(alt indirect string, offset: 0x%s) %s"
+ #, c-format
+-msgid "%c(alt indirect string, offset: 0x%s) %s"
+-msgstr "%c(alt indirekt sträng, avstånd: 0x%s) %s"
 +msgid "%c(alt indirect string, offset: %#<PRIx64>) %s"
- msgstr "%c(alt indirekt sträng, avstånd: 0x%s) %s"
++msgstr "%c(alt indirekt sträng, avstånd: %#<PRIx64>) %s"
  
 -#. We have already displayed the form name.
 -#: dwarf.c:2804
--#, c-format
++#: dwarf.c:2753
+ #, c-format
 -msgid "%c(index: 0x%s): %s"
 -msgstr "%c(index: 0x%s): %s"
-+#: dwarf.c:2753
-+#, fuzzy, c-format
-+#| msgid "<offset is too big>"
 +msgid "loc_offset %<PRIu64> too big\n"
-+msgstr "<avståndet är för stort>"
++msgstr "loc_offset %<PRIu64> är för stort\n"
  
 -#: dwarf.c:2816
 +#: dwarf.c:2794
  #, c-format
 -msgid "Unrecognized form: 0x%lx\n"
+-msgstr "Okänd formtyp: 0x%lx\n"
 +msgid "%c(index: %#<PRIx64>): %#<PRIx64>"
 +msgstr "%c(index: %#<PRIx64>): %#<PRIx64>"
-+
-+#: dwarf.c:2805
-+#, fuzzy, c-format
-+#| msgid "Unrecognized form: 0x%lx\n"
-+msgid "Unrecognized form: %#lx\n"
- msgstr "Okänd formtyp: 0x%lx\n"
  
 -#: dwarf.c:2830
--#, c-format
++#: dwarf.c:2805
+ #, c-format
 -msgid "CU @ 0x%s has multiple loclists_base values (0x%s and 0x%s)"
-+#: dwarf.c:2819
-+#, fuzzy, c-format
-+#| msgid "CU @ 0x%s has multiple loclists_base values (0x%s and 0x%s)"
-+msgid "CU @ %#<PRIx64> has multiple loclists_base values (%#<PRIx64> and %#<PRIx64>)"
- msgstr "CU @ 0x%s har flera loclists_base-värden (0x%s och 0x%s)"
+-msgstr "CU @ 0x%s har flera loclists_base-värden (0x%s och 0x%s)"
++msgid "Unrecognized form: %#lx\n"
++msgstr "Okänd form: %#lx\n"
  
 -#: dwarf.c:2838
--#, c-format
++#: dwarf.c:2819
+ #, c-format
 -msgid "CU @ 0x%s has multiple rnglists_base values (0x%s and 0x%s)"
-+#: dwarf.c:2827
-+#, fuzzy, c-format
-+#| msgid "CU @ 0x%s has multiple rnglists_base values (0x%s and 0x%s)"
-+msgid "CU @ %#<PRIx64> has multiple rnglists_base values (%#<PRIx64> and %#<PRIx64>)"
- msgstr "CU @ 0x%s har flera rnglists_base-värden (0x%s och 0x%s)"
+-msgstr "CU @ 0x%s har flera rnglists_base-värden (0x%s och 0x%s)"
++msgid "CU @ %#<PRIx64> has multiple loclists_base values (%#<PRIx64> and %#<PRIx64>)"
++msgstr "CU @ %#<PRIx64> har flera loclists_base-värden (%#<PRIx64> och %#<PRIx64>)"
  
 -#: dwarf.c:2846
--#, c-format
++#: dwarf.c:2827
+ #, c-format
 -msgid "CU @ 0x%s has multiple str_offsets_base values (0x%s and 0x%s)"
-+#: dwarf.c:2835
-+#, fuzzy, c-format
-+#| msgid "CU @ 0x%s has multiple str_offsets_base values (0x%s and 0x%s)"
-+msgid "CU @ %#<PRIx64> has multiple str_offsets_base values %#<PRIx64> and %#<PRIx64>)"
- msgstr "CU @ 0x%s har flera str_offsets_base-värden (0x%s och 0x%s)"
+-msgstr "CU @ 0x%s har flera str_offsets_base-värden (0x%s och 0x%s)"
++msgid "CU @ %#<PRIx64> has multiple rnglists_base values (%#<PRIx64> and %#<PRIx64>)"
++msgstr "CU @ %#<PRIx64> har flera rnglists_base-värden (%#<PRIx64> och %#<PRIx64>)"
  
 -#: dwarf.c:2910
++#: dwarf.c:2835
++#, c-format
++msgid "CU @ %#<PRIx64> has multiple str_offsets_base values %#<PRIx64> and %#<PRIx64>)"
++msgstr "CU @ %#<PRIx64> har flera str_offsets_base-värden (%#<PRIx64> och %#<PRIx64>)"
++
 +#: dwarf.c:2899
  msgid "More location offset attributes than DW_AT_GNU_locview attributes\n"
  msgstr "Fler platsavståndsattribut än DW_AT_GNU_locview-attribut\n"
@@ -1589,32 +1558,28 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "(deklarerad som inline och inline:ad)"
  
 -#: dwarf.c:3106
--#, c-format
--msgid "  (Unknown inline attribute value: %s)"
 +#: dwarf.c:3095
-+#, fuzzy, c-format
-+#| msgid "  (Unknown inline attribute value: %s)"
+ #, c-format
+-msgid "  (Unknown inline attribute value: %s)"
+-msgstr "  (Okänt inline-attributvärde: %s)"
 +msgid "  (Unknown inline attribute value: %#<PRIx64>)"
- msgstr "  (Okänt inline-attributvärde: %s)"
++msgstr "  (Okänt inline-attributvärde: %#<PRIx64>)"
  
 -#: dwarf.c:3163
--#, c-format
--msgid "(implementation defined: %s)"
 +#: dwarf.c:3152
-+#, fuzzy, c-format
-+#| msgid "(implementation defined: %s)"
+ #, c-format
+-msgid "(implementation defined: %s)"
+-msgstr "(implementationsdefinierad: %s)"
 +msgid "(implementation defined: %#<PRIx64>)"
- msgstr "(implementationsdefinierad: %s)"
++msgstr "(implementationsdefinierad: %#<PRIx64>)"
  
 -#: dwarf.c:3166
--#, c-format
++#: dwarf.c:3154
+ #, c-format
 -msgid "(Unknown: %s)"
 -msgstr "(Okänd: %s)"
-+#: dwarf.c:3154
-+#, fuzzy, c-format
-+#| msgid "<unknown: %x>"
 +msgid "(unknown: %#<PRIx64>)"
-+msgstr "<okänd: %x>"
++msgstr "(okänt: %#<PRIx64>)"
  
 -#: dwarf.c:3211
 +#: dwarf.c:3199
@@ -1749,13 +1714,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr " [utan DW_AT_frame_base]"
  
 -#: dwarf.c:3423
--#, c-format
--msgid "Offset %s used as value for DW_AT_import attribute of DIE at offset 0x%lx is too big.\n"
 +#: dwarf.c:3411
-+#, fuzzy, c-format
-+#| msgid "Offset %s used as value for DW_AT_import attribute of DIE at offset 0x%lx is too big.\n"
+ #, c-format
+-msgid "Offset %s used as value for DW_AT_import attribute of DIE at offset 0x%lx is too big.\n"
+-msgstr "Avståndet %s som används som ett värde till attributet DW_AT_import på DIE vid avståndet 0x%lx är för stort.\n"
 +msgid "Offset %#<PRIx64> used as value for DW_AT_import attribute of DIE at offset %#tx is too big.\n"
- msgstr "Avståndet %s som används som ett värde till attributet DW_AT_import på DIE vid avståndet 0x%lx är för stort.\n"
++msgstr "Avståndet %#<PRIx64> som används som ett värde till attributet DW_AT_import på DIE vid avståndet %#tx är för stort.\n"
  
 -#: dwarf.c:3429
 +#: dwarf.c:3417
@@ -1768,7 +1732,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "Raw dump of debug contents of section %s (loaded from %s):\n"
-@@ -2423,7 +2507,7 @@ msgstr ""
+@@ -2423,7 +2467,7 @@ msgstr ""
  "Rå utskrift av felsökningsinnehåll i sektion %s (inläst från %s):\n"
  "\n"
  
@@ -1777,7 +1741,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "Raw dump of debug contents of section %s:\n"
-@@ -2432,7 +2516,7 @@ msgstr ""
+@@ -2432,7 +2476,7 @@ msgstr ""
  "Rå utskrift av felsökningsinnehåll i sektion %s:\n"
  "\n"
  
@@ -1786,7 +1750,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "Contents of the %s section (loaded from %s):\n"
-@@ -2441,7 +2525,7 @@ msgstr ""
+@@ -2441,7 +2485,7 @@ msgstr ""
  "%s-sektionens innehåll (inläst från %s):\n"
  "\n"
  
@@ -1795,27 +1759,25 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "Contents of the %s section:\n"
-@@ -2450,186 +2534,202 @@ msgstr ""
+@@ -2450,186 +2494,186 @@ msgstr ""
  "%s-sektionens innehåll:\n"
  "\n"
  
 -#: dwarf.c:3578
--#, c-format
--msgid "Reserved length value (0x%s) found in section %s\n"
 +#: dwarf.c:3581
-+#, fuzzy, c-format
-+#| msgid "Reserved length value (0x%s) found in section %s\n"
+ #, c-format
+-msgid "Reserved length value (0x%s) found in section %s\n"
+-msgstr "Reserverat längdvärde (0x%s) hittat i sektionen %s\n"
 +msgid "Reserved length value (%#<PRIx64>) found in section %s\n"
- msgstr "Reserverat längdvärde (0x%s) hittat i sektionen %s\n"
++msgstr "Reserverat längdvärde (%#<PRIx64>) hittat i sektionen %s\n"
  
 -#: dwarf.c:3588
--#, c-format
--msgid "Corrupt unit length (got 0x%s expected at most 0x%s) in section %s\n"
 +#: dwarf.c:3591
-+#, fuzzy, c-format
-+#| msgid "Corrupt unit length (got 0x%s expected at most 0x%s) in section %s\n"
+ #, c-format
+-msgid "Corrupt unit length (got 0x%s expected at most 0x%s) in section %s\n"
+-msgstr "Trasig enhetslängd (fick 0x%s men högst 0x%s förväntades) i sektionen %s\n"
 +msgid "Corrupt unit length (got %#<PRIx64> expected at most %#tx) in section %s\n"
- msgstr "Trasig enhetslängd (fick 0x%s men högst 0x%s förväntades) i sektionen %s\n"
++msgstr "Trasig enhetslängd (fick %#<PRIx64> men högst %#tx förväntades) i sektionen %s\n"
  
 -#: dwarf.c:3599
 +#: dwarf.c:3601
@@ -1842,22 +1804,20 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Felaktig pekarstorlek (%d) i compunit-huvud, använder %d istället\n"
  
 -#: dwarf.c:3868
--#, c-format
--msgid "  Compilation Unit @ offset 0x%s:\n"
 +#: dwarf.c:3850
-+#, fuzzy, c-format
-+#| msgid "  Compilation Unit @ offset 0x%s:\n"
+ #, c-format
+-msgid "  Compilation Unit @ offset 0x%s:\n"
+-msgstr "  Kompileringsenhet @ avstånd 0x%s:\n"
 +msgid "  Compilation Unit @ offset %#<PRIx64>:\n"
- msgstr "  Kompileringsenhet @ avstånd 0x%s:\n"
++msgstr "  Kompileringsenhet @ avstånd %#<PRIx64>:\n"
  
 -#: dwarf.c:3870
--#, c-format
--msgid "   Length:        0x%s (%s)\n"
 +#: dwarf.c:3852
-+#, fuzzy, c-format
-+#| msgid "   Length:        0x%s (%s)\n"
+ #, c-format
+-msgid "   Length:        0x%s (%s)\n"
+-msgstr "   Längd:         0x%s (%s)\n"
 +msgid "   Length:        %#<PRIx64> (%s)\n"
- msgstr "   Längd:         0x%s (%s)\n"
++msgstr "   Längd:         %#<PRIx64> (%s)\n"
  
 -#: dwarf.c:3873
 +#: dwarf.c:3855
@@ -1872,13 +1832,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "   Enhetstyp:     %s (%x)\n"
  
 -#: dwarf.c:3882
--#, c-format
--msgid "   Abbrev Offset: 0x%s\n"
 +#: dwarf.c:3864
-+#, fuzzy, c-format
-+#| msgid "   Abbrev Offset: 0x%s\n"
+ #, c-format
+-msgid "   Abbrev Offset: 0x%s\n"
+-msgstr "   Förk.-avstånd: 0x%s\n"
 +msgid "   Abbrev Offset: %#<PRIx64>\n"
- msgstr "   Förk.-avstånd: 0x%s\n"
++msgstr "   Förk.-avstånd: %#<PRIx64>\n"
  
 -#: dwarf.c:3884
 +#: dwarf.c:3866
@@ -1887,31 +1846,28 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "   Pekarstorlek:  %d\n"
  
 -#: dwarf.c:3887
--#, c-format
--msgid "   Signature:     0x%s\n"
 +#: dwarf.c:3869
-+#, fuzzy, c-format
-+#| msgid "   Signature:     0x%s\n"
+ #, c-format
+-msgid "   Signature:     0x%s\n"
+-msgstr "   Signatur:      0x%s\n"
 +msgid "   Signature:     %#<PRIx64>\n"
- msgstr "   Signatur:      0x%s\n"
++msgstr "   Signatur:      %#<PRIx64>\n"
  
 -#: dwarf.c:3889
--#, c-format
--msgid "   Type Offset:   0x%s\n"
 +#: dwarf.c:3870
-+#, fuzzy, c-format
-+#| msgid "   Type Offset:   0x%s\n"
+ #, c-format
+-msgid "   Type Offset:   0x%s\n"
+-msgstr "   Typavstånd:    0x%s\n"
 +msgid "   Type Offset:   %#<PRIx64>\n"
- msgstr "   Typavstånd:    0x%s\n"
++msgstr "   Typavstånd:    %#<PRIx64>\n"
  
 -#: dwarf.c:3893
--#, c-format
--msgid "   DWO ID:        0x%s\n"
 +#: dwarf.c:3873
-+#, fuzzy, c-format
-+#| msgid "   DWO ID:        0x%s\n"
+ #, c-format
+-msgid "   DWO ID:        0x%s\n"
+-msgstr "   DWO ID:        0x%s\n"
 +msgid "   DWO ID:        %#<PRIx64>\n"
- msgstr "   DWO ID:        0x%s\n"
++msgstr "   DWO ID:        %#<PRIx64>\n"
  
 -#: dwarf.c:3899
 +#: dwarf.c:3879
@@ -1920,58 +1876,52 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "   Sektionsbidrag:\n"
  
 -#: dwarf.c:3900
--#, c-format
--msgid "    .debug_abbrev.dwo:       0x%s  0x%s\n"
 +#: dwarf.c:3880
-+#, fuzzy, c-format
-+#| msgid "    .debug_abbrev.dwo:       0x%s  0x%s\n"
+ #, c-format
+-msgid "    .debug_abbrev.dwo:       0x%s  0x%s\n"
+-msgstr "    .debug_abbrev.dwo:       0x%s  0x%s\n"
 +msgid "    .debug_abbrev.dwo:       %#<PRIx64>  %#zx\n"
- msgstr "    .debug_abbrev.dwo:       0x%s  0x%s\n"
++msgstr "    .debug_abbrev.dwo:       %#<PRIx64>  %#zx\n"
  
 -#: dwarf.c:3903
--#, c-format
--msgid "    .debug_line.dwo:         0x%s  0x%s\n"
 +#: dwarf.c:3882
-+#, fuzzy, c-format
-+#| msgid "    .debug_line.dwo:         0x%s  0x%s\n"
+ #, c-format
+-msgid "    .debug_line.dwo:         0x%s  0x%s\n"
+-msgstr "    .debug_line.dwo:         0x%s  0x%s\n"
 +msgid "    .debug_line.dwo:         %#<PRIx64>  %#zx\n"
- msgstr "    .debug_line.dwo:         0x%s  0x%s\n"
++msgstr "    .debug_line.dwo:         %#<PRIx64>  %#zx\n"
  
 -#: dwarf.c:3906
--#, c-format
--msgid "    .debug_loc.dwo:          0x%s  0x%s\n"
 +#: dwarf.c:3884
-+#, fuzzy, c-format
-+#| msgid "    .debug_loc.dwo:          0x%s  0x%s\n"
+ #, c-format
+-msgid "    .debug_loc.dwo:          0x%s  0x%s\n"
+-msgstr "    .debug_loc.dwo:          0x%s  0x%s\n"
 +msgid "    .debug_loc.dwo:          %#<PRIx64>  %#zx\n"
- msgstr "    .debug_loc.dwo:          0x%s  0x%s\n"
++msgstr "    .debug_loc.dwo:          %#<PRIx64>  %#zx\n"
  
 -#: dwarf.c:3909
--#, c-format
--msgid "    .debug_str_offsets.dwo:  0x%s  0x%s\n"
 +#: dwarf.c:3886
-+#, fuzzy, c-format
-+#| msgid "    .debug_str_offsets.dwo:  0x%s  0x%s\n"
+ #, c-format
+-msgid "    .debug_str_offsets.dwo:  0x%s  0x%s\n"
+-msgstr "    .debug_str_offsets.dwo:  0x%s  0x%s\n"
 +msgid "    .debug_str_offsets.dwo:  %#<PRIx64>  %#zx\n"
- msgstr "    .debug_str_offsets.dwo:  0x%s  0x%s\n"
++msgstr "    .debug_str_offsets.dwo:  %#<PRIx64>  %#zx\n"
  
 -#: dwarf.c:3920
--#, c-format
--msgid "CU at offset %s contains corrupt or unsupported version number: %d.\n"
 +#: dwarf.c:3896
-+#, fuzzy, c-format
-+#| msgid "CU at offset %s contains corrupt or unsupported version number: %d.\n"
+ #, c-format
+-msgid "CU at offset %s contains corrupt or unsupported version number: %d.\n"
+-msgstr "CU vid avståndet %s innehåller trasiga eller ej stödda versionsnummer: %d.\n"
 +msgid "CU at offset %#<PRIx64> contains corrupt or unsupported version number: %d.\n"
- msgstr "CU vid avståndet %s innehåller trasiga eller ej stödda versionsnummer: %d.\n"
++msgstr "CU vid avståndet %#<PRIx64> innehåller trasiga eller ej stödda versionsnummer: %d.\n"
  
 -#: dwarf.c:3932
--#, c-format
--msgid "CU at offset %s contains corrupt or unsupported unit type: %d.\n"
 +#: dwarf.c:3908
-+#, fuzzy, c-format
-+#| msgid "CU at offset %s contains corrupt or unsupported unit type: %d.\n"
+ #, c-format
+-msgid "CU at offset %s contains corrupt or unsupported unit type: %d.\n"
+-msgstr "CU vid avståndet %s innehåller en trasig eller ej stödd enhetstyp: %d.\n"
 +msgid "CU at offset %#<PRIx64> contains corrupt or unsupported unit type: %d.\n"
- msgstr "CU vid avståndet %s innehåller en trasig eller ej stödd enhetstyp: %d.\n"
++msgstr "CU vid avståndet %#<PRIx64> innehåller en trasig eller ej stödd enhetstyp: %d.\n"
  
 -#: dwarf.c:3987
 +#: dwarf.c:3953
@@ -2003,13 +1953,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr " <%d><%lx>: …\n"
  
 -#: dwarf.c:4045
--#, c-format
--msgid "DIE at offset 0x%lx refers to abbreviation number %lu which does not exist\n"
 +#: dwarf.c:4010
-+#, fuzzy, c-format
-+#| msgid "DIE at offset 0x%lx refers to abbreviation number %lu which does not exist\n"
+ #, c-format
+-msgid "DIE at offset 0x%lx refers to abbreviation number %lu which does not exist\n"
+-msgstr "DIE på avståndet 0x%lx refererar till förkortning nummer %lu som inte finns\n"
 +msgid "DIE at offset %#lx refers to abbreviation number %lu which does not exist\n"
- msgstr "DIE på avståndet 0x%lx refererar till förkortning nummer %lu som inte finns\n"
++msgstr "DIE på avståndet %#lx refererar till förkortning nummer %lu som inte finns\n"
  
 -#: dwarf.c:4120
 +#: dwarf.c:4085
@@ -2017,13 +1966,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "DIE har locviews utan loclist\n"
  
 -#: dwarf.c:4229
--#, c-format
--msgid "The length field (0x%lx) in the debug_line header is wrong - the section is too small\n"
 +#: dwarf.c:4196
-+#, fuzzy, c-format
-+#| msgid "The length field (0x%lx) in the debug_line header is wrong - the section is too small\n"
+ #, c-format
+-msgid "The length field (0x%lx) in the debug_line header is wrong - the section is too small\n"
+-msgstr "Längdfältet (0x%lx) i debug_line-huvudet är trasig — sektionen är för liten\n"
 +msgid "The length field (%#<PRIx64>) in the debug_line header is wrong - the section is too small\n"
- msgstr "Längdfältet (0x%lx) i debug_line-huvudet är trasig — sektionen är för liten\n"
++msgstr "Längdfältet (%#<PRIx64>) i debug_line-huvudet är trasig — sektionen är för liten\n"
  
 -#: dwarf.c:4244
 +#: dwarf.c:4213
@@ -2068,18 +2016,17 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -2638,61 +2738,66 @@ msgstr ""
+@@ -2638,61 +2682,61 @@ msgstr ""
  "\n"
  "%s är tom.\n"
  
 -#: dwarf.c:4327
--#, c-format
--msgid "%s: Corrupt entry count - expected %s but none found\n"
 +#: dwarf.c:4296
-+#, fuzzy, c-format
-+#| msgid "%s: Corrupt entry count - expected %s but none found\n"
+ #, c-format
+-msgid "%s: Corrupt entry count - expected %s but none found\n"
+-msgstr "%s: Trasigt postantal – %s förväntades men inget hittades\n"
 +msgid "%s: Corrupt entry count - expected %#<PRIx64> but none found\n"
- msgstr "%s: Trasigt postantal – %s förväntades men inget hittades\n"
++msgstr "%s: Trasigt postantal – %#<PRIx64> förväntades men inget hittades\n"
  
 -#: dwarf.c:4334
 +#: dwarf.c:4303
@@ -2088,19 +2035,16 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "%s: formatantal är noll, men tabellen är inte tom\n"
  
 -#: dwarf.c:4339
--#, c-format
 +#: dwarf.c:4308
-+#, fuzzy, c-format
-+#| msgid ""
-+#| "\n"
-+#| " The %s (offset 0x%lx, lines %s, columns %u):\n"
+ #, c-format
  msgid ""
  "\n"
 -" The %s (offset 0x%lx, lines %s, columns %u):\n"
 +" The %s (offset %#tx, lines %<PRIu64>, columns %u):\n"
  msgstr ""
  "\n"
- "%s (avstånd 0x%lx, raderna %s, kolumner %u):\n"
+-"%s (avstånd 0x%lx, raderna %s, kolumner %u):\n"
++" %s (avstånd %#tx, raderna %#<PRIx64>, kolumner %u):\n"
  
 -#: dwarf.c:4343
 +#: dwarf.c:4311
@@ -2139,20 +2083,19 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "\tMD5\t\t\t"
  
 -#: dwarf.c:4372
--#, c-format
--msgid "\t(Unknown format content type %s)"
 +#: dwarf.c:4340
-+#, fuzzy, c-format
-+#| msgid "\t(Unknown format content type %s)"
+ #, c-format
+-msgid "\t(Unknown format content type %s)"
+-msgstr "\t(Okänd formatinnehållstyp %s)"
 +msgid "\t(Unknown format content type %<PRIu64>)"
- msgstr "\t(Okänd formatinnehållstyp %s)"
++msgstr "\t(Okänd formatinnehållstyp %#<PRIx64>)"
  
 -#: dwarf.c:4406
 +#: dwarf.c:4374
  #, c-format
  msgid ""
  "\n"
-@@ -2701,138 +2806,142 @@ msgstr ""
+@@ -2701,138 +2745,138 @@ msgstr ""
  "\n"
  "%s: Trasig postlista\n"
  
@@ -2192,13 +2135,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "trasig .debug_sup-sektion: kontrollsummelängden är längre än den återstående sektionslängden\n"
  
 -#: dwarf.c:4471
--#, c-format
--msgid "corrupt .debug_sup section: there are 0x%lx extra, unused bytes at the end of the section\n"
 +#: dwarf.c:4439
-+#, fuzzy, c-format
-+#| msgid "corrupt .debug_sup section: there are 0x%lx extra, unused bytes at the end of the section\n"
+ #, c-format
+-msgid "corrupt .debug_sup section: there are 0x%lx extra, unused bytes at the end of the section\n"
+-msgstr "trasig .debug_sup-sektion: det finns 0x%lx extra, oanvända byte i slutet av sektionen\n"
 +msgid "corrupt .debug_sup section: there are %#<PRIx64> extra, unused bytes at the end of the section\n"
- msgstr "trasig .debug_sup-sektion: det finns 0x%lx extra, oanvända byte i slutet av sektionen\n"
++msgstr "trasig .debug_sup-sektion: det finns %#<PRIx64> extra, oanvända byte i slutet av sektionen\n"
  
 -#: dwarf.c:4475
 +#: dwarf.c:4444
@@ -2219,13 +2161,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "  Filnamn:      %s\n"
  
 -#: dwarf.c:4478
--#, c-format
--msgid "  Checksum Len: %lu\n"
 +#: dwarf.c:4447
-+#, fuzzy, c-format
-+#| msgid "  Checksum Len: %lu\n"
+ #, c-format
+-msgid "  Checksum Len: %lu\n"
+-msgstr "  Kontr.sum.ln: %lu\n"
 +msgid "  Checksum Len: %<PRIu64>\n"
- msgstr "  Kontr.sum.ln: %lu\n"
++msgstr "  Kontr.sum.ln: %<PRIu64>\n"
  
 -#: dwarf.c:4481
 +#: dwarf.c:4450
@@ -2239,22 +2180,20 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Partiell .debug_line-sektion påträffad utan en föregående fullständig .debug_line-sektion\n"
  
 -#: dwarf.c:4542 dwarf.c:6097
--#, c-format
--msgid "  Offset:                      0x%lx\n"
 +#: dwarf.c:4511
-+#, fuzzy, c-format
-+#| msgid "  Offset:                      0x%lx\n"
+ #, c-format
+-msgid "  Offset:                      0x%lx\n"
+-msgstr "  Avstånd:                     0x%lx\n"
 +msgid "  Offset:                      %#tx\n"
- msgstr "  Avstånd:                     0x%lx\n"
++msgstr "  Avstånd:                     %#tx\n"
  
 -#: dwarf.c:4543
--#, c-format
--msgid "  Length:                      %ld\n"
 +#: dwarf.c:4512
-+#, fuzzy, c-format
-+#| msgid "  Length:                      %ld\n"
+ #, c-format
+-msgid "  Length:                      %ld\n"
+-msgstr "  Längd:                       %ld\n"
 +msgid "  Length:                      %<PRId64>\n"
- msgstr "  Längd:                       %ld\n"
++msgstr "  Längd:                       %<PRId64>\n"
  
 -#: dwarf.c:4544
 +#: dwarf.c:4513
@@ -2332,7 +2271,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -2841,14 +2950,14 @@ msgstr ""
+@@ -2841,14 +2885,14 @@ msgstr ""
  "\n"
  " Op-koder:\n"
  
@@ -2349,48 +2288,42 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -2857,16 +2966,19 @@ msgstr ""
+@@ -2857,16 +2901,16 @@ msgstr ""
  "\n"
  " Katalogtabellen är tom.\n"
  
 -#: dwarf.c:4606
--#, c-format
 +#: dwarf.c:4575
-+#, fuzzy, c-format
-+#| msgid ""
-+#| "\n"
-+#| " The Directory Table (offset 0x%lx):\n"
+ #, c-format
  msgid ""
  "\n"
 -" The Directory Table (offset 0x%lx):\n"
 +" The Directory Table (offset %#tx):\n"
  msgstr ""
  "\n"
- " Katalogtabellen (avstånd 0x%lx):\n"
+-" Katalogtabellen (avstånd 0x%lx):\n"
++" Katalogtabellen (avstånd %#tx):\n"
  
 -#: dwarf.c:4629
 +#: dwarf.c:4598
  #, c-format
  msgid ""
  "\n"
-@@ -2875,211 +2987,228 @@ msgstr ""
+@@ -2875,211 +2919,211 @@ msgstr ""
  "\n"
  " Filnamnstabellen är tom.\n"
  
 -#: dwarf.c:4632
--#, c-format
 +#: dwarf.c:4601
-+#, fuzzy, c-format
-+#| msgid ""
-+#| "\n"
-+#| " The File Name Table (offset 0x%lx):\n"
+ #, c-format
  msgid ""
  "\n"
 -" The File Name Table (offset 0x%lx):\n"
 +" The File Name Table (offset %#tx):\n"
  msgstr ""
  "\n"
- " Filnamnstabellen (avstånd 0x%lx):\n"
+-" Filnamnstabellen (avstånd 0x%lx):\n"
++" Filnamnstabellen (avstånd %#tx):\n"
  
 -#: dwarf.c:4657
 +#: dwarf.c:4626
@@ -2410,13 +2343,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr " Radnummersatser:\n"
  
 -#: dwarf.c:4699
--#, c-format
--msgid "  Special opcode %d: advance Address by %s to 0x%s%s"
 +#: dwarf.c:4668
-+#, fuzzy, c-format
-+#| msgid "  Special opcode %d: advance Address by %s to 0x%s%s"
+ #, c-format
+-msgid "  Special opcode %d: advance Address by %s to 0x%s%s"
+-msgstr "  Särskild op-kod %d: öka adressen med %s till 0x%s%s"
 +msgid "  Special opcode %d: advance Address by %<PRIu64> to %#<PRIx64>%s"
- msgstr "  Särskild op-kod %d: öka adressen med %s till 0x%s%s"
++msgstr "  Särskild op-kod %d: öka adressen med %<PRIu64> till %#<PRIx64>%s"
  
 -#: dwarf.c:4704 dwarf.c:4725 dwarf.c:4767 dwarf.c:4787 dwarf.c:4837
 -#: dwarf.c:4857
@@ -2426,22 +2358,20 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr " (återställ vy)"
  
 -#: dwarf.c:4719
--#, c-format
--msgid "  Special opcode %d: advance Address by %s to 0x%s[%d]%s"
 +#: dwarf.c:4688
-+#, fuzzy, c-format
-+#| msgid "  Special opcode %d: advance Address by %s to 0x%s[%d]%s"
+ #, c-format
+-msgid "  Special opcode %d: advance Address by %s to 0x%s[%d]%s"
+-msgstr "  Särskild op-kod %d: öka adressen med %s till 0x%s[%d]%s"
 +msgid "  Special opcode %d: advance Address by %<PRIu64> to %#<PRIx64>[%d]%s"
- msgstr "  Särskild op-kod %d: öka adressen med %s till 0x%s[%d]%s"
++msgstr "  Särskild op-kod %d: öka adressen med %<PRIu64> till %#<PRIx64>[%d]%s"
  
 -#: dwarf.c:4729
--#, c-format
--msgid " and Line by %s to %d"
 +#: dwarf.c:4698
-+#, fuzzy, c-format
-+#| msgid " and Line by %s to %d"
+ #, c-format
+-msgid " and Line by %s to %d"
+-msgstr " och radnumret med %s till %d"
 +msgid " and Line by %<PRId64> to %d"
- msgstr " och radnumret med %s till %d"
++msgstr " och radnumret med %<PRId64> till %d"
  
 -#: dwarf.c:4732 dwarf.c:4749
 +#: dwarf.c:4701 dwarf.c:4718
@@ -2456,58 +2386,52 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "  Kopiera"
  
 -#: dwarf.c:4763
--#, c-format
--msgid "  Advance PC by %s to 0x%s%s\n"
 +#: dwarf.c:4732
-+#, fuzzy, c-format
-+#| msgid "  Advance PC by %s to 0x%s%s\n"
+ #, c-format
+-msgid "  Advance PC by %s to 0x%s%s\n"
+-msgstr "  Öka programräknaren med %s till 0x%s%s\n"
 +msgid "  Advance PC by %<PRIu64> to %#<PRIx64>%s\n"
- msgstr "  Öka programräknaren med %s till 0x%s%s\n"
++msgstr "  Öka programräknaren med %<PRIu64> till %#<PRIx64>%s\n"
  
 -#: dwarf.c:4782
--#, c-format
--msgid "  Advance PC by %s to 0x%s[%d]%s\n"
 +#: dwarf.c:4751
-+#, fuzzy, c-format
-+#| msgid "  Advance PC by %s to 0x%s[%d]%s\n"
+ #, c-format
+-msgid "  Advance PC by %s to 0x%s[%d]%s\n"
+-msgstr "  Öka programräknaren med %s till 0x%s[%d]%s\n"
 +msgid "  Advance PC by %<PRIu64> to %#<PRIx64>[%d]%s\n"
- msgstr "  Öka programräknaren med %s till 0x%s[%d]%s\n"
++msgstr "  Öka programräknaren med %<PRIu64> till %#<PRIx64>[%d]%s\n"
  
 -#: dwarf.c:4794
--#, c-format
--msgid "  Advance Line by %s to %d\n"
 +#: dwarf.c:4763
-+#, fuzzy, c-format
-+#| msgid "  Advance Line by %s to %d\n"
+ #, c-format
+-msgid "  Advance Line by %s to %d\n"
+-msgstr "  Öka radnumret med %s till %d\n"
 +msgid "  Advance Line by %<PRId64> to %d\n"
- msgstr "  Öka radnumret med %s till %d\n"
++msgstr "  Öka radnumret med %<PRId64> till %d\n"
  
 -#: dwarf.c:4801
--#, c-format
--msgid "  Set File Name to entry %s in the File Name Table\n"
 +#: dwarf.c:4769
-+#, fuzzy, c-format
-+#| msgid "  Set File Name to entry %s in the File Name Table\n"
+ #, c-format
+-msgid "  Set File Name to entry %s in the File Name Table\n"
+-msgstr "  Sätt filnamnet till post %s i filnamnstabellen\n"
 +msgid "  Set File Name to entry %<PRIu64> in the File Name Table\n"
- msgstr "  Sätt filnamnet till post %s i filnamnstabellen\n"
++msgstr "  Sätt filnamnet till post %<PRIu64> i filnamnstabellen\n"
  
 -#: dwarf.c:4808
--#, c-format
--msgid "  Set column to %s\n"
 +#: dwarf.c:4776
-+#, fuzzy, c-format
-+#| msgid "  Set column to %s\n"
+ #, c-format
+-msgid "  Set column to %s\n"
+-msgstr "  Sätt kolumnen till %s\n"
 +msgid "  Set column to %<PRIu64>\n"
- msgstr "  Sätt kolumnen till %s\n"
++msgstr "  Sätt kolumnen till %<PRIu64>\n"
  
 -#: dwarf.c:4816
--#, c-format
--msgid "  Set is_stmt to %s\n"
 +#: dwarf.c:4783
-+#, fuzzy, c-format
-+#| msgid "  Set is_stmt to %s\n"
+ #, c-format
+-msgid "  Set is_stmt to %s\n"
+-msgstr "  Sätt is_stmt till %s\n"
 +msgid "  Set is_stmt to %<PRId64>\n"
- msgstr "  Sätt is_stmt till %s\n"
++msgstr "  Sätt is_stmt till %<PRId64>\n"
  
 -#: dwarf.c:4821
 +#: dwarf.c:4788
@@ -2516,31 +2440,28 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "  Sätt basblocket\n"
  
 -#: dwarf.c:4833
--#, c-format
--msgid "  Advance PC by constant %s to 0x%s%s\n"
 +#: dwarf.c:4800
-+#, fuzzy, c-format
-+#| msgid "  Advance PC by constant %s to 0x%s%s\n"
+ #, c-format
+-msgid "  Advance PC by constant %s to 0x%s%s\n"
+-msgstr "  Öka programräknaren med konstanten %s till 0x%s%s\n"
 +msgid "  Advance PC by constant %<PRIu64> to %#<PRIx64>%s\n"
- msgstr "  Öka programräknaren med konstanten %s till 0x%s%s\n"
++msgstr "  Öka programräknaren med konstanten %<PRIu64> till %#<PRIx64>%s\n"
  
 -#: dwarf.c:4852
--#, c-format
--msgid "  Advance PC by constant %s to 0x%s[%d]%s\n"
 +#: dwarf.c:4819
-+#, fuzzy, c-format
-+#| msgid "  Advance PC by constant %s to 0x%s[%d]%s\n"
+ #, c-format
+-msgid "  Advance PC by constant %s to 0x%s[%d]%s\n"
+-msgstr "  Öka programräknaren med konstant %s till 0x%s[%d]%s\n"
 +msgid "  Advance PC by constant %<PRIu64> to %#<PRIx64>[%d]%s\n"
- msgstr "  Öka programräknaren med konstant %s till 0x%s[%d]%s\n"
++msgstr "  Öka programräknaren med konstant %<PRIu64> till %#<PRIx64>[%d]%s\n"
  
 -#: dwarf.c:4865
--#, c-format
--msgid "  Advance PC by fixed size amount %s to 0x%s\n"
 +#: dwarf.c:4832
-+#, fuzzy, c-format
-+#| msgid "  Advance PC by fixed size amount %s to 0x%s\n"
+ #, c-format
+-msgid "  Advance PC by fixed size amount %s to 0x%s\n"
+-msgstr "  Öka programräknaren med en fast storlek %s till 0x%s\n"
 +msgid "  Advance PC by fixed size amount %<PRIu64> to %#<PRIx64>\n"
- msgstr "  Öka programräknaren med en fast storlek %s till 0x%s\n"
++msgstr "  Öka programräknaren med en fast storlek %<PRIu64> till %#<PRIx64>\n"
  
 -#: dwarf.c:4872
 +#: dwarf.c:4839
@@ -2555,14 +2476,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "  Sätt epilogue_begin till sann\n"
  
 -#: dwarf.c:4881
--#, c-format
++#: dwarf.c:4848
+ #, c-format
 -msgid "  Set ISA to %s\n"
 -msgstr "  Sätt ISA till %s\n"
-+#: dwarf.c:4848
-+#, fuzzy, c-format
-+#| msgid "  Set ISA to %lu\n"
 +msgid "  Set ISA to %<PRIu64>\n"
-+msgstr "  Sätt ISA till %lu\n"
++msgstr "  Sätt ISA till %<PRIu64>\n"
  
 -#: dwarf.c:4885 dwarf.c:5524
 +#: dwarf.c:4852 dwarf.c:5511
@@ -2630,13 +2549,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "<okänd>"
  
 -#: dwarf.c:5263 dwarf.c:5454
--#, c-format
--msgid "directory index %u > number of directories %s\n"
 +#: dwarf.c:5232 dwarf.c:5438
-+#, fuzzy, c-format
-+#| msgid "directory index %u > number of directories %s\n"
+ #, c-format
+-msgid "directory index %u > number of directories %s\n"
+-msgstr "katalogindex %u > antalet kataloger %s\n"
 +msgid "directory index %u >= number of directories %u\n"
- msgstr "katalogindex %u > antalet kataloger %s\n"
++msgstr "katalogindex %u > antalet kataloger %u\n"
  
 -#: dwarf.c:5265 dwarf.c:5559 elfcomm.c:777 readelf.c:394 readelf.c:928
 -#: readelf.c:8016 readelf.c:8579 readelf.c:10615 readelf.c:13057
@@ -2681,25 +2599,24 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -3088,12 +3217,13 @@ msgstr ""
+@@ -3088,12 +3132,12 @@ msgstr ""
  "\n"
  " [Använd filtabellspost %d]\n"
  
 -#: dwarf.c:5442
--#, c-format
--msgid "file index %u > number of files %u\n"
 +#: dwarf.c:5412 dwarf.c:5544
-+#, fuzzy, c-format
-+#| msgid "file index %u > number of files %u\n"
+ #, c-format
+-msgid "file index %u > number of files %u\n"
+-msgstr "filindex %u > antalet filer %u\n"
 +msgid "file index %u >= number of files %u\n"
- msgstr "filindex %u > antalet filer %u\n"
++msgstr "filindex %u ≥ antalet filer %u\n"
  
 -#: dwarf.c:5443
 +#: dwarf.c:5414
  #, c-format
  msgid ""
  "\n"
-@@ -3102,7 +3232,7 @@ msgstr ""
+@@ -3102,7 +3146,7 @@ msgstr ""
  "\n"
  " <för stort filtabellsindex %u>"
  
@@ -2708,7 +2625,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -3111,7 +3241,7 @@ msgstr ""
+@@ -3111,7 +3155,7 @@ msgstr ""
  "\n"
  " [Använd filen %s i katalogtabellpost %d]\n"
  
@@ -2717,7 +2634,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -3120,83 +3250,83 @@ msgstr ""
+@@ -3120,83 +3164,78 @@ msgstr ""
  "\n"
  " <för stor katalogtabellpost %u>\n"
  
@@ -2773,31 +2690,28 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "oanvänd7"
  
 -#: dwarf.c:5772 dwarf.c:7595 dwarf.c:10087
--#, c-format
--msgid "Debug info is corrupted, %s header at %#lx has length %s\n"
 +#: dwarf.c:5759
-+#, fuzzy, c-format
-+#| msgid "Debug info is corrupted, %s header at %#lx has length %s\n"
+ #, c-format
+-msgid "Debug info is corrupted, %s header at %#lx has length %s\n"
+-msgstr "Felsökningsinfo är trasig, %s-huvudet vid %#lx har längden %s\n"
 +msgid "Debug info is corrupted, %s header at %#lx has length %#<PRIx64>\n"
- msgstr "Felsökningsinfo är trasig, %s-huvudet vid %#lx har längden %s\n"
++msgstr "Felsökningsinfo är trasig, %s-huvudet vid %#lx har längden %#<PRIx64>\n"
  
 -#: dwarf.c:5788 dwarf.c:7610
--#, c-format
--msgid ".debug_info offset of 0x%lx in %s section does not point to a CU header.\n"
 +#: dwarf.c:5774 dwarf.c:7588
-+#, fuzzy, c-format
-+#| msgid ".debug_info offset of 0x%lx in %s section does not point to a CU header.\n"
+ #, c-format
+-msgid ".debug_info offset of 0x%lx in %s section does not point to a CU header.\n"
+-msgstr ".debug_info-avstånd på 0x%lx i sektionen %s pekar inte på ett CU-huvud.\n"
 +msgid ".debug_info offset of %#<PRIx64> in %s section does not point to a CU header.\n"
- msgstr ".debug_info-avstånd på 0x%lx i sektionen %s pekar inte på ett CU-huvud.\n"
++msgstr ".debug_info-avstånd på %#<PRIx64> i sektionen %s pekar inte på ett CU-huvud.\n"
  
 -#: dwarf.c:5793
--#, c-format
--msgid "  Length:                              %ld\n"
 +#: dwarf.c:5780
-+#, fuzzy, c-format
-+#| msgid "  Length:                              %ld\n"
+ #, c-format
+-msgid "  Length:                              %ld\n"
+-msgstr "  längd:                               %ld\n"
 +msgid "  Length:                              %<PRId64>\n"
- msgstr "  längd:                               %ld\n"
++msgstr "  längd:                               %<PRId64>\n"
  
 -#: dwarf.c:5795
 +#: dwarf.c:5782
@@ -2806,22 +2720,20 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "  version:                             %d\n"
  
 -#: dwarf.c:5797
--#, c-format
--msgid "  Offset into .debug_info section:     0x%lx\n"
 +#: dwarf.c:5784
-+#, fuzzy, c-format
-+#| msgid "  Offset into .debug_info section:     0x%lx\n"
+ #, c-format
+-msgid "  Offset into .debug_info section:     0x%lx\n"
+-msgstr "  Avstånd in i .debug_info-sektionen:  0x%lx\n"
 +msgid "  Offset into .debug_info section:     %#<PRIx64>\n"
- msgstr "  Avstånd in i .debug_info-sektionen:  0x%lx\n"
++msgstr "  Avstånd in i .debug_info-sektionen:  %#<PRIx64>\n"
  
 -#: dwarf.c:5799
--#, c-format
--msgid "  Size of area in .debug_info section: %ld\n"
 +#: dwarf.c:5786
-+#, fuzzy, c-format
-+#| msgid "  Size of area in .debug_info section: %ld\n"
+ #, c-format
+-msgid "  Size of area in .debug_info section: %ld\n"
+-msgstr "  storl. på omr. i .debug_info-sekt.:  %ld\n"
 +msgid "  Size of area in .debug_info section: %<PRId64>\n"
- msgstr "  storl. på omr. i .debug_info-sekt.:  %ld\n"
++msgstr "  storl. på omr. i .debug_info-sekt.:  %<PRId64>\n"
  
 -#: dwarf.c:5808
 +#: dwarf.c:5795
@@ -2833,7 +2745,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -3205,7 +3335,7 @@ msgstr ""
+@@ -3205,7 +3244,7 @@ msgstr ""
  "\n"
  "   Avstånd  Sort          Namn\n"
  
@@ -2842,7 +2754,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -3214,350 +3344,368 @@ msgstr ""
+@@ -3214,350 +3253,350 @@ msgstr ""
  "\n"
  "    Offset\tNamn\n"
  
@@ -2894,10 +2806,9 @@ index e3cd39683f8..f848dcc1d8c 100644
  
 -#: dwarf.c:6099
 +#: dwarf.c:6084
-+#, fuzzy, c-format
-+#| msgid "  Offset:                      0x%lx\n"
++#, c-format
 +msgid "  Offset:                      %#<PRIx64>\n"
-+msgstr "  Avstånd:                     0x%lx\n"
++msgstr "  Avstånd:                     %#<PRIx64>\n"
 +
 +#: dwarf.c:6085
  #, c-format
@@ -2911,13 +2822,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "  Avståndsstorlek:             %d\n"
  
 -#: dwarf.c:6104
--#, c-format
--msgid "  Offset into .debug_line:     0x%lx\n"
 +#: dwarf.c:6090
-+#, fuzzy, c-format
-+#| msgid "  Offset into .debug_line:     0x%lx\n"
+ #, c-format
+-msgid "  Offset into .debug_line:     0x%lx\n"
+-msgstr "  Avstånd in i .debug_info:    0x%lx\n"
 +msgid "  Offset into .debug_line:     %#<PRIx64>\n"
- msgstr "  Avstånd in i .debug_info:    0x%lx\n"
++msgstr "  Avstånd in i .debug_info:    %#<PRIx64>\n"
  
 -#: dwarf.c:6118
 +#: dwarf.c:6104
@@ -2996,49 +2906,44 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr " DW_MACRO_undef_strp — radnr : %d makro : %s\n"
  
 -#: dwarf.c:6254
--#, c-format
--msgid " DW_MACRO_import - offset : 0x%lx\n"
 +#: dwarf.c:6240
-+#, fuzzy, c-format
-+#| msgid " DW_MACRO_import - offset : 0x%lx\n"
+ #, c-format
+-msgid " DW_MACRO_import - offset : 0x%lx\n"
+-msgstr " DW_MACRO_import — avstånd : 0x%lx\n"
 +msgid " DW_MACRO_import - offset : %#<PRIx64>\n"
- msgstr " DW_MACRO_import — avstånd : 0x%lx\n"
++msgstr " DW_MACRO_import — avstånd : %#<PRIx64>\n"
  
 -#: dwarf.c:6261
--#, c-format
--msgid " DW_MACRO_define_sup - lineno : %d macro offset : 0x%lx\n"
 +#: dwarf.c:6247
-+#, fuzzy, c-format
-+#| msgid " DW_MACRO_define_sup - lineno : %d macro offset : 0x%lx\n"
+ #, c-format
+-msgid " DW_MACRO_define_sup - lineno : %d macro offset : 0x%lx\n"
+-msgstr " DW_MACRO_define_sup — radnr : %d makroavstånd : 0x%lx\n"
 +msgid " DW_MACRO_define_sup - lineno : %d macro offset : %#<PRIx64>\n"
- msgstr " DW_MACRO_define_sup — radnr : %d makroavstånd : 0x%lx\n"
++msgstr " DW_MACRO_define_sup — radnr : %d makroavstånd : %#<PRIx64>\n"
  
 -#: dwarf.c:6268
--#, c-format
--msgid " DW_MACRO_undef_sup - lineno : %d macro offset : 0x%lx\n"
 +#: dwarf.c:6255
-+#, fuzzy, c-format
-+#| msgid " DW_MACRO_undef_sup - lineno : %d macro offset : 0x%lx\n"
+ #, c-format
+-msgid " DW_MACRO_undef_sup - lineno : %d macro offset : 0x%lx\n"
+-msgstr " DW_MACRO_undef_sup — radnr : %d makroavstånd : 0x%lx\n"
 +msgid " DW_MACRO_undef_sup - lineno : %d macro offset : %#<PRIx64>\n"
- msgstr " DW_MACRO_undef_sup — radnr : %d makroavstånd : 0x%lx\n"
++msgstr " DW_MACRO_undef_sup — radnr : %d makroavstånd : %#<PRIx64>\n"
  
 -#: dwarf.c:6274
--#, c-format
--msgid " DW_MACRO_import_sup - offset : 0x%lx\n"
 +#: dwarf.c:6262
-+#, fuzzy, c-format
-+#| msgid " DW_MACRO_import_sup - offset : 0x%lx\n"
+ #, c-format
+-msgid " DW_MACRO_import_sup - offset : 0x%lx\n"
+-msgstr " DW_MACRO_import_sup — avstånd : 0x%lx\n"
 +msgid " DW_MACRO_import_sup - offset : %#<PRIx64>\n"
- msgstr " DW_MACRO_import_sup — avstånd : 0x%lx\n"
++msgstr " DW_MACRO_import_sup — avstånd : %#<PRIx64>\n"
  
 -#: dwarf.c:6289
--#, c-format
--msgid "(with offset %s) "
 +#: dwarf.c:6277
-+#, fuzzy, c-format
-+#| msgid "(with offset %s) "
+ #, c-format
+-msgid "(with offset %s) "
+-msgstr "(med avstånd %s) "
 +msgid "(with offset %#<PRIx64>) "
- msgstr "(med avstånd %s) "
++msgstr "(med avstånd %#<PRIx64>) "
  
 -#: dwarf.c:6290
 +#: dwarf.c:6278
@@ -3071,13 +2976,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr " DW_MACRO_%02x —"
  
 -#: dwarf.c:6373
--#, c-format
--msgid "  Number TAG (0x%lx)\n"
 +#: dwarf.c:6352
-+#, fuzzy, c-format
-+#| msgid "  Number TAG (0x%lx)\n"
+ #, c-format
+-msgid "  Number TAG (0x%lx)\n"
+-msgstr "  Nummer-TAGG (0x%lx)\n"
 +msgid "  Number TAG (%#<PRIx64>)\n"
- msgstr "  Nummer-TAGG (0x%lx)\n"
++msgstr "  Nummer-TAGG (%#<PRIx64>)\n"
  
 -#: dwarf.c:6382
 +#: dwarf.c:6361
@@ -3110,15 +3014,14 @@ index e3cd39683f8..f848dcc1d8c 100644
 -#: dwarf.c:6499 dwarf.c:6553 dwarf.c:6562 dwarf.c:6648 dwarf.c:6760
 -#: dwarf.c:6768 dwarf.c:6866 dwarf.c:6939 dwarf.c:6947 dwarf.c:7171
 -#: dwarf.c:7189
--#, c-format
--msgid "Location list starting at offset 0x%lx is not terminated.\n"
 +#: dwarf.c:6480 dwarf.c:6533 dwarf.c:6542 dwarf.c:6628 dwarf.c:6739
 +#: dwarf.c:6747 dwarf.c:6845 dwarf.c:6917 dwarf.c:6925 dwarf.c:7136
 +#: dwarf.c:7154
-+#, fuzzy, c-format
-+#| msgid "Location list starting at offset 0x%lx is not terminated.\n"
+ #, c-format
+-msgid "Location list starting at offset 0x%lx is not terminated.\n"
+-msgstr "Platslistan som startar på avstånd 0x%lx är inte avslutad.\n"
 +msgid "Location list starting at offset %#<PRIx64> is not terminated.\n"
- msgstr "Platslistan som startar på avstånd 0x%lx är inte avslutad.\n"
++msgstr "Platslistan som startar på avstånd %#<PRIx64> är inte avslutad.\n"
  
 -#: dwarf.c:6521 dwarf.c:6677 dwarf.c:6904 dwarf.c:7962 dwarf.c:8027
 +#: dwarf.c:6502 dwarf.c:6656 dwarf.c:6882 dwarf.c:7957 dwarf.c:8022
@@ -3135,18 +3038,15 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "(basadress)\n"
  
 -#: dwarf.c:6547 dwarf.c:6670 dwarf.c:6892
--#, c-format
 +#: dwarf.c:6528 dwarf.c:6650 dwarf.c:6871
-+#, fuzzy, c-format
-+#| msgid ""
-+#| "views at %8.8lx for:\n"
-+#| "    %*s "
+ #, c-format
  msgid ""
 -"views at %8.8lx for:\n"
 +"views at %8.8<PRIx64> for:\n"
  "    %*s "
  msgstr ""
- "vyer vid %8.8lx för:\n"
+-"vyer vid %8.8lx för:\n"
++"vyer vid %8.8<PRIx64> för:\n"
  "    %*s "
  
 -#: dwarf.c:6583 dwarf.c:6789 dwarf.c:7180
@@ -3214,22 +3114,20 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Okänd typ av platslistpost 0x%x.\n"
  
 -#: dwarf.c:7014
--#, c-format
--msgid "Table at Offset 0x%lx\n"
 +#: dwarf.c:6992
-+#, fuzzy, c-format
-+#| msgid "Table at Offset 0x%lx\n"
+ #, c-format
+-msgid "Table at Offset 0x%lx\n"
+-msgstr "Tabell på avståndet 0x%lx\n"
 +msgid "Table at Offset %#tx\n"
- msgstr "Tabell på avståndet 0x%lx\n"
++msgstr "Tabell på avståndet %#tx\n"
  
 -#: dwarf.c:7030 dwarf.c:8158
--#, c-format
--msgid "  Length:          0x%s\n"
 +#: dwarf.c:7008 dwarf.c:8155
-+#, fuzzy, c-format
-+#| msgid "  Length:          0x%s\n"
+ #, c-format
+-msgid "  Length:          0x%s\n"
+-msgstr "  Längd:           0x%s\n"
 +msgid "  Length:          %#<PRIx64>\n"
- msgstr "  Längd:           0x%s\n"
++msgstr "  Längd:           %#<PRIx64>\n"
  
 -#: dwarf.c:7031 dwarf.c:8159
 +#: dwarf.c:7009 dwarf.c:8156
@@ -3274,34 +3172,30 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Sektionen %s innehåller en tabell utan avstånd\n"
  
 -#: dwarf.c:7059
--#, c-format
 +#: dwarf.c:7037
-+#, fuzzy, c-format
-+#| msgid ""
-+#| "\n"
-+#| "   Offset Entries starting at 0x%lx:\n"
+ #, c-format
  msgid ""
  "\n"
 -"   Offset Entries starting at 0x%lx:\n"
 +"   Offset Entries starting at %#tx:\n"
  msgstr ""
  "\n"
- "   Avståndposter börar vid 0x%lx:\n"
+-"   Avståndposter börar vid 0x%lx:\n"
++"   Avståndposter börar vid %#tx:\n"
  
 -#: dwarf.c:7069 dwarf.c:8192
--#, c-format
++#: dwarf.c:7045 dwarf.c:8189
+ #, c-format
 -msgid "    [%6u] 0x%s\n"
 -msgstr "    [%6u] 0x%s\n"
--
++msgid "    [%6u] %#<PRIx64>\n"
++msgstr "    [%6u] %#<PRIx64>\n"
+ 
 -#: dwarf.c:7079 dwarf.c:8202
 -#, c-format
 -msgid "    [%6u] 0x%x\n"
-+#: dwarf.c:7045 dwarf.c:8189
-+#, fuzzy, c-format
-+#| msgid "    [%6u] 0x%x\n"
-+msgid "    [%6u] %#<PRIx64>\n"
- msgstr "    [%6u] 0x%x\n"
- 
+-msgstr "    [%6u] 0x%x\n"
+-
 -#: dwarf.c:7097
 +#: dwarf.c:7062
  #, c-format
@@ -3313,7 +3207,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "<End of list>\n"
-@@ -3566,7 +3714,15 @@ msgstr ""
+@@ -3566,7 +3605,15 @@ msgstr ""
  "<Slut på listan>\n"
  "\n"
  
@@ -3330,7 +3224,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -3575,26 +3731,27 @@ msgstr ""
+@@ -3575,26 +3622,26 @@ msgstr ""
  "\n"
  "Sektionen %s är tom.\n"
  
@@ -3352,20 +3246,19 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Inga platslistor i sektionen .debug_info!\n"
  
 -#: dwarf.c:7336
--#, c-format
--msgid "Location lists in %s section start at 0x%s rather than 0x%s\n"
 +#: dwarf.c:7300
-+#, fuzzy, c-format
-+#| msgid "Location lists in %s section start at 0x%s rather than 0x%s\n"
+ #, c-format
+-msgid "Location lists in %s section start at 0x%s rather than 0x%s\n"
+-msgstr "Platslistorna i sektionen %s startar vid 0x%s istället för 0x%s\n"
 +msgid "Location lists in %s section start at %#<PRIx64> rather than %#<PRIx64>\n"
- msgstr "Platslistorna i sektionen %s startar vid 0x%s istället för 0x%s\n"
++msgstr "Platslistorna i sektionen %s startar vid %#<PRIx64> istället för %#<PRIx64>\n"
  
 -#: dwarf.c:7347
 +#: dwarf.c:7311
  #, c-format
  msgid ""
  " Warning: This section has relocations - addresses seen here may not be accurate.\n"
-@@ -3604,85 +3761,97 @@ msgstr ""
+@@ -3604,85 +3651,90 @@ msgstr ""
  "\n"
  
  # Expression är en maskinkodsinstruktion
@@ -3376,40 +3269,36 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "    Avstånd  Start            Slut             Instruktion\n"
  
 -#: dwarf.c:7404 dwarf.c:8349
--#, c-format
--msgid "There is a hole [0x%lx - 0x%lx] in %s section.\n"
 +#: dwarf.c:7383 dwarf.c:7387
-+#, fuzzy, c-format
-+#| msgid "There is a hole [0x%lx - 0x%lx] in %s section.\n"
+ #, c-format
+-msgid "There is a hole [0x%lx - 0x%lx] in %s section.\n"
+-msgstr "Det finns ett hål [0x%lx - 0x%lx] i sektionen %s.\n"
 +msgid "There is a hole [%#tx - %#<PRIx64>] in %s section.\n"
- msgstr "Det finns ett hål [0x%lx - 0x%lx] i sektionen %s.\n"
++msgstr "Det finns ett hål [%#tx - %#<PRIx64>] i sektionen %s.\n"
  
 -#: dwarf.c:7409 dwarf.c:8356
--#, c-format
--msgid "There is an overlap [0x%lx - 0x%lx] in %s section.\n"
 +#: dwarf.c:7392
-+#, fuzzy, c-format
-+#| msgid "There is an overlap [0x%lx - 0x%lx] in %s section.\n"
+ #, c-format
+-msgid "There is an overlap [0x%lx - 0x%lx] in %s section.\n"
+-msgstr "Det finns en överlappning [0x%lx - 0x%lx] i sektionen %s.\n"
 +msgid "There is an overlap [%#tx - %#<PRIx64>] in %s section.\n"
- msgstr "Det finns en överlappning [0x%lx - 0x%lx] i sektionen %s.\n"
++msgstr "Det finns en överlappning [%#tx - %#<PRIx64>] i sektionen %s.\n"
  
 -#: dwarf.c:7419
--#, c-format
--msgid "Offset 0x%lx is bigger than %s section size.\n"
 +#: dwarf.c:7400
-+#, fuzzy, c-format
-+#| msgid "Offset 0x%lx is bigger than %s section size.\n"
+ #, c-format
+-msgid "Offset 0x%lx is bigger than %s section size.\n"
+-msgstr "Avstånd 0x%lx är större än storleken på sektionen %s.\n"
 +msgid "Offset %#<PRIx64> is bigger than %s section size.\n"
- msgstr "Avstånd 0x%lx är större än storleken på sektionen %s.\n"
++msgstr "Avstånd %#<PRIx64> är större än storleken på sektionen %s.\n"
  
 -#: dwarf.c:7427
--#, c-format
--msgid "View Offset 0x%lx is bigger than %s section size.\n"
 +#: dwarf.c:7407
-+#, fuzzy, c-format
-+#| msgid "View Offset 0x%lx is bigger than %s section size.\n"
+ #, c-format
+-msgid "View Offset 0x%lx is bigger than %s section size.\n"
+-msgstr "Vyavståndet 0x%lx är större än storleken på sektionen %s.\n"
 +msgid "View Offset %#<PRIx64> is bigger than %s section size.\n"
- msgstr "Vyavståndet 0x%lx är större än storleken på sektionen %s.\n"
++msgstr "Vyavståndet %#<PRIx64> är större än storleken på sektionen %s.\n"
  
 -#: dwarf.c:7445
 +#: dwarf.c:7424
@@ -3431,23 +3320,21 @@ index e3cd39683f8..f848dcc1d8c 100644
  
 -#: dwarf.c:7623
 +#: dwarf.c:7574
-+#, fuzzy, c-format
-+#| msgid "Debug info is corrupted, %s header at %#lx has length %s\n"
++#, c-format
 +msgid "Debug info is corrupted, %s header at %#<PRIx64> has length %#<PRIx64>\n"
-+msgstr "Felsökningsinfo är trasig, %s-huvudet vid %#lx har längden %s\n"
++msgstr "Felsökningsinfo är trasig, %s-huvudet vid %#<PRIx64> har längden %#<PRIx64>\n"
 +
 +#: dwarf.c:7602
  msgid "Only DWARF 2 and 3 aranges are currently supported.\n"
  msgstr "Endast DWARF 2 och 3 a-intervall hanteras för närvarande.\n"
  
 -#: dwarf.c:7627
--#, c-format
--msgid "  Length:                   %ld\n"
 +#: dwarf.c:7606
-+#, fuzzy, c-format
-+#| msgid "  Length:                   %ld\n"
+ #, c-format
+-msgid "  Length:                   %ld\n"
+-msgstr "  längd:                    %ld\n"
 +msgid "  Length:                   %<PRId64>\n"
- msgstr "  längd:                    %ld\n"
++msgstr "  längd:                    %<PRId64>\n"
  
 -#: dwarf.c:7629
 +#: dwarf.c:7607
@@ -3456,13 +3343,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "  version:                  %d\n"
  
 -#: dwarf.c:7630
--#, c-format
--msgid "  Offset into .debug_info:  0x%lx\n"
 +#: dwarf.c:7608
-+#, fuzzy, c-format
-+#| msgid "  Offset into .debug_info:  0x%lx\n"
+ #, c-format
+-msgid "  Offset into .debug_info:  0x%lx\n"
+-msgstr "  Avstånd in i .debug_info: 0x%lx\n"
 +msgid "  Offset into .debug_info:  %#<PRIx64>\n"
- msgstr "  Avstånd in i .debug_info: 0x%lx\n"
++msgstr "  Avstånd in i .debug_info: %#<PRIx64>\n"
  
 -#: dwarf.c:7632
 +#: dwarf.c:7610
@@ -3492,7 +3378,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -3691,7 +3860,7 @@ msgstr ""
+@@ -3691,7 +3743,7 @@ msgstr ""
  "\n"
  "    Adress             Längd\n"
  
@@ -3501,27 +3387,25 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -3700,175 +3869,208 @@ msgstr ""
+@@ -3700,176 +3752,188 @@ msgstr ""
  "\n"
  "    Adress     Längd\n"
  
 -#: dwarf.c:7734
--#, c-format
--msgid "Corrupt address base (%lx) found in debug section %u\n"
 +#: dwarf.c:7712
-+#, fuzzy, c-format
-+#| msgid "Corrupt address base (%lx) found in debug section %u\n"
+ #, c-format
+-msgid "Corrupt address base (%lx) found in debug section %u\n"
+-msgstr "Trasig adressbas (%lx) upptäckt i felsökningssektion %u\n"
 +msgid "Corrupt address base (%#<PRIx64>) found in debug section %u\n"
- msgstr "Trasig adressbas (%lx) upptäckt i felsökningssektion %u\n"
++msgstr "Trasig adressbas (%#<PRIx64>) upptäckt i felsökningssektion %u\n"
  
 -#: dwarf.c:7751
--#, c-format
--msgid "  For compilation unit at offset 0x%s:\n"
 +#: dwarf.c:7730
-+#, fuzzy, c-format
-+#| msgid "  For compilation unit at offset 0x%s:\n"
+ #, c-format
+-msgid "  For compilation unit at offset 0x%s:\n"
+-msgstr "  För kompileringsenhet på avstånd 0x%s:\n"
 +msgid "  For compilation unit at offset %#<PRIx64>:\n"
- msgstr "  För kompileringsenhet på avstånd 0x%s:\n"
++msgstr "  För kompileringsenhet på avstånd %#<PRIx64>:\n"
  
 -#: dwarf.c:7754
 +#: dwarf.c:7733
@@ -3530,13 +3414,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "\tIndex\tAdress\n"
  
 -#: dwarf.c:7766
--#, c-format
--msgid "Corrupt %s section: expecting header size of 8 or 16, but found %ld instead\n"
 +#: dwarf.c:7745
-+#, fuzzy, c-format
-+#| msgid "Corrupt %s section: expecting header size of 8 or 16, but found %ld instead\n"
+ #, c-format
+-msgid "Corrupt %s section: expecting header size of 8 or 16, but found %ld instead\n"
+-msgstr "Trasig %s-sektion: huvudstorlek på 8 eller 16 förväntades, men %ld hittades istället\n"
 +msgid "Corrupt %s section: expecting header size of 8 or 16, but found %zd instead\n"
- msgstr "Trasig %s-sektion: huvudstorlek på 8 eller 16 förväntades, men %ld hittades istället\n"
++msgstr "Trasig %s-sektion: huvudstorlek på 8 eller 16 förväntades, men %zd hittades istället\n"
  
 -#: dwarf.c:7778
 +#: dwarf.c:7756
@@ -3561,13 +3444,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "\t%d:\t"
  
 -#: dwarf.c:7862 dwarf.c:7886
--#, c-format
--msgid "    Length: %#lx\n"
 +#: dwarf.c:7856 dwarf.c:7880
-+#, fuzzy, c-format
-+#| msgid "    Length: %#lx\n"
+ #, c-format
+-msgid "    Length: %#lx\n"
+-msgstr "    Längd: %#lx\n"
 +msgid "    Length: %#<PRIx64>\n"
- msgstr "    Längd: %#lx\n"
++msgstr "    Längd: %#<PRIx64>\n"
  
 -#: dwarf.c:7863 dwarf.c:7888
 +#: dwarf.c:7857 dwarf.c:7882
@@ -3576,13 +3458,12 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "       Index   Avst.  [Sträng]\n"
  
 -#: dwarf.c:7871
--#, c-format
--msgid "Section %s is too small %#lx\n"
 +#: dwarf.c:7865
-+#, fuzzy, c-format
-+#| msgid "Section %s is too small %#lx\n"
+ #, c-format
+-msgid "Section %s is too small %#lx\n"
+-msgstr "Sektionen %s är för liten %#lx\n"
 +msgid "Section %s is too small %#<PRIx64>\n"
- msgstr "Sektionen %s är för liten %#lx\n"
++msgstr "Sektionen %s är för liten %#<PRIx64>\n"
  
 -#: dwarf.c:7879
 +#: dwarf.c:7873
@@ -3597,30 +3478,28 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Oväntat värde i str_offset-huvudets utfyllnadsfält: %#x\n"
  
 -#: dwarf.c:7887
--#, c-format
--msgid "    Version: %#lx\n"
 +#: dwarf.c:7881
-+#, fuzzy, c-format
-+#| msgid "    Version: %#lx\n"
-+msgid "    Version: %#x\n"
- msgstr "    Version: %#lx\n"
- 
+ #, c-format
+-msgid "    Version: %#lx\n"
+-msgstr "    Version: %#lx\n"
+-
 -#: dwarf.c:7981 dwarf.c:8093
 -msgid "(start == end)"
 -msgstr "(start == slut)"
--
++msgid "    Version: %#x\n"
++msgstr "    Version: %#x\n"
+ 
 -#: dwarf.c:7983 dwarf.c:8095
 -msgid "(start > end)"
 -msgstr "(start > slut)"
 -
 -#: dwarf.c:8014
--#, c-format
--msgid "Range list starting at offset 0x%s is not terminated.\n"
 +#: dwarf.c:8009
-+#, fuzzy, c-format
-+#| msgid "Range list starting at offset 0x%s is not terminated.\n"
+ #, c-format
+-msgid "Range list starting at offset 0x%s is not terminated.\n"
+-msgstr "Intervallistan som startar på avstånd 0x%s är inte avslutad.\n"
 +msgid "Range list starting at offset %#<PRIx64> is not terminated.\n"
- msgstr "Intervallistan som startar på avstånd 0x%s är inte avslutad.\n"
++msgstr "Intervallistan som startar på avstånd %#<PRIx64> är inte avslutad.\n"
  
 -#: dwarf.c:8032
 +#: dwarf.c:8027
@@ -3635,22 +3514,20 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Okänd typ av intervallistpost %d\n"
  
 -#: dwarf.c:8143
--#, c-format
--msgid "The length field (0x%lx) in the debug_rnglists header is wrong - the section is too small\n"
 +#: dwarf.c:8138
-+#, fuzzy, c-format
-+#| msgid "The length field (0x%lx) in the debug_rnglists header is wrong - the section is too small\n"
+ #, c-format
+-msgid "The length field (0x%lx) in the debug_rnglists header is wrong - the section is too small\n"
+-msgstr "Längdfältet (0x%lx) i huvudet debug_rnglists är felaktigt — sektionen är för liten\n"
 +msgid "The length field (%#<PRIx64>) in the debug_rnglists header is wrong - the section is too small\n"
- msgstr "Längdfältet (0x%lx) i huvudet debug_rnglists är felaktigt — sektionen är för liten\n"
++msgstr "Längdfältet (%#<PRIx64>) i huvudet debug_rnglists är felaktigt — sektionen är för liten\n"
  
 -#: dwarf.c:8157
--#, c-format
--msgid " Table at Offset: 0x%s:\n"
 +#: dwarf.c:8154
-+#, fuzzy, c-format
-+#| msgid " Table at Offset: 0x%s:\n"
+ #, c-format
+-msgid " Table at Offset: 0x%s:\n"
+-msgstr " Tabell på avstånd: 0x%s\n"
 +msgid " Table at Offset: %#<PRIx64>:\n"
- msgstr " Tabell på avstånd: 0x%s\n"
++msgstr " Tabell på avstånd: %#<PRIx64>\n"
  
 -#: dwarf.c:8175
 +#: dwarf.c:8172
@@ -3658,34 +3535,28 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Endast debug_rnglists-information från DWARF version 5+ stödjs för närvarande.\n"
  
 -#: dwarf.c:8184
--#, c-format
 +#: dwarf.c:8181
-+#, fuzzy, c-format
-+#| msgid ""
-+#| "\n"
-+#| "   Offsets starting at 0x%lx:\n"
+ #, c-format
  msgid ""
  "\n"
 -"   Offsets starting at 0x%lx:\n"
 +"   Offsets starting at %#tx:\n"
  msgstr ""
  "\n"
- "   Avstånd börjar på 0x%lx:\n"
+-"   Avstånd börjar på 0x%lx:\n"
++"   Avstånd börjar på %#tx:\n"
  
 -#: dwarf.c:8214
--#, c-format
 +#: dwarf.c:8200
-+#, fuzzy, c-format
-+#| msgid ""
-+#| "\n"
-+#| "  Offset: %lx, Index: 0x%s\n"
+ #, c-format
  msgid ""
  "\n"
 -"  Offset: %lx, Index: 0x%s\n"
 +"  Offset: %#<PRIx64>, Index: %#<PRIx64>\n"
  msgstr ""
  "\n"
- "  Avstånd: %lx, index: 0x%s\n"
+-"  Avstånd: %lx, index: 0x%s\n"
++"  Avstånd: %#<PRIx64>, index: %#<PRIx64>\n"
  
 -#: dwarf.c:8216 dwarf.c:8305
 +#: dwarf.c:8202 dwarf.c:8291
@@ -3702,45 +3573,40 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Inga intervallistor i sektionen .debug_info.\n"
  
 -#: dwarf.c:8301
--#, c-format
--msgid "Range lists in %s section start at 0x%lx\n"
 +#: dwarf.c:8287
-+#, fuzzy, c-format
-+#| msgid "Range lists in %s section start at 0x%lx\n"
++#, c-format
 +msgid "Range lists in %s section start at %#<PRIx64>\n"
- msgstr "Intervallistor i sektionen %s startar vid 0x%lx\n"
++msgstr "Intervallistor i sektionen %s startar vid %#<PRIx64>\n"
++
++#: dwarf.c:8309
++#, c-format
++msgid "Corrupt pointer size (%d) in debug entry at offset %#<PRIx64>\n"
++msgstr "Trasig pekarstorlek (%d) i felsökningspost på position %#<PRIx64>\n"
++
++#: dwarf.c:8316
+ #, c-format
+-msgid "Range lists in %s section start at 0x%lx\n"
+-msgstr "Intervallistor i sektionen %s startar vid 0x%lx\n"
++msgid "Corrupt offset (%#<PRIx64>) in range entry %u\n"
++msgstr "Trasigt avstånd (%#<PRIx64>) i intervallpost %u\n"
  
 -#: dwarf.c:8323
--#, c-format
++#: dwarf.c:8335
+ #, c-format
 -msgid "Corrupt pointer size (%d) in debug entry at offset %8.8lx\n"
-+#: dwarf.c:8309
-+#, fuzzy, c-format
-+#| msgid "Corrupt pointer size (%d) in debug entry at offset %8.8lx\n"
-+msgid "Corrupt pointer size (%d) in debug entry at offset %#<PRIx64>\n"
- msgstr "Trasig pekarstorlek (%d) i felsökningspost på position %8.8lx\n"
+-msgstr "Trasig pekarstorlek (%d) i felsökningspost på position %8.8lx\n"
++msgid "There is a hole [%#tx - %#tx] in %s section.\n"
++msgstr "Det finns ett hål [%#tx - %#tx] i sektionen %s.\n"
  
 -#: dwarf.c:8330
--#, c-format
++#: dwarf.c:8341
+ #, c-format
 -msgid "Corrupt offset (%#8.8lx) in range entry %u\n"
-+#: dwarf.c:8316
-+#, fuzzy, c-format
-+#| msgid "Corrupt offset (%#8.8lx) in range entry %u\n"
-+msgid "Corrupt offset (%#<PRIx64>) in range entry %u\n"
- msgstr "Trasigt avstånd (%#8.8lx) i intervallpost %u\n"
+-msgstr "Trasigt avstånd (%#8.8lx) i intervallpost %u\n"
++msgid "There is an overlap [%#tx - %#tx] in %s section.\n"
++msgstr "Det finns en överlappning [%#tx - %#tx] i sektionen %s.\n"
  
 -#: dwarf.c:8432
-+#: dwarf.c:8335
-+#, fuzzy, c-format
-+#| msgid "There is a hole [0x%lx - 0x%lx] in %s section.\n"
-+msgid "There is a hole [%#tx - %#tx] in %s section.\n"
-+msgstr "Det finns ett hål [0x%lx - 0x%lx] i sektionen %s.\n"
-+
-+#: dwarf.c:8341
-+#, fuzzy, c-format
-+#| msgid "There is an overlap [0x%lx - 0x%lx] in %s section.\n"
-+msgid "There is an overlap [%#tx - %#tx] in %s section.\n"
-+msgstr "Det finns en överlappning [0x%lx - 0x%lx] i sektionen %s.\n"
-+
 +#: dwarf.c:8416
  #, c-format
  msgid "Unfeasibly large register number: %u\n"
@@ -3770,16 +3636,16 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Felaktig segmentstorlek (%d) i CIE-data\n"
  
 -#: dwarf.c:8956 dwarf.c:9329
--#, c-format
--msgid "Augmentation data too long: 0x%s, expected at most %#lx\n"
 +#: dwarf.c:8958 dwarf.c:9330
-+#, fuzzy, c-format
-+#| msgid "Augmentation data too long: 0x%s, expected at most %#lx\n"
+ #, c-format
+-msgid "Augmentation data too long: 0x%s, expected at most %#lx\n"
+-msgstr "Tilläggsdatan är för lång: 0x%s, förväntades högst %#lx\n"
 +msgid "Augmentation data too long: %#<PRIx64>, expected at most %#tx\n"
- msgstr "Tilläggsdatan är för lång: 0x%s, förväntades högst %#lx\n"
++msgstr "Tilläggsdatan är för lång: %#<PRIx64>, förväntades högst %#tx\n"
  
  #: dwarf.c:9043
-@@ -3880,132 +4082,134 @@ msgstr "  Tilläggsdata:    "
+ #, c-format
+@@ -3880,132 +3944,132 @@ msgstr "  Tilläggsdata:    "
  msgid "bad register: "
  msgstr "felaktigt register: "
  
@@ -3819,13 +3685,12 @@ index e3cd39683f8..f848dcc1d8c 100644
 -msgstr "  DW_CFA_def_cfa_expression: <trasig längd %lu>\n"
 -
 -#: dwarf.c:9848
--#, c-format
--msgid "  DW_CFA_expression: <corrupt len %lu>\n"
 +#: dwarf.c:9832 dwarf.c:9856
-+#, fuzzy, c-format
-+#| msgid "  DW_CFA_expression: <corrupt len %lu>\n"
+ #, c-format
+-msgid "  DW_CFA_expression: <corrupt len %lu>\n"
+-msgstr "  DW_CFA_expression: <trasig längd %lu>\n"
 +msgid "  %s: <corrupt len %<PRIu64>>\n"
- msgstr "  DW_CFA_expression: <trasig längd %lu>\n"
++msgstr "  %s: <trasig längd %<PRIu64>>\n"
  
 -#: dwarf.c:9981
 +#: dwarf.c:10000
@@ -3840,13 +3705,11 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr "Ej stött eller okänt nummer på Dwarf anropsramsinstruktion: %#x\n"
  
 -#: dwarf.c:10097 dwarf.c:10522
--#, c-format
--msgid "Version %ld\n"
 +#: dwarf.c:10106
-+#, fuzzy, c-format
-+#| msgid "Debug info is corrupted, %s header at %#lx has length %s\n"
+ #, c-format
+-msgid "Version %ld\n"
 +msgid "Debug info is corrupted, %s header at %#tx has length %#<PRIx64>\n"
-+msgstr "Felsökningsinfo är trasig, %s-huvudet vid %#lx har längden %s\n"
++msgstr "Felsökningsinfo är trasig, %s-huvudet vid %#tx har längden %#<PRIx64>\n"
 +
 +#: dwarf.c:10115
 +#, fuzzy, c-format
@@ -3960,7 +3823,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -4014,81 +4218,91 @@ msgstr ""
+@@ -4014,81 +4078,91 @@ msgstr ""
  "\n"
  "Symboltabell:\n"
  
@@ -4077,7 +3940,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -4097,12 +4311,7 @@ msgstr ""
+@@ -4097,12 +4171,7 @@ msgstr ""
  "\n"
  "CU-tabell:\n"
  
@@ -4091,7 +3954,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -4111,12 +4320,7 @@ msgstr ""
+@@ -4111,12 +4180,7 @@ msgstr ""
  "\n"
  "TU-tabell:\n"
  
@@ -4105,7 +3968,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -4125,74 +4329,65 @@ msgstr ""
+@@ -4125,74 +4189,65 @@ msgstr ""
  "\n"
  "Adresstabell:\n"
  
@@ -4193,7 +4056,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  Number of slots:         %u\n"
-@@ -4201,137 +4396,136 @@ msgstr ""
+@@ -4201,137 +4256,136 @@ msgstr ""
  "  Antal fack:              %u\n"
  "\n"
  
@@ -4370,7 +4233,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -4340,17 +4534,17 @@ msgstr ""
+@@ -4340,17 +4394,17 @@ msgstr ""
  "\n"
  "%s: Hittade separat fil med felsökningsinformation: %s\n"
  
@@ -4391,7 +4254,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "%s: Found separate debug object file: %s\n"
-@@ -4359,44 +4553,46 @@ msgstr ""
+@@ -4359,44 +4413,46 @@ msgstr ""
  "%s: Hittade separat fil med felsökningsobjekt: %s\n"
  "\n"
  
@@ -4449,7 +4312,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "%s: Found supplementary debug file: %s\n"
-@@ -4405,64 +4601,64 @@ msgstr ""
+@@ -4405,64 +4461,64 @@ msgstr ""
  "%s: Hittade kompletterande fil med felsökningsinformation: %s\n"
  "\n"
  
@@ -4527,7 +4390,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgid "read LEB value is too large to store in destination variable\n"
  msgstr "det lästa LEB-värdet är för stort för att lagras i destinationsvariabeln\n"
  
-@@ -4476,127 +4672,129 @@ msgstr "%s: Fel: "
+@@ -4476,127 +4532,129 @@ msgstr "%s: Fel: "
  msgid "%s: Warning: "
  msgstr "%s: Varning: "
  
@@ -4687,7 +4550,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "%s: did not find a valid archive header\n"
  msgstr "%s hittade inte ett giltigt arkivhuvud\n"
-@@ -4684,12 +4882,12 @@ msgstr "%s: Lyckades inte läsa ELF-huvudet\n"
+@@ -4684,12 +4742,12 @@ msgstr "%s: Lyckades inte läsa ELF-huvudet\n"
  msgid "%s: Failed to seek to ELF header\n"
  msgstr "%s: Lyckades inte söka till ELF-huvudet\n"
  
@@ -4702,7 +4565,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "%s: bad archive file name\n"
  msgstr "%s: felaktigt arkivfilnamn\n"
-@@ -4704,22 +4902,22 @@ msgstr "Infil ”%s” är inte läsbar\n"
+@@ -4704,22 +4762,22 @@ msgstr "Infil ”%s” är inte läsbar\n"
  msgid "%s: failed to seek to archive member\n"
  msgstr "%s: lyckades inte söka till arkivmedlem\n"
  
@@ -4729,7 +4592,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "%s: Failed to read file's magic number\n"
  msgstr "%s: Lyckades inte läsa filens magiska tal\n"
-@@ -4749,7 +4947,7 @@ msgstr "Användning: %s <flaggor> elffil(er)>\n"
+@@ -4749,7 +4807,7 @@ msgstr "Användning: %s <flaggor> elffil(er)>\n"
  msgid " Update the ELF header of ELF files\n"
  msgstr "Uppdatera ELF-huvudet på ELF-filer\n"
  
@@ -4738,7 +4601,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid " The options are:\n"
  msgstr " Flaggorna är:\n"
-@@ -4868,7 +5066,7 @@ msgstr "  -B                     Samma som --format=bsd\n"
+@@ -4868,7 +4926,7 @@ msgstr "  -B                     Samma som --format=bsd\n"
  msgid "  -C, --demangle[=STYLE] Decode mangled/processed symbol names\n"
  msgstr "  -C, --demangle[=STIL]  Avkoda manglade/bearbetade symbolnamn\n"
  
@@ -4747,7 +4610,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgid "                           STYLE can be "
  msgstr "                           STIL kan vara "
  
-@@ -5061,17 +5259,17 @@ msgstr "%s: ogiltig talbas"
+@@ -5061,17 +5119,17 @@ msgstr "%s: ogiltig talbas"
  msgid "%s: invalid output format"
  msgstr "%s: ogiltigt utdataformat"
  
@@ -4768,7 +4631,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "<unknown>: %d"
  msgstr "<okänd>: %d"
-@@ -5170,7 +5368,7 @@ msgstr ""
+@@ -5170,7 +5228,7 @@ msgstr ""
  msgid "Print width has not been initialized (%d)"
  msgstr "Utskriftsbredden har inte initierats (%d)"
  
@@ -4777,7 +4640,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "invalid argument to -U/--unicode: %s"
  msgstr "ogiltigt argument till -U/--unicode: %s"
-@@ -5187,17 +5385,17 @@ msgstr "Användning av --size-sort och --undefined-only samtidigt"
+@@ -5187,17 +5245,17 @@ msgstr "Användning av --size-sort och --undefined-only samtidigt"
  msgid "will produce no output, since undefined symbols have no size."
  msgstr "ger ingen utdata, eftersom odefinierade symboler inte har någon storlek"
  
@@ -4798,7 +4661,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -I --input-target <bfdname>      Assume input file is in format <bfdname>\n"
-@@ -5214,7 +5412,7 @@ msgstr ""
+@@ -5214,7 +5272,7 @@ msgstr ""
  "     --debugging                   Konvertera felsökningsinformation, om möjligt\n"
  "  -p --preserve-dates              Kopiera ändrad-/åtkomststämplar till utdata\n"
  
@@ -4807,7 +4670,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -D --enable-deterministic-archives\n"
-@@ -5227,7 +5425,7 @@ msgstr ""
+@@ -5227,7 +5285,7 @@ msgstr ""
  "  -U --disable-deterministic-archives\n"
  "                                   Inaktivera beteendet -D\n"
  
@@ -4816,7 +4679,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -D --enable-deterministic-archives\n"
-@@ -5240,8 +5438,117 @@ msgstr ""
+@@ -5240,8 +5298,117 @@ msgstr ""
  "  -U --disable-deterministic-archives\n"
  "                                   Inaktivera beteendet -D (standard)\n"
  
@@ -4936,7 +4799,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgid ""
  "  -j --only-section <name>         Only copy section <name> into the output\n"
  "     --add-gnu-debuglink=<file>    Add section .gnu_debuglink linking to <file>\n"
-@@ -5338,8 +5645,8 @@ msgid ""
+@@ -5338,8 +5505,8 @@ msgid ""
  "                                   <commit>\n"
  "     --subsystem <name>[:<version>]\n"
  "                                   Set PE subsystem to <name> [& <version>]\n"
@@ -4947,7 +4810,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  "     --decompress-debug-sections   Decompress DWARF debug sections using zlib\n"
  "     --elf-stt-common=[yes|no]     Generate ELF common symbols with STT_COMMON\n"
  "                                     type\n"
-@@ -5478,17 +5785,17 @@ msgstr ""
+@@ -5478,17 +5645,17 @@ msgstr ""
  "  -h --help                        Visa denna utdata\n"
  "     --info                        Visa objektformat & -arkitekturer som stödjs\n"
  
@@ -4968,7 +4831,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -I --input-target=<bfdname>      Assume input file is in format <bfdname>\n"
-@@ -5501,7 +5808,7 @@ msgstr ""
+@@ -5501,7 +5668,7 @@ msgstr ""
  "  -F --target=<bfdnamn>            Sätt både in- och utformat till <bfdname>\n"
  "  -p --preserve-dates              Kopiera ändrad-/åtkomststämplar till utdata\n"
  
@@ -4977,7 +4840,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -R --remove-section=<name>       Also remove section <name> from the output\n"
-@@ -5552,655 +5859,663 @@ msgstr ""
+@@ -5552,655 +5719,663 @@ msgstr ""
  "     --info                        Lista objektformat & arkitekturer som stödjs\n"
  "  -o <fil>                         Spara den rensade utdatan i <fil>\n"
  
@@ -5793,7 +5656,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -W, --dwarf[a/=abbrev, A/=addr, r/=aranges, c/=cu_index, L/=decodedline,\n"
-@@ -6217,7 +6532,7 @@ msgstr ""
+@@ -6217,7 +6392,7 @@ msgstr ""
  "              U/=trace_info]\n"
  "                           Vissa innehållet i DWARF-felsökningssektioner\n"
  
@@ -5802,7 +5665,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -Wk,--dwarf=links        Display the contents of sections that link to\n"
-@@ -6226,7 +6541,7 @@ msgstr ""
+@@ -6226,7 +6401,7 @@ msgstr ""
  "  -Wk,--dwarf=links        Visa innehållet i sektioner som länkar till\n"
  "                            separata felsökningsinformationsfiler\n"
  
@@ -5811,7 +5674,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -WK,--dwarf=follow-links\n"
-@@ -6236,7 +6551,7 @@ msgstr ""
+@@ -6236,7 +6411,7 @@ msgstr ""
  "                           Följ länkar till separata filer med\n"
  "                            felsökningsinformation (standard)\n"
  
@@ -5820,7 +5683,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -WN,--dwarf=no-follow-links\n"
-@@ -6246,7 +6561,7 @@ msgstr ""
+@@ -6246,7 +6421,7 @@ msgstr ""
  "                           Följ inte länkar till separata filer med\n"
  "                            felsökningsinformation\n"
  
@@ -5829,7 +5692,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -WK,--dwarf=follow-links\n"
-@@ -6256,7 +6571,7 @@ msgstr ""
+@@ -6256,7 +6431,7 @@ msgstr ""
  "                           Följ länkar till separata filer med\n"
  "                            felsökningsinformation\n"
  
@@ -5838,7 +5701,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -WN,--dwarf=no-follow-links\n"
-@@ -6267,7 +6582,7 @@ msgstr ""
+@@ -6267,7 +6442,7 @@ msgstr ""
  "                           Följ inte länkar till separata filer med\n"
  "                            felsökningsinformation (standard)\n"
  
@@ -5847,7 +5710,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -WD --dwarf=use-debuginfod\n"
-@@ -6276,7 +6591,7 @@ msgstr ""
+@@ -6276,7 +6451,7 @@ msgstr ""
  "  -WD --dwarf=use-debuginfod\n"
  "                           När länkar följs, fråga även debuginfod-servrar (standard)\n"
  
@@ -5856,7 +5719,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -WE --dwarf=do-not-use-debuginfod\n"
-@@ -6285,7 +6600,7 @@ msgstr ""
+@@ -6285,7 +6460,7 @@ msgstr ""
  "  -WE --dwarf=do-not-use-debuginfod\n"
  "                           When following links, fråga inte debuginfod-servrar\n"
  
@@ -5865,7 +5728,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -L, --process-links      Display the contents of non-debug sections in\n"
-@@ -6295,52 +6610,58 @@ msgstr ""
+@@ -6295,52 +6470,58 @@ msgstr ""
  "                            i separata filer med felsökningsinformation.\n"
  "                            (Implicerar -WK)\n"
  
@@ -5934,7 +5797,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -6349,72 +6670,72 @@ msgstr ""
+@@ -6349,72 +6530,72 @@ msgstr ""
  "\n"
  " Följande flaggor är frivilliga:\n"
  
@@ -6020,7 +5883,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "      --recurse-limit            Enable a limit on recursion whilst demangling\n"
-@@ -6423,19 +6744,19 @@ msgstr ""
+@@ -6423,19 +6604,19 @@ msgstr ""
  "      --recurse-limit            Aktivera en gräns på rekursionen vid\n"
  "                                 avmangling (standard)\n"
  
@@ -6043,7 +5906,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -U[d|l|i|x|e|h]                Controls the display of UTF-8 unicode characters\n"
-@@ -6444,103 +6765,109 @@ msgstr ""
+@@ -6444,103 +6625,109 @@ msgstr ""
  "  -U[d|l|i|x|e|h]                Styr visningen av UTF-8 unicode-tecken\n"
  "  --unicode=[default|locale|invalid|hex|escape|highlight]\n"
  
@@ -6172,7 +6035,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "      --visualize-jumps=extended-color\n"
-@@ -6549,34 +6876,79 @@ msgstr ""
+@@ -6549,34 +6736,79 @@ msgstr ""
  "      --visualize-jumps=extended-color\n"
  "                                 Använd utökade 8-bitars färgkoder\n"
  
@@ -6265,7 +6128,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -6585,71 +6957,75 @@ msgstr ""
+@@ -6585,71 +6817,75 @@ msgstr ""
  "\n"
  "Flaggor som stödjs för -P/--private-switch:\n"
  
@@ -6355,7 +6218,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -6658,26 +7034,29 @@ msgstr ""
+@@ -6658,26 +6894,29 @@ msgstr ""
  "\n"
  "Disassemblering av sektion %s:\n"
  
@@ -6391,7 +6254,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -6686,12 +7065,12 @@ msgstr ""
+@@ -6686,12 +6925,12 @@ msgstr ""
  "\n"
  "Kan inte hämta innehållet i sektionen ”%s”.\n"
  
@@ -6406,7 +6269,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "No %s section present\n"
-@@ -6700,12 +7079,12 @@ msgstr ""
+@@ -6700,12 +6939,12 @@ msgstr ""
  "Det finns ingen %s-sektion\n"
  "\n"
  
@@ -6421,7 +6284,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "Contents of %s section:\n"
-@@ -6714,17 +7093,17 @@ msgstr ""
+@@ -6714,17 +6953,17 @@ msgstr ""
  "Innehåll i %s-sektionen:\n"
  "\n"
  
@@ -6442,7 +6305,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -6733,25 +7112,25 @@ msgstr ""
+@@ -6733,25 +6972,25 @@ msgstr ""
  "\n"
  "startadress 0x"
  
@@ -6473,7 +6336,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -6760,71 +7139,77 @@ msgstr ""
+@@ -6760,71 +6999,77 @@ msgstr ""
  "\n"
  "CTF-arkivmedlem: %s:\n"
  
@@ -6565,7 +6428,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -6833,56 +7218,56 @@ msgstr ""
+@@ -6833,56 +7078,56 @@ msgstr ""
  "\n"
  "%s:     filformat %s\n"
  
@@ -6634,7 +6497,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "unrecognized --endian type `%s'"
  msgstr "okänd --endian-typ ”%s”"
-@@ -7218,7 +7603,7 @@ msgstr "   ant sektioner:%d\n"
+@@ -7218,7 +7463,7 @@ msgstr "   ant sektioner:%d\n"
  msgid "  time and date: 0x%08x  - "
  msgstr "  tid och datum: 0x%08x  - "
  
@@ -6643,7 +6506,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "not set\n"
  msgstr "ej satt\n"
-@@ -7685,389 +8070,388 @@ msgstr "%s: %s: stab-post %ld är trasig\n"
+@@ -7685,389 +7930,388 @@ msgstr "%s: %s: stab-post %ld är trasig\n"
  msgid "Last stabs entries before error:\n"
  msgstr "De sista stabs-posterna före felet:\n"
  
@@ -7133,7 +6996,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "     --sym-base=[0|8|10|16] \n"
-@@ -8078,29 +8462,29 @@ msgstr ""
+@@ -8078,29 +8322,29 @@ msgstr ""
  "                         Bestäm bas för symbolstorlekar.  Alternativen är\n"
  "                         blandat (standard), oktalt, decimalt, hexadecimalt.\n"
  
@@ -7168,7 +7031,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "     -U[dlexhi] --unicode=[default|locale|escape|hex|highlight|invalid]\n"
-@@ -8115,47 +8499,47 @@ msgstr ""
+@@ -8115,47 +8359,47 @@ msgstr ""
  "                          markerade flyktföljder, eller betrakta deom som\n"
  "                          ogiltiga och visa som ”{hex-sekvenser}”\n"
  
@@ -7225,7 +7088,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -L --lint|--enable-checks\n"
-@@ -8164,7 +8548,7 @@ msgstr ""
+@@ -8164,7 +8408,7 @@ msgstr ""
  "  -L --lint|--enable-checks\n"
  "                         Visa varningsmeddelanden för möjliga problem\n"
  
@@ -7234,7 +7097,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -x --hex-dump=<number|name>\n"
-@@ -8173,7 +8557,7 @@ msgstr ""
+@@ -8173,7 +8417,7 @@ msgstr ""
  "  -x --hex-dump=<nummer|namn>\n"
  "                         Visa innehållet i sektion <nummer|namn> som byte\n"
  
@@ -7243,7 +7106,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -p --string-dump=<number|name>\n"
-@@ -8182,7 +8566,7 @@ msgstr ""
+@@ -8182,7 +8426,7 @@ msgstr ""
  "  -p --string-dump=<nummer|namn>\n"
  "                         Visa innehållet i sektion <nummer|namn> som strängar\n"
  
@@ -7252,7 +7115,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -R --relocated-dump=<number|name>\n"
-@@ -8191,12 +8575,12 @@ msgstr ""
+@@ -8191,12 +8435,12 @@ msgstr ""
  "  -R --relocated-dump=<nummer|namn>\n"
  "                         Visa det relokerade innehållet i sektion <nummer|namn>\n"
  
@@ -7267,7 +7130,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -w --debug-dump[a/=abbrev, A/=addr, r/=aranges, c/=cu_index, L/=decodedline,\n"
-@@ -8213,7 +8597,7 @@ msgstr ""
+@@ -8213,7 +8457,7 @@ msgstr ""
  "                  U/=trace_info]\n"
  "                         Visa innehållet i DWARF-felsökningssektioner\n"
  
@@ -7276,7 +7139,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -wk --debug-dump=links Display the contents of sections that link to separate\n"
-@@ -8222,7 +8606,7 @@ msgstr ""
+@@ -8222,7 +8466,7 @@ msgstr ""
  "  -wk --debug-dump=links Visa innehållet i sektioner som länkar till separata\n"
  "                          filer med felsökningsinformation\n"
  
@@ -7285,7 +7148,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -P --process-links     Display the contents of non-debug sections in separate\n"
-@@ -8232,7 +8616,7 @@ msgstr ""
+@@ -8232,7 +8476,7 @@ msgstr ""
  "                            i separata filer med felsökningsinformation.\n"
  "                            (Implicerar -wK)\n"
  
@@ -7294,7 +7157,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -wK --debug-dump=follow-links\n"
-@@ -8242,7 +8626,7 @@ msgstr ""
+@@ -8242,7 +8486,7 @@ msgstr ""
  "                         Följ länkar till separata filer med\n"
  "                          felsökningsinformation (standard)\n"
  
@@ -7303,7 +7166,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -wN --debug-dump=no-follow-links\n"
-@@ -8252,7 +8636,7 @@ msgstr ""
+@@ -8252,7 +8496,7 @@ msgstr ""
  "                         Följ inte länkar till separata filer med\n"
  "                          felsökningsinformation\n"
  
@@ -7312,7 +7175,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -wK --debug-dump=follow-links\n"
-@@ -8262,7 +8646,7 @@ msgstr ""
+@@ -8262,7 +8506,7 @@ msgstr ""
  "                         Följ länkar till separata filer med\n"
  "                          felsökningsinformation\n"
  
@@ -7321,7 +7184,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -wN --debug-dump=no-follow-links\n"
-@@ -8273,7 +8657,7 @@ msgstr ""
+@@ -8273,7 +8517,7 @@ msgstr ""
  "                         Följ inte länkar till separata filer med\n"
  "                          felsökningsinformation (standard)\n"
  
@@ -7330,7 +7193,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -wD --debug-dump=use-debuginfod\n"
-@@ -8282,7 +8666,7 @@ msgstr ""
+@@ -8282,7 +8526,7 @@ msgstr ""
  "  -wD --debug-dump=use-debuginfod\n"
  "                         När länkar följs, fråga även debuginfod-servrar (standard)\n"
  
@@ -7339,7 +7202,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -wE --debug-dump=do-not-use-debuginfod\n"
-@@ -8291,27 +8675,27 @@ msgstr ""
+@@ -8291,27 +8535,27 @@ msgstr ""
  "  -wN --debug-dump=do-not-use-debuginfod\n"
  "                         När länkar följs, fråga inte debuginfod-servrar\n"
  
@@ -7372,7 +7235,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  --ctf-symbols=<number|name>\n"
-@@ -8321,7 +8705,7 @@ msgstr ""
+@@ -8321,7 +8565,7 @@ msgstr ""
  "                         Använd sektion <nummer|namn> som den externa\n"
  "                         CTF-symboltabellen\n"
  
@@ -7381,7 +7244,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  --ctf-strings=<number|name>\n"
-@@ -8331,7 +8715,13 @@ msgstr ""
+@@ -8331,7 +8575,13 @@ msgstr ""
  "                         Använd sektion <nummer|namn> som den externa\n"
  "                         CTF-strängtabellen\n"
  
@@ -7396,7 +7259,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "  -i --instruction-dump=<number|name>\n"
-@@ -8340,144 +8730,156 @@ msgstr ""
+@@ -8340,144 +8590,156 @@ msgstr ""
  "  -i --instruction-dump=<nummer|namn>\n"
  "                         Disassemblera innehållet i sektion <nummer|namn>\n"
  
@@ -7581,7 +7444,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -8487,7 +8889,7 @@ msgstr ""
+@@ -8487,7 +8749,7 @@ msgstr ""
  "  Start för programhuvuden:          "
  
  # 37 tecken i "vänstra" kolumnen
@@ -7590,7 +7453,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  " (bytes into file)\n"
-@@ -8496,85 +8898,85 @@ msgstr ""
+@@ -8496,85 +8758,85 @@ msgstr ""
  " (byte in i filen)\n"
  "  Start för sektionshuvuden:         "
  
@@ -7692,7 +7555,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -8583,7 +8985,7 @@ msgstr ""
+@@ -8583,7 +8845,7 @@ msgstr ""
  "\n"
  "Det finns inga programhuvuden i den länkade filen ”%s”.\n"
  
@@ -7701,7 +7564,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -8592,7 +8994,7 @@ msgstr ""
+@@ -8592,7 +8854,7 @@ msgstr ""
  "\n"
  "Det finns inga programhuvuden i denna fil.\n"
  
@@ -7710,7 +7573,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -8601,20 +9003,23 @@ msgstr ""
+@@ -8601,20 +8863,23 @@ msgstr ""
  "\n"
  "Elf-filtyp är %s\n"
  
@@ -7742,7 +7605,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -8623,68 +9028,68 @@ msgstr ""
+@@ -8623,68 +8888,68 @@ msgstr ""
  "\n"
  "Programhuvuden:\n"
  
@@ -7826,7 +7689,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -8693,102 +9098,108 @@ msgstr ""
+@@ -8693,102 +8958,108 @@ msgstr ""
  "\n"
  " Sektion till segment-avbildning:\n"
  
@@ -7969,7 +7832,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -8797,57 +9208,60 @@ msgstr ""
+@@ -8797,57 +9068,60 @@ msgstr ""
  "\n"
  "Det finns inga sektioner i denna fil.\n"
  
@@ -8050,7 +7913,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -8856,7 +9270,7 @@ msgstr ""
+@@ -8856,7 +9130,7 @@ msgstr ""
  "\n"
  "Sektionshuvuden i den länkade filen ”%s”:\n"
  
@@ -8059,7 +7922,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -8865,7 +9279,7 @@ msgstr ""
+@@ -8865,7 +9139,7 @@ msgstr ""
  "\n"
  "Sektionshuvuden:\n"
  
@@ -8068,7 +7931,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -8874,106 +9288,106 @@ msgstr ""
+@@ -8874,106 +9148,106 @@ msgstr ""
  "\n"
  "Sektionshuvud:\n"
  
@@ -8196,7 +8059,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "       [<unknown>: 0x%x], "
  msgstr "        [<okänd>: 0x%x], "
-@@ -8981,7 +9395,7 @@ msgstr "        [<okänd>: 0x%x], "
+@@ -8981,7 +9255,7 @@ msgstr "        [<okänd>: 0x%x], "
  #. The ordering of the letters shown here matches the ordering of the
  #. corresponding SHF_xxx values, and hence the order in which these
  #. letters will be displayed to the user.
@@ -8205,7 +8068,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "Key to Flags:\n"
-@@ -8996,44 +9410,44 @@ msgstr ""
+@@ -8996,44 +9270,44 @@ msgstr ""
  "  C (komprimerad, x (okänd), o (OS-specifik), E (uteslut),\n"
  "  "
  
@@ -8259,7 +8122,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9042,7 +9456,7 @@ msgstr ""
+@@ -9042,7 +9316,7 @@ msgstr ""
  "\n"
  "Det finns inga sektionsgrupper i den länkade filen ”%s”.\n"
  
@@ -8268,7 +8131,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9051,16 +9465,16 @@ msgstr ""
+@@ -9051,16 +9325,16 @@ msgstr ""
  "\n"
  "Det finns inga sektionsgrupper i denna fil.\n"
  
@@ -8288,7 +8151,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9069,41 +9483,43 @@ msgstr ""
+@@ -9069,41 +9343,43 @@ msgstr ""
  "\n"
  "Det finns inga sektionsgrupper i den länkade filen ”%s”.\n"
  
@@ -8344,7 +8207,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9112,62 +9528,66 @@ msgstr ""
+@@ -9112,62 +9388,66 @@ msgstr ""
  "\n"
  "%sgruppsektionen [%5u] ”%s” [%s] innehåller %u sektioner:\n"
  
@@ -8427,7 +8290,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9176,34 +9596,40 @@ msgstr ""
+@@ -9176,34 +9456,40 @@ msgstr ""
  "\n"
  "Avbildsomlokaliseringar\n"
  
@@ -8477,7 +8340,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9212,7 +9638,7 @@ msgstr ""
+@@ -9212,7 +9498,7 @@ msgstr ""
  "\n"
  "Det finns inga dynamiska omlokaliseringar i den länkade filen ”%s”.\n"
  
@@ -8486,7 +8349,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9221,7 +9647,7 @@ msgstr ""
+@@ -9221,7 +9507,7 @@ msgstr ""
  "\n"
  "Det finns inga dynamiska omlokaliseringar i denna fil.\n"
  
@@ -8495,7 +8358,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9230,7 +9656,7 @@ msgstr ""
+@@ -9230,7 +9516,7 @@ msgstr ""
  "\n"
  "I den länkade filen ”%s” omlokeringssektion "
  
@@ -8504,7 +8367,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9239,14 +9665,16 @@ msgstr ""
+@@ -9239,14 +9525,16 @@ msgstr ""
  "\n"
  "Omlokeringssektion "
  
@@ -8526,7 +8389,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9255,7 +9683,7 @@ msgstr ""
+@@ -9255,7 +9543,7 @@ msgstr ""
  "\n"
  "Det finns inga statiska omlokaliseringar i den länkade filen ”%s”."
  
@@ -8535,7 +8398,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9264,7 +9692,7 @@ msgstr ""
+@@ -9264,7 +9552,7 @@ msgstr ""
  "\n"
  "Det finns inga statiska omlokaliseringar i denna fil."
  
@@ -8544,7 +8407,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9273,7 +9701,7 @@ msgstr ""
+@@ -9273,7 +9561,7 @@ msgstr ""
  "\n"
  "För att se de dynamiska omlokaliseringarna, lägg till --use-dynamic på kommandoraden.\n"
  
@@ -8553,7 +8416,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9282,7 +9710,7 @@ msgstr ""
+@@ -9282,7 +9570,7 @@ msgstr ""
  "\n"
  "Det finns inga omlokaliseringar i den länkade filen ”%s”.\n"
  
@@ -8562,7 +8425,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9291,50 +9719,53 @@ msgstr ""
+@@ -9291,50 +9579,53 @@ msgstr ""
  "\n"
  "Det finns inga omlokaliseringar i denna fil.\n"
  
@@ -8632,7 +8495,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9344,7 +9775,7 @@ msgstr ""
+@@ -9344,7 +9635,7 @@ msgstr ""
  "Det finns inga utrullningssektioner i denna fil.\n"
  
  #  BUGG: Fortsättningen är inte markerad för översättning i koden och innehåller '-citattecken.
@@ -8641,7 +8504,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9353,11 +9784,11 @@ msgstr ""
+@@ -9353,11 +9644,11 @@ msgstr ""
  "\n"
  "Kunde inte hitta utrullningssektion till "
  
@@ -8655,7 +8518,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9366,19 +9797,26 @@ msgstr ""
+@@ -9366,19 +9657,26 @@ msgstr ""
  "\n"
  "Utrullningssektion "
  
@@ -8689,7 +8552,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Utrullad sektion ”%s” på avståndet 0x%lx innehåller %lu post:\n"
-@@ -9386,197 +9824,207 @@ msgstr[1] ""
+@@ -9386,197 +9684,207 @@ msgstr[1] ""
  "\n"
  "Utrullad sektion ”%s” på avståndet 0x%lx innehåller %lu poster:\n"
  
@@ -8947,7 +8810,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9585,79 +10033,79 @@ msgstr ""
+@@ -9585,79 +9893,79 @@ msgstr ""
  "\n"
  "Avkodningen av utrullningssektioner för maskintypen %s stödjs inte för närvarande.\n"
  
@@ -9063,7 +8926,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9666,7 +10114,7 @@ msgstr ""
+@@ -9666,7 +9974,7 @@ msgstr ""
  "\n"
  "Det finns ingen dynamisk sektion i den länkade filen ”%s”.\n"
  
@@ -9072,7 +8935,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9676,56 +10124,63 @@ msgstr ""
+@@ -9676,56 +9984,63 @@ msgstr ""
  "Det finns ingen dynamisk sektion i denna fil.\n"
  
  #. See PR 21379 for a reproducer.
@@ -9152,7 +9015,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "I den länkade filen ”%s” innehåller den dynamiska sektionen på avståndet 0x%lx %lu post:\n"
-@@ -9733,14 +10188,20 @@ msgstr[1] ""
+@@ -9733,14 +10048,20 @@ msgstr[1] ""
  "\n"
  "I den länkade filen ”%s” innehåller den dynamiska sektionen på avståndet 0x%lx %lu poster:\n"
  
@@ -9177,7 +9040,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Den dynamiska sektionen på avståndet 0x%lx innehåller %lu post:\n"
-@@ -9748,87 +10209,88 @@ msgstr[1] ""
+@@ -9748,87 +10069,88 @@ msgstr[1] ""
  "\n"
  "Den dynamiska sektionen på avståndet 0x%lx innehåller %lu poster:\n"
  
@@ -9285,7 +9148,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9843,7 +10305,7 @@ msgstr[1] ""
+@@ -9843,7 +10165,7 @@ msgstr[1] ""
  "\n"
  "I den länkade filen ”%s” innehåller versiondefinitionssektion ”%s” %u poster:\n"
  
@@ -9294,7 +9157,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9858,71 +10320,76 @@ msgstr[1] ""
+@@ -9858,71 +10180,76 @@ msgstr[1] ""
  "\n"
  "Versiondefinitionssektion ”%s” innehåller %u poster:\n"
  
@@ -9395,7 +9258,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9937,7 +10404,7 @@ msgstr[1] ""
+@@ -9937,7 +10264,7 @@ msgstr[1] ""
  "\n"
  "I den länkade filen ”%s” innehåller versionbehovssektion ”%s” %u poster:\n"
  
@@ -9404,7 +9267,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -9952,75 +10419,84 @@ msgstr[1] ""
+@@ -9952,75 +10279,84 @@ msgstr[1] ""
  "\n"
  "Versionbehovssektion ”%s” innehåller %u poster:\n"
  
@@ -9512,7 +9375,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "I den länkade filen ”%s” innehåller versionsymbolssektionen ”%s” %lu post:\n"
-@@ -10028,14 +10504,20 @@ msgstr[1] ""
+@@ -10028,14 +10364,20 @@ msgstr[1] ""
  "\n"
  "I den länkade filen ”%s” innehåller versionsymbolssektionen ”%s” %lu poster:\n"
  
@@ -9537,7 +9400,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Versionsymbolssektion ”%s” innehåller %lu post:\n"
-@@ -10043,47 +10525,47 @@ msgstr[1] ""
+@@ -10043,47 +10385,47 @@ msgstr[1] ""
  "\n"
  "Versionsymbolssektion ”%s” innehåller %lu poster:\n"
  
@@ -9596,7 +9459,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10092,7 +10574,7 @@ msgstr ""
+@@ -10092,7 +10434,7 @@ msgstr ""
  "\n"
  "Det fanns ingen versionsinformation i den länkade filen ”%s”.\n"
  
@@ -9605,7 +9468,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10101,74 +10583,75 @@ msgstr ""
+@@ -10101,74 +10443,75 @@ msgstr ""
  "\n"
  "Det fanns ingen versionsinformation i denna fil.\n"
  
@@ -9698,7 +9561,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10177,7 +10660,7 @@ msgstr ""
+@@ -10177,7 +10520,7 @@ msgstr ""
  "\n"
  "LTO-symboltabellsektionen ”%s” i den länkade filen ”%s” är tom!\n"
  
@@ -9707,7 +9570,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10186,24 +10669,24 @@ msgstr ""
+@@ -10186,24 +10529,24 @@ msgstr ""
  "\n"
  "LTO-symboltabellen ”%s” är tom!\n"
  
@@ -9737,7 +9600,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10212,56 +10695,62 @@ msgstr ""
+@@ -10212,56 +10555,62 @@ msgstr ""
  "\n"
  "I den länkade filen ”%s”: "
  
@@ -9813,7 +9676,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "I den länkade filen ”%s” innehåller den dynamiska symboltabellen %lu post:\n"
-@@ -10269,14 +10758,20 @@ msgstr[1] ""
+@@ -10269,14 +10618,20 @@ msgstr[1] ""
  "\n"
  "I den länkade filen ”%s” innehåller den dynamiska symboltabellen %lu poster:\n"
  
@@ -9838,7 +9701,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Symboltabellen för avbild innehåller %lu post:\n"
-@@ -10284,17 +10779,17 @@ msgstr[1] ""
+@@ -10284,17 +10639,17 @@ msgstr[1] ""
  "\n"
  "Symboltabellen för avbild innehåller %lu poster:\n"
  
@@ -9859,7 +9722,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10303,14 +10798,20 @@ msgstr ""
+@@ -10303,14 +10658,20 @@ msgstr ""
  "\n"
  "Symboltabellen ”%s” har en sh_entsize på noll!\n"
  
@@ -9884,7 +9747,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "I den länkade filen ”%s” innehåller ”%s” %lu post:\n"
-@@ -10318,14 +10819,20 @@ msgstr[1] ""
+@@ -10318,14 +10679,20 @@ msgstr[1] ""
  "\n"
  "I den länkade filen ”%s” innehåller ”%s” %lu poster:\n"
  
@@ -9909,7 +9772,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Symboltabell ”%s” innehåller %lu post:\n"
-@@ -10333,7 +10840,7 @@ msgstr[1] ""
+@@ -10333,7 +10700,7 @@ msgstr[1] ""
  "\n"
  "Symboltabell ”%s” innehåller %lu poster:\n"
  
@@ -9918,7 +9781,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10342,14 +10849,20 @@ msgstr ""
+@@ -10342,14 +10709,20 @@ msgstr ""
  "\n"
  "Informationen om dynamiska symboler är inte tillgänglig för att visa symboler.\n"
  
@@ -9943,7 +9806,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Histogram över hinkarnas listlängd (totalt %lu hink):\n"
-@@ -10357,31 +10870,37 @@ msgstr[1] ""
+@@ -10357,31 +10730,37 @@ msgstr[1] ""
  "\n"
  "Histogram över hinkarnas listlängd (totalt %lu hinkar):\n"
  
@@ -9989,7 +9852,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Histogram över ”%s”-hinkarnas listlängd (totalt %lu hink):\n"
-@@ -10389,22 +10908,28 @@ msgstr[1] ""
+@@ -10389,22 +10768,28 @@ msgstr[1] ""
  "\n"
  "Histogram över ”%s”-hinkarnas listlängd (totalt %lu hinkar):\n"
  
@@ -10024,7 +9887,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "I den länkade filen ”%s” innehåller segmentet med dynamisk information på avstånd 0x%lx %d post:\n"
-@@ -10412,14 +10937,20 @@ msgstr[1] ""
+@@ -10412,14 +10797,20 @@ msgstr[1] ""
  "\n"
  "I den länkade filen ”%s” innehåller segmentet med dynamisk information på avstånd 0x%lx %d poster:\n"
  
@@ -10049,7 +9912,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Dynamiskt info-segment på offset 0x%lx innehåller %d post:\n"
-@@ -10427,101 +10958,113 @@ msgstr[1] ""
+@@ -10427,101 +10818,113 @@ msgstr[1] ""
  "\n"
  "Dynamiskt info-segment på offset 0x%lx innehåller %d poster:\n"
  
@@ -10207,7 +10070,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10530,16 +11073,16 @@ msgstr ""
+@@ -10530,16 +10933,16 @@ msgstr ""
  "\n"
  "Disassembleringsutskrift av sektion %s\n"
  
@@ -10227,7 +10090,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10548,7 +11091,7 @@ msgstr ""
+@@ -10548,7 +10951,7 @@ msgstr ""
  "\n"
  "Strängutskrift av sektion ”%s” i den länkade filen %s:\n"
  
@@ -10236,7 +10099,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10557,33 +11100,33 @@ msgstr ""
+@@ -10557,33 +10960,33 @@ msgstr ""
  "\n"
  "Strängutskrift av sektion ”%s”:\n"
  
@@ -10277,7 +10140,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10592,7 +11135,7 @@ msgstr ""
+@@ -10592,7 +10995,7 @@ msgstr ""
  "\n"
  "Hexadecimal utskrift av sektion ”%s” av den länkade filen %s:\n"
  
@@ -10286,7 +10149,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10601,36 +11144,36 @@ msgstr ""
+@@ -10601,36 +11004,36 @@ msgstr ""
  "\n"
  "Hexadecimal utskrift av sektion ”%s”:\n"
  
@@ -10330,7 +10193,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10639,7 +11182,7 @@ msgstr ""
+@@ -10639,7 +11042,7 @@ msgstr ""
  "\n"
  "Utskrift av CTF-sektionen ”%s” i den länkade filen %s:\n"
  
@@ -10339,7 +10202,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10648,27 +11191,40 @@ msgstr ""
+@@ -10648,27 +11051,40 @@ msgstr ""
  "\n"
  "Utskrift av CTF-sektionen ”%s”:\n"
  
@@ -10385,7 +10248,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -10681,503 +11237,500 @@ msgstr ""
+@@ -10681,503 +11097,500 @@ msgstr ""
  #. which has the NOBITS type - the bits in the file will be random.
  #. This can happen when a file containing a .eh_frame section is
  #. stripped with the --only-keep-debug command line option.
@@ -10999,7 +10862,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -11186,52 +11739,58 @@ msgstr ""
+@@ -11186,52 +11599,58 @@ msgstr ""
  "\n"
  "Statisk GOT:\n"
  
@@ -11072,7 +10935,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Sektionen ”.liblist” innehåller %lu post:\n"
-@@ -11239,37 +11798,37 @@ msgstr[1] ""
+@@ -11239,37 +11658,37 @@ msgstr[1] ""
  "\n"
  "Sektionen ”.liblist” innehåller %lu poster:\n"
  
@@ -11118,7 +10981,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -11284,35 +11843,42 @@ msgstr[1] ""
+@@ -11284,35 +11703,42 @@ msgstr[1] ""
  "\n"
  "Sektionen ”%s” innehåller %d poster:\n"
  
@@ -11172,7 +11035,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Sektionen ”.conflict” innehåller %lu post:\n"
-@@ -11320,31 +11886,33 @@ msgstr[1] ""
+@@ -11320,31 +11746,33 @@ msgstr[1] ""
  "\n"
  "Sektionen ”.conflict” innehåller %lu poster:\n"
  
@@ -11216,7 +11079,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -11353,99 +11921,107 @@ msgstr ""
+@@ -11353,99 +11781,107 @@ msgstr ""
  "\n"
  "Primär GOT:\n"
  
@@ -11351,7 +11214,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgstr[0] ""
  "\n"
  "Bibliotekslistsektionen ”%s” innehåller %lu post:\n"
-@@ -11453,462 +12029,463 @@ msgstr[1] ""
+@@ -11453,462 +11889,463 @@ msgstr[1] ""
  "\n"
  "Bibliotekslistsektionen ”%s” innehåller %lu poster:\n"
  
@@ -11926,7 +11789,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "    Version: "
  msgstr "    Version: "
-@@ -11918,321 +12495,322 @@ msgstr "    Version: "
+@@ -11918,321 +12355,322 @@ msgstr "    Version: "
  #. is a series of entries, where each entry is a single byte followed
  #. by a nul terminated string.  The byte gives the bit number to test
  #. if enabled in the bitmask.
@@ -12323,7 +12186,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -12241,284 +12819,294 @@ msgstr ""
+@@ -12241,284 +12679,294 @@ msgstr ""
  "\n"
  "   Länkflaggor : "
  
@@ -12714,7 +12577,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid ""
  "\n"
-@@ -12527,63 +13115,66 @@ msgstr ""
+@@ -12527,63 +12975,66 @@ msgstr ""
  "\n"
  "Fil: %s\n"
  
@@ -12798,7 +12661,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgid "Nothing to do.\n"
  msgstr "Inget att göra.\n"
  
-@@ -13005,17 +13596,29 @@ msgid " If no input file(s) are specified, a.out is assumed\n"
+@@ -13005,17 +13456,29 @@ msgid " If no input file(s) are specified, a.out is assumed\n"
  msgstr " Om ingen infil är vald används a.out\n"
  
  #: size.c:91
@@ -12831,7 +12694,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  "\n"
  msgstr ""
  " Flaggorna är:\n"
-@@ -13030,12 +13633,12 @@ msgstr ""
+@@ -13030,12 +13493,12 @@ msgstr ""
  "  -v        --version                 Visa programmets versionsinformation\n"
  "\n"
  
@@ -12846,7 +12709,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  #, c-format
  msgid "Invalid radix: %s\n"
  msgstr "Ogiltig talbas: %s\n"
-@@ -13582,17 +14185,17 @@ msgstr "\tkodsidesättningen ignoreras.\n"
+@@ -13582,17 +14045,17 @@ msgstr "\tkodsidesättningen ignoreras.\n"
  msgid "try to add a ill language."
  msgstr "försök lägga till ett ill(?)-språk."
  
@@ -12867,7 +12730,7 @@ index e3cd39683f8..f848dcc1d8c 100644
  msgid "input file does not seems to be UFT16.\n"
  msgstr "infilen verkar inte vara UTF16.\n"
  
-@@ -13740,3 +14343,67 @@ msgstr "stab_int_type: felaktig storlek %u"
+@@ -13740,3 +14203,67 @@ msgstr "stab_int_type: felaktig storlek %u"
  #, c-format
  msgid "%s: warning: unknown size for field `%s' in struct"
  msgstr "%s: varning: okänd storleken på fält ”%s” i strukturen"
