@@ -11,7 +11,7 @@ BINUTILS_BRANCH=origin/binutils-$(echo "${BINUTILS_VER}" | sed -re "s|([0-9]+)\.
 git -C "$BINUTILS_GIT" remote update -p
 git -C "$BINUTILS_GIT" rev-parse --verify --quiet refs/tags/"${BINUTILS_TAG}" > /dev/null
 git -C "$BINUTILS_GIT" rev-parse --verify --quiet "$BINUTILS_BRANCH" > /dev/null
-git -C "$BINUTILS_GIT" shortlog "${BINUTILS_TAG}".."${BINUTILS_BRANCH}" -- . ':!/bfd/version.h' ':!/bfd/development.sh' ':!/src-release.sh' > new.patch~
+git -C "$BINUTILS_GIT" shortlog "${BINUTILS_TAG}".."${BINUTILS_BRANCH}" -- . ':!/bfd/version.h' ':!/bfd/development.sh' ':!/src-release.sh'  ':!/libbacktrace' ':!/gas/doc/.dirstamp' > new.patch~
 git -C "$BINUTILS_GIT" diff "${BINUTILS_TAG}".."${BINUTILS_BRANCH}" -- . ':!/bfd/version.h' ':!/bfd/development.sh' ':!/src-release.sh' ':!/libbacktrace' ':!/gas/doc/.dirstamp' >> new.patch~
 diff binutils-stable-branch.patch new.patch~ > /dev/null && rm new.patch~ && exit
 mv new.patch~ binutils-stable-branch.patch
