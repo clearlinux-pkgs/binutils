@@ -6,7 +6,7 @@
 #
 Name     : binutils
 Version  : 2.40
-Release  : 500
+Release  : 501
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz.sig
@@ -189,7 +189,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1675179942
+export SOURCE_DATE_EPOCH=1675695607
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -253,7 +253,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1675179942
+export SOURCE_DATE_EPOCH=1675695607
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
@@ -5023,7 +5023,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 %files lib
 %defattr(-,root,root,-)
 /usr/lib64/bfd-plugins/libdep.so
-/usr/lib64/glibc-hwcaps/x86-64-v3/libbfd-2.40.so
+/usr/lib64/glibc-hwcaps/x86-64-v3/libbfd-2.40.0.so
 /usr/lib64/glibc-hwcaps/x86-64-v3/libbfd.so
 /usr/lib64/glibc-hwcaps/x86-64-v3/libctf-nobfd.so
 /usr/lib64/glibc-hwcaps/x86-64-v3/libctf-nobfd.so.0
@@ -5034,7 +5034,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib64/glibc-hwcaps/x86-64-v3/libgprofng.so
 /usr/lib64/glibc-hwcaps/x86-64-v3/libgprofng.so.0
 /usr/lib64/glibc-hwcaps/x86-64-v3/libgprofng.so.0.0.0
-/usr/lib64/glibc-hwcaps/x86-64-v3/libopcodes-2.40.so
+/usr/lib64/glibc-hwcaps/x86-64-v3/libopcodes-2.40.0.so
 /usr/lib64/glibc-hwcaps/x86-64-v3/libopcodes.so
 /usr/lib64/glibc-hwcaps/x86-64-v3/libsframe.so
 /usr/lib64/glibc-hwcaps/x86-64-v3/libsframe.so.0
@@ -5044,7 +5044,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib64/gprofng/libgp-heap.so
 /usr/lib64/gprofng/libgp-iotrace.so
 /usr/lib64/gprofng/libgp-sync.so
-/usr/lib64/libbfd-2.40.so
+/usr/lib64/libbfd-2.40.0.so
 /usr/lib64/libbfd.so
 /usr/lib64/libctf-nobfd.so
 /usr/lib64/libctf-nobfd.so.0
@@ -5055,7 +5055,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib64/libgprofng.so
 /usr/lib64/libgprofng.so.0
 /usr/lib64/libgprofng.so.0.0.0
-/usr/lib64/libopcodes-2.40.so
+/usr/lib64/libopcodes-2.40.0.so
 /usr/lib64/libopcodes.so
 /usr/lib64/libsframe.so
 /usr/lib64/libsframe.so.0
