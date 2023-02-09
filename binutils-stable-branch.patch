@@ -1,6 +1,9 @@
 Alan Modra (1):
       Regen config files
 
+Clément Chigot (1):
+      configure: remove dependencies on gmp and mpfr when gdb is disabled
+
 Enze Li (1):
       libctf: update regexp to allow makeinfo to build document
 
@@ -12488,6 +12491,36 @@ index e3cd39683f8..6c55dd3e82b 100644
  msgid "input file does not seems to be UFT16.\n"
  msgstr "infilen verkar inte vara UTF16.\n"
  
+diff --git a/configure b/configure
+index 417fc5a970c..9cb953a197e 100755
+--- a/configure
++++ b/configure
+@@ -8032,7 +8032,9 @@ if test -d ${srcdir}/gcc ; then
+   require_mpc=yes
+ fi
+ if test -d ${srcdir}/gdb ; then
+-  require_gmp=yes
++  if test "x$enable_gdb" != xno; then
++   require_gmp=yes
++  fi
+ fi
+ 
+ gmplibs="-lmpfr -lgmp"
+diff --git a/configure.ac b/configure.ac
+index 3a1eb0357e5..e95a9ed116e 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1585,7 +1585,9 @@ if test -d ${srcdir}/gcc ; then
+   require_mpc=yes
+ fi
+ if test -d ${srcdir}/gdb ; then
+-  require_gmp=yes
++  if test "x$enable_gdb" != xno; then
++   require_gmp=yes
++  fi
+ fi
+ 
+ gmplibs="-lmpfr -lgmp"
 diff --git a/cpu/bpf.cpu b/cpu/bpf.cpu
 index 13dde7094c8..2ae74fc4c18 100644
 --- a/cpu/bpf.cpu
