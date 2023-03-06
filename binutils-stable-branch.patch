@@ -1,8 +1,9 @@
-Alan Modra (4):
+Alan Modra (5):
       Regen config files
       ppc32 and "LOAD segment with RWX permissions"
       PR30046, power cmpi leads to unknown architecture
       PR30155, ld segfault in _bfd_nearby_section
+      PR30198, Assertion and segfault when linking x86_64 elf and coff
 
 Clément Chigot (1):
       configure: remove dependencies on gmp and mpfr when gdb is disabled
@@ -91,6 +92,38 @@ index a7a48e0d182..5f656e2373b 100644
  2023-01-14  Nick Clifton  <nickc@redhat.com>
  
  	* 2.40 release point.
+diff --git a/bfd/coff-x86_64.c b/bfd/coff-x86_64.c
+index 13061cdacff..822504a339b 100644
+--- a/bfd/coff-x86_64.c
++++ b/bfd/coff-x86_64.c
+@@ -139,15 +139,19 @@ coff_amd64_reloc (bfd *abfd,
+ 	  break;
+ 	case bfd_target_elf_flavour:
+ 	  /* Subtract __ImageBase.  */
++	  h = NULL;
+ 	  link_info = _bfd_get_link_info (obfd);
+-	  if (link_info == NULL)
+-	    return bfd_reloc_dangerous;
+-	  h = bfd_link_hash_lookup (link_info->hash, "__ImageBase",
+-				    false, false, false);
+-	  if (h == NULL)
+-	    return bfd_reloc_dangerous;
+-	  while (h->type == bfd_link_hash_indirect)
+-	    h = h->u.i.link;
++	  if (link_info != NULL)
++	    h = bfd_link_hash_lookup (link_info->hash, "__ImageBase",
++				      false, false, true);
++	  if (h == NULL
++	      || (h->type != bfd_link_hash_defined
++		  && h->type != bfd_link_hash_defweak))
++	    {
++	      *error_message
++		= (char *) _("R_AMD64_IMAGEBASE with __ImageBase undefined");
++	      return bfd_reloc_dangerous;
++	    }
+ 	  /* ELF symbols in relocatable files are section relative,
+ 	     but in nonrelocatable files they are virtual addresses.  */
+ 	  diff -= (h->u.def.value
 diff --git a/bfd/configure b/bfd/configure
 index e5d464378f8..60ea6becab2 100755
 --- a/bfd/configure
