@@ -3,4 +3,5 @@ bison
 dejagnu
 flex
 help2man
+pypi(msgpack)
 texinfo

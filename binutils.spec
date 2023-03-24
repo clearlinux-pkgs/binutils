@@ -7,7 +7,7 @@
 #
 Name     : binutils
 Version  : 2.40
-Release  : 508
+Release  : 509
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz.sig
@@ -26,13 +26,10 @@ BuildRequires : dejagnu
 BuildRequires : expect
 BuildRequires : flex
 BuildRequires : glibc-staticdev
-BuildRequires : grep
 BuildRequires : help2man
 BuildRequires : lz4-dev
 BuildRequires : lzo-dev
-BuildRequires : pkgconfig(jansson)
-BuildRequires : pkgconfig(msgpack)
-BuildRequires : sed
+BuildRequires : pypi(msgpack)
 BuildRequires : texinfo
 BuildRequires : xz-dev
 BuildRequires : zlib-dev
@@ -190,7 +187,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1679494380
+export SOURCE_DATE_EPOCH=1679681503
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -254,7 +251,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1679494380
+export SOURCE_DATE_EPOCH=1679681503
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :

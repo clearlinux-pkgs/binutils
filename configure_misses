@@ -34,6 +34,8 @@ Configure miss: lwpstatus_t.pr_reg in sys/procfs.h
 Configure miss: lwpstatus_t.pr_reg in sys/procfs.h
 Configure miss: lwpxstatus_t in sys/procfs.h
 Configure miss: lwpxstatus_t in sys/procfs.h
+Configure miss: msgpack
+Configure miss: msgpack
 Configure miss: otool
 Configure miss: otool
 Configure miss: otool
