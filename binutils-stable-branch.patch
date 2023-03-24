@@ -23,6 +23,10 @@ Jan Beulich (2):
       RISC-V: make C-extension JAL available again for (32-bit) assembly
       gas: correct symbol name comparison in .startof./.sizeof. handling
 
+Nick Alcock (2):
+      libctf: fix assertion failure with no system qsort_r
+      libctf: get the offsets of fields of unnamed structs/unions right
+
 Nick Clifton (7):
       Re-enable development.  Update version to 2.40.0
       Updated translations for the gas and binutils sub-directories
@@ -39082,6 +39086,172 @@ index a0148a4c328..47216ccf9fc 100644
        build_info=yes
      else
          build_info=
+diff --git a/libctf/ctf-dedup.c b/libctf/ctf-dedup.c
+index c46f69e7449..6297c45c84d 100644
+--- a/libctf/ctf-dedup.c
++++ b/libctf/ctf-dedup.c
+@@ -2306,6 +2306,10 @@ sort_output_mapping (const ctf_next_hkv_t *one, const ctf_next_hkv_t *two,
+   ctf_id_t one_type;
+   ctf_id_t two_type;
+ 
++  /* Inputs are always equal to themselves.  */
++  if (one == two)
++    return 0;
++
+   one_gid = ctf_dynhash_lookup (d->cd_output_first_gid, one_hval);
+   two_gid = ctf_dynhash_lookup (d->cd_output_first_gid, two_hval);
+ 
+diff --git a/libctf/ctf-types.c b/libctf/ctf-types.c
+index d21f6d5ff99..dd82053e1d7 100644
+--- a/libctf/ctf-types.c
++++ b/libctf/ctf-types.c
+@@ -1417,7 +1417,10 @@ ctf_member_info (ctf_dict_t *fp, ctf_id_t type, const char *name,
+ 	  && (ctf_type_kind (fp, memb.ctlm_type) == CTF_K_STRUCT
+ 	      || ctf_type_kind (fp, memb.ctlm_type) == CTF_K_UNION)
+ 	  && (ctf_member_info (fp, memb.ctlm_type, name, mip) == 0))
+-	return 0;
++	{
++	  mip->ctm_offset += (unsigned long) CTF_LMEM_OFFSET (&memb);
++	  return 0;
++	}
+ 
+       if (strcmp (membname, name) == 0)
+ 	{
+diff --git a/libctf/testsuite/libctf-lookup/unnamed-field-info-ctf.c b/libctf/testsuite/libctf-lookup/unnamed-field-info-ctf.c
+new file mode 100644
+index 00000000000..54d60f5b195
+--- /dev/null
++++ b/libctf/testsuite/libctf-lookup/unnamed-field-info-ctf.c
+@@ -0,0 +1,36 @@
++struct A
++{
++  int a;
++  char *b;
++  struct
++  {
++    struct
++    {
++      char *one;
++      int two;
++    };
++    union
++    {
++      char *three;
++    };
++  };
++  struct
++  {
++    int four;
++  };
++  union
++  {
++    struct
++    {
++      double x;
++      long y;
++    };
++    struct
++    {
++      struct { char *foo; } z;
++      float aleph;
++    };
++  };
++};
++
++struct A used;
+diff --git a/libctf/testsuite/libctf-lookup/unnamed-field-info.c b/libctf/testsuite/libctf-lookup/unnamed-field-info.c
+new file mode 100644
+index 00000000000..9abe8b026bb
+--- /dev/null
++++ b/libctf/testsuite/libctf-lookup/unnamed-field-info.c
+@@ -0,0 +1,79 @@
++/* Make sure unnamed field offsets are relative to the containing struct.  */
++
++#include <ctf-api.h>
++#include <stddef.h>
++#include <stdio.h>
++#include <stdlib.h>
++
++#include "unnamed-field-info-ctf.c"
++
++static void
++verify_offsetof_matching (ctf_dict_t *fp, ctf_id_t type, const char *name, size_t offset)
++{
++  ctf_membinfo_t mi;
++
++  if (ctf_member_info (fp, type, name, &mi) < 0)
++    goto err;
++
++  if (mi.ctm_offset != offset * 8)
++    fprintf (stderr, "field %s inconsistency: offsetof() says %zi bits, CTF says %zi\n",
++	     name, offset * 8, mi.ctm_offset);
++
++  return;
++
++ err:
++  fprintf (stderr, "Cannot look up field %s: %s\n", name,
++	   ctf_errmsg (ctf_errno (fp)));
++  return;
++}
++
++int
++main (int argc, char *argv[])
++{
++  ctf_dict_t *fp;
++  ctf_archive_t *ctf;
++  ctf_id_t type;
++  int err;
++
++  if (argc != 2)
++    {
++      fprintf (stderr, "Syntax: %s PROGRAM\n", argv[0]);
++      exit(1);
++    }
++
++  if ((ctf = ctf_open (argv[1], NULL, &err)) == NULL)
++    goto open_err;
++  if ((fp = ctf_dict_open (ctf, NULL, &err)) == NULL)
++    goto open_err;
++
++  /* Dig out some structure members by name.  */
++
++  if ((type = ctf_lookup_by_name (fp, "struct A") ) == CTF_ERR)
++    goto err;
++
++  verify_offsetof_matching (fp, type, "a", offsetof (struct A, a));
++  verify_offsetof_matching (fp, type, "b", offsetof (struct A, b));
++  verify_offsetof_matching (fp, type, "one", offsetof (struct A, one));
++  verify_offsetof_matching (fp, type, "two", offsetof (struct A, two));
++  verify_offsetof_matching (fp, type, "three", offsetof (struct A, three));
++  verify_offsetof_matching (fp, type, "four", offsetof (struct A, four));
++  verify_offsetof_matching (fp, type, "x", offsetof (struct A, x));
++  verify_offsetof_matching (fp, type, "y", offsetof (struct A, y));
++  verify_offsetof_matching (fp, type, "z", offsetof (struct A, z));
++  verify_offsetof_matching (fp, type, "aleph", offsetof (struct A, aleph));
++
++  ctf_dict_close (fp);
++  ctf_arc_close (ctf);
++
++  printf ("Offset validation complete.\n");
++
++  return 0;
++
++ open_err:
++  fprintf (stderr, "%s: cannot open: %s\n", argv[0], ctf_errmsg (err));
++  return 1;
++
++ err:
++  fprintf (stderr, "Cannot look up type: %s\n", ctf_errmsg (ctf_errno (fp)));
++  return 1;
++}
+diff --git a/libctf/testsuite/libctf-lookup/unnamed-field-info.lk b/libctf/testsuite/libctf-lookup/unnamed-field-info.lk
+new file mode 100644
+index 00000000000..eae6a517d50
+--- /dev/null
++++ b/libctf/testsuite/libctf-lookup/unnamed-field-info.lk
+@@ -0,0 +1,2 @@
++# source: unnamed-field-info-ctf.c
++Offset validation complete.
 diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
 index 760208539b2..0f5514247cf 100644
 --- a/opcodes/ChangeLog
