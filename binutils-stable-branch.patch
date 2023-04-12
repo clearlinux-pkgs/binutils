@@ -16,6 +16,9 @@ Enze Li (1):
 Guillermo E. Martinez (1):
       bpf: fix error conversion from long unsigned int to unsigned int [-Werror=overflow]
 
+H.J. Lu (1):
+      lto: Don't add indirect symbols for versioned aliases in IR
+
 Indu Bhagat (1):
       toplevel: Makefile.def: add install-strip dependency on libsframe
 
@@ -265,6 +268,26 @@ index a8234f27a8a..833bc744563 100644
      }
  
    BFD_ASSERT (htab->plt_type != PLT_VXWORKS);
+diff --git a/bfd/elflink.c b/bfd/elflink.c
+index 7bf337c7d44..98468acca6c 100644
+--- a/bfd/elflink.c
++++ b/bfd/elflink.c
+@@ -5382,7 +5382,14 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
+ 	      h->unique_global = (flags & BSF_GNU_UNIQUE) != 0;
+ 	    }
+ 
+-	  if (definition && !dynamic)
++	  /* Don't add indirect symbols for .symver x, x@FOO aliases
++	     in IR.  Since all data or text symbols in IR have the
++	     same type, value and section, we can't tell if a symbol
++	     is an alias of another symbol by their types, values and
++	     sections.  */
++	  if (definition
++	      && !dynamic
++	      && (abfd->flags & BFD_PLUGIN) == 0)
+ 	    {
+ 	      char *p = strchr (name, ELF_VER_CHR);
+ 	      if (p != NULL && p[1] != ELF_VER_CHR)
 diff --git a/bfd/po/sr.po b/bfd/po/sr.po
 index 6414555fff3..4023065ee69 100644
 --- a/bfd/po/sr.po
@@ -39915,6 +39938,46 @@ index a3a8994749d..35235a08d8a 100644
      if { [target_defaults_to_execstack] } {
  	run_ld_link_tests [list \
  	   [list "PR ld/29072 (warn about absent .note.GNU-stack)" \
+diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
+index 6c1322e43e0..083cf627968 100644
+--- a/ld/testsuite/ld-plugin/lto.exp
++++ b/ld/testsuite/ld-plugin/lto.exp
+@@ -530,6 +530,15 @@ set lto_link_elf_tests [list \
+    {} \
+    "pr29086" \
+   ] \
++  [list \
++   "Build pr30281.so" \
++   "-shared -Wl,--version-script,pr30281.t \
++    -O2 -fPIC -flto-partition=max -flto=2" \
++   "-O2 -fPIC -flto-partition=max -flto=2" \
++   {pr30281.c} \
++   "" \
++   "pr30281.so" \
++  ] \
+ ]
+ 
+ # PR 14918 checks that libgcc is not spuriously included in a shared link of
+diff --git a/ld/testsuite/ld-plugin/pr30281.c b/ld/testsuite/ld-plugin/pr30281.c
+new file mode 100644
+index 00000000000..ba9722a389c
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr30281.c
+@@ -0,0 +1,4 @@
++extern __inline __attribute__((__gnu_inline__)) void foo(void) {}
++__attribute__((__symver__("foo@GLIBC_2.2.5")))
++int __collector_foo_2_2(void) {}
++void foo(void) {}
+diff --git a/ld/testsuite/ld-plugin/pr30281.t b/ld/testsuite/ld-plugin/pr30281.t
+new file mode 100644
+index 00000000000..3169ad398c9
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr30281.t
+@@ -0,0 +1,4 @@
++GLIBC_2.2.5 {
++  global:
++    foo;
++};
 diff --git a/libctf/configure b/libctf/configure
 index 17463a74cca..b347b292195 100755
 --- a/libctf/configure
