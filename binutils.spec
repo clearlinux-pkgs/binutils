@@ -7,7 +7,7 @@
 #
 Name     : binutils
 Version  : 2.40
-Release  : 514
+Release  : 515
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz.sig
@@ -176,7 +176,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1682645678
+export SOURCE_DATE_EPOCH=1682698589
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -240,7 +240,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1682645678
+export SOURCE_DATE_EPOCH=1682698589
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
@@ -303,40 +303,6 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 
 %files
 %defattr(-,root,root,-)
-/V3/usr/bin/addr2line
-/V3/usr/bin/ar
-/V3/usr/bin/as
-/V3/usr/bin/c++filt
-/V3/usr/bin/coffdump
-/V3/usr/bin/dllwrap
-/V3/usr/bin/dwp
-/V3/usr/bin/elfedit
-/V3/usr/bin/gp-archive
-/V3/usr/bin/gp-collect-app
-/V3/usr/bin/gp-display-src
-/V3/usr/bin/gp-display-text
-/V3/usr/bin/gprof
-/V3/usr/bin/gprofng
-/V3/usr/bin/ld
-/V3/usr/bin/ld.bfd
-/V3/usr/bin/ld.gold
-/V3/usr/bin/nm
-/V3/usr/bin/objcopy
-/V3/usr/bin/objdump
-/V3/usr/bin/ranlib
-/V3/usr/bin/readelf
-/V3/usr/bin/size
-/V3/usr/bin/srconv
-/V3/usr/bin/strings
-/V3/usr/bin/strip
-/V3/usr/bin/sysdump
-/V3/usr/bin/windmc
-/V3/usr/lib64/bfd-plugins/libdep.so
-/V3/usr/lib64/gprofng/libgp-collector.so
-/V3/usr/lib64/gprofng/libgp-collectorAPI.so
-/V3/usr/lib64/gprofng/libgp-heap.so
-/V3/usr/lib64/gprofng/libgp-iotrace.so
-/V3/usr/lib64/gprofng/libgp-sync.so
 /usr/lib/ldscripts/aarch64cloudabi.x
 /usr/lib/ldscripts/aarch64cloudabi.xbn
 /usr/lib/ldscripts/aarch64cloudabi.xc
@@ -4917,6 +4883,33 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 
 %files bin
 %defattr(-,root,root,-)
+/V3/usr/bin/addr2line
+/V3/usr/bin/ar
+/V3/usr/bin/as
+/V3/usr/bin/c++filt
+/V3/usr/bin/coffdump
+/V3/usr/bin/dllwrap
+/V3/usr/bin/dwp
+/V3/usr/bin/elfedit
+/V3/usr/bin/gp-archive
+/V3/usr/bin/gp-collect-app
+/V3/usr/bin/gp-display-src
+/V3/usr/bin/gp-display-text
+/V3/usr/bin/gprof
+/V3/usr/bin/gprofng
+/V3/usr/bin/ld
+/V3/usr/bin/ld.bfd
+/V3/usr/bin/nm
+/V3/usr/bin/objcopy
+/V3/usr/bin/objdump
+/V3/usr/bin/ranlib
+/V3/usr/bin/readelf
+/V3/usr/bin/size
+/V3/usr/bin/srconv
+/V3/usr/bin/strings
+/V3/usr/bin/strip
+/V3/usr/bin/sysdump
+/V3/usr/bin/windmc
 /usr/bin/addr2line
 /usr/bin/ar
 /usr/bin/as
@@ -5023,6 +5016,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 
 %files extras
 %defattr(-,root,root,-)
+/V3/usr/bin/ld.gold
 /usr/bin/ld.gold
 
 %files info
@@ -5038,23 +5032,29 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 
 %files lib
 %defattr(-,root,root,-)
+/V3/usr/lib64/bfd-plugins/libdep.so
+/V3/usr/lib64/gprofng/libgp-collector.so
+/V3/usr/lib64/gprofng/libgp-collectorAPI.so
+/V3/usr/lib64/gprofng/libgp-heap.so
+/V3/usr/lib64/gprofng/libgp-iotrace.so
+/V3/usr/lib64/gprofng/libgp-sync.so
+/V3/usr/lib64/libbfd-2.40.0.so
+/V3/usr/lib64/libbfd.so
+/V3/usr/lib64/libctf-nobfd.so
+/V3/usr/lib64/libctf-nobfd.so.0
+/V3/usr/lib64/libctf-nobfd.so.0.0.0
+/V3/usr/lib64/libctf.so
+/V3/usr/lib64/libctf.so.0
+/V3/usr/lib64/libctf.so.0.0.0
+/V3/usr/lib64/libgprofng.so
+/V3/usr/lib64/libgprofng.so.0
+/V3/usr/lib64/libgprofng.so.0.0.0
+/V3/usr/lib64/libopcodes-2.40.0.so
+/V3/usr/lib64/libopcodes.so
+/V3/usr/lib64/libsframe.so
+/V3/usr/lib64/libsframe.so.0
+/V3/usr/lib64/libsframe.so.0.0.0
 /usr/lib64/bfd-plugins/libdep.so
-/usr/lib64/glibc-hwcaps/x86-64-v3/libbfd-2.40.0.so
-/usr/lib64/glibc-hwcaps/x86-64-v3/libbfd.so
-/usr/lib64/glibc-hwcaps/x86-64-v3/libctf-nobfd.so
-/usr/lib64/glibc-hwcaps/x86-64-v3/libctf-nobfd.so.0
-/usr/lib64/glibc-hwcaps/x86-64-v3/libctf-nobfd.so.0.0.0
-/usr/lib64/glibc-hwcaps/x86-64-v3/libctf.so
-/usr/lib64/glibc-hwcaps/x86-64-v3/libctf.so.0
-/usr/lib64/glibc-hwcaps/x86-64-v3/libctf.so.0.0.0
-/usr/lib64/glibc-hwcaps/x86-64-v3/libgprofng.so
-/usr/lib64/glibc-hwcaps/x86-64-v3/libgprofng.so.0
-/usr/lib64/glibc-hwcaps/x86-64-v3/libgprofng.so.0.0.0
-/usr/lib64/glibc-hwcaps/x86-64-v3/libopcodes-2.40.0.so
-/usr/lib64/glibc-hwcaps/x86-64-v3/libopcodes.so
-/usr/lib64/glibc-hwcaps/x86-64-v3/libsframe.so
-/usr/lib64/glibc-hwcaps/x86-64-v3/libsframe.so.0
-/usr/lib64/glibc-hwcaps/x86-64-v3/libsframe.so.0.0.0
 /usr/lib64/gprofng/libgp-collector.so
 /usr/lib64/gprofng/libgp-collectorAPI.so
 /usr/lib64/gprofng/libgp-heap.so
