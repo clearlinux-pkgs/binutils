@@ -7,7 +7,7 @@
 #
 Name     : binutils
 Version  : 2.40
-Release  : 513
+Release  : 514
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz.sig
@@ -15,7 +15,6 @@ Summary  : zlib compression library
 Group    : Development/Tools
 License  : BSL-1.0 GPL-2.0 GPL-3.0 GPL-3.0+ LGPL-2.0 LGPL-2.1 LGPL-3.0
 Requires: binutils-bin = %{version}-%{release}
-Requires: binutils-filemap = %{version}-%{release}
 Requires: binutils-info = %{version}-%{release}
 Requires: binutils-lib = %{version}-%{release}
 Requires: binutils-license = %{version}-%{release}
@@ -50,7 +49,6 @@ debuggers, etc., plus their support routines, definitions, and documentation.
 Summary: bin components for the binutils package.
 Group: Binaries
 Requires: binutils-license = %{version}-%{release}
-Requires: binutils-filemap = %{version}-%{release}
 
 %description bin
 bin components for the binutils package.
@@ -76,14 +74,6 @@ Group: Default
 extras components for the binutils package.
 
 
-%package filemap
-Summary: filemap components for the binutils package.
-Group: Default
-
-%description filemap
-filemap components for the binutils package.
-
-
 %package info
 Summary: info components for the binutils package.
 Group: Default
@@ -96,7 +86,6 @@ info components for the binutils package.
 Summary: lib components for the binutils package.
 Group: Libraries
 Requires: binutils-license = %{version}-%{release}
-Requires: binutils-filemap = %{version}-%{release}
 
 %description lib
 lib components for the binutils package.
@@ -187,7 +176,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1682345940
+export SOURCE_DATE_EPOCH=1682645678
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -251,7 +240,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1682345940
+export SOURCE_DATE_EPOCH=1682645678
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
@@ -314,6 +303,40 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 
 %files
 %defattr(-,root,root,-)
+/V3/usr/bin/addr2line
+/V3/usr/bin/ar
+/V3/usr/bin/as
+/V3/usr/bin/c++filt
+/V3/usr/bin/coffdump
+/V3/usr/bin/dllwrap
+/V3/usr/bin/dwp
+/V3/usr/bin/elfedit
+/V3/usr/bin/gp-archive
+/V3/usr/bin/gp-collect-app
+/V3/usr/bin/gp-display-src
+/V3/usr/bin/gp-display-text
+/V3/usr/bin/gprof
+/V3/usr/bin/gprofng
+/V3/usr/bin/ld
+/V3/usr/bin/ld.bfd
+/V3/usr/bin/ld.gold
+/V3/usr/bin/nm
+/V3/usr/bin/objcopy
+/V3/usr/bin/objdump
+/V3/usr/bin/ranlib
+/V3/usr/bin/readelf
+/V3/usr/bin/size
+/V3/usr/bin/srconv
+/V3/usr/bin/strings
+/V3/usr/bin/strip
+/V3/usr/bin/sysdump
+/V3/usr/bin/windmc
+/V3/usr/lib64/bfd-plugins/libdep.so
+/V3/usr/lib64/gprofng/libgp-collector.so
+/V3/usr/lib64/gprofng/libgp-collectorAPI.so
+/V3/usr/lib64/gprofng/libgp-heap.so
+/V3/usr/lib64/gprofng/libgp-iotrace.so
+/V3/usr/lib64/gprofng/libgp-sync.so
 /usr/lib/ldscripts/aarch64cloudabi.x
 /usr/lib/ldscripts/aarch64cloudabi.xbn
 /usr/lib/ldscripts/aarch64cloudabi.xc
@@ -4922,7 +4945,6 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/bin/strip
 /usr/bin/sysdump
 /usr/bin/windmc
-/usr/share/clear/optimized-elf/bin*
 
 %files dev
 %defattr(-,root,root,-)
@@ -5003,10 +5025,6 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 %defattr(-,root,root,-)
 /usr/bin/ld.gold
 
-%files filemap
-%defattr(-,root,root,-)
-/usr/share/clear/filemap/filemap-binutils
-
 %files info
 %defattr(0644,root,root,0755)
 /usr/share/info/as.info
@@ -5058,7 +5076,6 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib64/libsframe.so
 /usr/lib64/libsframe.so.0
 /usr/lib64/libsframe.so.0.0.0
-/usr/share/clear/optimized-elf/other*
 
 %files license
 %defattr(0644,root,root,0755)
