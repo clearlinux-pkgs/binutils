@@ -11196,11 +11196,13 @@ index 6414555fff3..4023065ee69 100644
  msgstr "%pB(%pA+%#<PRIx64>): неочекивана „%s“ инструкција „%#lx“ у „TLS“ трамбулини"
  
 -#: elf32-arm.c:10532
-+#: elf32-arm.c:10535
- msgid "shared object"
- msgstr "дељени објекат"
- 
--#: elf32-arm.c:10535
+-msgid "shared object"
+-msgstr "дељени објекат"
+-
+ #: elf32-arm.c:10535
++msgid "shared object"
++msgstr "дељени објекат"
++
 +#: elf32-arm.c:10538
  msgid "PIE executable"
  msgstr "„PIE“ извршна"
@@ -11730,12 +11732,12 @@ index 6414555fff3..4023065ee69 100644
 +#: elf32-avr.c:1508
 +msgid "%X%H: %s against `%s': error: relocation applies outside section\n"
 +msgstr "%X%H: %s наспрам „%s“: грешка: премештање се примењује ван одељка\n"
-+
+ 
+-#: elf32-avr.c:3324 elfnn-aarch64.c:3229
 +#: elf32-avr.c:1516
 +msgid "%X%H: %s against `%s': error: relocation target address is odd\n"
 +msgstr "%X%H: %s наспрам „%s“: грешка: адреса мете премештања је нетачна\n"
- 
--#: elf32-avr.c:3324 elfnn-aarch64.c:3229
++
 +#: elf32-avr.c:1524
 +msgid "%X%H: %s against `%s': internal error: unexpected relocation result %d\n"
 +msgstr "%X%H: %s наспрам „%s“: унутрашња грешка: неочекивани резултат премештања %d\n"
@@ -13223,23 +13225,23 @@ index 6414555fff3..4023065ee69 100644
  msgstr "%s: прво ISA проширење мора бити „e“, „i“ или „g“"
  
 -#: elfxx-riscv.c:1691
--#, c-format
++#: elfxx-riscv.c:1705
+ #, c-format
 -msgid "%s: unknown standard ISA extension `%c'"
 -msgstr "%s: непознато стандардно ISA проширење „%c“"
--
++msgid "%s: unknown standard ISA extension or prefix class `%c'"
++msgstr "%s: непознато стандардно ISA проширење или класа префикса „%c“"
+ 
 -#: elfxx-riscv.c:1701
 -#, c-format
 -msgid "%s: standard ISA extension `%c' is not in canonical order"
 -msgstr "%s: стандардно ISA проширење „%c“ није у канонском поретку"
 -
 -#: elfxx-riscv.c:1751
-+#: elfxx-riscv.c:1705
- #, c-format
+-#, c-format
 -msgid "%s: unknown prefix class for the ISA extension `%s'"
 -msgstr "%s: непозната класа префикса за ISA проширење „%s“"
-+msgid "%s: unknown standard ISA extension or prefix class `%c'"
-+msgstr "%s: непознато стандардно ISA проширење или класа префикса „%c“"
- 
+-
 -#: elfxx-riscv.c:1787
 +#: elfxx-riscv.c:1741
  #, c-format
@@ -16727,20 +16729,20 @@ index 6414555fff3..4023065ee69 100644
  
 -#: elfnn-riscv.c:2569
 +#: elfnn-riscv.c:2498
- #, c-format
--msgid "%pcrel_lo section symbol with an addend"
--msgstr "симбол „%pcrel_lo“ одељка са сабирком"
++#, c-format
 +msgid "%%X%%P: relocation %s against `%s' which may bind externally can not be used when making a shared object; recompile with -fPIC\n"
 +msgstr "%%X%%P: премештање „%s“ наспрам „%s“ која се може свезати споља не може се користити приликом стварања дељеног објекта; поново преведите са „-fPIC“\n"
- 
--#: elfnn-riscv.c:2792
++
 +#: elfnn-riscv.c:2581
  #, c-format
+ msgid "%pcrel_lo section symbol with an addend"
+ msgstr "симбол „%pcrel_lo“ одељка са сабирком"
+ 
+-#: elfnn-riscv.c:2792
+-#, c-format
 -msgid "%%X%%P: relocation %s against `%s' can not be used when making a shared object; recompile with -fPIC\n"
 -msgstr "%%X%%P: премештање „%s“ наспрам „%s“ се не може користити приликом стварања дељеног објекта; поново преведите са „-fPIC“\n"
-+msgid "%pcrel_lo section symbol with an addend"
-+msgstr "симбол „%pcrel_lo“ одељка са сабирком"
- 
+-
 -#: elfnn-riscv.c:2802
 +#: elfnn-riscv.c:2800
  #, c-format
@@ -18738,22 +18740,20 @@ index e3cd39683f8..6c55dd3e82b 100644
  #, c-format
 -msgid "Debug info is corrupted, abbrev size (%lx) is larger than abbrev section size (%lx)\n"
 -msgstr "Felsökningsinfo är trasig, abbrev-storlek (%lx) är större än abbrev-sektionstorleken (%lx)\n"
+-
+-#: dwarf.c:1060
+-#, c-format
+-msgid "Debug info is corrupted, abbrev offset (%lx) is larger than abbrev section size (%lx)\n"
+-msgstr "Felsökningsinfo är trasig, abbrev-avstånd (%lx) är större än abbrev-sektionstorleken (%lx)\n"
 +msgid "Section %s is too small to contain an value indexed from another section!\n"
 +msgstr "Sektionen %s är för liten för att innehålla ett värde indexerat från en annan sektion!\n"
  
--#: dwarf.c:1060
-+#. Report the missing single zero which ends the section.
+ #. Report the missing single zero which ends the section.
 +#: dwarf.c:1051
- #, c-format
--msgid "Debug info is corrupted, abbrev offset (%lx) is larger than abbrev section size (%lx)\n"
--msgstr "Felsökningsinfo är trasig, abbrev-avstånd (%lx) är större än abbrev-sektionstorleken (%lx)\n"
++#, c-format
 +msgid "%s section not zero terminated\n"
 +msgstr "sektionen %s är inte nollterminerad\n"
- 
--#. Report the missing single zero which ends the section.
--#: dwarf.c:1122
--msgid ".debug_abbrev section not zero terminated\n"
--msgstr "sektionen .debug_abbrev är inte nollterminerad\n"
++
 +#. PR 17531: file:4bcd9ce9.
 +#: dwarf.c:1079
 +#, c-format
@@ -18764,17 +18764,22 @@ index e3cd39683f8..6c55dd3e82b 100644
 +#, c-format
 +msgid "Debug info is corrupted, abbrev offset (%#<PRIx64>) is larger than abbrev section size (%#<PRIx64>)\n"
 +msgstr "Felsökningsinfo är trasig, abbrev-avstånd (%#<PRIx64>) är större än abbrev-sektionstorleken (%<PRIx64>)\n"
- 
--#: dwarf.c:1137
++
 +#: dwarf.c:1119
- #, c-format
--msgid "User TAG value: %#lx"
--msgstr "Användar-TAG-värde: %#lx"
++#, c-format
 +msgid "User TAG value: %#<PRIx64>"
 +msgstr "Användar-TAG-värde: %#<PRIx64>"
- 
++
+ #: dwarf.c:1122
+-msgid ".debug_abbrev section not zero terminated\n"
+-msgstr "sektionen .debug_abbrev är inte nollterminerad\n"
+-
+-#: dwarf.c:1137
+-#, c-format
+-msgid "User TAG value: %#lx"
+-msgstr "Användar-TAG-värde: %#lx"
+-
 -#: dwarf.c:1139
-+#: dwarf.c:1122
  #, c-format
 -msgid "Unknown TAG value: %#lx"
 -msgstr "Okänt TAG-värde: %#lx"
@@ -19013,50 +19018,50 @@ index e3cd39683f8..6c55dd3e82b 100644
 -#. We have already displayed the form name.
 -#: dwarf.c:2804
 +#: dwarf.c:2753
++#, c-format
++msgid "loc_offset %<PRIu64> too big\n"
++msgstr "loc_offset %<PRIu64> är för stort\n"
++
++#: dwarf.c:2794
  #, c-format
 -msgid "%c(index: 0x%s): %s"
 -msgstr "%c(index: 0x%s): %s"
-+msgid "loc_offset %<PRIu64> too big\n"
-+msgstr "loc_offset %<PRIu64> är för stort\n"
- 
--#: dwarf.c:2816
-+#: dwarf.c:2794
- #, c-format
--msgid "Unrecognized form: 0x%lx\n"
--msgstr "Okänd formtyp: 0x%lx\n"
 +msgid "%c(index: %#<PRIx64>): %#<PRIx64>"
 +msgstr "%c(index: %#<PRIx64>): %#<PRIx64>"
  
--#: dwarf.c:2830
+-#: dwarf.c:2816
 +#: dwarf.c:2805
  #, c-format
--msgid "CU @ 0x%s has multiple loclists_base values (0x%s and 0x%s)"
--msgstr "CU @ 0x%s har flera loclists_base-värden (0x%s och 0x%s)"
+-msgid "Unrecognized form: 0x%lx\n"
+-msgstr "Okänd formtyp: 0x%lx\n"
 +msgid "Unrecognized form: %#lx\n"
 +msgstr "Okänd form: %#lx\n"
  
--#: dwarf.c:2838
+-#: dwarf.c:2830
 +#: dwarf.c:2819
  #, c-format
--msgid "CU @ 0x%s has multiple rnglists_base values (0x%s and 0x%s)"
--msgstr "CU @ 0x%s har flera rnglists_base-värden (0x%s och 0x%s)"
+-msgid "CU @ 0x%s has multiple loclists_base values (0x%s and 0x%s)"
+-msgstr "CU @ 0x%s har flera loclists_base-värden (0x%s och 0x%s)"
 +msgid "CU @ %#<PRIx64> has multiple loclists_base values (%#<PRIx64> and %#<PRIx64>)"
 +msgstr "CU @ %#<PRIx64> har flera loclists_base-värden (%#<PRIx64> och %#<PRIx64>)"
  
--#: dwarf.c:2846
+-#: dwarf.c:2838
 +#: dwarf.c:2827
  #, c-format
--msgid "CU @ 0x%s has multiple str_offsets_base values (0x%s and 0x%s)"
--msgstr "CU @ 0x%s har flera str_offsets_base-värden (0x%s och 0x%s)"
+-msgid "CU @ 0x%s has multiple rnglists_base values (0x%s and 0x%s)"
+-msgstr "CU @ 0x%s har flera rnglists_base-värden (0x%s och 0x%s)"
 +msgid "CU @ %#<PRIx64> has multiple rnglists_base values (%#<PRIx64> and %#<PRIx64>)"
 +msgstr "CU @ %#<PRIx64> har flera rnglists_base-värden (%#<PRIx64> och %#<PRIx64>)"
  
--#: dwarf.c:2910
+-#: dwarf.c:2846
 +#: dwarf.c:2835
-+#, c-format
+ #, c-format
+-msgid "CU @ 0x%s has multiple str_offsets_base values (0x%s and 0x%s)"
+-msgstr "CU @ 0x%s har flera str_offsets_base-värden (0x%s och 0x%s)"
 +msgid "CU @ %#<PRIx64> has multiple str_offsets_base values %#<PRIx64> and %#<PRIx64>)"
 +msgstr "CU @ %#<PRIx64> har flera str_offsets_base-värden (%#<PRIx64> och %#<PRIx64>)"
-+
+ 
+-#: dwarf.c:2910
 +#: dwarf.c:2899
  msgid "More location offset attributes than DW_AT_GNU_locview attributes\n"
  msgstr "Fler platsavståndsattribut än DW_AT_GNU_locview-attribut\n"
@@ -19924,54 +19929,57 @@ index e3cd39683f8..6c55dd3e82b 100644
  msgid "  Copy"
  msgstr "  Kopiera"
  
--#: dwarf.c:4763
 +#: dwarf.c:4732
++#, c-format
++msgid "  Advance PC by %<PRIu64> to %#<PRIx64>%s\n"
++msgstr "  Öka programräknaren med %<PRIu64> till %#<PRIx64>%s\n"
++
++#: dwarf.c:4751
++#, c-format
++msgid "  Advance PC by %<PRIu64> to %#<PRIx64>[%d]%s\n"
++msgstr "  Öka programräknaren med %<PRIu64> till %#<PRIx64>[%d]%s\n"
++
+ #: dwarf.c:4763
  #, c-format
 -msgid "  Advance PC by %s to 0x%s%s\n"
 -msgstr "  Öka programräknaren med %s till 0x%s%s\n"
-+msgid "  Advance PC by %<PRIu64> to %#<PRIx64>%s\n"
-+msgstr "  Öka programräknaren med %<PRIu64> till %#<PRIx64>%s\n"
- 
--#: dwarf.c:4782
-+#: dwarf.c:4751
- #, c-format
--msgid "  Advance PC by %s to 0x%s[%d]%s\n"
--msgstr "  Öka programräknaren med %s till 0x%s[%d]%s\n"
-+msgid "  Advance PC by %<PRIu64> to %#<PRIx64>[%d]%s\n"
-+msgstr "  Öka programräknaren med %<PRIu64> till %#<PRIx64>[%d]%s\n"
- 
--#: dwarf.c:4794
-+#: dwarf.c:4763
- #, c-format
--msgid "  Advance Line by %s to %d\n"
--msgstr "  Öka radnumret med %s till %d\n"
 +msgid "  Advance Line by %<PRId64> to %d\n"
 +msgstr "  Öka radnumret med %<PRId64> till %d\n"
  
--#: dwarf.c:4801
+-#: dwarf.c:4782
 +#: dwarf.c:4769
  #, c-format
--msgid "  Set File Name to entry %s in the File Name Table\n"
--msgstr "  Sätt filnamnet till post %s i filnamnstabellen\n"
+-msgid "  Advance PC by %s to 0x%s[%d]%s\n"
+-msgstr "  Öka programräknaren med %s till 0x%s[%d]%s\n"
 +msgid "  Set File Name to entry %<PRIu64> in the File Name Table\n"
 +msgstr "  Sätt filnamnet till post %<PRIu64> i filnamnstabellen\n"
  
--#: dwarf.c:4808
+-#: dwarf.c:4794
 +#: dwarf.c:4776
  #, c-format
--msgid "  Set column to %s\n"
--msgstr "  Sätt kolumnen till %s\n"
+-msgid "  Advance Line by %s to %d\n"
+-msgstr "  Öka radnumret med %s till %d\n"
 +msgid "  Set column to %<PRIu64>\n"
 +msgstr "  Sätt kolumnen till %<PRIu64>\n"
  
--#: dwarf.c:4816
+-#: dwarf.c:4801
 +#: dwarf.c:4783
  #, c-format
--msgid "  Set is_stmt to %s\n"
--msgstr "  Sätt is_stmt till %s\n"
+-msgid "  Set File Name to entry %s in the File Name Table\n"
+-msgstr "  Sätt filnamnet till post %s i filnamnstabellen\n"
 +msgid "  Set is_stmt to %<PRId64>\n"
 +msgstr "  Sätt is_stmt till %<PRId64>\n"
  
+-#: dwarf.c:4808
+-#, c-format
+-msgid "  Set column to %s\n"
+-msgstr "  Sätt kolumnen till %s\n"
+-
+-#: dwarf.c:4816
+-#, c-format
+-msgid "  Set is_stmt to %s\n"
+-msgstr "  Sätt is_stmt till %s\n"
+-
 -#: dwarf.c:4821
 +#: dwarf.c:4788
  #, c-format
@@ -20360,17 +20368,18 @@ index e3cd39683f8..6c55dd3e82b 100644
  msgid "  Offset size:                 %d\n"
  msgstr "  Avståndsstorlek:             %d\n"
  
--#: dwarf.c:6104
 +#: dwarf.c:6090
++#, c-format
++msgid "  Offset into .debug_line:     %#<PRIx64>\n"
++msgstr "  Avstånd in i .debug_info:    %#<PRIx64>\n"
++
+ #: dwarf.c:6104
  #, c-format
 -msgid "  Offset into .debug_line:     0x%lx\n"
 -msgstr "  Avstånd in i .debug_info:    0x%lx\n"
-+msgid "  Offset into .debug_line:     %#<PRIx64>\n"
-+msgstr "  Avstånd in i .debug_info:    %#<PRIx64>\n"
- 
+-
 -#: dwarf.c:6118
-+#: dwarf.c:6104
- #, c-format
+-#, c-format
  msgid "  Extension opcode arguments:\n"
  msgstr "  Argument till utökad op-kod:\n"
  
@@ -21021,7 +21030,9 @@ index e3cd39683f8..6c55dd3e82b 100644
  #, c-format
 -msgid "    Version: %#lx\n"
 -msgstr "    Version: %#lx\n"
--
++msgid "    Version: %#x\n"
++msgstr "    Version: %#x\n"
+ 
 -#: dwarf.c:7981 dwarf.c:8093
 -msgid "(start == end)"
 -msgstr "(start == slut)"
@@ -21029,9 +21040,7 @@ index e3cd39683f8..6c55dd3e82b 100644
 -#: dwarf.c:7983 dwarf.c:8095
 -msgid "(start > end)"
 -msgstr "(start > slut)"
-+msgid "    Version: %#x\n"
-+msgstr "    Version: %#x\n"
- 
+-
 -#: dwarf.c:8014
 +#: dwarf.c:8009
  #, c-format
@@ -21245,18 +21254,18 @@ index e3cd39683f8..6c55dd3e82b 100644
  
 -#: dwarf.c:10097 dwarf.c:10522
 +#: dwarf.c:10106
-+#, c-format
-+msgid "Debug info is corrupted, %s header at %#tx has length %#<PRIx64>\n"
-+msgstr "Felsökningsinfo är trasig, %s-huvudet vid %#tx har längden %#<PRIx64>\n"
-+
-+#: dwarf.c:10115
  #, c-format
 -msgid "Version %ld\n"
 -msgstr "Version %ld\n"
-+msgid "Version %d\n"
-+msgstr "Version %d\n"
++msgid "Debug info is corrupted, %s header at %#tx has length %#<PRIx64>\n"
++msgstr "Felsökningsinfo är trasig, %s-huvudet vid %#tx har längden %#<PRIx64>\n"
  
 -#: dwarf.c:10103
++#: dwarf.c:10115
++#, c-format
++msgid "Version %d\n"
++msgstr "Version %d\n"
++
 +#: dwarf.c:10121
  msgid "Only DWARF version 5 .debug_names is currently supported.\n"
  msgstr "Endast .debug_names från DWARF 5 hanteras för närvarande.\n"
@@ -23475,8 +23484,7 @@ index e3cd39683f8..6c55dd3e82b 100644
 -"\n"
 +msgid "      --disassembler-color=off       Disable disassembler color output.\n"
 +msgstr "      --disassembler-color=off       Avaktivera färger i disassembler-utdata.\n"
- 
--#: objdump.c:410
++
 +#: objdump.c:434
 +#, c-format
 +msgid "      --disassembler-color=terminal  Enable disassembler color output if displaying on a terminal. (default)\n"
@@ -23496,7 +23504,8 @@ index e3cd39683f8..6c55dd3e82b 100644
 +#, c-format
 +msgid "      --disassembler-color=on        Enable disassembler color output.\n"
 +msgstr "      --disassembler-color=on    Aktivera färger i disassembler-utdata.\n"
-+
+ 
+-#: objdump.c:410
 +#: objdump.c:444
  #, c-format
  msgid ""
@@ -30284,7 +30293,7 @@ index c4518a64fcf..28031b7f825 100644
  #, c-format
  msgid ""
  "Options:\n"
-@@ -124,55 +124,45 @@ msgstr ""
+@@ -124,22 +124,26 @@ msgstr ""
  "                      \t  s      включать символы\n"
  "                      \t  =ФАЙЛ  записывать в ФАЙЛ (должно быть последним)\n"
  
@@ -30310,15 +30319,17 @@ index c4518a64fcf..28031b7f825 100644
  
 -#: as.c:270
 +#: as.c:257
- #, c-format
--msgid ""
--"  --nocompress-debug-sections\n"
--"                          don't compress DWARF debug sections\n"
--msgstr ""
--"  --nocompress-debug-sections\n"
--"                          не сжимать отладочные разделы DWARF\n"
++#, c-format
 +msgid "\t\t            Default: %s\n"
 +msgstr "\t\t            По умолчанию: %s\n"
++
++#: as.c:261
+ #, c-format
+ msgid ""
+ "  --nocompress-debug-sections\n"
+@@ -148,31 +152,17 @@ msgstr ""
+ "  --nocompress-debug-sections\n"
+ "                          не сжимать отладочные разделы DWARF\n"
  
 -#: as.c:274
 -#, c-format
@@ -30331,17 +30342,14 @@ index c4518a64fcf..28031b7f825 100644
 -"                          с помощью zlib\n"
 -
 -#: as.c:277
-+#: as.c:261
- #, c-format
- msgid ""
- "  --nocompress-debug-sections\n"
+-#, c-format
+-msgid ""
+-"  --nocompress-debug-sections\n"
 -"                          don't compress DWARF debug sections [default]\n"
-+"                          don't compress DWARF debug sections\n"
- msgstr ""
- "  --nocompress-debug-sections\n"
+-msgstr ""
+-"  --nocompress-debug-sections\n"
 -"                          не сжимать отладочные разделы DWARF [по умолчанию]\n"
-+"                          не сжимать отладочные разделы DWARF\n"
- 
+-
 -#: as.c:281
 +#: as.c:264
  #, c-format
@@ -36748,10 +36756,13 @@ index c4518a64fcf..28031b7f825 100644
  
 -#: config/tc-i386.c:4913
 +#: config/tc-i386.c:4988
-+#, c-format
+ #, c-format
+-msgid "0x%s out of range of signed 32bit displacement"
+-msgstr "0x%s вне диапазона знаковой 32-битной перестановки"
 +msgid "0x%<PRIx64> out of range of signed 32bit displacement"
 +msgstr "0x%<PRIx64> вне диапазона знаковой 32-битной перестановки"
-+
+ 
+-#: config/tc-i386.c:4956
 +#: config/tc-i386.c:5035
 +msgid "operand size mismatch"
 +msgstr "несоответствие размера операнда"
@@ -36790,13 +36801,10 @@ index c4518a64fcf..28031b7f825 100644
 +msgstr "неподдерживаемая инструкция «%s»"
 +
 +#: config/tc-i386.c:5063
- #, c-format
--msgid "0x%s out of range of signed 32bit displacement"
--msgstr "0x%s вне диапазона знаковой 32-битной перестановки"
++#, c-format
 +msgid "`%s' is not supported on `%s%s'"
 +msgstr "«%s» не поддерживается для «%s%s»"
- 
--#: config/tc-i386.c:4956
++
 +#: config/tc-i386.c:5070
 +#, c-format
 +msgid "`%s%c' is %s supported in 64-bit mode"
@@ -36999,57 +37007,69 @@ index c4518a64fcf..28031b7f825 100644
 -msgstr "используйте .code16, чтобы задать правильный режим адресации"
 -
 -#: config/tc-i386.c:5511
--#, c-format
--msgid "`%s' is not supported on `%s%s'"
--msgstr "«%s» не поддерживается для «%s%s»"
--
--#: config/tc-i386.c:5539
--#, c-format
--msgid "invalid character %s before operand %d"
--msgstr "недопустимый символ %s перед операндом %d"
--
--#: config/tc-i386.c:5551
 +#: config/tc-i386.c:5704
  #, c-format
--msgid "unbalanced double quotes in operand %d."
--msgstr "несогласованные двойные кавычки в операнде %d."
--
+-msgid "`%s' is not supported on `%s%s'"
+-msgstr "«%s» не поддерживается для «%s%s»"
++msgid "found `%sd'; assuming `%sl' was meant"
++msgstr "найден «%sd»; предполагаем подразумевался «%sl»"
+ 
+-#: config/tc-i386.c:5539
++#: config/tc-i386.c:5803
+ #, c-format
+ msgid "invalid character %s before operand %d"
+ msgstr "недопустимый символ %s перед операндом %d"
+ 
+-#: config/tc-i386.c:5551
++#: config/tc-i386.c:5815
+ #, c-format
+ msgid "unbalanced double quotes in operand %d."
+ msgstr "несогласованные двойные кавычки в операнде %d."
+ 
 -#: config/tc-i386.c:5558
--#, c-format
--msgid "unbalanced parenthesis in operand %d."
--msgstr "несогласованные круглые скобки в операнде %d."
--
++#: config/tc-i386.c:5822
+ #, c-format
+ msgid "unbalanced parenthesis in operand %d."
+ msgstr "несогласованные круглые скобки в операнде %d."
+ 
 -#: config/tc-i386.c:5571
--#, c-format
--msgid "invalid character %s in operand %d"
--msgstr "недопустимый символ %s в операнде %d"
--
++#: config/tc-i386.c:5835
+ #, c-format
+ msgid "invalid character %s in operand %d"
+ msgstr "недопустимый символ %s в операнде %d"
+ 
 -#: config/tc-i386.c:5591
--#, c-format
--msgid "spurious operands; (%d operands/instruction max)"
--msgstr "побочные операнды; (максимально %d операндов/инструкций)"
--
++#: config/tc-i386.c:5855
+ #, c-format
+ msgid "spurious operands; (%d operands/instruction max)"
+ msgstr "побочные операнды; (максимально %d операндов/инструкций)"
+ 
 -#: config/tc-i386.c:5601 config/tc-i386.c:11569
--#, c-format
--msgid "too many memory references for `%s'"
--msgstr "слишком много ссылок на память для «%s»"
--
++#: config/tc-i386.c:5865
+ #, c-format
+ msgid "too many memory references for `%s'"
+ msgstr "слишком много ссылок на память для «%s»"
+ 
 -#: config/tc-i386.c:5622
--msgid "expecting operand after ','; got nothing"
--msgstr "ожидается операнд после «,»; ничего не получено"
--
++#: config/tc-i386.c:5886
+ msgid "expecting operand after ','; got nothing"
+ msgstr "ожидается операнд после «,»; ничего не получено"
+ 
 -#: config/tc-i386.c:5627
--msgid "expecting operand before ','; got nothing"
--msgstr "ожидается операнд перед «,»; ничего не получено"
--
++#: config/tc-i386.c:5891
+ msgid "expecting operand before ','; got nothing"
+ msgstr "ожидается операнд перед «,»; ничего не получено"
+ 
 -#: config/tc-i386.c:6058
--msgid "mask, index, and destination registers should be distinct"
--msgstr "регистры маски, индекса и назначения должны различаться"
--
++#: config/tc-i386.c:6322
+ msgid "mask, index, and destination registers should be distinct"
+ msgstr "регистры маски, индекса и назначения должны различаться"
+ 
 -#: config/tc-i386.c:6075
--msgid "index and destination registers should be distinct"
--msgstr "регистры индекса и назначения должны различаться"
--
++#: config/tc-i386.c:6339
+ msgid "index and destination registers should be distinct"
+ msgstr "регистры индекса и назначения должны различаться"
+ 
 -#: config/tc-i386.c:6850
 -msgid "operand size mismatch"
 -msgstr "несоответствие размера операнда"
@@ -37106,85 +37126,46 @@ index c4518a64fcf..28031b7f825 100644
 -#: config/tc-i386.c:6890
 -msgid "destination and source registers must be distinct"
 -msgstr "регистры назначения и источника должны различаться"
-+msgid "found `%sd'; assuming `%sl' was meant"
-+msgstr "найден «%sd»; предполагаем подразумевался «%sl»"
- 
+-
 -#: config/tc-i386.c:6893
 -msgid "unsupported vector index register"
 -msgstr "неподдерживаемый векторный индексный регистр"
-+#: config/tc-i386.c:5803
-+#, c-format
-+msgid "invalid character %s before operand %d"
-+msgstr "недопустимый символ %s перед операндом %d"
- 
+-
 -#: config/tc-i386.c:6896
 -msgid "unsupported broadcast"
 -msgstr "неподдерживаемый broadcast"
-+#: config/tc-i386.c:5815
-+#, c-format
-+msgid "unbalanced double quotes in operand %d."
-+msgstr "несогласованные двойные кавычки в операнде %d."
- 
+-
 -#: config/tc-i386.c:6899
 -msgid "broadcast is needed for operand of such type"
 -msgstr "для операнда такого типа требуется broadcast"
-+#: config/tc-i386.c:5822
-+#, c-format
-+msgid "unbalanced parenthesis in operand %d."
-+msgstr "несогласованные круглые скобки в операнде %d."
- 
+-
 -#: config/tc-i386.c:6902
 -msgid "unsupported masking"
 -msgstr "неподдерживаемая маска"
-+#: config/tc-i386.c:5835
-+#, c-format
-+msgid "invalid character %s in operand %d"
-+msgstr "недопустимый символ %s в операнде %d"
- 
+-
 -#: config/tc-i386.c:6905
 -msgid "mask not on destination operand"
 -msgstr "маске находится не в операнде назначения"
-+#: config/tc-i386.c:5855
-+#, c-format
-+msgid "spurious operands; (%d operands/instruction max)"
-+msgstr "побочные операнды; (максимально %d операндов/инструкций)"
- 
+-
 -#: config/tc-i386.c:6908
 -msgid "default mask isn't allowed"
 -msgstr "маска по умолчанию запрещена"
-+#: config/tc-i386.c:5865
-+#, c-format
-+msgid "too many memory references for `%s'"
-+msgstr "слишком много ссылок на память для «%s»"
- 
+-
 -#: config/tc-i386.c:6911
 -msgid "unsupported static rounding/sae"
 -msgstr "неподдерживаемое статическое округление/sae"
-+#: config/tc-i386.c:5886
-+msgid "expecting operand after ','; got nothing"
-+msgstr "ожидается операнд после «,»; ничего не получено"
- 
+-
 -#: config/tc-i386.c:6914 config/tc-metag.c:4787 config/tc-metag.c:5528
 -#: config/tc-metag.c:5550
 -msgid "invalid register operand"
 -msgstr "неверный регистровый операнд"
-+#: config/tc-i386.c:5891
-+msgid "expecting operand before ','; got nothing"
-+msgstr "ожидается операнд перед «,»; ничего не получено"
- 
+-
 -#: config/tc-i386.c:6917
 -#, c-format
 -msgid "%s for `%s'"
 -msgstr "%s для «%s»"
-+#: config/tc-i386.c:6322
-+msgid "mask, index, and destination registers should be distinct"
-+msgstr "регистры маски, индекса и назначения должны различаться"
- 
+-
 -#: config/tc-i386.c:6926
-+#: config/tc-i386.c:6339
-+msgid "index and destination registers should be distinct"
-+msgstr "регистры индекса и назначения должны различаться"
-+
 +#: config/tc-i386.c:7094
  #, c-format
  msgid "indirect %s without `*'"
@@ -48348,7 +48329,8 @@ index e9bf9337d9f..3ad87139280 100755
 +done
 +  done
 +IFS=$as_save_IFS
-+
+ 
+-HELP2MAN=${HELP2MAN-"${am_missing_run}help2man"}
 +fi
 +fi
 +HELP2MAN=$ac_cv_prog_HELP2MAN
@@ -48359,8 +48341,7 @@ index e9bf9337d9f..3ad87139280 100755
 +  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 +$as_echo "no" >&6; }
 +fi
- 
--HELP2MAN=${HELP2MAN-"${am_missing_run}help2man"}
++
 +
 +  test -n "$HELP2MAN" && break
 +done
@@ -51029,18 +51010,18 @@ index 430d785d7a0..2468b5f7eea 100644
  
 -#: i386-gen.c:1178
 +#: i386-gen.c:920
-+#, c-format
-+msgid "%s: %d: no memory operand\n"
-+msgstr "%s: %d: нема операнда меморије\n"
-+
-+#: i386-gen.c:956
  #, c-format
 -msgid "unknown broadcast operand: %s\n"
 -msgstr "непознат операнд емитовања: %s\n"
-+msgid "%s: %d: unknown element size: %s\n"
-+msgstr "%s: %d: непозната величина елемента: %s\n"
++msgid "%s: %d: no memory operand\n"
++msgstr "%s: %d: нема операнда меморије\n"
  
 -#: i386-gen.c:1233
++#: i386-gen.c:956
++#, c-format
++msgid "%s: %d: unknown element size: %s\n"
++msgstr "%s: %d: непозната величина елемента: %s\n"
++
 +#: i386-gen.c:1013
  #, c-format
  msgid "%s:%d: Conflicting opcode space specifications\n"
