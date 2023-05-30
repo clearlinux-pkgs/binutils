@@ -7,7 +7,7 @@
 #
 Name     : binutils
 Version  : 2.40
-Release  : 517
+Release  : 518
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.40.tar.xz.sig
@@ -176,7 +176,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1684858793
+export SOURCE_DATE_EPOCH=1685484107
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -240,7 +240,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1684858793
+export SOURCE_DATE_EPOCH=1685484107
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
@@ -5039,20 +5039,10 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /V3/usr/lib64/gprofng/libgp-iotrace.so
 /V3/usr/lib64/gprofng/libgp-sync.so
 /V3/usr/lib64/libbfd-2.40.0.so
-/V3/usr/lib64/libbfd.so
-/V3/usr/lib64/libctf-nobfd.so
-/V3/usr/lib64/libctf-nobfd.so.0
 /V3/usr/lib64/libctf-nobfd.so.0.0.0
-/V3/usr/lib64/libctf.so
-/V3/usr/lib64/libctf.so.0
 /V3/usr/lib64/libctf.so.0.0.0
-/V3/usr/lib64/libgprofng.so
-/V3/usr/lib64/libgprofng.so.0
 /V3/usr/lib64/libgprofng.so.0.0.0
 /V3/usr/lib64/libopcodes-2.40.0.so
-/V3/usr/lib64/libopcodes.so
-/V3/usr/lib64/libsframe.so
-/V3/usr/lib64/libsframe.so.0
 /V3/usr/lib64/libsframe.so.0.0.0
 /usr/lib64/bfd-plugins/libdep.so
 /usr/lib64/gprofng/libgp-collector.so
