@@ -1,4 +1,4 @@
-Alan Modra (7):
+Alan Modra (8):
       Regen config files
       ppc32 and "LOAD segment with RWX permissions"
       PR30046, power cmpi leads to unknown architecture
@@ -6,6 +6,7 @@ Alan Modra (7):
       PR30198, Assertion and segfault when linking x86_64 elf and coff
       PR30217, dynamic relocations using local dynamic symbols
       coff_get_normalized_symtab bfd_release
+      PR30536, ppc64el gold linker produces unusable clang-16 binary
 
 Clément Chigot (1):
       configure: remove dependencies on gmp and mpfr when gdb is disabled
@@ -47099,7 +47100,7 @@ index 3f6a4403145..1c97e400f02 100644
  #~ msgid "__tls_get_addr call lacks marker reloc"
  #~ msgstr "„__tls_get_addr“ позиву недостаје премештај означавача"
 diff --git a/gold/powerpc.cc b/gold/powerpc.cc
-index 4144a8800c3..a847dadf900 100644
+index 4144a8800c3..aa2d9a18787 100644
 --- a/gold/powerpc.cc
 +++ b/gold/powerpc.cc
 @@ -636,6 +636,24 @@ enum Got_type
@@ -47189,20 +47190,18 @@ index 4144a8800c3..a847dadf900 100644
        this->lplt_
  	= new Output_data_plt_powerpc<size, big_endian>(this, symtab, lplt_rel,
  							"** LPLT");
-@@ -4609,11 +4632,7 @@ Target_powerpc<size, big_endian>::make_brlt_section(Layout* layout)
- 	{
+@@ -4610,6 +4633,10 @@ Target_powerpc<size, big_endian>::make_brlt_section(Layout* layout)
  	  // When PIC we can't fill in .branch_lt but must initialise at
  	  // runtime via dynamic relocations.
--	  this->rela_dyn_section(layout);
--	  brlt_rel = new Reloc_section(false);
--	  if (this->rela_dyn_->output_section())
--	    this->rela_dyn_->output_section()
--	      ->add_output_section_data(brlt_rel);
-+	  brlt_rel = this->rela_dyn_section(layout);
- 	}
-       this->brlt_section_
- 	= new Output_data_brlt_powerpc<size, big_endian>(this, brlt_rel);
-@@ -9009,7 +9028,7 @@ Target_powerpc<size, big_endian>::Scan::global(
+ 	  this->rela_dyn_section(layout);
++	  // FIXME: This reloc section won't have its relative relocs
++	  // sorted properly among the other relative relocs in rela_dyn_
++	  // but it must be a separate section due to needing to call
++	  // reset_data_size().
+ 	  brlt_rel = new Reloc_section(false);
+ 	  if (this->rela_dyn_->output_section())
+ 	    this->rela_dyn_->output_section()
+@@ -9009,7 +9036,7 @@ Target_powerpc<size, big_endian>::Scan::global(
      case elfcpp::R_PPC64_PLT16_LO_DS:
        if (!pushed_ifunc)
  	{
@@ -47211,7 +47210,7 @@ index 4144a8800c3..a847dadf900 100644
  	    target->make_plt_entry(symtab, layout, gsym);
  	  else
  	    target->make_local_plt_entry(symtab, layout, gsym);
-@@ -9028,11 +9047,7 @@ Target_powerpc<size, big_endian>::Scan::global(
+@@ -9028,11 +9055,7 @@ Target_powerpc<size, big_endian>::Scan::global(
  	  unsigned int r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
  	  target->push_branch(ppc_object, data_shndx, reloc.get_r_offset(),
  			      r_type, r_sym, reloc.get_r_addend());
