@@ -1,5 +1,50 @@
 -*- text -*-
 
+Changes in 2.41:
+
+* The MIPS port now supports the Sony Interactive Entertainment Allegrex
+  processor, used with the PlayStation Portable, which implements the MIPS
+  II ISA along with a single-precision FPU and a few implementation-specific
+  integer instructions.
+
+* Objdump's --private option can now be used on PE format files to display the
+  fields in the file header and section headers.
+
+* New versioned release of libsframe: libsframe.so.1.  This release introduces
+  versioned symbols with version node name LIBSFRAME_1.0.  This release also
+  updates the ABI in an incompatible way: this includes removal of
+  sframe_get_funcdesc_with_addr API, change in the behavior of
+  sframe_fre_get_ra_offset and sframe_fre_get_fp_offset APIs.
+
+* SFrame Version 2 is now the default (and only) format version supported by
+  gas, ld, readelf and objdump.
+  
+* Add command-line option, --strip-section-headers, to objcopy and strip to
+  remove ELF section header from ELF file.
+
+* The RISC-V port now supports the following new standard extensions:
+  - Zicond (conditional zero instructions)
+  - Zfa (additional floating-point instructions)
+  - Zvbb, Zvbc, Zvkg, Zvkned, Zvknh[ab], Zvksed, Zvksh, Zvkn, Zvknc, Zvkng,
+    Zvks, Zvksc, Zvkg, Zvkt (vector crypto instructions)
+
+* The RISC-V port now supports the following vendor-defined extensions:
+  - XVentanaCondOps
+
+* The LoongArch port now supports the following extensions:
+  - LSX (Loongson SIMD eXtension; 128-bit vectors)
+  - LASX (Loongson Advanced SIMD eXtension; 256-bit vectors)
+  - LVZ (Loongson Virtualization extension)
+  - LBT (Loongson Binary Translation extension)
+
+* The LoongArch disassembly output received the following tweaks:
+  - Colored output is now supported.
+  - Some pseudo-instructions are now shown in place of the canonical forms,
+    where semantics are equivalent. A disassembler option '-M no-aliases' is
+    added to disable the new behavior.
+  - Signed immediates are no longer printed with their hex representation.
+  - Unrecognized instruction words are now shown with '.word'.
+
 Changes in 2.40:
 
 * Objdump has a new command line option --show-all-symbols which will make it
