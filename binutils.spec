@@ -24,11 +24,10 @@ BuildRequires : zstd-dev
 # Suppress stripping binaries
 %define __strip /bin/true
 %define debug_package %{nil}
-Patch1: binutils-stable-branch-snafu.patch
-Patch2: binutils-stable-branch.patch
-Patch3: binutils-add-LD_AS_NEEDED-global-env.patch
-Patch4: compilespeed.patch
-Patch5: zlib-level.patch
+Patch1: binutils-stable-branch.patch
+Patch2: binutils-add-LD_AS_NEEDED-global-env.patch
+Patch3: compilespeed.patch
+Patch4: zlib-level.patch
 
 %description
 This directory contains various GNU compilers, assemblers, linkers,
@@ -41,7 +40,6 @@ cd %{_builddir}/binutils-2.41
 %patch -P 2 -p1
 %patch -P 3 -p1
 %patch -P 4 -p1
-%patch -P 5 -p1
 pushd ..
 cp -a binutils-2.41 buildavx2
 popd
@@ -87,7 +85,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1690824442
+export SOURCE_DATE_EPOCH=1690895908
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -151,7 +149,7 @@ export no_proxy=localhost,127.0.0.1,0.0.0.0
 make %{?_smp_flags} -O check tooldir=/usr || :
 
 %install
-export SOURCE_DATE_EPOCH=1690824442
+export SOURCE_DATE_EPOCH=1690895908
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
