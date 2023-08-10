@@ -4,10 +4,15 @@ set -e -o pipefail
 BINUTILS_GIT=~/git/binutils-gdb
 BINUTILS_VER=2_41
 
-BINUTILS_TAG="binutils-${BINUTILS_VER}"
+#BINUTILS_TAG="binutils-${BINUTILS_VER}"
+BINUTILS_TAG="binutils-2_41-official-release"
+
 BINUTILS_BRANCH=origin/binutils-$(echo "${BINUTILS_VER}" | sed -re "s|([0-9]+)\.([0-9]+)(\.[0-9]+)?|\1_\2|")-branch
 
+echo Tag is $BINUTILS_TAG   Branch is $BINUTILS_BRANCH
+
 [ -d "$BINUTILS_GIT" ] || git clone https://sourceware.org/git/binutils-gdb.git "$BINUTILS_GIT"
+git -C "$BINUTILS_GIT" pull -p
 git -C "$BINUTILS_GIT" remote update -p
 git -C "$BINUTILS_GIT" rev-parse --verify --quiet refs/tags/"${BINUTILS_TAG}" > /dev/null
 git -C "$BINUTILS_GIT" rev-parse --verify --quiet "$BINUTILS_BRANCH" > /dev/null

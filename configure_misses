@@ -20,6 +20,8 @@ Configure miss: gdc
 Configure miss: gdc
 Configure miss: gdc
 Configure miss: gdc
+Configure miss: if using Solaris linker
+Configure miss: if using Solaris linker
 Configure miss: isl 0.15 or later
 Configure miss: isl 0.15 or later
 Configure miss: jni.h
