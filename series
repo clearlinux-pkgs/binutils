@@ -2,3 +2,4 @@ binutils-stable-branch.patch
 binutils-add-LD_AS_NEEDED-global-env.patch
 #compilespeed.patch
 #zlib-level.patch
+v1-0001-Add-env-variable-as-fallback-linker-script-arg.patch

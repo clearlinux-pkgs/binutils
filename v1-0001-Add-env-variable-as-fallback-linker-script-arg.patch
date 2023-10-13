@@ -1,0 +1,73 @@
+From 180717791f88c47f3fddd2e3977c07d6b0370fd6 Mon Sep 17 00:00:00 2001
+From: Noah Goldstein <goldstein.w.n@gmail.com>
+Date: Thu, 12 Oct 2023 13:33:48 -0500
+Subject: Add env variable as fallback linker script arg
+
+---
+ ld/lexsup.c | 36 ++++++++++++++++++++++++++++++++++--
+ 1 file changed, 34 insertions(+), 2 deletions(-)
+
+diff --git a/ld/lexsup.c b/ld/lexsup.c
+index fe8722313fe..f6feeb6eefd 100644
+--- a/ld/lexsup.c
++++ b/ld/lexsup.c
+@@ -639,6 +639,7 @@ parse_args (unsigned argc, char **argv)
+   unsigned i;
+   int is, il, irl;
+   int ingroup = 0;
++  int has_linker_script = 0;
+   char *default_dirlist = NULL;
+   char *shortopts;
+   struct option *longopts;
+@@ -798,8 +799,38 @@ parse_args (unsigned argc, char **argv)
+       if (ldemul_handle_option (optc))
+ 	continue;
+ 
+-      if (optc == -1)
+-	break;
++      if (optc == -1) {
++          char * env_linker_script = getenv("LD_ORDERING_SCRIPT");
++          if (has_linker_script) {
++            if (verbose && env_linker_script != NULL) {
++                  info_msg("Ignoring env linker script as user provided one\n");
++            }
++          }
++          else if (env_linker_script != NULL) {
++            if (access(env_linker_script, F_OK) == 0) {
++                  if (verbose) {
++                      info_msg("Using env linker script: %s\n",
++                               env_linker_script);
++                  }
++
++                  /* Set optarg. This is *probably* unnecessary but ld has so
++                   * much global state juggling that set it to be safe incase
++                   * its reference somewhere deep inside basic linker script
++                   * handling.  */
++                  optarg                 = env_linker_script;
++                  previous_script_handle = saved_script_handle;
++                  ldfile_open_script_file(optarg);
++                  parser_input = input_script;
++                  yyparse();
++                  previous_script_handle = NULL;
++            }
++            else if (verbose) {
++                  info_msg("Warning: Cannot open env linker script %s\n",
++                           env_linker_script);
++            }
++          }
++          break;
++      }
+ 
+       switch (optc)
+ 	{
+@@ -1379,6 +1410,7 @@ parse_args (unsigned argc, char **argv)
+ 	  ++trace_files;
+ 	  break;
+ 	case 'T':
++      has_linker_script = 1;
+ 	  previous_script_handle = saved_script_handle;
+ 	  ldfile_open_script_file (optarg);
+ 	  parser_input = input_script;
+-- 
+2.34.1
+
