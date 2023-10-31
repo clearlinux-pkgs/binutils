@@ -1,0 +1,258 @@
+From 02d2c8fe4aacfee2ed008a1432c01b13fd7fedd2 Mon Sep 17 00:00:00 2001
+From: Noah Goldstein <goldstein.w.n@gmail.com>
+Date: Sun, 29 Oct 2023 21:54:17 -0500
+Subject: Add support for ordering maps
+
+---
+ gold/parameters.cc                |   5 +-
+ include/ld-and-gold-env-scripts.h | 111 ++++++++++++++++++++++++++++++
+ ld/lexsup.c                       |  71 ++++++++++---------
+ 3 files changed, 154 insertions(+), 33 deletions(-)
+ create mode 100644 include/ld-and-gold-env-scripts.h
+
+diff --git a/gold/parameters.cc b/gold/parameters.cc
+index 57dc1fd5ccd..7ecf8c0a4d4 100644
+--- a/gold/parameters.cc
++++ b/gold/parameters.cc
+@@ -26,6 +26,7 @@
+ #include "options.h"
+ #include "target.h"
+ #include "target-select.h"
++#include "ld-and-gold-env-scripts.h"
+ 
+ namespace gold
+ {
+@@ -243,7 +244,9 @@ Parameters::set_section_ordering_file_from_env()
+     return;
+ 
+   // Read filepath from environment.
+-  ret = getenv("GOLD_ORDERING_SCRIPT");
++  ret = ld_and_gold_get_ordering_script ("GOLD_ORDERING_SCRIPT",
++					 "GOLD_ORDERING_SCRIPT_MAP",
++					 this->options ().output_file_name ());
+ 
+   // If not set (or error), indicate we should stop trying to return.
+   if (ret == NULL)
+diff --git a/include/ld-and-gold-env-scripts.h b/include/ld-and-gold-env-scripts.h
+new file mode 100644
+index 00000000000..250f9fe9028
+--- /dev/null
++++ b/include/ld-and-gold-env-scripts.h
+@@ -0,0 +1,111 @@
++#ifndef BINUTILS_D_INCLUDE_D_LD_AND_GOLD_ENV_SCRIPTS_H_
++#define BINUTILS_D_INCLUDE_D_LD_AND_GOLD_ENV_SCRIPTS_H_
++
++#include <stddef.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++/* Try to read input linker-script or gold section-ordering-file from env 1. an
++ * env variable and 2. a map of DSO -> scripts if env variable (1) doesn't
++ * exist. Only takes affect if normal commandline arguments not present. */
++static char *
++ld_and_gold_get_ordering_script (const char *env_linker_script_in,
++				 const char *env_linker_script_map_in,
++				 const char *output_dso)
++{
++  char *env_linker_script = NULL;
++  char *env_linker_script_map = NULL;
++  if (env_linker_script_in != NULL)
++    {
++      env_linker_script = getenv (env_linker_script_in);
++    }
++
++  if (env_linker_script == NULL || access (env_linker_script, F_OK) != 0)
++    {
++
++      char *line = NULL;
++      size_t line_sz = 0;
++      FILE *fp = NULL;
++      ssize_t nread;
++      const char *output_dso_basename = NULL;
++      const char *output_dso_end = NULL;
++      size_t output_dso_len = 0;
++
++      if (env_linker_script_map_in == NULL)
++	{
++	  return NULL;
++	}
++
++      if (output_dso == NULL)
++	{
++	  return NULL;
++	}
++
++      env_linker_script_map = getenv (env_linker_script_map_in);
++      if (env_linker_script_map == NULL)
++	{
++	  return NULL;
++	}
++      fp = fopen (env_linker_script_map, "r");
++      if (fp == NULL)
++	{
++	  return NULL;
++	}
++
++      output_dso_len = strlen (output_dso);
++      output_dso_end = output_dso + output_dso_len;
++
++      output_dso_basename = output_dso_end;
++      while (output_dso_basename != output_dso
++	     && (*output_dso_basename) != '/')
++	{
++	  --output_dso_basename;
++	}
++      if ((*output_dso_basename) == '/')
++	{
++	  ++output_dso_basename;
++	}
++
++      for (;;)
++	{
++	  char *end_dso;
++	  nread = getline (&line, &line_sz, fp);
++	  if (nread < 0)
++	    {
++	      free (line);
++	      break;
++	    }
++	  end_dso = (char *) memchr (line, ' ', nread);
++	  if (end_dso == NULL)
++	    {
++	      continue;
++	    }
++
++	  *end_dso = '\0';
++	  if (strcmp (line, output_dso_basename) == 0)
++	    {
++	      do
++		{
++		  ++end_dso;
++		}
++	      while ((*end_dso) == ' ');
++	      /* We end up leaking memory allocated for line. Its a very
++	       * bounded amount we make leak so probably okay.  */
++	      env_linker_script = end_dso;
++	      break;
++	    }
++	}
++
++      fclose (fp);
++    }
++  if (env_linker_script == NULL || access (env_linker_script, F_OK) != 0)
++    {
++      return NULL;
++    }
++
++  return env_linker_script;
++}
++
++#endif
+diff --git a/ld/lexsup.c b/ld/lexsup.c
+index f6feeb6eefd..2ba59c8d0e0 100644
+--- a/ld/lexsup.c
++++ b/ld/lexsup.c
+@@ -41,6 +41,7 @@
+ #include "ldver.h"
+ #include "ldemul.h"
+ #include "demangle.h"
++#include "ld-and-gold-env-scripts.h"
+ #if BFD_SUPPORTS_PLUGINS
+ #include "plugin.h"
+ #endif /* BFD_SUPPORTS_PLUGINS */
+@@ -640,6 +641,7 @@ parse_args (unsigned argc, char **argv)
+   int is, il, irl;
+   int ingroup = 0;
+   int has_linker_script = 0;
++  char *output_dso = NULL;
+   char *default_dirlist = NULL;
+   char *shortopts;
+   struct option *longopts;
+@@ -799,38 +801,42 @@ parse_args (unsigned argc, char **argv)
+       if (ldemul_handle_option (optc))
+ 	continue;
+ 
+-      if (optc == -1) {
+-          char * env_linker_script = getenv("LD_ORDERING_SCRIPT");
+-          if (has_linker_script) {
+-            if (verbose && env_linker_script != NULL) {
+-                  info_msg("Ignoring env linker script as user provided one\n");
+-            }
+-          }
+-          else if (env_linker_script != NULL) {
+-            if (access(env_linker_script, F_OK) == 0) {
+-                  if (verbose) {
+-                      info_msg("Using env linker script: %s\n",
+-                               env_linker_script);
+-                  }
+-
+-                  /* Set optarg. This is *probably* unnecessary but ld has so
+-                   * much global state juggling that set it to be safe incase
+-                   * its reference somewhere deep inside basic linker script
+-                   * handling.  */
+-                  optarg                 = env_linker_script;
+-                  previous_script_handle = saved_script_handle;
+-                  ldfile_open_script_file(optarg);
+-                  parser_input = input_script;
+-                  yyparse();
+-                  previous_script_handle = NULL;
+-            }
+-            else if (verbose) {
+-                  info_msg("Warning: Cannot open env linker script %s\n",
+-                           env_linker_script);
+-            }
+-          }
+-          break;
+-      }
++      if (optc == -1)
++	{
++	  char *env_linker_script = NULL;
++	  if (verbose || !has_linker_script)
++	    {
++	      env_linker_script = ld_and_gold_get_ordering_script (
++		  "LD_ORDERING_SCRIPT", "LD_ORDERING_SCRIPT_MAP", output_dso);
++	    }
++	  if (has_linker_script)
++	    {
++	      if (verbose && env_linker_script == NULL)
++		{
++		  info_msg (
++		      "Ignoring env linker script as user provided one\n");
++		}
++	    }
++	  else if (env_linker_script)
++	    {
++	      if (verbose)
++		{
++		  info_msg ("Using env linker script: %s\n",
++			    env_linker_script);
++		}
++	      /* Set optarg. This is *probably* unnecessary but ld has so
++	       * much global state juggling that set it to be safe incase
++	       * its reference somewhere deep inside basic linker script
++	       * handling.  */
++	      optarg = env_linker_script;
++	      previous_script_handle = saved_script_handle;
++	      ldfile_open_script_file (optarg);
++	      parser_input = input_script;
++	      yyparse ();
++	      previous_script_handle = NULL;
++	    }
++	  break;
++	}
+ 
+       switch (optc)
+ 	{
+@@ -1187,6 +1193,7 @@ parse_args (unsigned argc, char **argv)
+ 	  link_info.optimize = strtoul (optarg, NULL, 0) != 0;
+ 	  break;
+ 	case 'o':
++	  output_dso = optarg;
+ 	  lang_add_output (optarg, 0);
+ 	  break;
+ 	case OPTION_OFORMAT:
+-- 
+2.34.1
+
