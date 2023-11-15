@@ -135,7 +135,7 @@ index 00000000000..250f9fe9028
 +	      /* We end up leaking memory allocated for line. Its a very
 +	       * bounded amount we make leak so probably okay.  */
 +	      env_linker_script = end_dso;
-+		end_dso = strstr(env_linker_script, '\n'); if (end_dso) *end_dso = '\0';
++		end_dso = strstr(env_linker_script, "\n"); if (end_dso) *end_dso = '\0';
 +	      break;
 +	    }
 +	}
