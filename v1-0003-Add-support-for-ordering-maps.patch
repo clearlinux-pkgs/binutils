@@ -38,7 +38,7 @@ new file mode 100644
 index 00000000000..250f9fe9028
 --- /dev/null
 +++ b/include/ld-and-gold-env-scripts.h
-@@ -0,0 +1,111 @@
+@@ -0,0 +1,112 @@
 +#ifndef BINUTILS_D_INCLUDE_D_LD_AND_GOLD_ENV_SCRIPTS_H_
 +#define BINUTILS_D_INCLUDE_D_LD_AND_GOLD_ENV_SCRIPTS_H_
 +
@@ -135,6 +135,7 @@ index 00000000000..250f9fe9028
 +	      /* We end up leaking memory allocated for line. Its a very
 +	       * bounded amount we make leak so probably okay.  */
 +	      env_linker_script = end_dso;
++		end_dso = strstr(env_linker_script, '\n'); if (end_dso) *end_dso = '\0';
 +	      break;
 +	    }
 +	}
