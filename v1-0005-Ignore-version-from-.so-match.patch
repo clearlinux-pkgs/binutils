@@ -1,0 +1,75 @@
+From c7466a419c9449efe2943ae6e1f86e6cb21311c4 Mon Sep 17 00:00:00 2001
+From: Noah Goldstein <goldstein.w.n@gmail.com>
+Date: Fri, 17 Nov 2023 21:40:41 -0600
+Subject: [PATCH v1 5/5] Ignore version from .so match
+
+---
+ include/ld-and-gold-env-scripts.h | 38 ++++++++++++++++++++++++++++++-
+ 1 file changed, 37 insertions(+), 1 deletion(-)
+
+diff --git a/include/ld-and-gold-env-scripts.h b/include/ld-and-gold-env-scripts.h
+index fdc2a949c57..faf32f7e8ee 100644
+--- a/include/ld-and-gold-env-scripts.h
++++ b/include/ld-and-gold-env-scripts.h
+@@ -7,6 +7,40 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
++/* Find where the ".so" starts in a dso. If ".so" exists return offset to the
++ * 'o'. Otherwise return 0.  */
++static size_t
++ld_and_gold_dso_find_so (const char *dso, size_t dso_len)
++{
++  for (; dso_len > 2U; --dso_len)
++    {
++      if (dso[dso_len] == 'o' && dso[dso_len - 1] == 's'
++	  && dso[dso_len - 2] == '.')
++	{
++	  return dso_len;
++	}
++    }
++  return 0;
++}
++
++/* Returns true if two dsos match. If both dsos are shared libraries it will
++ * only match up to the last ".so".  */
++static int
++ld_and_gold_dso_matches (const char *dso0, size_t dso_len0, const char *dso1,
++			 size_t dso_len1)
++{
++  size_t len0 = ld_and_gold_dso_find_so (dso0, dso_len0);
++  if (len0 != 0)
++    {
++      size_t len1 = ld_and_gold_dso_find_so (dso1, dso_len1);
++      if (len0 == len1)
++	{
++	  return memcmp (dso0, dso1, len0) == 0;
++	}
++    }
++  return dso_len0 == dso_len1 && memcmp (dso0, dso1, dso_len0) == 0;
++}
++
+ /* Try to read input linker-script or gold section-ordering-file from env 1. an
+  * env variable and 2. a map of DSO -> scripts if env variable (1) doesn't
+  * exist. Only takes affect if normal commandline arguments not present. */
+@@ -68,6 +102,7 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+ 	{
+ 	  ++output_dso_basename;
+ 	}
++      output_dso_len = output_dso_end - output_dso_basename;
+ 
+       for (;;)
+ 	{
+@@ -85,7 +120,8 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+ 	    }
+ 
+ 	  *end_dso = '\0';
+-	  if (strcmp (line, output_dso_basename) == 0)
++	  if (ld_and_gold_dso_matches (line, end_dso - line,
++				       output_dso_basename, output_dso_len))
+ 	    {
+ 	      do
+ 		{
+-- 
+2.34.1
+

@@ -5,3 +5,5 @@ binutils-add-LD_AS_NEEDED-global-env.patch
 v1-0001-Add-env-variable-as-fallback-linker-script-arg.patch
 v1-0002-gold-Add-env-variable-support.patch
 v1-0003-Add-support-for-ordering-maps.patch
+v1-0004-Removing-trailing-spaces-newline-from-mapped-scri.patch
+v1-0005-Ignore-version-from-.so-match.patch

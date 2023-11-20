@@ -1,0 +1,46 @@
+From 1237c28f150ffb6143998d9e4c6b4afb67795aa3 Mon Sep 17 00:00:00 2001
+From: Noah Goldstein <goldstein.w.n@gmail.com>
+Date: Fri, 17 Nov 2023 00:11:09 -0600
+Subject: Removing trailing spaces/newline from mapped script path
+
+---
+ include/ld-and-gold-env-scripts.h | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/include/ld-and-gold-env-scripts.h b/include/ld-and-gold-env-scripts.h
+index 250f9fe9028..fdc2a949c57 100644
+--- a/include/ld-and-gold-env-scripts.h
++++ b/include/ld-and-gold-env-scripts.h
+@@ -16,6 +16,7 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+ 				 const char *output_dso)
+ {
+   char *env_linker_script = NULL;
++  char *env_linker_script_end = NULL;
+   char *env_linker_script_map = NULL;
+   if (env_linker_script_in != NULL)
+     {
+@@ -100,7 +101,20 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+ 
+       fclose (fp);
+     }
+-  if (env_linker_script == NULL || access (env_linker_script, F_OK) != 0)
++
++  if (env_linker_script == NULL)
++    {
++      return NULL;
++    }
++
++  env_linker_script_end = env_linker_script + strlen (env_linker_script) - 1;
++  while (env_linker_script_end > env_linker_script
++	 && (*env_linker_script_end == '\n' || *env_linker_script_end == ' '))
++    {
++      *env_linker_script_end = '\0';
++      --env_linker_script_end;
++    }
++  if (access (env_linker_script, F_OK) != 0)
+     {
+       return NULL;
+     }
+-- 
+2.34.1
+
