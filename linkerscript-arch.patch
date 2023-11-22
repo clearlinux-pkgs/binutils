@@ -1,0 +1,18 @@
+--- binutils-2.41/ld/lexsup.c~	2023-07-02 23:00:00.000000000 +0000
++++ binutils-2.41/ld/lexsup.c	2023-11-22 15:13:35.421576650 +0000
+@@ -62,6 +62,7 @@
+ static void set_section_start (char *, char *);
+ static void set_segment_start (const char *, char *);
+ static void help (void);
++static bool inhibit_linker_script = false;
+ 
+ /* The long options.  This structure is used for both the option
+    parsing and the help text.  */
+@@ -865,6 +866,7 @@
+ 	  break;
+ 	case 'A':
+ 	  ldfile_add_arch (optarg);
++	  inhibit_linker_script = true;
+ 	  break;
+ 	case 'b':
+ 	  lang_add_target (optarg);

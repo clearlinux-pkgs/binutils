@@ -9,7 +9,7 @@
 #
 Name     : binutils
 Version  : 2.41
-Release  : 527
+Release  : 528
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.41.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.41.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.41.tar.xz.sig
@@ -46,6 +46,7 @@ Patch4: v1-0002-gold-Add-env-variable-support.patch
 Patch5: v1-0003-Add-support-for-ordering-maps.patch
 Patch6: v1-0004-Removing-trailing-spaces-newline-from-mapped-scri.patch
 Patch7: v1-0005-Ignore-version-from-.so-match.patch
+Patch8: linkerscript-arch.patch
 
 %description
 This directory contains various GNU compilers, assemblers, linkers,
@@ -140,6 +141,7 @@ cd %{_builddir}/binutils-2.41
 %patch -P 5 -p1
 %patch -P 6 -p1
 %patch -P 7 -p1
+%patch -P 8 -p1
 pushd ..
 cp -a binutils-2.41 buildavx2
 popd
@@ -185,7 +187,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1700506115
+export SOURCE_DATE_EPOCH=1700667148
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -269,7 +271,7 @@ FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS"
 FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS"
 ASFLAGS="$CLEAR_INTERMEDIATE_ASFLAGS"
 LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS"
-export SOURCE_DATE_EPOCH=1700506115
+export SOURCE_DATE_EPOCH=1700667148
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
