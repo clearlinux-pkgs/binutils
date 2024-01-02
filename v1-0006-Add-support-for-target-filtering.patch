@@ -1,0 +1,243 @@
+From b1f7d39c7a0e40c788010b19e79bcafe1ab764aa Mon Sep 17 00:00:00 2001
+From: Noah Goldstein <goldstein.w.n@gmail.com>
+Date: Wed, 22 Nov 2023 16:08:34 -0600
+Subject: Add support for 'target' filtering
+
+---
+ gold/parameters.cc                |  8 +--
+ gold/target.h                     | 12 +++++
+ include/ld-and-gold-env-scripts.h | 86 +++++++++++++++++++++++++++----
+ ld/ldemul.c                       |  6 +++
+ ld/ldemul.h                       |  2 +
+ ld/lexsup.c                       |  3 +-
+ 6 files changed, 104 insertions(+), 13 deletions(-)
+
+diff --git a/gold/parameters.cc b/gold/parameters.cc
+index 7ecf8c0a4d4..80c4ac26648 100644
+--- a/gold/parameters.cc
++++ b/gold/parameters.cc
+@@ -244,9 +244,11 @@ Parameters::set_section_ordering_file_from_env()
+     return;
+ 
+   // Read filepath from environment.
+-  ret = ld_and_gold_get_ordering_script ("GOLD_ORDERING_SCRIPT",
+-					 "GOLD_ORDERING_SCRIPT_MAP",
+-					 this->options ().output_file_name ());
++  ret = ld_and_gold_get_ordering_script (
++      "GOLD_ORDERING_SCRIPT", "GOLD_ORDERING_SCRIPT_MAP",
++      this->options ().output_file_name (),
++      parameters->target_valid () ? parameters->target ().machine_code_name ()
++				  : NULL);
+ 
+   // If not set (or error), indicate we should stop trying to return.
+   if (ret == NULL)
+diff --git a/gold/target.h b/gold/target.h
+index 307c98f4a10..cf5a565a83c 100644
+--- a/gold/target.h
++++ b/gold/target.h
+@@ -88,6 +88,18 @@ class Target
+   machine_code() const
+   { return this->pti_->machine_code; }
+ 
++  const char *
++  machine_code_name () const
++  {
++    switch (machine_code ())
++      {
++      case elfcpp::EM::EM_X86_64:
++	return "elf_x86_64";
++      default:
++	return NULL;
++      }
++  }
++
+   // Processor specific flags to store in e_flags field of ELF header.
+   elfcpp::Elf_Word
+   processor_specific_flags() const
+diff --git a/include/ld-and-gold-env-scripts.h b/include/ld-and-gold-env-scripts.h
+index faf32f7e8ee..14f987769d8 100644
+--- a/include/ld-and-gold-env-scripts.h
++++ b/include/ld-and-gold-env-scripts.h
+@@ -47,7 +47,8 @@ ld_and_gold_dso_matches (const char *dso0, size_t dso_len0, const char *dso1,
+ static char *
+ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+ 				 const char *env_linker_script_map_in,
+-				 const char *output_dso)
++				 const char *output_dso,
++				 const char *target_name)
+ {
+   char *env_linker_script = NULL;
+   char *env_linker_script_end = NULL;
+@@ -63,11 +64,11 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+       char *line = NULL;
+       size_t line_sz = 0;
+       FILE *fp = NULL;
+-      ssize_t nread;
+       const char *output_dso_basename = NULL;
+       const char *output_dso_end = NULL;
+       size_t output_dso_len = 0;
+-
++      size_t target_len = 0;
++      int target_okay = 0;
+       if (env_linker_script_map_in == NULL)
+ 	{
+ 	  return NULL;
+@@ -83,6 +84,7 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+ 	{
+ 	  return NULL;
+ 	}
++
+       fp = fopen (env_linker_script_map, "r");
+       if (fp == NULL)
+ 	{
+@@ -104,23 +106,88 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+ 	}
+       output_dso_len = output_dso_end - output_dso_basename;
+ 
++      if (target_name != NULL)
++	{
++	  target_len = strlen (target_name);
++	}
++      /* Default to accepting. If we reach a 'target:*' line then we start
++       * filtering.  */
++      target_okay = 1;
+       for (;;)
+ 	{
+-	  char *end_dso;
+-	  nread = getline (&line, &line_sz, fp);
+-	  if (nread < 0)
++	  char *end_dso, *cur_line;
++	  ssize_t nread_s;
++	  size_t nread;
++	  nread_s = getline (&line, &line_sz, fp);
++	  if (nread_s < 0)
+ 	    {
+ 	      free (line);
+ 	      break;
+ 	    }
+-	  end_dso = (char *) memchr (line, ' ', nread);
++	  nread = nread_s;
++
++	  cur_line = line;
++	  while (nread > 0 && (cur_line[0] == ' ' || cur_line[0] == '\t'))
++	    {
++	      --nread;
++	      ++cur_line;
++	    }
++
++	  if (target_len != 0 && nread > strlen ("target:")
++	      && memcmp (cur_line, "target:", strlen ("target:")) == 0)
++	    {
++	      target_okay = 0;
++	      nread -= strlen ("target:");
++	      cur_line += strlen ("target:");
++
++	      for (;;)
++		{
++		  char *next_target;
++		  while (nread > 0
++			 && (cur_line[0] == ' ' || cur_line[0] == '\t'))
++		    {
++		      --nread;
++		      ++cur_line;
++		    }
++		  next_target = (char *) memchr (cur_line, ',', nread);
++		  if (next_target == NULL)
++		    {
++		      next_target = (char *) memchr (cur_line, '\n', nread);
++		      if (next_target == NULL)
++			{
++			  break;
++			}
++		    }
++
++		  if ((size_t) (next_target - cur_line) == target_len
++		      && memcmp (cur_line, target_name, target_len) == 0)
++		    {
++		      target_okay = 1;
++		      break;
++		    }
++		  if (cur_line + nread <= (next_target + 1))
++		    {
++		      break;
++		    }
++		  nread -= (ssize_t) ((next_target + 1) - cur_line);
++		  cur_line = next_target + 1;
++		}
++	      continue;
++	    }
++
++	  if (!target_okay)
++	    {
++	      continue;
++	    }
++
++	  end_dso = (char *) memchr (cur_line, ' ', nread);
+ 	  if (end_dso == NULL)
+ 	    {
+ 	      continue;
+ 	    }
+ 
+ 	  *end_dso = '\0';
+-	  if (ld_and_gold_dso_matches (line, end_dso - line,
++	  if (ld_and_gold_dso_matches (cur_line, end_dso - cur_line,
+ 				       output_dso_basename, output_dso_len))
+ 	    {
+ 	      do
+@@ -145,7 +212,8 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+ 
+   env_linker_script_end = env_linker_script + strlen (env_linker_script) - 1;
+   while (env_linker_script_end > env_linker_script
+-	 && (*env_linker_script_end == '\n' || *env_linker_script_end == ' '))
++	 && (*env_linker_script_end == '\n' || *env_linker_script_end == ' '
++	     || *env_linker_script_end == '\t'))
+     {
+       *env_linker_script_end = '\0';
+       --env_linker_script_end;
+diff --git a/ld/ldemul.c b/ld/ldemul.c
+index d0943de1f2a..7e0693753f3 100644
+--- a/ld/ldemul.c
++++ b/ld/ldemul.c
+@@ -59,6 +59,12 @@ ldemul_before_parse (void)
+   ld_emulation->before_parse ();
+ }
+ 
++const char *
++ldemul_emulation_name (void)
++{
++  return ld_emulation == NULL ? NULL : ld_emulation->emulation_name;
++}
++
+ void
+ ldemul_before_plugin_all_symbols_read (void)
+ {
+diff --git a/ld/ldemul.h b/ld/ldemul.h
+index f3e8bb697f4..ab30891bfbc 100644
+--- a/ld/ldemul.h
++++ b/ld/ldemul.h
+@@ -32,6 +32,8 @@ extern void ldemul_after_parse
+   (void);
+ extern void ldemul_before_parse
+   (void);
++extern const char * ldemul_emulation_name
++  (void);
+ extern void ldemul_before_plugin_all_symbols_read
+   (void);
+ extern void ldemul_after_open
+diff --git a/ld/lexsup.c b/ld/lexsup.c
+index 2ba59c8d0e0..381526933ca 100644
+--- a/ld/lexsup.c
++++ b/ld/lexsup.c
+@@ -807,7 +807,8 @@ parse_args (unsigned argc, char **argv)
+ 	  if (verbose || !has_linker_script)
+ 	    {
+ 	      env_linker_script = ld_and_gold_get_ordering_script (
+-		  "LD_ORDERING_SCRIPT", "LD_ORDERING_SCRIPT_MAP", output_dso);
++		  "LD_ORDERING_SCRIPT", "LD_ORDERING_SCRIPT_MAP", output_dso,
++		  ldemul_emulation_name ());
+ 	    }
+ 	  if (has_linker_script)
+ 	    {
+-- 
+2.34.1
+
