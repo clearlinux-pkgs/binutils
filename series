@@ -8,4 +8,4 @@ v1-0003-Add-support-for-ordering-maps.patch
 v1-0004-Removing-trailing-spaces-newline-from-mapped-scri.patch
 v1-0005-Ignore-version-from-.so-match.patch
 v1-0006-Add-support-for-target-filtering.patch
-linkerscript-arch.patch
+v1-0007-With-text-ordering-file-support.patch

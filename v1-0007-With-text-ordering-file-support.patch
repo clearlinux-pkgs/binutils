@@ -1,0 +1,207 @@
+From a92a5db131a3a79ea58be09e5683252de2ea50f2 Mon Sep 17 00:00:00 2001
+From: Noah Goldstein <goldstein.w.n@gmail.com>
+Date: Mon, 15 Jan 2024 17:45:16 -0800
+Subject: With --text-ordering-file support
+
+---
+ ld/ld.h               |  3 +++
+ ld/ldfile.c           | 25 ++++++++++++++++++++++---
+ ld/ldlex.h            |  1 +
+ ld/lexsup.c           | 37 ++++++++++++++++---------------------
+ ld/scripttempl/elf.sc |  1 +
+ 5 files changed, 43 insertions(+), 24 deletions(-)
+
+diff --git a/ld/ld.h b/ld/ld.h
+index a0f8a15c7a9..f590d7de95e 100644
+--- a/ld/ld.h
++++ b/ld/ld.h
+@@ -313,6 +313,9 @@ typedef struct
+ 
+   /* Compress DWARF debug sections.  */
+   enum compressed_debug_section_type compress_debug;
++
++  /* The optional text section ordering file.  */
++  const char *text_section_ordering_file;
+ } ld_config_type;
+ 
+ extern ld_config_type config;
+diff --git a/ld/ldfile.c b/ld/ldfile.c
+index df7c9cbd65e..30c46b61587 100644
+--- a/ld/ldfile.c
++++ b/ld/ldfile.c
+@@ -255,7 +255,7 @@ ldfile_possibly_remap_input (const char * filename)
+ 	  return i->renamed;
+ 	}
+     }
+-	 
++
+   return filename;
+ }
+ 
+@@ -686,7 +686,7 @@ ldfile_open_file (lang_input_statement_type *entry)
+ 	      argv[1] = "missing-lib";
+ 	      argv[2] = (char *) entry->local_sym_name;
+ 	      argv[3] = NULL;
+-      
++
+ 	      if (verbose)
+ 		einfo (_("%P: About to run error handling script '%s' with arguments: '%s' '%s'\n"),
+ 		       argv[0], argv[1], argv[2]);
+@@ -891,6 +891,7 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
+   static struct script_name_list *processed_scripts = NULL;
+   struct script_name_list *script;
+   size_t len;
++  bool use_text_section_ordering_file = false;
+ 
+   /* PR 24576: Catch the case where the user has accidentally included
+      the same linker script twice.  */
+@@ -905,6 +906,23 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
+ 	}
+     }
+ 
++  if (strcmp (name, "config.text_section_ordering_file") == 0)
++    {
++      /* Support
++
++	 INCLUDE config.text_section_ordering_file;
++
++	 in input text sections in linker script.  */
++      if (config.text_section_ordering_file == NULL)
++	{
++	  lex_push_file (NULL, name, false);
++	  return;
++	}
++
++      name = config.text_section_ordering_file;
++      use_text_section_ordering_file = true;
++    }
++
+   /* FIXME: This memory is never freed, but that should not really matter.
+      It will be released when the linker exits, and it is unlikely to ever
+      be more than a few tens of bytes.  */
+@@ -931,7 +949,8 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
+ 
+   lineno = 1;
+ 
+-  saved_script_handle = ldlex_input_stack;
++  if (!use_text_section_ordering_file)
++    saved_script_handle = ldlex_input_stack;
+ }
+ 
+ /* Open command file NAME in the current directory, -L directories,
+diff --git a/ld/ldlex.h b/ld/ldlex.h
+index 87cac02141d..78009dc1bda 100644
+--- a/ld/ldlex.h
++++ b/ld/ldlex.h
+@@ -68,6 +68,7 @@ enum option_values
+   OPTION_TASK_LINK,
+   OPTION_TBSS,
+   OPTION_TDATA,
++  OPTION_TEXT_SECTION_ORDERING_FILE,
+   OPTION_TTEXT,
+   OPTION_TTEXT_SEGMENT,
+   OPTION_TRODATA_SEGMENT,
+diff --git a/ld/lexsup.c b/ld/lexsup.c
+index 381526933ca..4f0de2f60a9 100644
+--- a/ld/lexsup.c
++++ b/ld/lexsup.c
+@@ -485,6 +485,9 @@ static const struct ld_option ld_options[] =
+   { {"sort-section", required_argument, NULL, OPTION_SORT_SECTION},
+     '\0', N_("name|alignment"),
+     N_("Sort sections by name or maximum alignment"), TWO_DASHES },
++  { {"text-section-ordering-file", required_argument, NULL, OPTION_TEXT_SECTION_ORDERING_FILE},
++    '\0', N_("FILE"),
++    N_("Sort text sections by FILE"), TWO_DASHES },
+   { {"spare-dynamic-tags", required_argument, NULL, OPTION_SPARE_DYNAMIC_TAGS},
+     '\0', N_("COUNT"), N_("How many tags to reserve in .dynamic section"),
+     TWO_DASHES },
+@@ -640,7 +643,6 @@ parse_args (unsigned argc, char **argv)
+   unsigned i;
+   int is, il, irl;
+   int ingroup = 0;
+-  int has_linker_script = 0;
+   char *output_dso = NULL;
+   char *default_dirlist = NULL;
+   char *shortopts;
+@@ -803,38 +805,29 @@ parse_args (unsigned argc, char **argv)
+ 
+       if (optc == -1)
+ 	{
+-	  char *env_linker_script = NULL;
+-	  if (verbose || !has_linker_script)
++	  char *env_ordering_script = NULL;
++	  if (verbose || config.text_section_ordering_file == NULL)
+ 	    {
+-	      env_linker_script = ld_and_gold_get_ordering_script (
++	      env_ordering_script = ld_and_gold_get_ordering_script (
+ 		  "LD_ORDERING_SCRIPT", "LD_ORDERING_SCRIPT_MAP", output_dso,
+ 		  ldemul_emulation_name ());
+ 	    }
+-	  if (has_linker_script)
++	  if (config.text_section_ordering_file != NULL)
+ 	    {
+-	      if (verbose && env_linker_script == NULL)
++	      if (verbose && env_ordering_script != NULL)
+ 		{
+ 		  info_msg (
+-		      "Ignoring env linker script as user provided one\n");
++		      "Ignoring env ordering script as user provided one\n");
+ 		}
+ 	    }
+-	  else if (env_linker_script)
++	  else if (env_ordering_script != NULL)
+ 	    {
+ 	      if (verbose)
+ 		{
+-		  info_msg ("Using env linker script: %s\n",
+-			    env_linker_script);
++		  info_msg ("Using env ordering script: %s\n",
++			    env_ordering_script);
+ 		}
+-	      /* Set optarg. This is *probably* unnecessary but ld has so
+-	       * much global state juggling that set it to be safe incase
+-	       * its reference somewhere deep inside basic linker script
+-	       * handling.  */
+-	      optarg = env_linker_script;
+-	      previous_script_handle = saved_script_handle;
+-	      ldfile_open_script_file (optarg);
+-	      parser_input = input_script;
+-	      yyparse ();
+-	      previous_script_handle = NULL;
++	      config.text_section_ordering_file = env_ordering_script;
+ 	    }
+ 	  break;
+ 	}
+@@ -1402,6 +1395,9 @@ parse_args (unsigned argc, char **argv)
+ 	    einfo (_("%F%P: invalid section sorting option: %s\n"),
+ 		   optarg);
+ 	  break;
++	case OPTION_TEXT_SECTION_ORDERING_FILE:
++	  config.text_section_ordering_file = optarg;
++	  break;
+ 	case OPTION_STATS:
+ 	  config.stats = true;
+ 	  break;
+@@ -1418,7 +1414,6 @@ parse_args (unsigned argc, char **argv)
+ 	  ++trace_files;
+ 	  break;
+ 	case 'T':
+-      has_linker_script = 1;
+ 	  previous_script_handle = saved_script_handle;
+ 	  ldfile_open_script_file (optarg);
+ 	  parser_input = input_script;
+diff --git a/ld/scripttempl/elf.sc b/ld/scripttempl/elf.sc
+index 1e3c5aa8504..a181a4ed645 100644
+--- a/ld/scripttempl/elf.sc
++++ b/ld/scripttempl/elf.sc
+@@ -546,6 +546,7 @@ cat <<EOF
+     ${RELOCATING+*(.text.unlikely .text.*_unlikely .text.unlikely.*)}
+     ${RELOCATING+*(.text.exit .text.exit.*)}
+     ${RELOCATING+*(.text.startup .text.startup.*)}
++    ${RELOCATING+INCLUDE config.text_section_ordering_file;}
+     ${RELOCATING+*(.text.hot .text.hot.*)}
+     ${RELOCATING+*(SORT(.text.sorted.*))}
+     *(.text .stub${RELOCATING+ .text.* .gnu.linkonce.t.*})
+-- 
+2.34.1
+

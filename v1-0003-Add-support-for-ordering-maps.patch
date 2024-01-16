@@ -206,7 +206,7 @@ index f6feeb6eefd..2ba59c8d0e0 100644
 -          }
 -          break;
 -      }
-+      if (optc == -1 && !inhibit_linker_script)
++      if (optc == -1)
 +	{
 +	  char *env_linker_script = NULL;
 +	  if (verbose || !has_linker_script)
