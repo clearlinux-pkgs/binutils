@@ -1,0 +1,644 @@
+From 892aa7b6273bf5da6d48124a3c84bf0148f907ea Mon Sep 17 00:00:00 2001
+From: Noah Goldstein <goldstein.w.n@gmail.com>
+Date: Fri, 26 Jan 2024 14:19:48 -0600
+Subject: ld/gold: Support alignment for functions
+
+---
+ gold/layout.cc                           |  29 +++-
+ gold/main.cc                             |   5 +
+ gold/output.cc                           |  12 ++
+ gold/parameters.cc                       |   3 +-
+ include/ld-and-gold-env-scripts.h        | 165 ++++++++++++++++++++++-
+ include/ld-and-gold-sect-alignment-tab.h | 143 ++++++++++++++++++++
+ ld/ldlang.c                              |  25 +++-
+ ld/ldmain.c                              |   8 +-
+ ld/lexsup.c                              |   5 +-
+ 9 files changed, 375 insertions(+), 20 deletions(-)
+ create mode 100644 include/ld-and-gold-sect-alignment-tab.h
+
+diff --git a/gold/layout.cc b/gold/layout.cc
+index c819d11ed3f..8e57776e657 100644
+--- a/gold/layout.cc
++++ b/gold/layout.cc
+@@ -2086,6 +2086,7 @@ Layout::attach_allocated_section_to_segment(const Target* target,
+ 	{
+ 	  Output_segment* oseg = this->make_output_segment(elfcpp::PT_NOTE,
+ 							   seg_flags);
++
+ 	  oseg->add_output_section_to_nonload(os, seg_flags);
+ 	  oseg->set_align(os_align);
+ 	}
+@@ -2955,12 +2956,32 @@ Layout::read_layout_from_file()
+     {
+       if (!line.empty() && line[line.length() - 1] == '\r')   // Windows
+ 	line.resize(line.length() - 1);
+-      // Ignore comments, beginning with '#'
+-      if (line[0] == '#')
++      // Ignore comments
++      size_t comment_pos = line.find('#');
++      if (comment_pos != std::string::npos)
+ 	{
+-	  std::getline(in, line);
+-	  continue;
++	   line = line.substr (0, comment_pos);
++	}
++      // Trim whitespace
++      size_t leading_ws = line.find_first_not_of (" \t");
++      if (leading_ws == std::string::npos)
++	{
++	   line.clear ();
++	}
++      else
++	{
++	   size_t trailing_ws = line.find_last_not_of (" \t");
++	   size_t trimmed_size = trailing_ws - leading_ws + 1;
++	   line = line.substr (leading_ws, trimmed_size);
++	}
++
++      if (line.empty())
++	{
++	   std::getline (in, line);
++	   continue;
+ 	}
++
++
+       this->input_section_position_[line] = position;
+       // Store all glob patterns in a vector.
+       if (is_wildcard_string(line.c_str()))
+diff --git a/gold/main.cc b/gold/main.cc
+index 404aad2085b..5e3cd6a0d60 100644
+--- a/gold/main.cc
++++ b/gold/main.cc
+@@ -50,6 +50,8 @@
+ #include "gdb-index.h"
+ #include "timer.h"
+ 
++#include "ld-and-gold-sect-alignment-tab.h"
++
+ using namespace gold;
+ 
+ // This function emits the commandline to a hard-coded file in temp.
+@@ -326,6 +328,9 @@ main(int argc, char** argv)
+   if (mapfile != NULL)
+     mapfile->close();
+ 
++  ld_and_gold_tab_drop ();
++
++
+   if (parameters->options().fatal_warnings()
+       && errors.warning_count() > 0
+       && errors.error_count() == 0)
+diff --git a/gold/output.cc b/gold/output.cc
+index 31be6270680..0eb892a27df 100644
+--- a/gold/output.cc
++++ b/gold/output.cc
+@@ -46,6 +46,8 @@
+ #include "layout.h"
+ #include "output.h"
+ 
++#include "ld-and-gold-sect-alignment-tab.h"
++
+ // For systems without mmap support.
+ #ifndef HAVE_MMAP
+ # define mmap gold_mmap
+@@ -2409,6 +2411,16 @@ Output_section::add_input_section(Layout* layout,
+ 				    &addralign))
+     input_section_size = uncompressed_size;
+ 
++  uint64_t alignment = ld_and_gold_tab_find (secname);
++  if (alignment != LD_AND_GOLD_BAD_ALIGN_POW && alignment < 32)
++    {
++      alignment = uint64_t (1) << alignment;
++      if (alignment > addralign)
++	{
++	  addralign = alignment;
++	}
++    }
++
+   if ((addralign & (addralign - 1)) != 0)
+     {
+       object->error(_("invalid alignment %lu for section \"%s\""),
+diff --git a/gold/parameters.cc b/gold/parameters.cc
+index 80c4ac26648..c6b4364310c 100644
+--- a/gold/parameters.cc
++++ b/gold/parameters.cc
+@@ -245,7 +245,7 @@ Parameters::set_section_ordering_file_from_env()
+ 
+   // Read filepath from environment.
+   ret = ld_and_gold_get_ordering_script (
+-      "GOLD_ORDERING_SCRIPT", "GOLD_ORDERING_SCRIPT_MAP",
++      0, "GOLD_ORDERING_SCRIPT", "GOLD_ORDERING_SCRIPT_MAP",
+       this->options ().output_file_name (),
+       parameters->target_valid () ? parameters->target ().machine_code_name ()
+ 				  : NULL);
+@@ -256,7 +256,6 @@ Parameters::set_section_ordering_file_from_env()
+       this->section_ordering_file_has_failed_ = true;
+       return;
+     }
+-
+   // Set env file.
+   section_ordering_file_from_env_ = ret;
+ }
+diff --git a/include/ld-and-gold-env-scripts.h b/include/ld-and-gold-env-scripts.h
+index 14f987769d8..10fc9192b0a 100644
+--- a/include/ld-and-gold-env-scripts.h
++++ b/include/ld-and-gold-env-scripts.h
+@@ -6,6 +6,156 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include <ctype.h>
++
++#include "ld-and-gold-sect-alignment-tab.h"
++
++htab_t G_ld_and_gold_alignment_tab = NULL;
++
++static int
++ld_and_gold_is_whitespace (char c)
++{
++  return c == ' ' || c == '\t';
++}
++
++static int
++ld_and_gold_is_digit (char c)
++{
++  return c >= '0' && c <= '9';
++}
++
++static struct ldg_func_sect_alignment_t *
++ld_and_gold_find_alignment (const char *line, size_t line_sz, int is_ld)
++{
++  const char *sect_begin;
++  const char *sect_end;
++  const char *begin_align_info;
++  char *sect_name_dup;
++  size_t sect_name_len, alloc_size;
++  void *mem;
++  const char to_match[] = { 'a', '=' };
++  unsigned to_match_idx = 0;
++  const char *line_end = line + line_sz;
++  if (line_sz == 0)
++    {
++      return NULL;
++    }
++
++  sect_begin = (const char *) memchr (line, '.', line_sz);
++  if (sect_begin == NULL)
++    {
++      return NULL;
++    }
++  line_sz = line_end - sect_begin;
++
++  sect_end = (const char *) memchr (sect_begin, is_ld ? ')' : ' ', line_sz);
++  if (sect_end == NULL)
++    {
++      return NULL;
++    }
++  line_sz = line_end - sect_end;
++  begin_align_info = (const char *) memchr (sect_end, '#', line_sz);
++  if (begin_align_info == NULL)
++    {
++      return NULL;
++    }
++  ++begin_align_info;
++
++  for (;;)
++    {
++      if (begin_align_info >= line_end)
++	{
++	  return NULL;
++	}
++      if (to_match_idx < sizeof (to_match)
++	  && begin_align_info[0] == to_match[to_match_idx])
++	{
++	  ++to_match_idx;
++	}
++      else if (!ld_and_gold_is_whitespace (begin_align_info[0]))
++	{
++	  break;
++	}
++      ++begin_align_info;
++    }
++
++  if (!ld_and_gold_is_digit (begin_align_info[0]))
++    {
++      return NULL;
++    }
++
++  unsigned alignment_power = begin_align_info[0] - '0';
++  ++begin_align_info;
++  if (begin_align_info < line_end
++      && ld_and_gold_is_digit (begin_align_info[0]))
++    {
++      alignment_power = alignment_power * 10 + begin_align_info[0] - '0';
++      ++begin_align_info;
++    }
++  if (begin_align_info < line_end
++      && !(ld_and_gold_is_whitespace (begin_align_info[0])
++	   || begin_align_info[0] == '\n' || begin_align_info[0] == '\0'))
++    {
++      return NULL;
++    }
++  sect_name_len = sect_end - sect_begin;
++  alloc_size = sizeof (struct ldg_func_sect_alignment_t) + sect_name_len + 1;
++  mem = malloc (alloc_size);
++  if (mem == NULL)
++    {
++      return NULL;
++    }
++
++  sect_name_dup = ((char *) mem) + sizeof (struct ldg_func_sect_alignment_t);
++  struct ldg_func_sect_alignment_t *func_sect_alignment
++      = (struct ldg_func_sect_alignment_t *) mem;
++
++  memcpy (sect_name_dup, sect_begin, sect_name_len);
++  sect_name_dup[sect_name_len] = '\0';
++  func_sect_alignment->func_sect_name_ = sect_name_dup;
++  func_sect_alignment->alignment_power_ = alignment_power;
++  func_sect_alignment->found_ = 0;
++  return func_sect_alignment;
++}
++
++static void
++ld_and_gold_add_alignments (const char *path, int is_ld)
++{
++  FILE *fp = NULL;
++  char *line = NULL;
++  size_t line_sz = 0;
++
++  fp = fopen (path, "r");
++  if (fp == NULL)
++    {
++      return;
++    }
++  for (;;)
++    {
++      ssize_t nread_s = getline (&line, &line_sz, fp);
++      size_t nread;
++      struct ldg_func_sect_alignment_t *alignment_info;
++      if (nread_s < 0)
++	{
++	  if (line != NULL)
++	    {
++	      free (line);
++	    }
++	  break;
++	}
++
++      nread = nread_s;
++      alignment_info = ld_and_gold_find_alignment (line, nread, is_ld);
++      if (alignment_info != NULL)
++	{
++	  if (ld_and_gold_tab_insert (alignment_info))
++	    {
++	      free (alignment_info);
++	    }
++	}
++    }
++  fclose (fp);
++}
+ 
+ /* Find where the ".so" starts in a dso. If ".so" exists return offset to the
+  * 'o'. Otherwise return 0.  */
+@@ -45,7 +195,7 @@ ld_and_gold_dso_matches (const char *dso0, size_t dso_len0, const char *dso1,
+  * env variable and 2. a map of DSO -> scripts if env variable (1) doesn't
+  * exist. Only takes affect if normal commandline arguments not present. */
+ static char *
+-ld_and_gold_get_ordering_script (const char *env_linker_script_in,
++ld_and_gold_get_ordering_script (int is_ld, const char *env_linker_script_in,
+ 				 const char *env_linker_script_map_in,
+ 				 const char *output_dso,
+ 				 const char *target_name)
+@@ -121,11 +271,14 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+ 	  nread_s = getline (&line, &line_sz, fp);
+ 	  if (nread_s < 0)
+ 	    {
+-	      free (line);
++	      if (line != NULL)
++		{
++		  free (line);
++		}
+ 	      break;
+ 	    }
+-	  nread = nread_s;
+ 
++	  nread = nread_s;
+ 	  cur_line = line;
+ 	  while (nread > 0 && (cur_line[0] == ' ' || cur_line[0] == '\t'))
+ 	    {
+@@ -158,7 +311,6 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+ 			  break;
+ 			}
+ 		    }
+-
+ 		  if ((size_t) (next_target - cur_line) == target_len
+ 		      && memcmp (cur_line, target_name, target_len) == 0)
+ 		    {
+@@ -223,6 +375,11 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+       return NULL;
+     }
+ 
++  if (env_linker_script != NULL)
++    {
++      ld_and_gold_add_alignments (env_linker_script, is_ld);
++    }
++
+   return env_linker_script;
+ }
+ 
+diff --git a/include/ld-and-gold-sect-alignment-tab.h b/include/ld-and-gold-sect-alignment-tab.h
+new file mode 100644
+index 00000000000..b026777282f
+--- /dev/null
++++ b/include/ld-and-gold-sect-alignment-tab.h
+@@ -0,0 +1,143 @@
++#ifndef BINUTILS_D_INCLUDE_D_LD_AND_GOLD_SECT_ALIGNMENT_TAB_H_
++#define BINUTILS_D_INCLUDE_D_LD_AND_GOLD_SECT_ALIGNMENT_TAB_H_ 1
++
++#include "hashtab.h"
++
++#define LD_AND_GOLD_BAD_ALIGN_POW 0
++
++extern htab_t G_ld_and_gold_alignment_tab;
++struct ldg_func_sect_alignment_t
++{
++  const char *func_sect_name_;
++  unsigned alignment_power_;
++  int found_;
++};
++
++static int
++ld_and_gold_fsa_eq (const void *lhs, const void *rhs)
++{
++  const struct ldg_func_sect_alignment_t *lhs_fda
++      = (const struct ldg_func_sect_alignment_t *) lhs;
++  const struct ldg_func_sect_alignment_t *rhs_fda
++      = (const struct ldg_func_sect_alignment_t *) rhs;
++
++  return strcmp (lhs_fda->func_sect_name_, rhs_fda->func_sect_name_) == 0;
++}
++
++static hashval_t
++ld_and_gold_fsa_hash (const void *n)
++{
++  const struct ldg_func_sect_alignment_t *n_fda
++      = (const struct ldg_func_sect_alignment_t *) n;
++  const char *str = n_fda->func_sect_name_;
++  hashval_t hv = 0;
++  for (;;)
++    {
++      char c = str[0];
++      if (c == '\0')
++	{
++	  break;
++	}
++      hv += (hv * 65599) + c;
++      ++str;
++    }
++  return hv ^ (hv >> 16);
++}
++static int
++ld_and_gold_fda_startswith (const struct ldg_func_sect_alignment_t *fda,
++			    const char *prefix)
++{
++  return strncmp (fda->func_sect_name_, prefix, strlen (prefix)) == 0;
++}
++static void
++ld_and_gold_fsa_del (void *p)
++{
++  struct ldg_func_sect_alignment_t *fda
++      = (struct ldg_func_sect_alignment_t *) p;
++  if (!fda->found_)
++    {
++      /* If found in one of these sections its likely just due to duplicate. */
++      if (!ld_and_gold_fda_startswith (fda, ".text.cold.")
++	  && !ld_and_gold_fda_startswith (fda, ".text.hot.")
++	  && !ld_and_gold_fda_startswith (fda, ".text.unlikely.")
++	  && !ld_and_gold_fda_startswith (fda, ".text.likely."))
++	{
++	  printf ("Warning: %s was never aligned to %u\n",
++		  fda->func_sect_name_, fda->alignment_power_);
++	}
++    }
++  free (p);
++}
++
++static htab_t
++ld_and_gold_tab_get (void)
++{
++  if (G_ld_and_gold_alignment_tab == NULL)
++    {
++      G_ld_and_gold_alignment_tab = htab_create (
++	  32, ld_and_gold_fsa_hash, ld_and_gold_fsa_eq, ld_and_gold_fsa_del);
++    }
++  return G_ld_and_gold_alignment_tab;
++}
++static int
++ld_and_gold_tab_drop (void)
++{
++  int ret = 0;
++  if (G_ld_and_gold_alignment_tab == NULL)
++    {
++      return ret;
++    }
++  ret = htab_elements (G_ld_and_gold_alignment_tab) != 0;
++  htab_delete (G_ld_and_gold_alignment_tab);
++  return ret;
++}
++
++#if !(defined LD_AND_GOLD_NWG_TESTING)
++static int
++ld_and_gold_tab_insert (struct ldg_func_sect_alignment_t *fda)
++{
++  htab_t tab = ld_and_gold_tab_get ();
++  void **slot;
++  if (tab == NULL)
++    {
++      return 1;
++    }
++  slot = htab_find_slot (tab, (void *) fda, INSERT);
++  if (slot == NULL)
++    {
++      return 1;
++    }
++  *slot = (void *) fda;
++  return 0;
++}
++#endif
++
++static unsigned
++ld_and_gold_tab_find (const char *s)
++{
++  struct ldg_func_sect_alignment_t fda = { s, 0, 0 };
++  htab_t tab = ld_and_gold_tab_get ();
++  unsigned alignment_power = LD_AND_GOLD_BAD_ALIGN_POW;
++  struct ldg_func_sect_alignment_t *found_fda;
++  void **slot;
++  if (tab == NULL)
++    {
++      return alignment_power;
++    }
++  slot = htab_find_slot (tab, (void *) &fda, NO_INSERT);
++  if (slot == NULL)
++    {
++      return alignment_power;
++    }
++  found_fda = ((struct ldg_func_sect_alignment_t *) (*slot));
++  alignment_power = found_fda->alignment_power_;
++  found_fda->found_ = 1;
++  if (alignment_power == LD_AND_GOLD_BAD_ALIGN_POW)
++    {
++      printf ("Warning: %s has bad alignment power\n",
++	      found_fda->func_sect_name_);
++    }
++  return alignment_power;
++}
++
++#endif
+diff --git a/ld/ldlang.c b/ld/ldlang.c
+index a357f80235f..8a269e29f08 100644
+--- a/ld/ldlang.c
++++ b/ld/ldlang.c
+@@ -43,6 +43,8 @@
+ #include "elf-bfd.h"
+ #include "bfdver.h"
+ 
++#include "ld-and-gold-sect-alignment-tab.h"
++
+ #if BFD_SUPPORTS_PLUGINS
+ #include "plugin.h"
+ #endif
+@@ -2645,8 +2647,9 @@ lang_add_section (lang_statement_list_type *ptr,
+   lang_input_section_type *new_section;
+   bfd *abfd = link_info.output_bfd;
+ 
+-  if (wont_add_section_p (section, output))
++  if (wont_add_section_p (section, output)) {
+     return;
++  }
+ 
+   if (sflag_info)
+     {
+@@ -2710,6 +2713,16 @@ lang_add_section (lang_statement_list_type *ptr,
+   if (output->bfd_section == NULL)
+     init_os (output, flags);
+ 
++  unsigned ldg_alignment_power = ld_and_gold_tab_find (section->name);
++  if (ldg_alignment_power != LD_AND_GOLD_BAD_ALIGN_POW
++      && ldg_alignment_power < 32)
++    {
++      if (section->alignment_power < ldg_alignment_power)
++	{
++	  section->alignment_power = ldg_alignment_power;
++	}
++    }
++
+   /* If SEC_READONLY is not set in the input section, then clear
+      it from the output section.  */
+   output->bfd_section->flags &= flags | ~SEC_READONLY;
+@@ -4852,18 +4865,18 @@ ld_is_local_symbol (asymbol * sym)
+   /* FIXME: This is intended to skip ARM mapping symbols,
+      which for some reason are not excluded by bfd_is_local_label,
+      but maybe it is wrong for other architectures.
+-     It would be better to fix bfd_is_local_label.  */  
++     It would be better to fix bfd_is_local_label.  */
+   if (*name == '$')
+     return false;
+ 
+   /* Some local symbols, eg _GLOBAL_OFFSET_TABLE_, are present
+      in the hash table, so do not print duplicates here.  */
+   struct bfd_link_hash_entry * h;
+-  h = bfd_link_hash_lookup (link_info.hash, name, false /* create */, 
++  h = bfd_link_hash_lookup (link_info.hash, name, false /* create */,
+ 			    false /* copy */, true /* follow */);
+   if (h == NULL)
+     return true;
+-  
++
+   /* Symbols from the plugin owned BFD will not get their own
+      iteration of this function, but can be on the link_info
+      list.  So include them here.  */
+@@ -4953,7 +4966,7 @@ print_input_section (asection *i, bool is_discarded)
+ 		{
+ 		  asymbol *     sym = symbol_table[j];
+ 		  bfd_vma       sym_addr = sym->value + i->output_section->vma;
+-		  
++
+ 		  if (sym->section == i->output_section
+ 		      && (sym->flags & BSF_LOCAL) != 0
+ 		      && sym_addr >= addr
+@@ -8601,7 +8614,7 @@ lang_add_string (const char *s)
+ 	    case 'n': c = '\n'; break;
+ 	    case 'r': c = '\r'; break;
+ 	    case 't': c = '\t'; break;
+-	  
++
+ 	    case '0':
+ 	    case '1':
+ 	    case '2':
+diff --git a/ld/ldmain.c b/ld/ldmain.c
+index 06ac2c64fa8..5297d9023f1 100644
+--- a/ld/ldmain.c
++++ b/ld/ldmain.c
+@@ -44,6 +44,8 @@
+ #include "plugin-api.h"
+ #endif /* BFD_SUPPORTS_PLUGINS */
+ 
++#include "ld-and-gold-sect-alignment-tab.h"
++
+ /* Somewhere above, sys/stat.h got included.  */
+ #if !defined(S_ISDIR) && defined(S_IFDIR)
+ #define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+@@ -615,6 +617,8 @@ main (int argc, char **argv)
+ 	}
+     }
+ 
++  ld_and_gold_tab_drop ();
++
+   if (config.stats)
+     {
+       long run_time = get_run_time () - start_time;
+@@ -1457,7 +1461,7 @@ undefined_symbol (struct bfd_link_info *info,
+       argv[1] = "undefined-symbol";
+       argv[2] = (char *) name;
+       argv[3] = NULL;
+-      
++
+       if (verbose)
+ 	einfo (_("%P: About to run error handling script '%s' with arguments: '%s' '%s'\n"),
+ 	       argv[0], argv[1], argv[2]);
+@@ -1478,7 +1482,7 @@ undefined_symbol (struct bfd_link_info *info,
+ 	 carry on to issue the normal error message.  */
+     }
+ #endif /* SUPPORT_ERROR_HANDLING_SCRIPT */
+-  
++
+   if (section != NULL)
+     {
+       if (error_count < MAX_ERRORS_IN_A_ROW)
+diff --git a/ld/lexsup.c b/ld/lexsup.c
+index 4f0de2f60a9..dfb7b7ed225 100644
+--- a/ld/lexsup.c
++++ b/ld/lexsup.c
+@@ -59,6 +59,7 @@
+ #define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+ #endif
+ 
++
+ static void set_default_dirlist (char *);
+ static void set_section_start (char *, char *);
+ static void set_segment_start (const char *, char *);
+@@ -809,8 +810,8 @@ parse_args (unsigned argc, char **argv)
+ 	  if (verbose || config.text_section_ordering_file == NULL)
+ 	    {
+ 	      env_ordering_script = ld_and_gold_get_ordering_script (
+-		  "LD_ORDERING_SCRIPT", "LD_ORDERING_SCRIPT_MAP", output_dso,
+-		  ldemul_emulation_name ());
++		  1, "LD_ORDERING_SCRIPT", "LD_ORDERING_SCRIPT_MAP",
++		  output_dso, ldemul_emulation_name ());
+ 	    }
+ 	  if (config.text_section_ordering_file != NULL)
+ 	    {
+-- 
+2.34.1
+
