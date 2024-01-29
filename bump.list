@@ -1,0 +1,7 @@
+linux-tools
+gnu-efi
+systemd
+clr-systemd-config
+systemd-bootchart
+cairo
+dropwatch
