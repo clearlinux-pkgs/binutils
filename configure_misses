@@ -1,5 +1,21 @@
 Configure miss: -fcf-protection
 Configure miss: -fcf-protection
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
+Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: chsize
 Configure miss: chsize
 Configure miss: dsymutil
@@ -20,6 +36,8 @@ Configure miss: gdc
 Configure miss: gdc
 Configure miss: gdc
 Configure miss: gdc
+Configure miss: gm2
+Configure miss: gm2
 Configure miss: if using Solaris linker
 Configure miss: if using Solaris linker
 Configure miss: isl 0.15 or later
@@ -116,6 +134,8 @@ Configure miss: x86_64-generic-linux-dsymutil
 Configure miss: x86_64-generic-linux-dsymutil
 Configure miss: x86_64-generic-linux-gdc
 Configure miss: x86_64-generic-linux-gdc
+Configure miss: x86_64-generic-linux-gm2
+Configure miss: x86_64-generic-linux-gm2
 Configure miss: x86_64-generic-linux-otool
 Configure miss: x86_64-generic-linux-otool
 Configure miss: x86_64-generic-linux-pkg-config

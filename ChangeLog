@@ -1,8 +1,25 @@
-2023-07-30  Nick Clifton  <nickc@redhat.com>
+2024-01-15  Nick Clifton  <nickc@redhat.com>
 
-	This is the 2.41 release.
-	* src-release.sh: Add Changelog.git.
-	* ChangeLog.git: New file.
+	* 2.42 branch point.
+
+2023-11-15  Arsen Arsenović  <arsen@aarsen.me>
+
+	* intl: Remove directory.  Replaced with out-of-tree GNU
+	gettext.
+	* .gitignore: Add '/gettext*'.
+	* configure.ac (host_libs): Replace intl with gettext.
+	(hbaseargs, bbaseargs, baseargs): Split baseargs into
+	{h,b}baseargs.
+	(skip_barg): New flag.  Skips appending current flag to
+	bbaseargs.
+	<library exemptions>: Exempt --with-libintl-{type,prefix} from
+	target and build machine argument passing.
+	* configure: Regenerate.
+	* Makefile.def (host_modules): Replace intl module with gettext
+	module.
+	(configure-ld): Depend on configure-gettext.
+	* Makefile.in: Regenerate.
+	* src-release.sh: Remove references to the intl/ directory.
 
 2023-07-03  Nick Clifton  <nickc@redhat.com>
 

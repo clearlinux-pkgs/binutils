@@ -8,11 +8,11 @@
 # Source0 file verified with key 0x13FCEF89DD9E3C4F (nickc@redhat.com)
 #
 Name     : binutils
-Version  : 2.41
-Release  : 534
-URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.41.tar.xz
-Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.41.tar.xz
-Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.41.tar.xz.sig
+Version  : 2.42
+Release  : 535
+URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz
+Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz
+Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz.sig
 Summary  : zlib compression library
 Group    : Development/Tools
 License  : BSL-1.0 GPL-2.0 GPL-3.0 GPL-3.0+ LGPL-2.0 LGPL-2.1 LGPL-3.0
@@ -28,7 +28,6 @@ BuildRequires : dejagnu
 BuildRequires : expect
 BuildRequires : flex
 BuildRequires : glibc-staticdev
-BuildRequires : help2man
 BuildRequires : lz4-dev
 BuildRequires : lzo-dev
 BuildRequires : pypi(msgpack)
@@ -134,8 +133,8 @@ staticdev components for the binutils package.
 
 
 %prep
-%setup -q -n binutils-2.41
-cd %{_builddir}/binutils-2.41
+%setup -q -n binutils-2.42
+cd %{_builddir}/binutils-2.42
 %patch -P 1 -p1
 %patch -P 2 -p1
 %patch -P 3 -p1
@@ -147,7 +146,7 @@ cd %{_builddir}/binutils-2.41
 %patch -P 9 -p1
 %patch -P 10 -p1
 pushd ..
-cp -a binutils-2.41 buildavx2
+cp -a binutils-2.42 buildavx2
 popd
 
 %build
@@ -191,7 +190,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1706548704
+export SOURCE_DATE_EPOCH=1706557673
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -275,7 +274,7 @@ FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS"
 FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS"
 ASFLAGS="$CLEAR_INTERMEDIATE_ASFLAGS"
 LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS"
-export SOURCE_DATE_EPOCH=1706548704
+export SOURCE_DATE_EPOCH=1706557673
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
@@ -1284,6 +1283,12 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib/ldscripts/avrxmega2.xn
 /usr/lib/ldscripts/avrxmega2.xr
 /usr/lib/ldscripts/avrxmega2.xu
+/usr/lib/ldscripts/avrxmega2_flmap.x
+/usr/lib/ldscripts/avrxmega2_flmap.xbn
+/usr/lib/ldscripts/avrxmega2_flmap.xe
+/usr/lib/ldscripts/avrxmega2_flmap.xn
+/usr/lib/ldscripts/avrxmega2_flmap.xr
+/usr/lib/ldscripts/avrxmega2_flmap.xu
 /usr/lib/ldscripts/avrxmega3.x
 /usr/lib/ldscripts/avrxmega3.xbn
 /usr/lib/ldscripts/avrxmega3.xe
@@ -1296,6 +1301,12 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib/ldscripts/avrxmega4.xn
 /usr/lib/ldscripts/avrxmega4.xr
 /usr/lib/ldscripts/avrxmega4.xu
+/usr/lib/ldscripts/avrxmega4_flmap.x
+/usr/lib/ldscripts/avrxmega4_flmap.xbn
+/usr/lib/ldscripts/avrxmega4_flmap.xe
+/usr/lib/ldscripts/avrxmega4_flmap.xn
+/usr/lib/ldscripts/avrxmega4_flmap.xr
+/usr/lib/ldscripts/avrxmega4_flmap.xu
 /usr/lib/ldscripts/avrxmega5.x
 /usr/lib/ldscripts/avrxmega5.xbn
 /usr/lib/ldscripts/avrxmega5.xe
@@ -2084,6 +2095,22 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib/ldscripts/elf32iq2000.xn
 /usr/lib/ldscripts/elf32iq2000.xr
 /usr/lib/ldscripts/elf32iq2000.xu
+/usr/lib/ldscripts/elf32kvx.x
+/usr/lib/ldscripts/elf32kvx.xbn
+/usr/lib/ldscripts/elf32kvx.xc
+/usr/lib/ldscripts/elf32kvx.xce
+/usr/lib/ldscripts/elf32kvx.xe
+/usr/lib/ldscripts/elf32kvx.xn
+/usr/lib/ldscripts/elf32kvx.xr
+/usr/lib/ldscripts/elf32kvx.xs
+/usr/lib/ldscripts/elf32kvx.xsc
+/usr/lib/ldscripts/elf32kvx.xsce
+/usr/lib/ldscripts/elf32kvx.xse
+/usr/lib/ldscripts/elf32kvx.xsw
+/usr/lib/ldscripts/elf32kvx.xswe
+/usr/lib/ldscripts/elf32kvx.xu
+/usr/lib/ldscripts/elf32kvx.xw
+/usr/lib/ldscripts/elf32kvx.xwe
 /usr/lib/ldscripts/elf32l4300.x
 /usr/lib/ldscripts/elf32l4300.xbn
 /usr/lib/ldscripts/elf32l4300.xc
@@ -3350,6 +3377,44 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib/ldscripts/elf64hppa.xs
 /usr/lib/ldscripts/elf64hppa.xse
 /usr/lib/ldscripts/elf64hppa.xu
+/usr/lib/ldscripts/elf64kvx.x
+/usr/lib/ldscripts/elf64kvx.xbn
+/usr/lib/ldscripts/elf64kvx.xc
+/usr/lib/ldscripts/elf64kvx.xce
+/usr/lib/ldscripts/elf64kvx.xe
+/usr/lib/ldscripts/elf64kvx.xn
+/usr/lib/ldscripts/elf64kvx.xr
+/usr/lib/ldscripts/elf64kvx.xs
+/usr/lib/ldscripts/elf64kvx.xsc
+/usr/lib/ldscripts/elf64kvx.xsce
+/usr/lib/ldscripts/elf64kvx.xse
+/usr/lib/ldscripts/elf64kvx.xsw
+/usr/lib/ldscripts/elf64kvx.xswe
+/usr/lib/ldscripts/elf64kvx.xu
+/usr/lib/ldscripts/elf64kvx.xw
+/usr/lib/ldscripts/elf64kvx.xwe
+/usr/lib/ldscripts/elf64kvx_linux.x
+/usr/lib/ldscripts/elf64kvx_linux.xbn
+/usr/lib/ldscripts/elf64kvx_linux.xc
+/usr/lib/ldscripts/elf64kvx_linux.xce
+/usr/lib/ldscripts/elf64kvx_linux.xd
+/usr/lib/ldscripts/elf64kvx_linux.xdc
+/usr/lib/ldscripts/elf64kvx_linux.xdce
+/usr/lib/ldscripts/elf64kvx_linux.xde
+/usr/lib/ldscripts/elf64kvx_linux.xdw
+/usr/lib/ldscripts/elf64kvx_linux.xdwe
+/usr/lib/ldscripts/elf64kvx_linux.xe
+/usr/lib/ldscripts/elf64kvx_linux.xn
+/usr/lib/ldscripts/elf64kvx_linux.xr
+/usr/lib/ldscripts/elf64kvx_linux.xs
+/usr/lib/ldscripts/elf64kvx_linux.xsc
+/usr/lib/ldscripts/elf64kvx_linux.xsce
+/usr/lib/ldscripts/elf64kvx_linux.xse
+/usr/lib/ldscripts/elf64kvx_linux.xsw
+/usr/lib/ldscripts/elf64kvx_linux.xswe
+/usr/lib/ldscripts/elf64kvx_linux.xu
+/usr/lib/ldscripts/elf64kvx_linux.xw
+/usr/lib/ldscripts/elf64kvx_linux.xwe
 /usr/lib/ldscripts/elf64loongarch.x
 /usr/lib/ldscripts/elf64loongarch.xbn
 /usr/lib/ldscripts/elf64loongarch.xc
@@ -4865,6 +4930,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib/ldscripts/shpe.xn
 /usr/lib/ldscripts/shpe.xr
 /usr/lib/ldscripts/shpe.xu
+/usr/lib/ldscripts/stamp
 /usr/lib/ldscripts/tic30coff.x
 /usr/lib/ldscripts/tic30coff.xbn
 /usr/lib/ldscripts/tic30coff.xe
@@ -5104,11 +5170,11 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /V3/usr/lib64/gprofng/libgp-heap.so
 /V3/usr/lib64/gprofng/libgp-iotrace.so
 /V3/usr/lib64/gprofng/libgp-sync.so
-/V3/usr/lib64/libbfd-2.41.so
+/V3/usr/lib64/libbfd-2.42.so
 /V3/usr/lib64/libctf-nobfd.so.0.0.0
 /V3/usr/lib64/libctf.so.0.0.0
 /V3/usr/lib64/libgprofng.so.0.0.0
-/V3/usr/lib64/libopcodes-2.41.so
+/V3/usr/lib64/libopcodes-2.42.so
 /V3/usr/lib64/libsframe.so.1.0.0
 /usr/lib64/bfd-plugins/libdep.so
 /usr/lib64/gprofng/libgp-collector.so
@@ -5116,7 +5182,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib64/gprofng/libgp-heap.so
 /usr/lib64/gprofng/libgp-iotrace.so
 /usr/lib64/gprofng/libgp-sync.so
-/usr/lib64/libbfd-2.41.so
+/usr/lib64/libbfd-2.42.so
 /usr/lib64/libbfd.so
 /usr/lib64/libctf-nobfd.so
 /usr/lib64/libctf-nobfd.so.0
@@ -5127,7 +5193,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib64/libgprofng.so
 /usr/lib64/libgprofng.so.0
 /usr/lib64/libgprofng.so.0.0.0
-/usr/lib64/libopcodes-2.41.so
+/usr/lib64/libopcodes-2.42.so
 /usr/lib64/libopcodes.so
 /usr/lib64/libsframe.so
 /usr/lib64/libsframe.so.1
