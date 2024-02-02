@@ -9,7 +9,7 @@
 #
 Name     : binutils
 Version  : 2.42
-Release  : 537
+Release  : 538
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz.sig
@@ -23,6 +23,7 @@ Requires: binutils-license = %{version}-%{release}
 Requires: binutils-locales = %{version}-%{release}
 Requires: binutils-man = %{version}-%{release}
 Requires: clr-optimized-link-scripts
+Requires: gcc14-dev
 BuildRequires : bison
 BuildRequires : dejagnu
 BuildRequires : expect
@@ -148,6 +149,9 @@ cd %{_builddir}/binutils-2.42
 pushd ..
 cp -a binutils-2.42 buildavx2
 popd
+pushd ..
+cp -a binutils-2.42 buildapx
+popd
 
 %build
 ## build_prepend content
@@ -190,7 +194,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1706557673
+export SOURCE_DATE_EPOCH=1706905114
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -251,6 +255,51 @@ FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS -march=x86-64-v3 "
 LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS -march=x86-64-v3 "
 make  %{?_smp_mflags}  -O tooldir=/usr
 popd
+pushd ../buildapx
+## build_prepend content
+rm -rf gdb libdecnumber readline sim
+export SOURCE_DATE_EPOCH=1549215809
+sed -i -e "s/#define BFD_VERSION_DATE.*/#define BFD_VERSION_DATE 20190203/g" bfd/version.h
+
+# Force all man pages to regenerate... they were truncated in the 2.37 release
+touch binutils/doc/binutils.texi
+touch gas/doc/as.texi
+touch gprof/gprof.texi
+touch ld/ld.texi
+
+
+# relro costs quite a bit for compile time
+export CFLAGS="$CFLAGS -Wl,-z,norelro  -g1 -gno-column-info -gno-variable-location-views -gz"
+export CXXFLAGS="$CXXFLAGS -Wl,-z,norelro  -g1 -gno-column-info -gno-variable-location-views -gz"
+
+# Do not use a macro - breaks toolchain
+./configure \
+--prefix=/usr \
+--libdir=/usr/lib64 \
+--includedir=/usr/include \
+--with-lib-path=/usr/lib64:/usr/lib32:/usr/lib \
+--enable-shared --disable-static \
+--target=x86_64-generic-linux \
+--build=x86_64-generic-linux \
+--enable-targets=all \
+--enable-deterministic-archives \
+--enable-lto \
+--enable-plugins \
+--enable-gold \
+--enable-secureplt \
+--disable-werror \
+--enable-64-bit-bfd \
+--with-system-zlib \
+--without-debuginfod
+## build_prepend end
+CC=gcc-14
+CFLAGS="$CLEAR_INTERMEDIATE_CFLAGS -march=x86-64-v3 -mapxf -mavx10.1 -Wl,-z,x86-64-v3 "
+CXXFLAGS="$CLEAR_INTERMEDIATE_CXXFLAGS -march=x86-64-v3 -mapxf -mavx10.1 -Wl,-z,x86-64-v3 "
+FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS -march=x86-64-v3 -mapxf -mavx10.1 -Wl,-z,x86-64-v3 "
+FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS -march=x86-64-v3 -mapxf -mavx10.1 "
+LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS -march=x86-64-v3 -mapxf -mavx10.1 "
+make  %{?_smp_mflags}  -O tooldir=/usr
+popd
 
 %check
 export LANG=C.UTF-8
@@ -274,7 +323,7 @@ FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS"
 FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS"
 ASFLAGS="$CLEAR_INTERMEDIATE_ASFLAGS"
 LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS"
-export SOURCE_DATE_EPOCH=1706557673
+export SOURCE_DATE_EPOCH=1706905114
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
@@ -289,6 +338,9 @@ cp %{_builddir}/binutils-%{version}/libiberty/COPYING.LIB %{buildroot}/usr/share
 cp %{_builddir}/binutils-%{version}/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0 || :
 pushd ../buildavx2/
 %make_install_v3 tooldir=/usr
+popd
+pushd ../buildapx/
+%make_install_va tooldir=/usr
 popd
 %make_install tooldir=/usr
 %find_lang binutils
@@ -334,6 +386,7 @@ install -d %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12/
 cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12/as
 ## install_append end
 /usr/bin/elf-move.py avx2 %{buildroot}-v3 %{buildroot} %{buildroot}/usr/share/clear/filemap/filemap-%{name}
+/usr/bin/elf-move.py apx %{buildroot}-va %{buildroot} %{buildroot}/usr/share/clear/filemap/filemap-%{name}
 
 %files
 %defattr(-,root,root,-)
@@ -5040,6 +5093,33 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /V3/usr/bin/strip
 /V3/usr/bin/sysdump
 /V3/usr/bin/windmc
+/VA/usr/bin/addr2line
+/VA/usr/bin/ar
+/VA/usr/bin/as
+/VA/usr/bin/c++filt
+/VA/usr/bin/coffdump
+/VA/usr/bin/dllwrap
+/VA/usr/bin/dwp
+/VA/usr/bin/elfedit
+/VA/usr/bin/gp-archive
+/VA/usr/bin/gp-collect-app
+/VA/usr/bin/gp-display-src
+/VA/usr/bin/gp-display-text
+/VA/usr/bin/gprof
+/VA/usr/bin/gprofng
+/VA/usr/bin/ld
+/VA/usr/bin/ld.bfd
+/VA/usr/bin/nm
+/VA/usr/bin/objcopy
+/VA/usr/bin/objdump
+/VA/usr/bin/ranlib
+/VA/usr/bin/readelf
+/VA/usr/bin/size
+/VA/usr/bin/srconv
+/VA/usr/bin/strings
+/VA/usr/bin/strip
+/VA/usr/bin/sysdump
+/VA/usr/bin/windmc
 /usr/bin/addr2line
 /usr/bin/ar
 /usr/bin/as
@@ -5148,6 +5228,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 %files extras
 %defattr(-,root,root,-)
 /V3/usr/bin/ld.gold
+/VA/usr/bin/ld.gold
 /usr/bin/ld.gold
 
 %files info
@@ -5176,6 +5257,18 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /V3/usr/lib64/libgprofng.so.0.0.0
 /V3/usr/lib64/libopcodes-2.42.so
 /V3/usr/lib64/libsframe.so.1.0.0
+/VA/usr/lib64/bfd-plugins/libdep.so
+/VA/usr/lib64/gprofng/libgp-collector.so
+/VA/usr/lib64/gprofng/libgp-collectorAPI.so
+/VA/usr/lib64/gprofng/libgp-heap.so
+/VA/usr/lib64/gprofng/libgp-iotrace.so
+/VA/usr/lib64/gprofng/libgp-sync.so
+/VA/usr/lib64/libbfd-2.42.so
+/VA/usr/lib64/libctf-nobfd.so.0.0.0
+/VA/usr/lib64/libctf.so.0.0.0
+/VA/usr/lib64/libgprofng.so.0.0.0
+/VA/usr/lib64/libopcodes-2.42.so
+/VA/usr/lib64/libsframe.so.1.0.0
 /usr/lib64/bfd-plugins/libdep.so
 /usr/lib64/gprofng/libgp-collector.so
 /usr/lib64/gprofng/libgp-collectorAPI.so
