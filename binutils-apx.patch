@@ -1,0 +1,768 @@
+commit 66e1d37771ac39e08b547c4f9f861a2a1c5852ce
+Author: H.J. Lu <hjl.tools@intel.com>
+Date:   Sat Feb 3 14:32:17 2024 -0800
+
+    x86-64: Add R_X86_64_CODE_6_GOTTPOFF
+    
+    For
+    
+            add     %reg1, name@gottpoff(%rip), %reg2
+            add     name@gottpoff(%rip), %reg1, %reg2
+    
+    add
+    
+     # define R_X86_64_CODE_6_GOTTPOFF      46
+    
+    if the instruction starts at 6 bytes before the relocation offset.
+    They are similar to R_X86_64_GOTTPOFF.  Linker can covert GOTTPOFF to
+    
+            add     $name@tpoff, %reg1, %reg2
+    
+    NB: There is no need to check BFD_RELOC_X86_64_CODE_4_GOTTPOFF in
+    md_assemble since there is only BFD_RELOC_X86_64_GOTTPOFF at this
+    stage, which will be converted to BFD_RELOC_X86_64_CODE_4_GOTTPOFF
+    or BFD_RELOC_X86_64_CODE_6_GOTTPOFF in i386_validate_fix.
+    
+    bfd/
+    
+            * elf64-x86-64.c (x86_64_elf_howto_table): Add
+            R_X86_64_CODE_6_GOTTPOFF.
+            (R_X86_64_standard): Updated.
+            (x86_64_reloc_map): Add BFD_RELOC_X86_64_CODE_6_GOTTPOFF.
+            (elf_x86_64_check_tls_transition): Handle
+            R_X86_64_CODE_6_GOTTPOFF.
+            (elf_x86_64_tls_transition): Likewise.
+            (elf_x86_64_scan_relocs): Likewise.
+            (elf_x86_64_relocate_section): Likewise.
+            * reloc.c (bfd_reloc_code_real): Add
+            BFD_RELOC_X86_64_CODE_6_GOTTPOFF.
+            * bfd-in2.h: Regenerated.
+            * libbfd.h: Likewise.
+    
+    elfcpp/
+    
+            * x86_64.h (R_X86_64_CODE_4_GOTTPOFF): New.
+    
+    gas/
+    
+            * config/tc-i386.c (tc_i386_fix_adjustable): Handle
+            BFD_RELOC_X86_64_CODE_4_GOTTPOFF.
+            (md_assemble): Don't check BFD_RELOC_X86_64_CODE_4_GOTTPOFF.
+            Allow "add %reg1, foo@gottpoff(%rip), %reg2".
+            (output_insn): Don't add empty REX prefix with REX2 prefix.
+            (output_disp): Handle BFD_RELOC_X86_64_CODE_6_GOTTPOFF.
+            (md_apply_fix): Likewise.
+            (i386_validate_fix): Generate BFD_RELOC_X86_64_CODE_6_GOTTPOFF
+            if fixp->fx_tcbit4 is set.
+            (tc_gen_reloc): Handle BFD_RELOC_X86_64_CODE_6_GOTTPOFF.
+            * testsuite/gas/i386/x86-64-gottpoff.d: Updated
+            * testsuite/gas/i386/x86-64-gottpoff.s: Add tests for
+            "add %reg1, foo@gottpoff(%rip), %reg2" and
+            "add foo@gottpoff(%rip), %reg, %reg2".
+    
+    gold/
+    
+            * x86_64.cc (Target_x86_64::optimize_tls_reloc): Handle
+            R_X86_64_CODE_6_GOTTPOFF.
+            (Target_x86_64::Scan::get_reference_flags): Likewise.
+            (Target_x86_64::Scan::local): Likewise.
+            (Target_x86_64::Scan::global): Likewise.
+            (Target_x86_64::Relocate::relocate): Likewise.
+            (Target_x86_64::Relocate::relocate_tls): Likewise.
+            (Target_x86_64::Relocate::tls_ie_to_le): Handle.
+            R_X86_64_CODE_6_GOTTPOFF.
+            * testsuite/x86_64_ie_to_le.s: Add tests for
+            "add %reg1, foo@gottpoff(%rip), %reg2" and
+            "add foo@gottpoff(%rip), %reg, %reg2".
+            * testsuite/x86_64_ie_to_le.sh: Updated.
+    
+    include/
+    
+            * elf/x86-64.h (elf_x86_64_reloc_type): Add
+            R_X86_64_CODE_6_GOTTPOFF.
+    
+    ld/
+    
+            * testsuite/ld-x86-64/tlsbindesc.d: Updated.
+            * testsuite/ld-x86-64/tlsbindesc.rd: Likewise.
+            * testsuite/ld-x86-64/tlsbindesc.s: Add R_X86_64_CODE_6_GOTTPOFF
+            tests.
+
+diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
+index 581d8fe0b3e..25880e2588b 100644
+--- a/bfd/bfd-in2.h
++++ b/bfd/bfd-in2.h
+@@ -3894,6 +3894,7 @@ enum bfd_reloc_code_real
+   BFD_RELOC_X86_64_CODE_4_GOTPCRELX,
+   BFD_RELOC_X86_64_CODE_4_GOTTPOFF,
+   BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC,
++  BFD_RELOC_X86_64_CODE_6_GOTTPOFF,
+ 
+   /* ns32k relocations.  */
+   BFD_RELOC_NS32K_IMM_8,
+diff --git a/bfd/elf64-x86-64.c b/bfd/elf64-x86-64.c
+index f1253751bbd..a223f202e43 100644
+--- a/bfd/elf64-x86-64.c
++++ b/bfd/elf64-x86-64.c
+@@ -179,12 +179,15 @@ static reloc_howto_type x86_64_elf_howto_table[] =
+   HOWTO(R_X86_64_CODE_4_GOTPC32_TLSDESC, 0, 4, 32, true, 0,
+ 	complain_overflow_bitfield, bfd_elf_generic_reloc,
+ 	"R_X86_64_CODE_4_GOTPC32_TLSDESC", false, 0, 0xffffffff, true),
++  HOWTO(R_X86_64_CODE_6_GOTTPOFF, 0, 4, 32, true, 0,
++	complain_overflow_signed, bfd_elf_generic_reloc,
++	"R_X86_64_CODE_6_GOTTPOFF", false, 0, 0xffffffff, true),
+ 
+   /* We have a gap in the reloc numbers here.
+      R_X86_64_standard counts the number up to this point, and
+      R_X86_64_vt_offset is the value to subtract from a reloc type of
+      R_X86_64_GNU_VT* to form an index into this table.  */
+-#define R_X86_64_standard (R_X86_64_CODE_4_GOTPC32_TLSDESC + 1)
++#define R_X86_64_standard (R_X86_64_CODE_6_GOTTPOFF + 1)
+ #define R_X86_64_vt_offset (R_X86_64_GNU_VTINHERIT - R_X86_64_standard)
+ 
+ /* GNU extension to record C++ vtable hierarchy.  */
+@@ -256,6 +259,7 @@ static const struct elf_reloc_map x86_64_reloc_map[] =
+   { BFD_RELOC_X86_64_CODE_4_GOTPCRELX, R_X86_64_CODE_4_GOTPCRELX, },
+   { BFD_RELOC_X86_64_CODE_4_GOTTPOFF, R_X86_64_CODE_4_GOTTPOFF, },
+   { BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC, R_X86_64_CODE_4_GOTPC32_TLSDESC, },
++  { BFD_RELOC_X86_64_CODE_6_GOTTPOFF, R_X86_64_CODE_6_GOTTPOFF, },
+   { BFD_RELOC_VTABLE_INHERIT,	R_X86_64_GNU_VTINHERIT, },
+   { BFD_RELOC_VTABLE_ENTRY,	R_X86_64_GNU_VTENTRY, },
+ };
+@@ -1283,6 +1287,23 @@ elf_x86_64_check_tls_transition (bfd *abfd,
+ 
+       goto check_gottpoff;
+ 
++    case R_X86_64_CODE_6_GOTTPOFF:
++      /* Check transition from IE access model:
++		add %reg1, foo@gottpoff(%rip), %reg2
++		where reg1/reg2 are one of r16 to r31.  */
++
++      if (offset < 6
++	  || (offset + 4) > sec->size
++	  || contents[offset - 6] != 0x62)
++	return false;
++
++      val = bfd_get_8 (abfd, contents + offset - 2);
++      if (val != 0x01 && val != 0x03)
++	return false;
++
++      val = bfd_get_8 (abfd, contents + offset - 1);
++      return (val & 0xc7) == 5;
++
+     case R_X86_64_GOTTPOFF:
+       /* Check transition from IE access model:
+ 		mov foo@gottpoff(%rip), %reg
+@@ -1417,6 +1438,7 @@ elf_x86_64_tls_transition (struct bfd_link_info *info, bfd *abfd,
+     case R_X86_64_TLSDESC_CALL:
+     case R_X86_64_GOTTPOFF:
+     case R_X86_64_CODE_4_GOTTPOFF:
++    case R_X86_64_CODE_6_GOTTPOFF:
+       if (bfd_link_executable (info))
+ 	{
+ 	  if (h == NULL)
+@@ -1464,6 +1486,8 @@ elf_x86_64_tls_transition (struct bfd_link_info *info, bfd *abfd,
+   /* Return TRUE if there is no transition.  */
+   if (from_type == to_type
+       || (from_type == R_X86_64_CODE_4_GOTTPOFF
++	  && to_type == R_X86_64_GOTTPOFF)
++      || (from_type == R_X86_64_CODE_6_GOTTPOFF
+ 	  && to_type == R_X86_64_GOTTPOFF))
+     return true;
+ 
+@@ -2177,6 +2201,7 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
+ 
+ 	case R_X86_64_GOTTPOFF:
+ 	case R_X86_64_CODE_4_GOTTPOFF:
++	case R_X86_64_CODE_6_GOTTPOFF:
+ 	  if (!bfd_link_executable (info))
+ 	    info->flags |= DF_STATIC_TLS;
+ 	  /* Fall through */
+@@ -2214,6 +2239,7 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
+ 		break;
+ 	      case R_X86_64_GOTTPOFF:
+ 	      case R_X86_64_CODE_4_GOTTPOFF:
++	      case R_X86_64_CODE_6_GOTTPOFF:
+ 		tls_type = GOT_TLS_IE;
+ 		break;
+ 	      case R_X86_64_GOTPC32_TLSDESC:
+@@ -3570,6 +3596,7 @@ elf_x86_64_relocate_section (bfd *output_bfd,
+ 	case R_X86_64_TLSDESC_CALL:
+ 	case R_X86_64_GOTTPOFF:
+ 	case R_X86_64_CODE_4_GOTTPOFF:
++	case R_X86_64_CODE_6_GOTTPOFF:
+ 	  tls_type = GOT_UNKNOWN;
+ 	  if (h == NULL && local_got_offsets)
+ 	    tls_type = elf_x86_local_got_tls_type (input_bfd) [r_symndx];
+@@ -3920,6 +3947,49 @@ elf_x86_64_relocate_section (bfd *output_bfd,
+ 			      contents + roff);
+ 		  continue;
+ 		}
++	      else if (r_type == R_X86_64_CODE_6_GOTTPOFF)
++		{
++		  /* IE->LE transition:
++		     Originally it is
++		     add %reg1, foo@gottpoff(%rip), %reg2
++		     add foo@gottpoff(%rip), %reg1, %reg2
++		     We change it into:
++		     add $foo@tpoff, %reg1, %reg2
++		   */
++		  unsigned int reg, byte1;
++		  unsigned int updated_byte1;
++
++		  if (roff < 6)
++		    goto corrupt_input;
++
++		  /* Move the R bits to the B bits in EVEX payload
++		     byte 1.  */
++		  byte1 = bfd_get_8 (input_bfd, contents + roff - 5);
++		  updated_byte1 = byte1;
++
++		  /* Set the R bits since they is inverted.  */
++		  updated_byte1 |= 1 << 7 | 1 << 4;
++
++		  /* Update the B bits from the R bits.  */
++		  if ((byte1 & (1 << 7)) == 0)
++		    updated_byte1 &= ~(1 << 5);
++		  if ((byte1 & (1 << 4)) == 0)
++		    updated_byte1 |= 1 << 3;
++
++		  reg = bfd_get_8 (input_bfd, contents + roff - 1);
++		  reg >>= 3;
++
++		  bfd_put_8 (output_bfd, updated_byte1,
++			     contents + roff - 5);
++		  bfd_put_8 (output_bfd, 0x81,
++			     contents + roff - 2);
++		  bfd_put_8 (output_bfd, 0xc0 | reg,
++			     contents + roff - 1);
++		  bfd_put_32 (output_bfd,
++			      elf_x86_64_tpoff (info, relocation),
++			      contents + roff);
++		  continue;
++		}
+ 	      else
+ 		BFD_ASSERT (false);
+ 	    }
+diff --git a/bfd/libbfd.h b/bfd/libbfd.h
+index ebd4f24149b..ba6b52964a9 100644
+--- a/bfd/libbfd.h
++++ b/bfd/libbfd.h
+@@ -1463,6 +1463,7 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
+   "BFD_RELOC_X86_64_CODE_4_GOTPCRELX",
+   "BFD_RELOC_X86_64_CODE_4_GOTTPOFF",
+   "BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC",
++  "BFD_RELOC_X86_64_CODE_6_GOTTPOFF",
+   "BFD_RELOC_NS32K_IMM_8",
+   "BFD_RELOC_NS32K_IMM_16",
+   "BFD_RELOC_NS32K_IMM_32",
+diff --git a/bfd/reloc.c b/bfd/reloc.c
+index e74cbd75e96..c33c6e876f9 100644
+--- a/bfd/reloc.c
++++ b/bfd/reloc.c
+@@ -2481,6 +2481,8 @@ ENUMX
+   BFD_RELOC_X86_64_CODE_4_GOTTPOFF
+ ENUMX
+   BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC
++ENUMX
++  BFD_RELOC_X86_64_CODE_6_GOTTPOFF
+ ENUMDOC
+   x86-64/elf relocations.
+ 
+diff --git a/elfcpp/x86_64.h b/elfcpp/x86_64.h
+index 135f339fccf..e641da996c8 100644
+--- a/elfcpp/x86_64.h
++++ b/elfcpp/x86_64.h
+@@ -110,6 +110,10 @@ enum
+ 					// descriptor in GOT if the
+ 					// instruction starts at 4 bytes
+ 					// before the relocation offset.
++  R_X86_64_CODE_6_GOTTPOFF = 46,  // 32 bit signed PC relative offset to
++				  // GOT entry for IE symbol if the
++				  // instruction starts at 6 bytes before
++				  // the relocation offset.
+   // GNU vtable garbage collection extensions.
+   R_X86_64_GNU_VTINHERIT = 250,
+   R_X86_64_GNU_VTENTRY = 251
+diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
+index 8f3a1b6f686..43a07d3550e 100644
+--- a/gas/config/tc-i386.c
++++ b/gas/config/tc-i386.c
+@@ -3648,6 +3648,7 @@ tc_i386_fix_adjustable (fixS *fixP)
+       || fixP->fx_r_type == BFD_RELOC_X86_64_DTPOFF64
+       || fixP->fx_r_type == BFD_RELOC_X86_64_GOTTPOFF
+       || fixP->fx_r_type == BFD_RELOC_X86_64_CODE_4_GOTTPOFF
++      || fixP->fx_r_type == BFD_RELOC_X86_64_CODE_6_GOTTPOFF
+       || fixP->fx_r_type == BFD_RELOC_X86_64_TPOFF32
+       || fixP->fx_r_type == BFD_RELOC_X86_64_TPOFF64
+       || fixP->fx_r_type == BFD_RELOC_X86_64_GOTOFF64
+@@ -6772,10 +6773,17 @@ md_assemble (char *line)
+       for (j = i.imm_operands; j < i.operands; ++j)
+ 	switch (i.reloc[j])
+ 	  {
++	  case BFD_RELOC_X86_64_GOTTPOFF:
++	    if (i.tm.mnem_off == MN_add
++		&& i.tm.opcode_space == SPACE_EVEXMAP4
++		&& i.mem_operands == 1
++		&& i.tm.operand_types[0].bitfield.class == Reg
++		&& i.tm.operand_types[2].bitfield.class == Reg)
++	      /* Allow APX: add %reg1, foo@gottpoff(%rip), %reg2.  */
++	      break;
++	    /* Fall through.  */
+ 	  case BFD_RELOC_386_TLS_GOTIE:
+ 	  case BFD_RELOC_386_TLS_LE_32:
+-	  case BFD_RELOC_X86_64_GOTTPOFF:
+-	  case BFD_RELOC_X86_64_CODE_4_GOTTPOFF:
+ 	  case BFD_RELOC_X86_64_TLSLD:
+ 	    as_bad (_("TLS relocation cannot be used with `%s'"), insn_name (&i.tm));
+ 	    return;
+@@ -12011,6 +12019,7 @@ output_disp (fragS *insn_start_frag, offsetT insn_start_off)
+ 		    case BFD_RELOC_X86_64_TLSLD:
+ 		    case BFD_RELOC_X86_64_GOTTPOFF:
+ 		    case BFD_RELOC_X86_64_CODE_4_GOTTPOFF:
++		    case BFD_RELOC_X86_64_CODE_6_GOTTPOFF:
+ 		    case BFD_RELOC_X86_64_GOTPC32_TLSDESC:
+ 		    case BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC:
+ 		    case BFD_RELOC_X86_64_TLSDESC_CALL:
+@@ -12030,6 +12039,8 @@ output_disp (fragS *insn_start_frag, offsetT insn_start_off)
+ 	      /* Set fx_tcbit3 for REX2 prefix.  */
+ 	      if (is_apx_rex2_encoding ())
+ 		fixP->fx_tcbit3 = 1;
++	      else if (is_apx_evex_encoding ())
++		fixP->fx_tcbit4 = 1;
+ 
+ 	      /* Check for "call/jmp *mem", "mov mem, %reg",
+ 		 "test %reg, mem" and "binop mem, %reg" where binop
+@@ -15534,6 +15545,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
+       case BFD_RELOC_X86_64_TLSLD:
+       case BFD_RELOC_X86_64_GOTTPOFF:
+       case BFD_RELOC_X86_64_CODE_4_GOTTPOFF:
++      case BFD_RELOC_X86_64_CODE_6_GOTTPOFF:
+       case BFD_RELOC_X86_64_GOTPC32_TLSDESC:
+       case BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC:
+ 	value = 0; /* Fully resolved at runtime.  No addend.  */
+@@ -17122,6 +17134,11 @@ i386_validate_fix (fixS *fixp)
+       else if (fixp->fx_r_type == BFD_RELOC_X86_64_GOTPC32_TLSDESC)
+ 	fixp->fx_r_type = BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC;
+     }
++  else if (fixp->fx_tcbit4)
++    {
++      if (fixp->fx_r_type == BFD_RELOC_X86_64_GOTTPOFF)
++	fixp->fx_r_type = BFD_RELOC_X86_64_CODE_6_GOTTPOFF;
++    }
+ #endif
+ 
+   if (fixp->fx_subsy)
+@@ -17267,6 +17284,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
+     case BFD_RELOC_X86_64_DTPOFF64:
+     case BFD_RELOC_X86_64_GOTTPOFF:
+     case BFD_RELOC_X86_64_CODE_4_GOTTPOFF:
++    case BFD_RELOC_X86_64_CODE_6_GOTTPOFF:
+     case BFD_RELOC_X86_64_TPOFF32:
+     case BFD_RELOC_X86_64_TPOFF64:
+     case BFD_RELOC_X86_64_GOTOFF64:
+@@ -17411,6 +17429,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
+ 	  case BFD_RELOC_X86_64_TLSLD:
+ 	  case BFD_RELOC_X86_64_GOTTPOFF:
+ 	  case BFD_RELOC_X86_64_CODE_4_GOTTPOFF:
++	  case BFD_RELOC_X86_64_CODE_6_GOTTPOFF:
+ 	  case BFD_RELOC_X86_64_GOTPC32_TLSDESC:
+ 	  case BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC:
+ 	  case BFD_RELOC_X86_64_TLSDESC_CALL:
+diff --git a/gas/testsuite/gas/i386/x86-64-gottpoff.d b/gas/testsuite/gas/i386/x86-64-gottpoff.d
+index d42abccc6d9..f2c039abe72 100644
+--- a/gas/testsuite/gas/i386/x86-64-gottpoff.d
++++ b/gas/testsuite/gas/i386/x86-64-gottpoff.d
+@@ -16,4 +16,8 @@ Disassembly of section .text:
+  +[a-f0-9]+:	48 8b 05 00 00 00 00 	mov    0x0\(%rip\),%rax        # 2c <_start\+0x2c>	28: R_X86_64_GOTTPOFF	foo-0x4
+  +[a-f0-9]+:	d5 48 03 05 00 00 00 00 	add    0x0\(%rip\),%r16        # 34 <_start\+0x34>	30: R_X86_64_CODE_4_GOTTPOFF	foo-0x4
+  +[a-f0-9]+:	d5 48 8b 25 00 00 00 00 	mov    0x0\(%rip\),%r20        # 3c <_start\+0x3c>	38: R_X86_64_CODE_4_GOTTPOFF	foo-0x4
++ +[a-f0-9]+:	62 74 fc 10 01 05 00 00 00 00 	add    %r8,0x0\(%rip\),%r16        # 46 <_start\+0x46>	42: R_X86_64_CODE_6_GOTTPOFF	foo-0x4
++ +[a-f0-9]+:	62 f4 9c 18 03 05 00 00 00 00 	add    0x0\(%rip\),%rax,%r12        # 50 <_start\+0x50>	4c: R_X86_64_CODE_6_GOTTPOFF	foo-0x4
++ +[a-f0-9]+:	62 74 fc 10 01 05 00 00 00 00 	add    %r8,0x0\(%rip\),%r16        # 5a <_start\+0x5a>	56: R_X86_64_CODE_6_GOTTPOFF	foo-0x4
++ +[a-f0-9]+:	62 f4 9c 18 03 05 00 00 00 00 	add    0x0\(%rip\),%rax,%r12        # 64 <_start\+0x64>	60: R_X86_64_CODE_6_GOTTPOFF	foo-0x4
+ #pass
+diff --git a/gas/testsuite/gas/i386/x86-64-gottpoff.s b/gas/testsuite/gas/i386/x86-64-gottpoff.s
+index 6f8f9d1480c..0335ec5debf 100644
+--- a/gas/testsuite/gas/i386/x86-64-gottpoff.s
++++ b/gas/testsuite/gas/i386/x86-64-gottpoff.s
+@@ -13,3 +13,13 @@ _start:
+ 
+ 	addq	r16, QWORD PTR [rip + foo@GOTTPOFF]
+ 	movq	r20, QWORD PTR [rip + foo@GOTTPOFF]
++
++	.att_syntax prefix
++
++	addq	%r8, foo@GOTTPOFF(%rip), %r16
++	addq	foo@GOTTPOFF(%rip), %rax, %r12
++
++	.intel_syntax noprefix
++
++	addq	r16, QWORD PTR [rip + foo@GOTTPOFF], r8
++	addq	r12, rax, QWORD PTR [rip + foo@GOTTPOFF]
+diff --git a/gas/write.c b/gas/write.c
+index 98ead0b991c..805a73842a7 100644
+--- a/gas/write.c
++++ b/gas/write.c
+@@ -170,6 +170,7 @@ fix_new_internal (fragS *frag,		/* Which frag?  */
+   fixP->fx_tcbit = 0;
+   fixP->fx_tcbit2 = 0;
+   fixP->fx_tcbit3 = 0;
++  fixP->fx_tcbit4 = 0;
+   fixP->fx_done = 0;
+   fixP->fx_no_overflow = 0;
+   fixP->fx_signed = 0;
+diff --git a/gas/write.h b/gas/write.h
+index 8e1b279a398..31312ef8b76 100644
+--- a/gas/write.h
++++ b/gas/write.h
+@@ -82,9 +82,7 @@ struct fix
+   unsigned fx_tcbit : 1;
+   unsigned fx_tcbit2 : 1;
+   unsigned fx_tcbit3 : 1;
+-
+-  /* Spare bits.  */
+-  unsigned fx_unused : 1;
++  unsigned fx_tcbit4 : 1;
+ 
+   bfd_reloc_code_real_type fx_r_type;
+ 
+diff --git a/gold/testsuite/x86_64_ie_to_le.s b/gold/testsuite/x86_64_ie_to_le.s
+index c5752068866..bd0643dc87f 100644
+--- a/gold/testsuite/x86_64_ie_to_le.s
++++ b/gold/testsuite/x86_64_ie_to_le.s
+@@ -7,6 +7,8 @@ _start:
+ 	movq	foo@gottpoff(%rip), %rax
+ 	addq	foo@gottpoff(%rip), %r16
+ 	movq	foo@gottpoff(%rip), %r20
++	addq	%r30, foo@gottpoff(%rip), %r8
++	addq	foo@gottpoff(%rip), %rax, %r20
+ 	.size	_start, .-_start
+ 	.section	.tdata,"awT",@progbits
+ 	.align 4
+diff --git a/gold/testsuite/x86_64_ie_to_le.sh b/gold/testsuite/x86_64_ie_to_le.sh
+index 9d2e082f3e0..5308712ddbd 100755
+--- a/gold/testsuite/x86_64_ie_to_le.sh
++++ b/gold/testsuite/x86_64_ie_to_le.sh
+@@ -27,3 +27,5 @@ grep -q "add[ \t]\+\$0x[a-f0-9]\+,%r12" x86_64_ie_to_le.stdout
+ grep -q "mov[ \t]\+\$0x[a-f0-9]\+,%rax" x86_64_ie_to_le.stdout
+ grep -q "add[ \t]\+\$0x[a-f0-9]\+,%r16" x86_64_ie_to_le.stdout
+ grep -q "mov[ \t]\+\$0x[a-f0-9]\+,%r20" x86_64_ie_to_le.stdout
++grep -q "add[ \t]\+\$0x[a-f0-9]\+,%r30,%r8" x86_64_ie_to_le.stdout
++grep -q "add[ \t]\+\$0x[a-f0-9]\+,%rax,%r20" x86_64_ie_to_le.stdout
+diff --git a/gold/x86_64.cc b/gold/x86_64.cc
+index 58e191a055a..f77430bfb3d 100644
+--- a/gold/x86_64.cc
++++ b/gold/x86_64.cc
+@@ -2920,6 +2920,11 @@ Target_x86_64<size>::optimize_tls_reloc(bool is_final, int r_type,
+       // Another Local-Dynamic reloc.
+       return tls::TLSOPT_TO_LE;
+ 
++    case elfcpp::R_X86_64_CODE_6_GOTTPOFF:
++      if (r_offset <= 6 || *(reloc_view - 6) != 0x62)
++	return tls::TLSOPT_NONE;
++      goto handle_gottpoff;
++
+     case elfcpp::R_X86_64_CODE_4_GOTTPOFF:
+       if (r_offset <= 4 || *(reloc_view - 4) != 0xd5)
+ 	return tls::TLSOPT_NONE;
+@@ -2929,6 +2934,7 @@ Target_x86_64<size>::optimize_tls_reloc(bool is_final, int r_type,
+       // from the GOT.  If we know that we are linking against the
+       // local symbol, we can switch to Local-Exec, which links the
+       // thread offset into the instruction.
++handle_gottpoff:
+       if (is_final)
+ 	return tls::TLSOPT_TO_LE;
+       return tls::TLSOPT_NONE;
+@@ -2997,6 +3003,7 @@ Target_x86_64<size>::Scan::get_reference_flags(unsigned int r_type)
+     case elfcpp::R_X86_64_DTPOFF64:
+     case elfcpp::R_X86_64_GOTTPOFF:         // Initial-exec
+     case elfcpp::R_X86_64_CODE_4_GOTTPOFF:
++    case elfcpp::R_X86_64_CODE_6_GOTTPOFF:
+     case elfcpp::R_X86_64_TPOFF32:          // Local-exec
+       return Symbol::TLS_REF;
+ 
+@@ -3362,6 +3369,7 @@ need_got:
+       // These are initial tls relocs, which are expected when linking
+     case elfcpp::R_X86_64_CODE_4_GOTPC32_TLSDESC:
+     case elfcpp::R_X86_64_CODE_4_GOTTPOFF:
++    case elfcpp::R_X86_64_CODE_6_GOTTPOFF:
+       {
+ 	section_size_type stype;
+ 	reloc_view = object->section_contents(data_shndx, &stype, true);
+@@ -3464,6 +3472,7 @@ need_got:
+ 
+ 	  case elfcpp::R_X86_64_GOTTPOFF:    // Initial-exec
+ 	  case elfcpp::R_X86_64_CODE_4_GOTTPOFF:
++	  case elfcpp::R_X86_64_CODE_6_GOTTPOFF:
+ 	    layout->set_has_static_tls();
+ 	    if (optimized_type == tls::TLSOPT_NONE)
+ 	      {
+@@ -3902,6 +3911,7 @@ Target_x86_64<size>::Scan::global(Symbol_table* symtab,
+       // These are initial tls relocs, which are expected for global()
+     case elfcpp::R_X86_64_CODE_4_GOTPC32_TLSDESC:
+     case elfcpp::R_X86_64_CODE_4_GOTTPOFF:
++    case elfcpp::R_X86_64_CODE_6_GOTTPOFF:
+       {
+ 	section_size_type stype;
+ 	reloc_view = object->section_contents(data_shndx, &stype, true);
+@@ -3920,7 +3930,8 @@ Target_x86_64<size>::Scan::global(Symbol_table* symtab,
+ 	// when building an executable.
+ 	const bool is_final = (gsym->final_value_is_known() ||
+ 			       ((r_type == elfcpp::R_X86_64_GOTTPOFF ||
+-				 r_type == elfcpp::R_X86_64_CODE_4_GOTTPOFF) &&
++				 r_type == elfcpp::R_X86_64_CODE_4_GOTTPOFF||
++				 r_type == elfcpp::R_X86_64_CODE_6_GOTTPOFF) &&
+ 			        gsym->is_undefined() &&
+ 				parameters->options().output_is_executable()));
+ 	size_t r_offset = reloc.get_r_offset();
+@@ -4006,6 +4017,7 @@ Target_x86_64<size>::Scan::global(Symbol_table* symtab,
+ 
+ 	  case elfcpp::R_X86_64_GOTTPOFF:    // Initial-exec
+ 	  case elfcpp::R_X86_64_CODE_4_GOTTPOFF:
++	  case elfcpp::R_X86_64_CODE_6_GOTTPOFF:
+ 	    layout->set_has_static_tls();
+ 	    if (optimized_type == tls::TLSOPT_NONE)
+ 	      {
+@@ -4608,6 +4620,7 @@ Target_x86_64<size>::Relocate::relocate(
+     case elfcpp::R_X86_64_DTPOFF64:
+     case elfcpp::R_X86_64_GOTTPOFF:         // Initial-exec
+     case elfcpp::R_X86_64_CODE_4_GOTTPOFF:
++    case elfcpp::R_X86_64_CODE_6_GOTTPOFF:
+     case elfcpp::R_X86_64_TPOFF32:          // Local-exec
+       this->relocate_tls(relinfo, target, relnum, rela, r_type, gsym, psymval,
+ 			 view, address, view_size);
+@@ -4894,6 +4907,7 @@ Target_x86_64<size>::Relocate::relocate_tls(
+ 
+     case elfcpp::R_X86_64_GOTTPOFF:         // Initial-exec
+     case elfcpp::R_X86_64_CODE_4_GOTTPOFF:
++    case elfcpp::R_X86_64_CODE_6_GOTTPOFF:
+       if (gsym != NULL
+ 	  && gsym->is_undefined()
+ 	  && parameters->options().output_is_executable())
+@@ -5308,11 +5322,19 @@ Target_x86_64<size>::Relocate::tls_ie_to_le(
+ 
+   // movq foo@gottpoff(%rip),%reg  ==>  movq $YY,%reg
+   // addq foo@gottpoff(%rip),%reg  ==>  addq $YY,%reg
++  // addq %reg1,foo@gottpoff(%rip),%reg2  ==>  addq $YY,%reg1,%reg2
++  // addq foo@gottpoff(%rip),%reg1,%reg2  ==>  addq $YY,%reg1,%reg2
+ 
+-  tls::check_range(relinfo, relnum, rela.get_r_offset(), view_size, -3);
++  int off1;
++  if (r_type == elfcpp::R_X86_64_CODE_6_GOTTPOFF)
++    off1 = -5;
++  else
++    off1 = -3;
++
++  tls::check_range(relinfo, relnum, rela.get_r_offset(), view_size, off1);
+   tls::check_range(relinfo, relnum, rela.get_r_offset(), view_size, 4);
+ 
+-  unsigned char op1 = view[-3];
++  unsigned char op1 = view[off1];
+   unsigned char op2 = view[-2];
+   unsigned char op3 = view[-1];
+   unsigned char reg = op3 >> 3;
+@@ -5350,7 +5372,7 @@ Target_x86_64<size>::Relocate::tls_ie_to_le(
+ 	  view[-1] = 0x80 | reg | (reg << 3);
+ 	}
+     }
+-  else
++  else if (r_type == elfcpp::R_X86_64_CODE_4_GOTTPOFF)
+     {
+       if (op2 == 0x8b)
+ 	op2 = 0xc7;
+@@ -5362,6 +5384,23 @@ Target_x86_64<size>::Relocate::tls_ie_to_le(
+       view[-2] = op2;
+       view[-1] = 0xc0 | reg;
+     }
++  else
++    {
++      unsigned char updated_op1 = op1;
++
++      // Set the R bits since they is inverted.
++      updated_op1 |= 1 << 7 | 1 << 4;
++
++      // Update the B bits from the R bits.
++      if ((op1 & (1 << 7)) == 0)
++	updated_op1 &= ~(1 << 5);
++      if ((op1 & (1 << 4)) == 0)
++	updated_op1 |= 1 << 3;
++
++      view[-5] = updated_op1;
++      view[-2] = 0x81;
++      view[-1] = 0xc0 | reg;
++    }
+ 
+   if (tls_segment != NULL)
+     value -= tls_segment->memsz();
+diff --git a/include/elf/x86-64.h b/include/elf/x86-64.h
+index 33a824620a6..34e3136655d 100644
+--- a/include/elf/x86-64.h
++++ b/include/elf/x86-64.h
+@@ -92,6 +92,9 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
+      /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
+ 	instruction starts at 4 bytes before the relocation offset.  */
+      RELOC_NUMBER (R_X86_64_CODE_4_GOTPC32_TLSDESC, 45)
++    /* PC relative offset to IE GOT entry if the instruction starts at
++       6 bytes before the relocation offset.  */
++     RELOC_NUMBER (R_X86_64_CODE_6_GOTTPOFF, 46)
+      RELOC_NUMBER (R_X86_64_GNU_VTINHERIT, 250)       /* GNU C++ hack  */
+      RELOC_NUMBER (R_X86_64_GNU_VTENTRY, 251)         /* GNU C++ hack  */
+ END_RELOC_NUMBERS (R_X86_64_max)
+diff --git a/ld/testsuite/ld-x86-64/tlsbindesc.dd b/ld/testsuite/ld-x86-64/tlsbindesc.dd
+index 4587cc751b4..be89f38199d 100644
+--- a/ld/testsuite/ld-x86-64/tlsbindesc.dd
++++ b/ld/testsuite/ld-x86-64/tlsbindesc.dd
+@@ -169,18 +169,42 @@ Disassembly of section .text:
+  +[0-9a-f]+:	d5 48 03 05 ([0-9a-f]{2} ){3}[ 	]+add    0x[0-9a-f]+\(%rip\),%r16 +# [0-9a-f]+ <sG2>
+ #				-> R_X86_64_TPOFF64	sG2
+  +[0-9a-f]+:	00 *
++ +[0-9a-f]+:	62 f4 fc 10 01 ([0-9a-f]{2} ){2}[ 	]+add    %rax,0x[0-9a-f]+\(%rip\),%r16 +# [0-9a-f]+ <sG2>
++#				-> R_X86_64_TPOFF64	sG2
++ +[0-9a-f]+:	([0-9a-f]{2} ){3} *
++ +[0-9a-f]+:	62 f4 fc 10 03 ([0-9a-f]{2} ){2}[ 	]+add    0x[0-9a-f]+\(%rip\),%rax,%r16 +# [0-9a-f]+ <sG2>
++#				-> R_X86_64_TPOFF64	sG2
++ +[0-9a-f]+:	([0-9a-f]{2} ){3} *
+ #  IE -> LE against global var defined in exec
+  +[0-9a-f]+:	d5 18 81 c1 60 ff ff[ 	]+add    \$0xf+60,%r17
+ #							sg1
+  +[0-9a-f]+:	ff *
++ +[0-9a-f]+:	62 d4 f4 10 81 ([0-9a-f]{2} ){2}[ 	]+add    \$0x[0-9a-f]+,%r8,%r17
++#							sg1
++ +[0-9a-f]+:	ff ff ff *
++ +[0-9a-f]+:	62 d4 f4 10 81 ([0-9a-f]{2} ){2}[ 	]+add    \$0x[0-9a-f]+,%r8,%r17
++#							sg1
++ +[0-9a-f]+:	ff ff ff *
+ #  IE -> LE against local var
+  +[0-9a-f]+:	d5 18 81 c2 80 ff ff[ 	]+add    \$0xf+80,%r18
+ #							sl1
+  +[0-9a-f]+:	ff *
++ +[0-9a-f]+:	62 d4 fc 18 81 ([0-9a-f]{2} ){2}[ 	]+add    \$0x[0-9a-f]+,%r8,%rax
++#							sl1
++ +[0-9a-f]+:	ff ff ff *
++ +[0-9a-f]+:	62 d4 fc 18 81 ([0-9a-f]{2} ){2}[ 	]+add    \$0x[0-9a-f]+,%r8,%rax
++#							sl1
++ +[0-9a-f]+:	ff ff ff *
+ #  IE -> LE against hidden var
+  +[0-9a-f]+:	d5 18 81 c3 a0 ff ff[ 	]+add    \$0xf+a0,%r19
+ #							sh1
+  +[0-9a-f]+:	ff *
++ +[0-9a-f]+:	62 fc bc 18 81 ([0-9a-f]{2} ){2}[ 	]+add    \$0x[0-9a-f]+,%r19,%r8
++#							sh1
++ +[0-9a-f]+:	ff ff ff *
++ +[0-9a-f]+:	62 fc bc 18 81 ([0-9a-f]{2} ){2}[ 	]+add    \$0x[0-9a-f]+,%r19,%r8
++#							sh1
++ +[0-9a-f]+:	ff ff ff *
+ #  Direct access through %fs
+ #  IE against global var
+  +[0-9a-f]+:	d5 48 8b 25 ([0-9a-f]{2} ){3}[ 	]+mov    0x[0-9a-f]+\(%rip\),%r20 +# [0-9a-f]+ <sG5>
+diff --git a/ld/testsuite/ld-x86-64/tlsbindesc.rd b/ld/testsuite/ld-x86-64/tlsbindesc.rd
+index daaea7a5371..59325b04e19 100644
+--- a/ld/testsuite/ld-x86-64/tlsbindesc.rd
++++ b/ld/testsuite/ld-x86-64/tlsbindesc.rd
+@@ -15,12 +15,12 @@ Section Headers:
+  +\[[ 0-9]+\] .dynsym +.*
+  +\[[ 0-9]+\] .dynstr +.*
+  +\[[ 0-9]+\] .rela.dyn +.*
+- +\[[ 0-9]+\] .text +PROGBITS +0+401000 0+1000 0+25d 00 +AX +0 +0 +4096
+- +\[[ 0-9]+\] .tdata +PROGBITS +0+60125d 0+125d 0+60 00 WAT +0 +0 +1
+- +\[[ 0-9]+\] .tbss +NOBITS +0+6012bd 0+12bd 0+40 00 WAT +0 +0 +1
+- +\[[ 0-9]+\] .dynamic +DYNAMIC +0+6012c0 0+12c0 0+100 10 +WA +4 +0 +8
+- +\[[ 0-9]+\] .got +PROGBITS +0+6013c0 0+13c0 0+20 08 +WA +0 +0 +8
+- +\[[ 0-9]+\] .got.plt +PROGBITS +0+6013e0 0+13e0 0+18 08 +WA +0 +0 +8
++ +\[[ 0-9]+\] .text +PROGBITS +0+401000 0+1000 0+2ad 00 +AX +0 +0 +4096
++ +\[[ 0-9]+\] .tdata +PROGBITS +0+6012ad 0+12ad 0+60 00 WAT +0 +0 +1
++ +\[[ 0-9]+\] .tbss +NOBITS +0+60130d 0+130d 0+40 00 WAT +0 +0 +1
++ +\[[ 0-9]+\] .dynamic +DYNAMIC +0+601310 0+1310 0+100 10 +WA +4 +0 +8
++ +\[[ 0-9]+\] .got +PROGBITS +0+601410 0+1410 0+20 08 +WA +0 +0 +8
++ +\[[ 0-9]+\] .got.plt +PROGBITS +0+601430 0+1430 0+18 08 +WA +0 +0 +8
+  +\[[ 0-9]+\] .symtab +.*
+  +\[[ 0-9]+\] .strtab +.*
+  +\[[ 0-9]+\] .shstrtab +.*
+@@ -28,7 +28,7 @@ Key to Flags:
+ #...
+ 
+ Elf file type is EXEC \(Executable file\)
+-Entry point 0x401165
++Entry point 0x4011b5
+ There are [0-9]+ program headers, starting at offset [0-9]+
+ 
+ Program Headers:
+@@ -36,10 +36,10 @@ Program Headers:
+  +PHDR.*
+  +INTERP.*
+ .*Requesting program interpreter.*
+- +LOAD +0x0+ 0x0+400000 0x0+400000 0x0+125d 0x0+125d R E 0x200000
+- +LOAD +0x0+125d 0x0+60125d 0x0+60125d 0x0+19b 0x0+19b RW +0x200000
+- +DYNAMIC +0x0+12c0 0x0+6012c0 0x0+6012c0 0x0+100 0x0+100 RW +0x8
+- +TLS +0x0+125d 0x0+60125d 0x0+60125d 0x0+60 0x0+a0 R +0x1
++ +LOAD +0x0+ 0x0+400000 0x0+400000 0x0+12ad 0x0+12ad R E 0x200000
++ +LOAD +0x0+12ad 0x0+6012ad 0x0+6012ad 0x0+19b 0x0+19b RW +0x200000
++ +DYNAMIC +0x0+1310 0x0+601310 0x0+601310 0x0+100 0x0+100 RW +0x8
++ +TLS +0x0+12ad 0x0+6012ad 0x0+6012ad 0x0+60 0x0+a0 R +0x1
+ 
+  Section to Segment mapping:
+  +Segment Sections...
+@@ -52,10 +52,10 @@ Program Headers:
+ 
+ Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 4 entries:
+  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
+-0+6013c0 +0+100000012 R_X86_64_TPOFF64 +0+ sG5 \+ 0
+-0+6013c8 +0+200000012 R_X86_64_TPOFF64 +0+ sG2 \+ 0
+-0+6013d0 +0+300000012 R_X86_64_TPOFF64 +0+ sG6 \+ 0
+-0+6013d8 +0+400000012 R_X86_64_TPOFF64 +0+ sG1 \+ 0
++0+601410 +0+100000012 R_X86_64_TPOFF64 +0+ sG5 \+ 0
++0+601418 +0+200000012 R_X86_64_TPOFF64 +0+ sG2 \+ 0
++0+601420 +0+300000012 R_X86_64_TPOFF64 +0+ sG6 \+ 0
++0+601428 +0+400000012 R_X86_64_TPOFF64 +0+ sG1 \+ 0
+ 
+ Symbol table '\.dynsym' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+@@ -88,8 +88,8 @@ Symbol table '\.symtab' contains [0-9]+ entries:
+  +[0-9]+: 0+9c +0 +TLS +LOCAL +DEFAULT +8 bl8
+ .* FILE +LOCAL +DEFAULT +ABS 
+  +[0-9]+: 0+a0 +0 +TLS +LOCAL +DEFAULT +7 _TLS_MODULE_BASE_
+- +[0-9]+: 0+6012c0 +0 +OBJECT +LOCAL +DEFAULT +9 _DYNAMIC
+- +[0-9]+: 0+6013e0 +0 +OBJECT +LOCAL +DEFAULT +11 _GLOBAL_OFFSET_TABLE_
++ +[0-9]+: 0+601310 +0 +OBJECT +LOCAL +DEFAULT +9 _DYNAMIC
++ +[0-9]+: 0+601430 +0 +OBJECT +LOCAL +DEFAULT +11 _GLOBAL_OFFSET_TABLE_
+  +[0-9]+: 0+1c +0 +TLS +GLOBAL +DEFAULT +7 sg8
+  +[0-9]+: 0+7c +0 +TLS +GLOBAL +DEFAULT +8 bg8
+  +[0-9]+: 0+74 +0 +TLS +GLOBAL +DEFAULT +8 bg6
+@@ -104,7 +104,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
+  +[0-9]+: 0+58 +0 +TLS +GLOBAL +HIDDEN +7 sh7
+  +[0-9]+: 0+5c +0 +TLS +GLOBAL +HIDDEN +7 sh8
+  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +7 sg1
+- +[0-9]+: 0+401165 +0 +FUNC +GLOBAL +DEFAULT +6 _start
++ +[0-9]+: 0+4011b5 +0 +FUNC +GLOBAL +DEFAULT +6 _start
+  +[0-9]+: 0+4c +0 +TLS +GLOBAL +HIDDEN +7 sh4
+  +[0-9]+: 0+78 +0 +TLS +GLOBAL +DEFAULT +8 bg7
+  +[0-9]+: 0+50 +0 +TLS +GLOBAL +HIDDEN +7 sh5
+diff --git a/ld/testsuite/ld-x86-64/tlsbindesc.s b/ld/testsuite/ld-x86-64/tlsbindesc.s
+index b80e5f192c0..4747fc1bc30 100644
+--- a/ld/testsuite/ld-x86-64/tlsbindesc.s
++++ b/ld/testsuite/ld-x86-64/tlsbindesc.s
+@@ -129,15 +129,23 @@ fn2:
+ 
+ 	/* IE against global var  */
+ 	addq	sG2@gottpoff(%rip), %r16
++	addq	%rax, sG2@gottpoff(%rip), %r16
++	addq	sG2@gottpoff(%rip), %rax, %r16
+ 
+ 	/* IE -> LE against global var defined in exec */
+ 	addq	sg1@gottpoff(%rip), %r17
++	addq	%r8, sg1@gottpoff(%rip), %r17
++	addq	sg1@gottpoff(%rip), %r8, %r17
+ 
+ 	/* IE -> LE against local var */
+ 	addq	sl1@gottpoff(%rip), %r18
++	addq	%r8, sl1@gottpoff(%rip), %rax
++	addq	sl1@gottpoff(%rip), %r8, %rax
+ 
+ 	/* IE -> LE against hidden var */
+ 	addq	sh1@gottpoff(%rip), %r19
++	addq	%r19, sh1@gottpoff(%rip), %r8
++	addq	sh1@gottpoff(%rip), %r19, %r8
+ 
+ 	/* Direct access through %fs  */
+ 

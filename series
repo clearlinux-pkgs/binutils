@@ -10,3 +10,4 @@ v1-0005-Ignore-version-from-.so-match.patch
 v1-0006-Add-support-for-target-filtering.patch
 v1-0007-With-text-ordering-file-support.patch
 v1-0008-ld-gold-Support-alignment-for-functions.patch
+binutils-apx.patch
