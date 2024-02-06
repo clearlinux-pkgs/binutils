@@ -1,4 +1,4 @@
-commit 66e1d37771ac39e08b547c4f9f861a2a1c5852ce
+commit a7b8352e84e49f6616cf9b68eae4b09d4c821a67
 Author: H.J. Lu <hjl.tools@intel.com>
 Date:   Sat Feb 3 14:32:17 2024 -0800
 
@@ -11,7 +11,7 @@ Date:   Sat Feb 3 14:32:17 2024 -0800
     
     add
     
-     # define R_X86_64_CODE_6_GOTTPOFF      46
+     #define R_X86_64_CODE_6_GOTTPOFF               50
     
     if the instruction starts at 6 bytes before the relocation offset.
     They are similar to R_X86_64_GOTTPOFF.  Linker can covert GOTTPOFF to
@@ -23,28 +23,58 @@ Date:   Sat Feb 3 14:32:17 2024 -0800
     stage, which will be converted to BFD_RELOC_X86_64_CODE_4_GOTTPOFF
     or BFD_RELOC_X86_64_CODE_6_GOTTPOFF in i386_validate_fix.
     
+    5 relocations:
+    
+     #define R_X86_64_CODE_5_GOTPCRELX              46
+     #define R_X86_64_CODE_5_GOTTPOFF               47
+     #define R_X86_64_CODE_5_GOTPC32_TLSDESC        48
+     #define R_X86_64_CODE_6_GOTPCRELX              49
+     #define R_X86_64_CODE_6_GOTPC32_TLSDESC        51
+    
+    are added for completeness and they are unused.
+    
     bfd/
     
             * elf64-x86-64.c (x86_64_elf_howto_table): Add
-            R_X86_64_CODE_6_GOTTPOFF.
+            R_X86_64_CODE_5_GOTPCRELX, R_X86_64_CODE_5_GOTTPOFF,
+            R_X86_64_CODE_5_GOTPC32_TLSDESC, R_X86_64_CODE_6_GOTPCRELX,
+            R_X86_64_CODE_6_GOTTPOFF and R_X86_64_CODE_6_GOTPC32_TLSDESC.
             (R_X86_64_standard): Updated.
-            (x86_64_reloc_map): Add BFD_RELOC_X86_64_CODE_6_GOTTPOFF.
+            (x86_64_reloc_map): Add R_X86_64_CODE_5_GOTPCRELX,
+            R_X86_64_CODE_5_GOTTPOFF, R_X86_64_CODE_5_GOTPC32_TLSDESC,
+            R_X86_64_CODE_6_GOTPCRELX, R_X86_64_CODE_6_GOTTPOFF and
+            R_X86_64_CODE_6_GOTPC32_TLSDESC.
             (elf_x86_64_check_tls_transition): Handle
             R_X86_64_CODE_6_GOTTPOFF.
             (elf_x86_64_tls_transition): Likewise.
-            (elf_x86_64_scan_relocs): Likewise.
-            (elf_x86_64_relocate_section): Likewise.
+            (elf_x86_64_scan_relocs): Handle R_X86_64_CODE_6_GOTTPOFF.
+            Issue an error for R_X86_64_CODE_5_GOTPCRELX,
+            R_X86_64_CODE_5_GOTTPOFF, R_X86_64_CODE_5_GOTPC32_TLSDESC,
+            R_X86_64_CODE_6_GOTPCRELX and R_X86_64_CODE_6_GOTPC32_TLSDESC.
+            (elf_x86_64_relocate_section): Handle R_X86_64_CODE_6_GOTTPOFF.
             * reloc.c (bfd_reloc_code_real): Add
-            BFD_RELOC_X86_64_CODE_6_GOTTPOFF.
+            BFD_RELOC_X86_64_CODE_5_GOTPCRELX,
+            BFD_RELOC_X86_64_CODE_5_GOTTPOFF,
+            BFD_RELOC_X86_64_CODE_5_GOTPC32_TLSDESC,
+            BFD_RELOC_X86_64_CODE_6_GOTPCRELX,
+            BFD_RELOC_X86_64_CODE_6_GOTTPOFF and
+            BFD_RELOC_X86_64_CODE_6_GOTPC32_TLSDESC.
             * bfd-in2.h: Regenerated.
             * libbfd.h: Likewise.
     
     elfcpp/
     
-            * x86_64.h (R_X86_64_CODE_4_GOTTPOFF): New.
+            * x86_64.h (R_X86_64_CODE_5_GOTPCRELX): New.
+            (R_X86_64_CODE_5_GOTTPOFF): Likewise.
+            (R_X86_64_CODE_5_GOTPC32_TLSDESC): Likewise.
+            (R_X86_64_CODE_6_GOTPCRELX): Likewise.
+            (R_X86_64_CODE_6_GOTTPOFF): Likewise.
+            (R_X86_64_CODE_6_GOTPC32_TLSDESC): Likewise.
     
     gas/
     
+            * write.c (fix_new_internal): Clear the fx_tcbit4 field.
+            * write.h (fix): Rename fx_unused to fx_tcbit4.
             * config/tc-i386.c (tc_i386_fix_adjustable): Handle
             BFD_RELOC_X86_64_CODE_4_GOTTPOFF.
             (md_assemble): Don't check BFD_RELOC_X86_64_CODE_4_GOTTPOFF.
@@ -79,57 +109,84 @@ Date:   Sat Feb 3 14:32:17 2024 -0800
     include/
     
             * elf/x86-64.h (elf_x86_64_reloc_type): Add
-            R_X86_64_CODE_6_GOTTPOFF.
+            R_X86_64_CODE_5_GOTPCRELX, R_X86_64_CODE_5_GOTTPOFF,
+            R_X86_64_CODE_5_GOTPC32_TLSDESC, R_X86_64_CODE_6_GOTPCRELX,
+            R_X86_64_CODE_6_GOTTPOFF and R_X86_64_CODE_6_GOTPC32_TLSDESC.
     
     ld/
     
-            * testsuite/ld-x86-64/tlsbindesc.d: Updated.
-            * testsuite/ld-x86-64/tlsbindesc.rd: Likewise.
             * testsuite/ld-x86-64/tlsbindesc.s: Add R_X86_64_CODE_6_GOTTPOFF
             tests.
+            * testsuite/ld-x86-64/tlsbindesc.d: Updated.
+            * testsuite/ld-x86-64/tlsbindesc.rd: Likewise.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 581d8fe0b3e..25880e2588b 100644
+index 581d8fe0b3e..dbafcf8da36 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
-@@ -3894,6 +3894,7 @@ enum bfd_reloc_code_real
+@@ -3894,6 +3894,12 @@ enum bfd_reloc_code_real
    BFD_RELOC_X86_64_CODE_4_GOTPCRELX,
    BFD_RELOC_X86_64_CODE_4_GOTTPOFF,
    BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC,
++  BFD_RELOC_X86_64_CODE_5_GOTPCRELX,
++  BFD_RELOC_X86_64_CODE_5_GOTTPOFF,
++  BFD_RELOC_X86_64_CODE_5_GOTPC32_TLSDESC,
++  BFD_RELOC_X86_64_CODE_6_GOTPCRELX,
 +  BFD_RELOC_X86_64_CODE_6_GOTTPOFF,
++  BFD_RELOC_X86_64_CODE_6_GOTPC32_TLSDESC,
  
    /* ns32k relocations.  */
    BFD_RELOC_NS32K_IMM_8,
 diff --git a/bfd/elf64-x86-64.c b/bfd/elf64-x86-64.c
-index f1253751bbd..a223f202e43 100644
+index f1253751bbd..2ed120af780 100644
 --- a/bfd/elf64-x86-64.c
 +++ b/bfd/elf64-x86-64.c
-@@ -179,12 +179,15 @@ static reloc_howto_type x86_64_elf_howto_table[] =
+@@ -179,12 +179,30 @@ static reloc_howto_type x86_64_elf_howto_table[] =
    HOWTO(R_X86_64_CODE_4_GOTPC32_TLSDESC, 0, 4, 32, true, 0,
  	complain_overflow_bitfield, bfd_elf_generic_reloc,
  	"R_X86_64_CODE_4_GOTPC32_TLSDESC", false, 0, 0xffffffff, true),
++  HOWTO(R_X86_64_CODE_5_GOTPCRELX, 0, 4, 32, true, 0,
++	complain_overflow_signed, bfd_elf_generic_reloc,
++	"R_X86_64_CODE_5_GOTPCRELX", false, 0, 0xffffffff, true),
++  HOWTO(R_X86_64_CODE_5_GOTTPOFF, 0, 4, 32, true, 0,
++	complain_overflow_signed, bfd_elf_generic_reloc,
++	"R_X86_64_CODE_5_GOTTPOFF", false, 0, 0xffffffff, true),
++  HOWTO(R_X86_64_CODE_5_GOTPC32_TLSDESC, 0, 4, 32, true, 0,
++	complain_overflow_bitfield, bfd_elf_generic_reloc,
++	"R_X86_64_CODE_5_GOTPC32_TLSDESC", false, 0, 0xffffffff, true),
++  HOWTO(R_X86_64_CODE_6_GOTPCRELX, 0, 4, 32, true, 0,
++	complain_overflow_signed, bfd_elf_generic_reloc,
++	"R_X86_64_CODE_6_GOTPCRELX", false, 0, 0xffffffff, true),
 +  HOWTO(R_X86_64_CODE_6_GOTTPOFF, 0, 4, 32, true, 0,
 +	complain_overflow_signed, bfd_elf_generic_reloc,
 +	"R_X86_64_CODE_6_GOTTPOFF", false, 0, 0xffffffff, true),
++  HOWTO(R_X86_64_CODE_6_GOTPC32_TLSDESC, 0, 4, 32, true, 0,
++	complain_overflow_bitfield, bfd_elf_generic_reloc,
++	"R_X86_64_CODE_6_GOTPC32_TLSDESC", false, 0, 0xffffffff, true),
  
    /* We have a gap in the reloc numbers here.
       R_X86_64_standard counts the number up to this point, and
       R_X86_64_vt_offset is the value to subtract from a reloc type of
       R_X86_64_GNU_VT* to form an index into this table.  */
 -#define R_X86_64_standard (R_X86_64_CODE_4_GOTPC32_TLSDESC + 1)
-+#define R_X86_64_standard (R_X86_64_CODE_6_GOTTPOFF + 1)
++#define R_X86_64_standard (R_X86_64_CODE_6_GOTPC32_TLSDESC + 1)
  #define R_X86_64_vt_offset (R_X86_64_GNU_VTINHERIT - R_X86_64_standard)
  
  /* GNU extension to record C++ vtable hierarchy.  */
-@@ -256,6 +259,7 @@ static const struct elf_reloc_map x86_64_reloc_map[] =
+@@ -256,6 +274,12 @@ static const struct elf_reloc_map x86_64_reloc_map[] =
    { BFD_RELOC_X86_64_CODE_4_GOTPCRELX, R_X86_64_CODE_4_GOTPCRELX, },
    { BFD_RELOC_X86_64_CODE_4_GOTTPOFF, R_X86_64_CODE_4_GOTTPOFF, },
    { BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC, R_X86_64_CODE_4_GOTPC32_TLSDESC, },
++  { BFD_RELOC_X86_64_CODE_5_GOTPCRELX, R_X86_64_CODE_5_GOTPCRELX, },
++  { BFD_RELOC_X86_64_CODE_5_GOTTPOFF, R_X86_64_CODE_5_GOTTPOFF, },
++  { BFD_RELOC_X86_64_CODE_5_GOTPC32_TLSDESC, R_X86_64_CODE_5_GOTPC32_TLSDESC, },
++  { BFD_RELOC_X86_64_CODE_6_GOTPCRELX, R_X86_64_CODE_6_GOTPCRELX, },
 +  { BFD_RELOC_X86_64_CODE_6_GOTTPOFF, R_X86_64_CODE_6_GOTTPOFF, },
++  { BFD_RELOC_X86_64_CODE_6_GOTPC32_TLSDESC, R_X86_64_CODE_6_GOTPC32_TLSDESC, },
    { BFD_RELOC_VTABLE_INHERIT,	R_X86_64_GNU_VTINHERIT, },
    { BFD_RELOC_VTABLE_ENTRY,	R_X86_64_GNU_VTENTRY, },
  };
-@@ -1283,6 +1287,23 @@ elf_x86_64_check_tls_transition (bfd *abfd,
+@@ -1283,6 +1307,23 @@ elf_x86_64_check_tls_transition (bfd *abfd,
  
        goto check_gottpoff;
  
@@ -153,7 +210,7 @@ index f1253751bbd..a223f202e43 100644
      case R_X86_64_GOTTPOFF:
        /* Check transition from IE access model:
  		mov foo@gottpoff(%rip), %reg
-@@ -1417,6 +1438,7 @@ elf_x86_64_tls_transition (struct bfd_link_info *info, bfd *abfd,
+@@ -1417,6 +1458,7 @@ elf_x86_64_tls_transition (struct bfd_link_info *info, bfd *abfd,
      case R_X86_64_TLSDESC_CALL:
      case R_X86_64_GOTTPOFF:
      case R_X86_64_CODE_4_GOTTPOFF:
@@ -161,7 +218,7 @@ index f1253751bbd..a223f202e43 100644
        if (bfd_link_executable (info))
  	{
  	  if (h == NULL)
-@@ -1464,6 +1486,8 @@ elf_x86_64_tls_transition (struct bfd_link_info *info, bfd *abfd,
+@@ -1464,6 +1506,8 @@ elf_x86_64_tls_transition (struct bfd_link_info *info, bfd *abfd,
    /* Return TRUE if there is no transition.  */
    if (from_type == to_type
        || (from_type == R_X86_64_CODE_4_GOTTPOFF
@@ -170,7 +227,7 @@ index f1253751bbd..a223f202e43 100644
  	  && to_type == R_X86_64_GOTTPOFF))
      return true;
  
-@@ -2177,6 +2201,7 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
+@@ -2177,6 +2221,7 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
  
  	case R_X86_64_GOTTPOFF:
  	case R_X86_64_CODE_4_GOTTPOFF:
@@ -178,7 +235,7 @@ index f1253751bbd..a223f202e43 100644
  	  if (!bfd_link_executable (info))
  	    info->flags |= DF_STATIC_TLS;
  	  /* Fall through */
-@@ -2214,6 +2239,7 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
+@@ -2214,6 +2259,7 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
  		break;
  	      case R_X86_64_GOTTPOFF:
  	      case R_X86_64_CODE_4_GOTTPOFF:
@@ -186,7 +243,34 @@ index f1253751bbd..a223f202e43 100644
  		tls_type = GOT_TLS_IE;
  		break;
  	      case R_X86_64_GOTPC32_TLSDESC:
-@@ -3570,6 +3596,7 @@ elf_x86_64_relocate_section (bfd *output_bfd,
+@@ -2503,6 +2549,26 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
+ 	    }
+ 	  break;
+ 
++	case R_X86_64_CODE_5_GOTPCRELX:
++	case R_X86_64_CODE_5_GOTTPOFF:
++	case R_X86_64_CODE_5_GOTPC32_TLSDESC:
++	case R_X86_64_CODE_6_GOTPCRELX:
++	case R_X86_64_CODE_6_GOTPC32_TLSDESC:
++	    {
++	      /* These relocations are added only for completeness and
++		 aren't be used.  */
++	      if (h)
++		name = h->root.root.string;
++	      else
++		name = bfd_elf_sym_name (abfd, symtab_hdr, isym,
++					 NULL);
++	      _bfd_error_handler
++		/* xgettext:c-format */
++		(_("%pB: unsupported relocation %s against symbol `%s'"),
++		 abfd, x86_64_elf_howto_table[r_type].name, name);
++	    }
++	  break;
++
+ 	  /* This relocation describes the C++ object vtable hierarchy.
+ 	     Reconstruct it for later use during GC.  */
+ 	case R_X86_64_GNU_VTINHERIT:
+@@ -3570,6 +3636,7 @@ elf_x86_64_relocate_section (bfd *output_bfd,
  	case R_X86_64_TLSDESC_CALL:
  	case R_X86_64_GOTTPOFF:
  	case R_X86_64_CODE_4_GOTTPOFF:
@@ -194,7 +278,7 @@ index f1253751bbd..a223f202e43 100644
  	  tls_type = GOT_UNKNOWN;
  	  if (h == NULL && local_got_offsets)
  	    tls_type = elf_x86_local_got_tls_type (input_bfd) [r_symndx];
-@@ -3920,6 +3947,49 @@ elf_x86_64_relocate_section (bfd *output_bfd,
+@@ -3920,6 +3987,50 @@ elf_x86_64_relocate_section (bfd *output_bfd,
  			      contents + roff);
  		  continue;
  		}
@@ -203,6 +287,7 @@ index f1253751bbd..a223f202e43 100644
 +		  /* IE->LE transition:
 +		     Originally it is
 +		     add %reg1, foo@gottpoff(%rip), %reg2
++		     or
 +		     add foo@gottpoff(%rip), %reg1, %reg2
 +		     We change it into:
 +		     add $foo@tpoff, %reg1, %reg2
@@ -245,47 +330,82 @@ index f1253751bbd..a223f202e43 100644
  		BFD_ASSERT (false);
  	    }
 diff --git a/bfd/libbfd.h b/bfd/libbfd.h
-index ebd4f24149b..ba6b52964a9 100644
+index ebd4f24149b..40bbe6a3886 100644
 --- a/bfd/libbfd.h
 +++ b/bfd/libbfd.h
-@@ -1463,6 +1463,7 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
+@@ -1463,6 +1463,12 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
    "BFD_RELOC_X86_64_CODE_4_GOTPCRELX",
    "BFD_RELOC_X86_64_CODE_4_GOTTPOFF",
    "BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC",
++  "BFD_RELOC_X86_64_CODE_5_GOTPCRELX",
++  "BFD_RELOC_X86_64_CODE_5_GOTTPOFF",
++  "BFD_RELOC_X86_64_CODE_5_GOTPC32_TLSDESC",
++  "BFD_RELOC_X86_64_CODE_6_GOTPCRELX",
 +  "BFD_RELOC_X86_64_CODE_6_GOTTPOFF",
++  "BFD_RELOC_X86_64_CODE_6_GOTPC32_TLSDESC",
    "BFD_RELOC_NS32K_IMM_8",
    "BFD_RELOC_NS32K_IMM_16",
    "BFD_RELOC_NS32K_IMM_32",
 diff --git a/bfd/reloc.c b/bfd/reloc.c
-index e74cbd75e96..c33c6e876f9 100644
+index e74cbd75e96..7583b7fd552 100644
 --- a/bfd/reloc.c
 +++ b/bfd/reloc.c
-@@ -2481,6 +2481,8 @@ ENUMX
+@@ -2481,6 +2481,18 @@ ENUMX
    BFD_RELOC_X86_64_CODE_4_GOTTPOFF
  ENUMX
    BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC
 +ENUMX
++  BFD_RELOC_X86_64_CODE_5_GOTPCRELX
++ENUMX
++  BFD_RELOC_X86_64_CODE_5_GOTTPOFF
++ENUMX
++  BFD_RELOC_X86_64_CODE_5_GOTPC32_TLSDESC
++ENUMX
++  BFD_RELOC_X86_64_CODE_6_GOTPCRELX
++ENUMX
 +  BFD_RELOC_X86_64_CODE_6_GOTTPOFF
++ENUMX
++  BFD_RELOC_X86_64_CODE_6_GOTPC32_TLSDESC
  ENUMDOC
    x86-64/elf relocations.
  
 diff --git a/elfcpp/x86_64.h b/elfcpp/x86_64.h
-index 135f339fccf..e641da996c8 100644
+index 135f339fccf..5d254ce483b 100644
 --- a/elfcpp/x86_64.h
 +++ b/elfcpp/x86_64.h
-@@ -110,6 +110,10 @@ enum
+@@ -110,6 +110,30 @@ enum
  					// descriptor in GOT if the
  					// instruction starts at 4 bytes
  					// before the relocation offset.
-+  R_X86_64_CODE_6_GOTTPOFF = 46,  // 32 bit signed PC relative offset to
++  R_X86_64_CODE_5_GOTPCRELX = 46, // 32 bit signed PC relative offset to
++				  // GOT if the instruction starts at 5
++				  // bytes before the relocation offset,
++				  // relaxable.
++  R_X86_64_CODE_5_GOTTPOFF = 47,  // 32 bit signed PC relative offset to
++				  // GOT entry for IE symbol if the
++				  // instruction starts at 5 bytes before
++				  // the relocation offset.
++  R_X86_64_CODE_5_GOTPC32_TLSDESC = 48, // 32-bit PC relative to TLS
++					// descriptor in GOT if the
++					// instruction starts at 5 bytes
++					// before the relocation offset.
++  R_X86_64_CODE_6_GOTPCRELX = 49, // 32 bit signed PC relative offset to
++				  // GOT if the instruction starts at 6
++				  // bytes before the relocation offset,
++				  // relaxable.
++  R_X86_64_CODE_6_GOTTPOFF = 50,  // 32 bit signed PC relative offset to
 +				  // GOT entry for IE symbol if the
 +				  // instruction starts at 6 bytes before
 +				  // the relocation offset.
++  R_X86_64_CODE_6_GOTPC32_TLSDESC = 51, // 32-bit PC relative to TLS
++					// descriptor in GOT if the
++					// instruction starts at 6 bytes
++					// before the relocation offset.
    // GNU vtable garbage collection extensions.
    R_X86_64_GNU_VTINHERIT = 250,
    R_X86_64_GNU_VTENTRY = 251
 diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
-index 8f3a1b6f686..43a07d3550e 100644
+index 047aaba567e..3fa0df934c9 100644
 --- a/gas/config/tc-i386.c
 +++ b/gas/config/tc-i386.c
 @@ -3648,6 +3648,7 @@ tc_i386_fix_adjustable (fixS *fixP)
@@ -316,7 +436,7 @@ index 8f3a1b6f686..43a07d3550e 100644
  	  case BFD_RELOC_X86_64_TLSLD:
  	    as_bad (_("TLS relocation cannot be used with `%s'"), insn_name (&i.tm));
  	    return;
-@@ -12011,6 +12019,7 @@ output_disp (fragS *insn_start_frag, offsetT insn_start_off)
+@@ -12017,6 +12025,7 @@ output_disp (fragS *insn_start_frag, offsetT insn_start_off)
  		    case BFD_RELOC_X86_64_TLSLD:
  		    case BFD_RELOC_X86_64_GOTTPOFF:
  		    case BFD_RELOC_X86_64_CODE_4_GOTTPOFF:
@@ -324,7 +444,7 @@ index 8f3a1b6f686..43a07d3550e 100644
  		    case BFD_RELOC_X86_64_GOTPC32_TLSDESC:
  		    case BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC:
  		    case BFD_RELOC_X86_64_TLSDESC_CALL:
-@@ -12030,6 +12039,8 @@ output_disp (fragS *insn_start_frag, offsetT insn_start_off)
+@@ -12036,6 +12045,8 @@ output_disp (fragS *insn_start_frag, offsetT insn_start_off)
  	      /* Set fx_tcbit3 for REX2 prefix.  */
  	      if (is_apx_rex2_encoding ())
  		fixP->fx_tcbit3 = 1;
@@ -333,7 +453,7 @@ index 8f3a1b6f686..43a07d3550e 100644
  
  	      /* Check for "call/jmp *mem", "mov mem, %reg",
  		 "test %reg, mem" and "binop mem, %reg" where binop
-@@ -15534,6 +15545,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
+@@ -15540,6 +15551,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
        case BFD_RELOC_X86_64_TLSLD:
        case BFD_RELOC_X86_64_GOTTPOFF:
        case BFD_RELOC_X86_64_CODE_4_GOTTPOFF:
@@ -341,7 +461,7 @@ index 8f3a1b6f686..43a07d3550e 100644
        case BFD_RELOC_X86_64_GOTPC32_TLSDESC:
        case BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC:
  	value = 0; /* Fully resolved at runtime.  No addend.  */
-@@ -17122,6 +17134,11 @@ i386_validate_fix (fixS *fixp)
+@@ -17128,6 +17140,11 @@ i386_validate_fix (fixS *fixp)
        else if (fixp->fx_r_type == BFD_RELOC_X86_64_GOTPC32_TLSDESC)
  	fixp->fx_r_type = BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC;
      }
@@ -353,7 +473,7 @@ index 8f3a1b6f686..43a07d3550e 100644
  #endif
  
    if (fixp->fx_subsy)
-@@ -17267,6 +17284,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
+@@ -17273,6 +17290,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
      case BFD_RELOC_X86_64_DTPOFF64:
      case BFD_RELOC_X86_64_GOTTPOFF:
      case BFD_RELOC_X86_64_CODE_4_GOTTPOFF:
@@ -361,7 +481,7 @@ index 8f3a1b6f686..43a07d3550e 100644
      case BFD_RELOC_X86_64_TPOFF32:
      case BFD_RELOC_X86_64_TPOFF64:
      case BFD_RELOC_X86_64_GOTOFF64:
-@@ -17411,6 +17429,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
+@@ -17417,6 +17435,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
  	  case BFD_RELOC_X86_64_TLSLD:
  	  case BFD_RELOC_X86_64_GOTTPOFF:
  	  case BFD_RELOC_X86_64_CODE_4_GOTTPOFF:
@@ -596,16 +716,33 @@ index 58e191a055a..f77430bfb3d 100644
    if (tls_segment != NULL)
      value -= tls_segment->memsz();
 diff --git a/include/elf/x86-64.h b/include/elf/x86-64.h
-index 33a824620a6..34e3136655d 100644
+index 33a824620a6..ea5036a8bbf 100644
 --- a/include/elf/x86-64.h
 +++ b/include/elf/x86-64.h
-@@ -92,6 +92,9 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
+@@ -92,6 +92,26 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
       /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
  	instruction starts at 4 bytes before the relocation offset.  */
       RELOC_NUMBER (R_X86_64_CODE_4_GOTPC32_TLSDESC, 45)
++     /* Load from 32 bit signed pc relative offset to GOT entry if the
++	instruction starts at 5 bytes before the relocation offset,
++	relaxable.  */
++     RELOC_NUMBER (R_X86_64_CODE_5_GOTPCRELX, 46)
++     /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
++	instruction starts at 5 bytes before the relocation offset.  */
++     RELOC_NUMBER (R_X86_64_CODE_5_GOTPC32_TLSDESC, 47)
++    /* PC relative offset to IE GOT entry if the instruction starts at
++       5 bytes before the relocation offset.  */
++     RELOC_NUMBER (R_X86_64_CODE_5_GOTTPOFF, 48)
++     /* Load from 32 bit signed pc relative offset to GOT entry if the
++	instruction starts at 6 bytes before the relocation offset,
++	relaxable.  */
++     RELOC_NUMBER (R_X86_64_CODE_6_GOTPCRELX, 49)
 +    /* PC relative offset to IE GOT entry if the instruction starts at
 +       6 bytes before the relocation offset.  */
-+     RELOC_NUMBER (R_X86_64_CODE_6_GOTTPOFF, 46)
++     RELOC_NUMBER (R_X86_64_CODE_6_GOTTPOFF, 50)
++     /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
++	instruction starts at 6 bytes before the relocation offset.  */
++     RELOC_NUMBER (R_X86_64_CODE_6_GOTPC32_TLSDESC, 51)
       RELOC_NUMBER (R_X86_64_GNU_VTINHERIT, 250)       /* GNU C++ hack  */
       RELOC_NUMBER (R_X86_64_GNU_VTENTRY, 251)         /* GNU C++ hack  */
  END_RELOC_NUMBERS (R_X86_64_max)
