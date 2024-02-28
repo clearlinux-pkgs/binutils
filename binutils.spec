@@ -9,7 +9,7 @@
 #
 Name     : binutils
 Version  : 2.42
-Release  : 541
+Release  : 542
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz.sig
