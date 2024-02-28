@@ -90,7 +90,7 @@ index faf32f7e8ee..14f987769d8 100644
        fp = fopen (env_linker_script_map, "r");
        if (fp == NULL)
  	{
-@@ -104,23 +106,88 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
+@@ -104,23 +106,89 @@ ld_and_gold_get_ordering_script (const char *env_linker_script_in,
  	}
        output_dso_len = output_dso_end - output_dso_basename;
  
@@ -101,6 +101,7 @@ index faf32f7e8ee..14f987769d8 100644
 +      /* Default to accepting. If we reach a 'target:*' line then we start
 +       * filtering.  */
 +      target_okay = 1;
++	fprintf(stderr, "CLEARLINUX DEBUG LD output dso %s\n", output_dso);
        for (;;)
  	{
 -	  char *end_dso;
