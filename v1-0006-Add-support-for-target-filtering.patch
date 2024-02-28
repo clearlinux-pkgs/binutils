@@ -101,7 +101,7 @@ index faf32f7e8ee..14f987769d8 100644
 +      /* Default to accepting. If we reach a 'target:*' line then we start
 +       * filtering.  */
 +      target_okay = 1;
-+	fprintf(stderr, "CLEARLINUX DEBUG LD output dso %s\n", output_dso);
++	fprintf(stderr, "CLEARLINUX DEBUG LD output dso %s\n", output_dso_basename);
        for (;;)
  	{
 -	  char *end_dso;
