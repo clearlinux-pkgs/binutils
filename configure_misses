@@ -1,14 +1,5 @@
 Configure miss: -fcf-protection
 Configure miss: -fcf-protection
-Configure miss: -fcf-protection
-Configure miss: CFLocaleCopyPreferredLanguages
-Configure miss: CFLocaleCopyPreferredLanguages
-Configure miss: CFLocaleCopyPreferredLanguages
-Configure miss: CFLocaleCopyPreferredLanguages
-Configure miss: CFLocaleCopyPreferredLanguages
-Configure miss: CFLocaleCopyPreferredLanguages
-Configure miss: CFLocaleCopyPreferredLanguages
-Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: CFLocaleCopyPreferredLanguages
@@ -27,192 +18,126 @@ Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: chsize
 Configure miss: chsize
-Configure miss: chsize
-Configure miss: dsymutil
-Configure miss: dsymutil
 Configure miss: dsymutil
 Configure miss: dsymutil
 Configure miss: dsymutil
 Configure miss: dsymutil
 Configure miss: elf-hints.h
 Configure miss: elf-hints.h
-Configure miss: elf-hints.h
-Configure miss: elf-hints.h presence
 Configure miss: elf-hints.h presence
 Configure miss: elf-hints.h presence
 Configure miss: elf-hints.h usability
 Configure miss: elf-hints.h usability
-Configure miss: elf-hints.h usability
 Configure miss: fls
 Configure miss: fls
-Configure miss: fls
-Configure miss: gcc version with buggy 64-bit support
 Configure miss: gcc version with buggy 64-bit support
 Configure miss: gcc version with buggy 64-bit support
 Configure miss: gdc
 Configure miss: gdc
 Configure miss: gdc
 Configure miss: gdc
-Configure miss: gdc
-Configure miss: gdc
-Configure miss: gm2
 Configure miss: gm2
 Configure miss: gm2
 Configure miss: if using Solaris linker
 Configure miss: if using Solaris linker
-Configure miss: if using Solaris linker
-Configure miss: isl 0.15 or later
 Configure miss: isl 0.15 or later
 Configure miss: isl 0.15 or later
 Configure miss: jni.h
 Configure miss: jni.h
-Configure miss: jni.h
-Configure miss: lwpstatus_t in sys/procfs.h
 Configure miss: lwpstatus_t in sys/procfs.h
 Configure miss: lwpstatus_t in sys/procfs.h
 Configure miss: lwpstatus_t.pr_context in sys/procfs.h
 Configure miss: lwpstatus_t.pr_context in sys/procfs.h
-Configure miss: lwpstatus_t.pr_context in sys/procfs.h
-Configure miss: lwpstatus_t.pr_fpreg in sys/procfs.h
 Configure miss: lwpstatus_t.pr_fpreg in sys/procfs.h
 Configure miss: lwpstatus_t.pr_fpreg in sys/procfs.h
 Configure miss: lwpstatus_t.pr_reg in sys/procfs.h
 Configure miss: lwpstatus_t.pr_reg in sys/procfs.h
-Configure miss: lwpstatus_t.pr_reg in sys/procfs.h
-Configure miss: lwpxstatus_t in sys/procfs.h
 Configure miss: lwpxstatus_t in sys/procfs.h
 Configure miss: lwpxstatus_t in sys/procfs.h
 Configure miss: msgpack
 Configure miss: msgpack
-Configure miss: msgpack
-Configure miss: otool
-Configure miss: otool
 Configure miss: otool
 Configure miss: otool
 Configure miss: otool
 Configure miss: otool
 Configure miss: prpsinfo32_t in sys/procfs.h
 Configure miss: prpsinfo32_t in sys/procfs.h
-Configure miss: prpsinfo32_t in sys/procfs.h
-Configure miss: prpsinfo32_t.pr_pid in sys/procfs.h
 Configure miss: prpsinfo32_t.pr_pid in sys/procfs.h
 Configure miss: prpsinfo32_t.pr_pid in sys/procfs.h
 Configure miss: prstatus32_t in sys/procfs.h
 Configure miss: prstatus32_t in sys/procfs.h
-Configure miss: prstatus32_t in sys/procfs.h
-Configure miss: prstatus32_t.pr_who in sys/procfs.h
 Configure miss: prstatus32_t.pr_who in sys/procfs.h
 Configure miss: prstatus32_t.pr_who in sys/procfs.h
 Configure miss: prstatus_t.pr_who in sys/procfs.h
 Configure miss: prstatus_t.pr_who in sys/procfs.h
-Configure miss: prstatus_t.pr_who in sys/procfs.h
-Configure miss: psinfo32_t in sys/procfs.h
 Configure miss: psinfo32_t in sys/procfs.h
 Configure miss: psinfo32_t in sys/procfs.h
 Configure miss: psinfo32_t.pr_pid in sys/procfs.h
 Configure miss: psinfo32_t.pr_pid in sys/procfs.h
-Configure miss: psinfo32_t.pr_pid in sys/procfs.h
-Configure miss: psinfo_t in sys/procfs.h
 Configure miss: psinfo_t in sys/procfs.h
 Configure miss: psinfo_t in sys/procfs.h
 Configure miss: psinfo_t.pr_pid in sys/procfs.h
 Configure miss: psinfo_t.pr_pid in sys/procfs.h
-Configure miss: psinfo_t.pr_pid in sys/procfs.h
-Configure miss: pstat_getstatic
 Configure miss: pstat_getstatic
 Configure miss: pstat_getstatic
 Configure miss: pstatus32_t in sys/procfs.h
 Configure miss: pstatus32_t in sys/procfs.h
-Configure miss: pstatus32_t in sys/procfs.h
-Configure miss: pstatus_t in sys/procfs.h
 Configure miss: pstatus_t in sys/procfs.h
 Configure miss: pstatus_t in sys/procfs.h
 Configure miss: pxstatus_t in sys/procfs.h
 Configure miss: pxstatus_t in sys/procfs.h
-Configure miss: pxstatus_t in sys/procfs.h
-Configure miss: spawnvpe
 Configure miss: spawnvpe
 Configure miss: spawnvpe
 Configure miss: sys/sysctl.h
 Configure miss: sys/sysctl.h
-Configure miss: sys/sysctl.h
-Configure miss: sys/sysmp.h
 Configure miss: sys/sysmp.h
 Configure miss: sys/sysmp.h
 Configure miss: sys/systemcfg.h
 Configure miss: sys/systemcfg.h
-Configure miss: sys/systemcfg.h
-Configure miss: sys/table.h
 Configure miss: sys/table.h
 Configure miss: sys/table.h
 Configure miss: sys_errlist
 Configure miss: sys_errlist
-Configure miss: sys_errlist
-Configure miss: sys_nerr
 Configure miss: sys_nerr
 Configure miss: sys_nerr
 Configure miss: sys_siglist
 Configure miss: sys_siglist
-Configure miss: sys_siglist
-Configure miss: sysctl
 Configure miss: sysctl
 Configure miss: sysctl
 Configure miss: sysmp
 Configure miss: sysmp
-Configure miss: sysmp
-Configure miss: whether ___lc_codepage_func is declared
 Configure miss: whether ___lc_codepage_func is declared
 Configure miss: whether ___lc_codepage_func is declared
 Configure miss: whether a statically linked program can dlopen itself
 Configure miss: whether a statically linked program can dlopen itself
-Configure miss: whether a statically linked program can dlopen itself
-Configure miss: whether compiler driver understands Ada and is recent enough
 Configure miss: whether compiler driver understands Ada and is recent enough
 Configure miss: whether compiler driver understands Ada and is recent enough
 Configure miss: whether compiling a cross-assembler
 Configure miss: whether compiling a cross-assembler
-Configure miss: whether compiling a cross-assembler
-Configure miss: whether declaration is required for environ
 Configure miss: whether declaration is required for environ
 Configure miss: whether declaration is required for environ
 Configure miss: whether declaration is required for ffs
 Configure miss: whether declaration is required for ffs
-Configure miss: whether declaration is required for ffs
-Configure miss: whether errno must be declared
 Configure miss: whether errno must be declared
 Configure miss: whether errno must be declared
 Configure miss: whether the D compiler works
 Configure miss: whether the D compiler works
-Configure miss: whether the D compiler works
 Configure miss: whether to use debuginfod
 Configure miss: whether to use debuginfod
-Configure miss: whether to use debuginfod
-Configure miss: win32_pstatus_t in sys/procfs.h
 Configure miss: win32_pstatus_t in sys/procfs.h
 Configure miss: win32_pstatus_t in sys/procfs.h
 Configure miss: windres
 Configure miss: windres
 Configure miss: windres
 Configure miss: windres
-Configure miss: windres
-Configure miss: windres
-Configure miss: x86_64-generic-linux-dsymutil
 Configure miss: x86_64-generic-linux-dsymutil
 Configure miss: x86_64-generic-linux-dsymutil
 Configure miss: x86_64-generic-linux-gdc
 Configure miss: x86_64-generic-linux-gdc
-Configure miss: x86_64-generic-linux-gdc
-Configure miss: x86_64-generic-linux-gm2
 Configure miss: x86_64-generic-linux-gm2
 Configure miss: x86_64-generic-linux-gm2
 Configure miss: x86_64-generic-linux-otool
 Configure miss: x86_64-generic-linux-otool
-Configure miss: x86_64-generic-linux-otool
-Configure miss: x86_64-generic-linux-pkg-config
-Configure miss: x86_64-generic-linux-pkg-config
-Configure miss: x86_64-generic-linux-pkg-config
-Configure miss: x86_64-generic-linux-pkg-config
-Configure miss: x86_64-generic-linux-pkg-config
 Configure miss: x86_64-generic-linux-pkg-config
 Configure miss: x86_64-generic-linux-pkg-config
 Configure miss: x86_64-generic-linux-pkg-config
