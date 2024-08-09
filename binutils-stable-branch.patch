@@ -4,6 +4,9 @@ H.J. Lu (1):
 Nick Clifton (1):
       Re-enable development on 2.43 branch
 
+Richard Henderson (1):
+      gas: sparc: Fix faligndatai assembly and disassembly
+
 Xi Ruoyao (1):
       LoongArch: Fix DT_RELR and relaxation interaction
 
@@ -329,6 +332,44 @@ index b9d742a2375..85523348370 100644
  * Add support for RISC-V Zfbfmin extension with version 1.0.
  
  * Add support for RISC-V Zvfbfmin extension with version 1.0.
+diff --git a/gas/config/tc-sparc.c b/gas/config/tc-sparc.c
+index aca60e6c4f5..e37189e7c5e 100644
+--- a/gas/config/tc-sparc.c
++++ b/gas/config/tc-sparc.c
+@@ -2593,13 +2593,6 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
+ 		    break;
+ 		  }	/* if not an 'f' register.  */
+ 
+-		if (*args == '}' && mask != RS2 (opcode))
+-		  {
+-		    error_message
+-		      = _(": Instruction requires frs2 and frsd must be the same register");
+-		    goto error;
+-		  }
+-
+ 		switch (*args)
+ 		  {
+ 		  case 'v':
+@@ -2628,10 +2621,18 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
+ 		  case 'g':
+ 		  case 'H':
+ 		  case 'J':
+-		  case '}':
+                   case '^':
+ 		    opcode |= RD (mask);
+ 		    continue;
++
++		  case '}':
++		    if (RD (mask) != (opcode & RD (0x1f)))
++		      {
++			error_message = _(": Instruction requires frs2 and "
++					  "frsd must be the same register");
++			goto error;
++		      }
++		    continue;
+ 		  }		/* Pack it in.  */
+ 
+ 		know (0);
 diff --git a/gas/configure b/gas/configure
 index b2c5126f788..a4d64ce5289 100755
 --- a/gas/configure
@@ -600,6 +641,26 @@ index 00000000000..d244c1fb0fb
 +	mop.rr.5 a0, a1, a2
 +	mop.rr.6 a0, a1, a2
 +	mop.rr.7 a0, a1, a2
+diff --git a/gas/testsuite/gas/sparc/sparc5vis4.d b/gas/testsuite/gas/sparc/sparc5vis4.d
+index bf5c90bbcf3..7820c2a5672 100644
+--- a/gas/testsuite/gas/sparc/sparc5vis4.d
++++ b/gas/testsuite/gas/sparc/sparc5vis4.d
+@@ -35,4 +35,4 @@ Disassembly of section .text:
+   64:	95 b1 aa c8 	fpsubs8  %f6, %f8, %f10
+   68:	9d b2 aa ec 	fpsubus8  %f10, %f12, %f14
+   6c:	a5 b3 aa 70 	fpsubus16  %f14, %f16, %f18
+-  70:	bf b0 09 3f 	faligndata  %f0, %f62, %f4, %f62
++  70:	bf b0 09 24 	faligndata  %g0, %f62, %f4, %f62
+diff --git a/gas/testsuite/gas/sparc/sparc5vis4.s b/gas/testsuite/gas/sparc/sparc5vis4.s
+index 0a0155f3376..58ca2b5f368 100644
+--- a/gas/testsuite/gas/sparc/sparc5vis4.s
++++ b/gas/testsuite/gas/sparc/sparc5vis4.s
+@@ -28,4 +28,4 @@
+ 	fpsubs8	%f6, %f8, %f10
+ 	fpsubus8 %f10, %f12, %f14
+ 	fpsubus16 %f14, %f16, %f18
+-	faligndata %f0, %f62, %f4, %f62
++	faligndata %g0, %f62, %f4, %f62
 diff --git a/gprof/configure b/gprof/configure
 index 6c0bf5ef050..e3c86d3f1ed 100755
 --- a/gprof/configure
@@ -1447,3 +1508,16 @@ index 14ec2903cdd..e6831bda9fd 100644
  /* Zcmp instructions.  */
  {"cm.push",    0,  INSN_CLASS_ZCMP, "{Wcr},Wcp",  MATCH_CM_PUSH, MASK_CM_PUSH, match_opcode, 0 },
  {"cm.pop",     0,  INSN_CLASS_ZCMP, "{Wcr},Wcp",  MATCH_CM_POP, MASK_CM_POP, match_opcode, 0 },
+diff --git a/opcodes/sparc-opc.c b/opcodes/sparc-opc.c
+index fb7ebe38d46..19f7f62f1a3 100644
+--- a/opcodes/sparc-opc.c
++++ b/opcodes/sparc-opc.c
+@@ -2016,7 +2016,7 @@ SLCBCC("cbnefr", 15),
+ { "alignaddr",	F3F(2, 0x36, 0x018), F3F(~2, ~0x36, ~0x018), "1,2,d", 0, HWCAP_VIS, 0, v9a },
+ { "alignaddrl",	F3F(2, 0x36, 0x01a), F3F(~2, ~0x36, ~0x01a), "1,2,d", 0, HWCAP_VIS, 0, v9a },
+ { "faligndata",	F3F(2, 0x36, 0x048), F3F(~2, ~0x36, ~0x048), "v,B,H", 0, HWCAP_VIS, 0, v9a }, /* faligndatag */
+-{ "faligndata", F3F(2, 0x36, 0x049), F3F(~2, ~0x36, ~0x049), "v,B,5,}", 0, 0, HWCAP2_SPARC5, v9m }, /* faligndatai  */
++{ "faligndata", F3F(2, 0x36, 0x049), F3F(~2, ~0x36, ~0x049), "1,H,B,}", 0, 0, HWCAP2_SPARC5, v9m }, /* faligndatai  */
+ 
+ { "fzerod",	F3F(2, 0x36, 0x060), F3F(~2, ~0x36, ~0x060), "H", 0, HWCAP_VIS, 0, v9a },
+ { "fzero",	F3F(2, 0x36, 0x060), F3F(~2, ~0x36, ~0x060), "H", F_ALIAS, HWCAP_VIS, 0, v9a },
