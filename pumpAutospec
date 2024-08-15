@@ -1,1 +1,1 @@
-Patch binutils-stable-branch.patch does not apply
+Compiler:  /builddir/build/BUILDROOT/binutils-2.43-549.x86_64-v3/usr/lib64/libbfd.so: ELF section name out of range
