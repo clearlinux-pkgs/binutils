@@ -8,11 +8,11 @@
 # Source0 file verified with key 0x13FCEF89DD9E3C4F (nickc@redhat.com)
 #
 Name     : binutils
-Version  : 2.43
+Version  : 2.42
 Release  : 549
-URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz
-Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz
-Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz.sig
+URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz
+Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz
+Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.42.tar.xz.sig
 Source2  : 13FCEF89DD9E3C4F.pkey
 Summary  : zlib compression library
 Group    : Development/Tools
@@ -50,8 +50,8 @@ chmod 700 .gnupg
 gpg --homedir .gnupg --import %{SOURCE2}
 gpg --homedir .gnupg --status-fd 1 --verify %{SOURCE1} %{SOURCE0} > gpg.status
 grep -E '^\[GNUPG:\] (GOODSIG|EXPKEYSIG) 13FCEF89DD9E3C4F' gpg.status
-%setup -q -n binutils-2.43
-cd %{_builddir}/binutils-2.43
+%setup -q -n binutils-2.42
+cd %{_builddir}/binutils-2.42
 %patch -P 1 -p1
 %patch -P 2 -p1
 %patch -P 3 -p1
@@ -64,7 +64,7 @@ cd %{_builddir}/binutils-2.43
 %patch -P 10 -p1
 %patch -P 11 -p1
 pushd ..
-cp -a binutils-2.43 buildavx2
+cp -a binutils-2.42 buildavx2
 popd
 
 %build
@@ -108,7 +108,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1723234427
+export SOURCE_DATE_EPOCH=1723739738
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
@@ -194,7 +194,7 @@ FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS"
 FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS"
 ASFLAGS="$CLEAR_INTERMEDIATE_ASFLAGS"
 LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS"
-export SOURCE_DATE_EPOCH=1723234427
+export SOURCE_DATE_EPOCH=1723739738
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
