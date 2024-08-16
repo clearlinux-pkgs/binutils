@@ -1,9 +1,10 @@
 Alan Modra (1):
       PR32067, ld -Wl,--oformat,binary crash in _bfd_elf_link_keep_memory
 
-H.J. Lu (2):
+H.J. Lu (3):
       LTO: Restore the wrapper symbol check for standard function
       ld: Add PR ld/32067 tests
+      lto: Don't include unused LTO archive members in output
 
 Jan Beulich (2):
       x86: correct .insn with opcode extension and VEX/XOP/EVEX encoding
@@ -22,6 +23,46 @@ Xiao Zeng (2):
       RISC-V: Add support for Zimop extension
       RISC-V: Add support for Zcmop extension
 
+diff --git a/bfd/archures.c b/bfd/archures.c
+index 94118b8d2cf..c4decc59e4a 100644
+--- a/bfd/archures.c
++++ b/bfd/archures.c
+@@ -947,6 +947,7 @@ bfd_arch_get_compatible (const bfd *abfd,
+      to assume that they know what they are doing.  */
+   if (accept_unknowns
+       || ubfd->plugin_format == bfd_plugin_yes
++      || ubfd->plugin_format == bfd_plugin_yes_unused
+       || strcmp (bfd_get_target (ubfd), "binary") == 0)
+     return kbfd->arch_info;
+   return NULL;
+diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
+index e3b5a8b8522..40ec416dded 100644
+--- a/bfd/bfd-in2.h
++++ b/bfd/bfd-in2.h
+@@ -1947,7 +1947,8 @@ enum bfd_plugin_format
+   {
+     bfd_plugin_unknown = 0,
+     bfd_plugin_yes = 1,
+-    bfd_plugin_no = 2
++    bfd_plugin_yes_unused = 2,
++    bfd_plugin_no = 3
+   };
+ 
+ struct bfd_build_id
+diff --git a/bfd/bfd.c b/bfd/bfd.c
+index ae79c6490b5..a93be109f11 100644
+--- a/bfd/bfd.c
++++ b/bfd/bfd.c
+@@ -65,7 +65,8 @@ EXTERNAL
+ .  {
+ .    bfd_plugin_unknown = 0,
+ .    bfd_plugin_yes = 1,
+-.    bfd_plugin_no = 2
++.    bfd_plugin_yes_unused = 2,
++.    bfd_plugin_no = 3
+ .  };
+ .
+ .struct bfd_build_id
 diff --git a/bfd/configure b/bfd/configure
 index c66a79ee343..9fe9cf6919f 100755
 --- a/bfd/configure
@@ -109,7 +150,7 @@ index c66a79ee343..9fe9cf6919f 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index a180e59e8ca..2430d606c30 100644
+index a180e59e8ca..336bcbf4658 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -64,7 +64,7 @@ _bfd_elf_link_keep_memory (struct bfd_link_info *info)
@@ -121,7 +162,15 @@ index a180e59e8ca..2430d606c30 100644
      return false;
  #endif
    bfd *abfd;
-@@ -5694,7 +5694,8 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -3653,6 +3653,7 @@ elf_link_is_defined_archive_symbol (bfd * abfd, carsym * symdef)
+      object file is an IR object, give linker LTO plugin a chance to
+      get the correct symbol table.  */
+   if (abfd->plugin_format == bfd_plugin_yes
++      || abfd->plugin_format == bfd_plugin_yes_unused
+ #if BFD_SUPPORTS_PLUGINS
+       || (abfd->plugin_format == bfd_plugin_unknown
+ 	  && bfd_link_plugin_object_p (abfd))
+@@ -5694,7 +5695,8 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
        && !bfd_link_relocatable (info)
        && (abfd->flags & BFD_PLUGIN) == 0
        && !just_syms
@@ -244,6 +293,40 @@ index b3adbed1913..80260d513c4 100644
      case INSN_CLASS_ZCMP:
        return "zcmp";
      case INSN_CLASS_SVINVAL:
+diff --git a/bfd/plugin.c b/bfd/plugin.c
+index 026654fd9d3..f6c6fdbee69 100644
+--- a/bfd/plugin.c
++++ b/bfd/plugin.c
+@@ -329,13 +329,23 @@ try_claim (bfd *abfd)
+   struct ld_plugin_input_file file;
+ 
+   file.handle = abfd;
+-  if (bfd_plugin_open_input (abfd, &file)
+-      && current_plugin->claim_file)
++  if (bfd_plugin_open_input (abfd, &file))
+     {
+-      current_plugin->claim_file (&file, &claimed);
+-      bfd_plugin_close_file_descriptor ((abfd->my_archive != NULL
+-					 ? abfd : NULL),
+-					file.fd);
++      bool claim_file_called = false;
++      if (current_plugin->claim_file_v2)
++	{
++	  current_plugin->claim_file_v2 (&file, &claimed, false);
++	  claim_file_called = true;
++	}
++      else if (current_plugin->claim_file)
++	{
++	  current_plugin->claim_file (&file, &claimed);
++	  claim_file_called = true;
++	}
++      if (claim_file_called)
++	bfd_plugin_close_file_descriptor ((abfd->my_archive != NULL
++					   ? abfd : NULL),
++					  file.fd);
+     }
+ 
+   return claimed;
 diff --git a/bfd/po/bfd.pot b/bfd/po/bfd.pot
 index 1a5ce2e1345..e75e000fa60 100644
 --- a/bfd/po/bfd.pot
@@ -1330,7 +1413,7 @@ index 44d79c2445d..1d89e3b0677 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 03ee9880d10..51c4765cc5b 100644
+index 03ee9880d10..34ae3a0e0d8 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -778,8 +778,18 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms,
@@ -1354,6 +1437,88 @@ index 03ee9880d10..51c4765cc5b 100644
  	}
        else
  	{
+@@ -1164,10 +1174,11 @@ plugin_load_plugins (void)
+ /* Call 'claim file' hook for all plugins.  */
+ static int
+ plugin_call_claim_file (const struct ld_plugin_input_file *file, int *claimed,
+-			bool known_used)
++			int *claim_file_handler_v2, bool known_used)
+ {
+   plugin_t *curplug = plugins_list;
+   *claimed = false;
++  *claim_file_handler_v2 = false;
+   while (curplug && !*claimed)
+     {
+       if (curplug->claim_file_handler)
+@@ -1176,7 +1187,11 @@ plugin_call_claim_file (const struct ld_plugin_input_file *file, int *claimed,
+ 
+ 	  called_plugin = curplug;
+ 	  if (curplug->claim_file_handler_v2)
+-	    rv = (*curplug->claim_file_handler_v2) (file, claimed, known_used);
++	    {
++	      rv = (*curplug->claim_file_handler_v2) (file, claimed,
++						      known_used);
++	      *claim_file_handler_v2 = true;
++	    }
+ 	  else
+ 	    rv = (*curplug->claim_file_handler) (file, claimed);
+ 	  called_plugin = NULL;
+@@ -1212,7 +1227,7 @@ plugin_cleanup (bfd *abfd ATTRIBUTE_UNUSED)
+ static bfd_cleanup
+ plugin_object_p (bfd *ibfd, bool known_used)
+ {
+-  int claimed;
++  int claimed, claim_file_handler_v2;
+   plugin_input_file_t *input;
+   struct ld_plugin_input_file file;
+   bfd *abfd;
+@@ -1221,12 +1236,17 @@ plugin_object_p (bfd *ibfd, bool known_used)
+   if ((ibfd->flags & BFD_PLUGIN) != 0)
+     return NULL;
+ 
+-  if (ibfd->plugin_format != bfd_plugin_unknown)
++  /* When KNOWN_USED is false, we call plugin claim_file if plugin_format
++     is bfd_plugin_unknown and set plugin_format to bfd_plugin_yes_unused
++     on LTO object.  When KNOWN_USED is true, we call plugin claim_file
++     if plugin_format is bfd_plugin_unknown or bfd_plugin_yes_unused.  */
++  if (ibfd->plugin_format != bfd_plugin_unknown
++      && (!known_used || ibfd->plugin_format != bfd_plugin_yes_unused))
+     {
+-      if (ibfd->plugin_format == bfd_plugin_yes)
+-	return plugin_cleanup;
+-      else
++      if (ibfd->plugin_format == bfd_plugin_no)
+ 	return NULL;
++      else
++	return plugin_cleanup;
+     }
+ 
+   /* We create a dummy BFD, initially empty, to house whatever symbols
+@@ -1262,7 +1282,8 @@ plugin_object_p (bfd *ibfd, bool known_used)
+ 
+   claimed = 0;
+ 
+-  if (plugin_call_claim_file (&file, &claimed, known_used))
++  if (plugin_call_claim_file (&file, &claimed, &claim_file_handler_v2,
++			      known_used))
+     einfo (_("%F%P: %s: plugin reported error claiming file\n"),
+ 	   plugin_error_plugin ());
+ 
+@@ -1282,7 +1303,13 @@ plugin_object_p (bfd *ibfd, bool known_used)
+ 
+   if (claimed)
+     {
+-      ibfd->plugin_format = bfd_plugin_yes;
++      /* Set plugin_format to bfd_plugin_yes_unused if KNOWN_USED is
++	 false for plugin claim_file_v2 to avoid including the unused
++	 LTO archive members in linker output.  */
++      if (known_used || !claim_file_handler_v2)
++	ibfd->plugin_format = bfd_plugin_yes;
++      else
++	ibfd->plugin_format = bfd_plugin_yes_unused;
+       ibfd->plugin_dummy_bfd = abfd;
+       bfd_make_readable (abfd);
+       abfd->no_export = ibfd->no_export;
 diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
 index ad6ad2e725e..8dafb6261fb 100644
 --- a/ld/testsuite/ld-i386/i386.exp
