@@ -10,11 +10,15 @@ Jan Beulich (2):
       x86: correct .insn with opcode extension and VEX/XOP/EVEX encoding
       gas: correct .irpc handling with empty string
 
-Nick Clifton (1):
+Nick Clifton (2):
       Re-enable development on 2.43 branch
+      This is the 2.43.1 release
 
 Richard Henderson (1):
       gas: sparc: Fix faligndatai assembly and disassembly
+
+Vladimir Mezentsev (1):
+      gprofng: fix typo in src/collctrl.cc
 
 Xi Ruoyao (1):
       LoongArch: Fix DT_RELR and relaxation interaction
@@ -23,6 +27,313 @@ Xiao Zeng (2):
       RISC-V: Add support for Zimop extension
       RISC-V: Add support for Zcmop extension
 
+diff --git a/ChangeLog.git b/ChangeLog.git
+index 2c017a55c0d..bea2a9bf80c 100644
+--- a/ChangeLog.git
++++ b/ChangeLog.git
+@@ -1,3 +1,290 @@
++2024-08-17  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-16  Vladimir Mezentsev  <vladimir.mezentsev@oracle.com>
++
++	gprofng: fix typo in src/collctrl.cc
++	gprofng/ChangeLog
++	2024-08-13  Vladimir Mezentsev  <vladimir.mezentsev@oracle.com>
++
++		* src/collctrl.cc (read_cpuinfo): Fix typo.
++
++2024-08-16  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-16  H.J. Lu  <hjl.tools@gmail.com>
++
++	lto: Don't include unused LTO archive members in output
++	When plugin_object_p is called by elf_link_is_defined_archive_symbol to
++	check if a symbol in archive is a real definition, set archive member
++	plugin_format to bfd_plugin_yes_unused to avoid including the unused LTO
++	archive members in linker output.  When plugin_object_p is called as
++	known used, call plugin claim_file if plugin_format is bfd_plugin_unknown
++	or bfd_plugin_yes_unused.
++
++	To get the proper support for archives with LTO common symbols with GCC,
++	the GCC fix for
++
++	https://gcc.gnu.org/bugzilla/show_bug.cgi?id=116361
++
++	is needed.
++
++	bfd/
++
++		PR ld/32083
++		* archures.c (bfd_arch_get_compatible): Treat bfd_plugin_yes_unused
++		the same as bfd_plugin_yes.
++		* elflink.c (elf_link_is_defined_archive_symbol): Likewise.
++		* bfd.c (bfd_plugin_format): Add bfd_plugin_yes_unused.
++		* plugin.c (try_claim): Try claim_file_v2 first.
++		* bfd-in2.h: Regenerated.
++
++	ld/
++
++		PR ld/32083
++		* plugin.c (plugin_call_claim_file): Add an argument to return
++		if LDPT_REGISTER_CLAIM_FILE_HOOK_V2 is used.
++		(plugin_object_p): When KNOWN_USED is false, we call plugin
++		claim_file if plugin_format is bfd_plugin_unknown and set
++		plugin_format to bfd_plugin_yes_unused on LTO object.  When
++		KNOWN_USED is true, we call plugin claim_file if plugin_format
++		is bfd_plugin_unknown or bfd_plugin_yes_unused.
++
++	(cherry picked from commit a6f8fe0a9e9cbe871652e46ba7c22d5e9fb86208)
++
++2024-08-15  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-14  Jan Beulich  <jbeulich@suse.com>
++
++	gas: correct .irpc handling with empty string
++	Following 69cab370cf66 ("gas: adjust handling of quotes for .irpc") the
++	closing quote was mistakenly treated as the first quoted character.
++
++2024-08-14  Jan Beulich  <jbeulich@suse.com>
++
++	x86: correct .insn with opcode extension and VEX/XOP/EVEX encoding
++	When VexVVVV handling was re-worked, .insn broke: When an opcode
++	extension is in use, VexVVVV_DST needs using now, as ModR/M.reg is
++	already occupied, matching what c8866e3ec5e2 ("x86: Drop using
++	extension_opcode to encode vvvv register") did.
++
++	While adding (bad) POP2 forms, also slightly adjust existing ones:
++	No need to use XMM registers, and no need to specify %r8 when really
++	%rax is meant twice (EVEX.vvvv not really being the culprit there, or
++	else EVEX.V' would also have needed mentioning).
++
++2024-08-14  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-13  H.J. Lu  <hjl.tools@gmail.com>
++
++	ld: Add PR ld/32067 tests
++	Add PR ld/32067 tests with the compiler driver since the -plugin option
++	is needed to trigger this --oformat binary bug.
++
++		PR ld/32067
++		* testsuite/ld-i386/i386.exp: Run PR ld/32067 test.
++		* testsuite/ld-x86-64/x86-64.exp: Likewise.
++		* testsuite/ld-i386/start.s: Add .note.GNU-stack section.
++		* testsuite/ld-x86-64/pr32067.s: New file.
++
++	(cherry picked from commit 602f5cf7e3a82229d75998a5f6eb13753f828bb3)
++
++2024-08-13  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-12  Alan Modra  <amodra@gmail.com>
++
++	PR32067, ld -Wl,--oformat,binary crash in _bfd_elf_link_keep_memory
++	The direct fix for this segfault is to test for a non-NULL bed in
++	_bfd_elf_link_keep_memory, but also there isn't much point in running
++	code for LTO if the output is binary.
++
++		PR 32067
++		* elflink.c (_bfd_elf_link_keep_memory): Test for non-NULL bed.
++		(elf_link_add_object_symbols): Don't run the loop setting
++		non_ir_ref_regular if the output hash table is not ELF.
++
++	(cherry picked from commit ec8f5671b4e70806fe3053636426a8d179dfef55)
++
++2024-08-12  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-11  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-10  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-09  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-08  Richard Henderson  <richard.henderson@linaro.org>
++
++	gas: sparc: Fix faligndatai assembly and disassembly
++	The first operand is a general register, not an fp register;
++	the third operand is encoded into RS2, not RS3;
++	the second operand must match the destination operand.
++
++2024-08-08  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-07  Xiao Zeng  <zengxiao@eswincomputing.com>
++
++	RISC-V: Add support for Zcmop extension
++	This implements the Zcmop (Compressed Zimop) extension, as of version 1.0.
++
++	View detailed information in:
++	<https://github.com/riscv/riscv-isa-manual/blob/main/src/zimop.adoc>
++
++	The Zcmop extension requires the Zca extension.
++
++	bfd/ChangeLog:
++
++		* elfxx-riscv.c (riscv_multi_subset_supports): Handle Zcmop.
++		(riscv_multi_subset_supports_ext): Ditto.
++
++	gas/ChangeLog:
++
++		* NEWS: Updated.
++		* testsuite/gas/riscv/march-help.l: Ditto.
++		* testsuite/gas/riscv/zcmop.d: New test.
++		* testsuite/gas/riscv/zcmop.s: New test.
++
++	include/ChangeLog:
++
++		* opcode/riscv-opc.h (DECLARE_INSN): New declarations for Zcmop.
++		(MATCH_C_MOP_1, MATCH_C_MOP_3, MATCH_C_MOP_5, MATCH_C_MOP_7,
++		MATCH_C_MOP_9, MATCH_C_MOP_11, MATCH_C_MOP_13, MATCH_C_MOP_15): Define.
++		(MASK_C_MOP_1, MASK_C_MOP_3, MASK_C_MOP_5, MASK_C_MOP_7,
++		MASK_C_MOP_9, MASK_C_MOP_11, MASK_C_MOP_13, MASK_C_MOP_15): Ditto.
++		* opcode/riscv.h (enum riscv_insn_class): Add INSN_CLASS_ZCMOP.
++
++	opcodes/ChangeLog:
++
++		* riscv-opc.c: Add Zcmop instructions.
++
++2024-08-07  Xiao Zeng  <zengxiao@eswincomputing.com>
++
++	RISC-V: Add support for Zimop extension
++	This implements the Zimop (May-Be-Operations) extension, as of version 1.0.
++
++	View detailed information in:
++	<https://github.com/riscv/riscv-isa-manual/blob/main/src/zimop.adoc>
++
++	bfd/ChangeLog:
++
++		* elfxx-riscv.c (riscv_multi_subset_supports): Handle Zimop
++		(riscv_multi_subset_supports_ext): Ditto.
++
++	gas/ChangeLog:
++
++		* NEWS: Updated.
++		* testsuite/gas/riscv/march-help.l: Ditto.
++		* testsuite/gas/riscv/zimop.d: New test.
++		* testsuite/gas/riscv/zimop.s: New test.
++
++	include/ChangeLog:
++
++		* opcode/riscv-opc.h (DECLARE_INSN): New declarations for Zimop.
++		(MATCH_MOP_R_0, MATCH_MOP_R_1, MATCH_MOP_R_2, MATCH_MOP_R_3,
++		MATCH_MOP_R_4, MATCH_MOP_R_5, MATCH_MOP_R_6, MATCH_MOP_R_7,
++		MATCH_MOP_R_8, MATCH_MOP_R_9, MATCH_MOP_R_10, MATCH_MOP_R_11,
++		MATCH_MOP_R_12, MATCH_MOP_R_13, MATCH_MOP_R_14, MATCH_MOP_R_15,
++		MATCH_MOP_R_16, MATCH_MOP_R_17, MATCH_MOP_R_18, MATCH_MOP_R_19,
++		MATCH_MOP_R_20, MATCH_MOP_R_21, MATCH_MOP_R_22, MATCH_MOP_R_23,
++		MATCH_MOP_R_24, MATCH_MOP_R_25, MATCH_MOP_R_26, MATCH_MOP_R_27,
++		MATCH_MOP_R_28, MATCH_MOP_R_29, MATCH_MOP_R_30, MATCH_MOP_R_31,
++		MATCH_MOP_RR_0, MATCH_MOP_RR_1, MATCH_MOP_RR_2, MATCH_MOP_RR_3,
++		MATCH_MOP_RR_4, MATCH_MOP_RR_5, MATCH_MOP_RR_6, MATCH_MOP_RR_7): Define.
++		(MASK_MOP_R_0, MASK_MOP_R_1, MASK_MOP_R_2, MASK_MOP_R_3, MASK_MOP_R_4,
++		MASK_MOP_R_5, MASK_MOP_R_6, MASK_MOP_R_7, MASK_MOP_R_8, MASK_MOP_R_9,
++		MASK_MOP_R_10, MASK_MOP_R_11, MASK_MOP_R_12, MASK_MOP_R_13,
++		MASK_MOP_R_14, MASK_MOP_R_15, MASK_MOP_R_16, MASK_MOP_R_17,
++		MASK_MOP_R_18, MASK_MOP_R_19, MASK_MOP_R_20, MASK_MOP_R_21,
++		MASK_MOP_R_22, MASK_MOP_R_23, MASK_MOP_R_24, MASK_MOP_R_25,
++		MASK_MOP_R_26, MASK_MOP_R_27, MASK_MOP_R_28, MASK_MOP_R_29,
++		MASK_MOP_R_30, MASK_MOP_R_31, MASK_MOP_RR_0, MASK_MOP_RR_1,
++		MASK_MOP_RR_2, MASK_MOP_RR_3, MASK_MOP_RR_4, MASK_MOP_RR_5,
++		MASK_MOP_RR_6, MASK_MOP_RR_7): Ditto.
++		* opcode/riscv.h (enum riscv_insn_class): Add INSN_CLASS_ZIMOP.
++
++	opcodes/ChangeLog:
++
++		* riscv-opc.c: Add Zimop instructions.
++
++2024-08-07  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-06  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-05  Xi Ruoyao  <xry111@xry111.site>
++
++	LoongArch: Fix DT_RELR and relaxation interaction
++
++2024-08-05  H.J. Lu  <hjl.tools@gmail.com>
++
++	LTO: Restore the wrapper symbol check for standard function
++	Call unwrap_hash_lookup to restore the wrapper symbol check for standard
++	function since reference to standard function may not show up in LTO
++	symbol table:
++
++	[hjl@gnu-tgl-3 pr31956-3]$ nm foo.o
++	00000000 T main
++	         U __real_malloc
++	00000000 T __wrap_malloc
++	[hjl@gnu-tgl-3 pr31956-3]$  lto-dump -list foo.o
++	Type   Visibility  Size  Name
++	function  default     0  malloc
++	function  default     0  __real_malloc
++	function  default     3  main
++	function  default     5  __wrap_malloc
++	[hjl@gnu-tgl-3 pr31956-3]$ make
++	gcc -O2 -flto -Wall   -c -o foo.o foo.c
++	gcc -Wl,--wrap=malloc -O2 -flto -Wall -o x foo.o
++	/usr/local/bin/ld: /tmp/ccsPW0a9.ltrans0.ltrans.o: in function `main':
++	<artificial>:(.text.startup+0xa): undefined reference to `__wrap_malloc'
++	collect2: error: ld returned 1 exit status
++	make: *** [Makefile:22: x] Error 1
++	[hjl@gnu-tgl-3 pr31956-3]$
++
++	Also add a test to verify that the unused wrapper is removed.
++
++		PR ld/31956
++		* plugin.c (get_symbols): Restore the wrapper symbol check for
++		standard function.
++		* testsuite/ld-plugin/lto.exp: Run the malloc test and the
++		unused test.
++		* testsuite/ld-plugin/pr31956c.c: New file.
++		* testsuite/ld-plugin/pr31956d.c: New file.
++		* testsuite/ld-plugin/pr31956d.d: New file.
++
++	(cherry picked from commit 3221c470f0765886a49a1a3d2ec602e4104a377b)
++
++2024-08-05  GDB Administrator  <gdbadmin@sourceware.org>
++
++	Automatic date update in version.in
++
++2024-08-04  Nick Clifton  <nickc@redhat.com>
++
++	Re-enable development on 2.43 branch
++
++	this-is-the-2.43-release
++
+ 2024-08-04  GDB Administrator  <gdbadmin@sourceware.org>
+ 
+ 	Automatic date update in version.in
+@@ -213978,11 +214265,3 @@
+ 
+ 		* dwarf2/read.c (lnp_state_machine::record_line): Use 'true'.
+ 		(dwarf_decode_lines): Remove '=='.
+-
+-2021-07-03  Nick Clifton  <nickc@redhat.com>
+-
+-	More minor updates to the how-to-make-a-release documentation
+-
+-	Update version number and regenerate files
+-
+-	Add markers for 2.37 branch
 diff --git a/bfd/archures.c b/bfd/archures.c
 index 94118b8d2cf..c4decc59e4a 100644
 --- a/bfd/archures.c
@@ -64,14 +375,14 @@ index ae79c6490b5..a93be109f11 100644
  .
  .struct bfd_build_id
 diff --git a/bfd/configure b/bfd/configure
-index c66a79ee343..9fe9cf6919f 100755
+index c66a79ee343..90a60f50822 100755
 --- a/bfd/configure
 +++ b/bfd/configure
 @@ -1,6 +1,6 @@
  #! /bin/sh
  # Guess values for system-dependent variables and create Makefiles.
 -# Generated by GNU Autoconf 2.69 for bfd 2.43.
-+# Generated by GNU Autoconf 2.69 for bfd 2.43.0.
++# Generated by GNU Autoconf 2.69 for bfd 2.43.1.
  #
  #
  # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
@@ -81,8 +392,8 @@ index c66a79ee343..9fe9cf6919f 100755
  PACKAGE_TARNAME='bfd'
 -PACKAGE_VERSION='2.43'
 -PACKAGE_STRING='bfd 2.43'
-+PACKAGE_VERSION='2.43.0'
-+PACKAGE_STRING='bfd 2.43.0'
++PACKAGE_VERSION='2.43.1'
++PACKAGE_STRING='bfd 2.43.1'
  PACKAGE_BUGREPORT=''
  PACKAGE_URL=''
  
@@ -91,7 +402,7 @@ index c66a79ee343..9fe9cf6919f 100755
    # This message is too long to be a string in the A/UX 3.1 sh.
    cat <<_ACEOF
 -\`configure' configures bfd 2.43 to adapt to many kinds of systems.
-+\`configure' configures bfd 2.43.0 to adapt to many kinds of systems.
++\`configure' configures bfd 2.43.1 to adapt to many kinds of systems.
  
  Usage: $0 [OPTION]... [VAR=VALUE]...
  
@@ -100,7 +411,7 @@ index c66a79ee343..9fe9cf6919f 100755
  if test -n "$ac_init_help"; then
    case $ac_init_help in
 -     short | recursive ) echo "Configuration of bfd 2.43:";;
-+     short | recursive ) echo "Configuration of bfd 2.43.0:";;
++     short | recursive ) echo "Configuration of bfd 2.43.1:";;
     esac
    cat <<\_ACEOF
  
@@ -109,7 +420,7 @@ index c66a79ee343..9fe9cf6919f 100755
  if $ac_init_version; then
    cat <<\_ACEOF
 -bfd configure 2.43
-+bfd configure 2.43.0
++bfd configure 2.43.1
  generated by GNU Autoconf 2.69
  
  Copyright (C) 2012 Free Software Foundation, Inc.
@@ -118,7 +429,7 @@ index c66a79ee343..9fe9cf6919f 100755
  running configure, to aid debugging if configure makes a mistake.
  
 -It was created by bfd $as_me 2.43, which was
-+It was created by bfd $as_me 2.43.0, which was
++It was created by bfd $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    $ $0 $@
@@ -127,7 +438,7 @@ index c66a79ee343..9fe9cf6919f 100755
  # Define the identity of the package.
   PACKAGE='bfd'
 - VERSION='2.43'
-+ VERSION='2.43.0'
++ VERSION='2.43.1'
  
  
  cat >>confdefs.h <<_ACEOF
@@ -136,7 +447,7 @@ index c66a79ee343..9fe9cf6919f 100755
  # values after options handling.
  ac_log="
 -This file was extended by bfd $as_me 2.43, which was
-+This file was extended by bfd $as_me 2.43.0, which was
++This file was extended by bfd $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    CONFIG_FILES    = $CONFIG_FILES
@@ -145,7 +456,7 @@ index c66a79ee343..9fe9cf6919f 100755
  ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
  ac_cs_version="\\
 -bfd config.status 2.43
-+bfd config.status 2.43.0
++bfd config.status 2.43.1
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
@@ -328,7 +639,7 @@ index 026654fd9d3..f6c6fdbee69 100644
  
    return claimed;
 diff --git a/bfd/po/bfd.pot b/bfd/po/bfd.pot
-index 1a5ce2e1345..e75e000fa60 100644
+index 1a5ce2e1345..bbb84807c21 100644
 --- a/bfd/po/bfd.pot
 +++ b/bfd/po/bfd.pot
 @@ -8,7 +8,7 @@ msgid ""
@@ -336,26 +647,1059 @@ index 1a5ce2e1345..e75e000fa60 100644
  "Project-Id-Version: PACKAGE VERSION\n"
  "Report-Msgid-Bugs-To: https://sourceware.org/bugzilla/\n"
 -"POT-Creation-Date: 2024-08-04 14:00+0100\n"
-+"POT-Creation-Date: 2024-08-04 17:41+0100\n"
++"POT-Creation-Date: 2024-08-17 17:39+0100\n"
  "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
  "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
  "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -129,7 +129,7 @@ msgstr ""
+ msgid "warning: writing archive was slow: rewriting timestamp"
+ msgstr ""
+ 
+-#: archive.c:2363 archive.c:2424 elflink.c:4930 linker.c:1436
++#: archive.c:2363 archive.c:2424 elflink.c:4931 linker.c:1436
+ #, c-format
+ msgid "%pB: plugin needed to handle lto object"
+ msgstr ""
+@@ -142,115 +142,115 @@ msgstr ""
+ msgid "Writing updated armap timestamp"
+ msgstr ""
+ 
+-#: bfd.c:777
+-msgid "no error"
+-msgstr ""
+-
+ #: bfd.c:778
+-msgid "system call error"
++msgid "no error"
+ msgstr ""
+ 
+ #: bfd.c:779
+-msgid "invalid bfd target"
++msgid "system call error"
+ msgstr ""
+ 
+ #: bfd.c:780
+-msgid "file in wrong format"
++msgid "invalid bfd target"
+ msgstr ""
+ 
+ #: bfd.c:781
+-msgid "archive object file in wrong format"
++msgid "file in wrong format"
+ msgstr ""
+ 
+ #: bfd.c:782
+-msgid "invalid operation"
++msgid "archive object file in wrong format"
+ msgstr ""
+ 
+ #: bfd.c:783
+-msgid "memory exhausted"
++msgid "invalid operation"
+ msgstr ""
+ 
+ #: bfd.c:784
+-msgid "no symbols"
++msgid "memory exhausted"
+ msgstr ""
+ 
+ #: bfd.c:785
+-msgid "archive has no index; run ranlib to add one"
++msgid "no symbols"
+ msgstr ""
+ 
+ #: bfd.c:786
+-msgid "no more archived files"
++msgid "archive has no index; run ranlib to add one"
+ msgstr ""
+ 
+ #: bfd.c:787
+-msgid "malformed archive"
++msgid "no more archived files"
+ msgstr ""
+ 
+ #: bfd.c:788
+-msgid "DSO missing from command line"
++msgid "malformed archive"
+ msgstr ""
+ 
+ #: bfd.c:789
+-msgid "file format not recognized"
++msgid "DSO missing from command line"
+ msgstr ""
+ 
+ #: bfd.c:790
+-msgid "file format is ambiguous"
++msgid "file format not recognized"
+ msgstr ""
+ 
+ #: bfd.c:791
+-msgid "section has no contents"
++msgid "file format is ambiguous"
+ msgstr ""
+ 
+ #: bfd.c:792
+-msgid "nonrepresentable section on output"
++msgid "section has no contents"
+ msgstr ""
+ 
+ #: bfd.c:793
+-msgid "symbol needs debug section which does not exist"
++msgid "nonrepresentable section on output"
+ msgstr ""
+ 
+ #: bfd.c:794
+-msgid "bad value"
++msgid "symbol needs debug section which does not exist"
+ msgstr ""
+ 
+ #: bfd.c:795
+-msgid "file truncated"
++msgid "bad value"
+ msgstr ""
+ 
+ #: bfd.c:796
+-msgid "file too big"
++msgid "file truncated"
+ msgstr ""
+ 
+ #: bfd.c:797
+-msgid "sorry, cannot handle this file"
++msgid "file too big"
+ msgstr ""
+ 
+ #: bfd.c:798
+-#, c-format
+-msgid "error reading %s: %s"
++msgid "sorry, cannot handle this file"
+ msgstr ""
+ 
+ #: bfd.c:799
++#, c-format
++msgid "error reading %s: %s"
++msgstr ""
++
++#: bfd.c:800
+ msgid "#<invalid error code>"
+ msgstr ""
+ 
+-#: bfd.c:2198
++#: bfd.c:2199
+ #, c-format
+ msgid "BFD %s assertion fail %s:%d"
+ msgstr ""
+ 
+-#: bfd.c:2211
++#: bfd.c:2212
+ #, c-format
+ msgid "%s: BFD %s internal error, aborting at %s:%d in %s\n"
+ msgstr ""
+ 
+-#: bfd.c:2215
++#: bfd.c:2216
+ #, c-format
+ msgid "%s: BFD %s internal error, aborting at %s:%d\n"
+ msgstr ""
+ 
+-#: bfd.c:2218
++#: bfd.c:2219
+ #, c-format
+ msgid "Please report this bug.\n"
+ msgstr ""
+@@ -560,16 +560,16 @@ msgstr ""
+ msgid "<corrupt info> %s"
+ msgstr ""
+ 
+-#: coffgen.c:2796 elflink.c:15466 linker.c:2987
++#: coffgen.c:2796 elflink.c:15468 linker.c:2987
+ msgid "%F%P: already_linked_table: %E\n"
+ msgstr ""
+ 
+-#: coffgen.c:3138 elflink.c:14404
++#: coffgen.c:3138 elflink.c:14406
+ #, c-format
+ msgid "removing unused section '%pA' in file '%pB'"
+ msgstr ""
+ 
+-#: coffgen.c:3215 elflink.c:14635
++#: coffgen.c:3215 elflink.c:14637
+ msgid "warning: gc-sections option ignored"
+ msgstr ""
+ 
+@@ -578,7 +578,7 @@ msgstr ""
+ msgid "warning: symbol `%s' is both section and non-section"
+ msgstr ""
+ 
+-#: cofflink.c:503 elf64-ia64-vms.c:5199 elflink.c:5559
++#: cofflink.c:503 elf64-ia64-vms.c:5199 elflink.c:5560
+ #, c-format
+ msgid "warning: type of symbol `%s' changed from %d to %d in %pB"
+ msgstr ""
+@@ -588,7 +588,7 @@ msgstr ""
+ msgid "%pB: relocs in section `%pA', but it has no contents"
+ msgstr ""
+ 
+-#: cofflink.c:2403 elflink.c:11802
++#: cofflink.c:2403 elflink.c:11804
+ #, c-format
+ msgid ""
+ "%X`%s' referenced in section `%pA' of %pB: defined in discarded section `%"
+@@ -916,7 +916,7 @@ msgstr ""
+ 
+ #. xgettext:c-format.
+ #: elf-ifunc.c:144
+-#: elfnn-loongarch.c:1624
++#: elfnn-loongarch.c:1630
+ #, c-format
+ msgid ""
+ "%F%P: dynamic STT_GNU_IFUNC symbol `%s' with pointer equality in `%pB' can "
+@@ -1127,7 +1127,7 @@ msgstr ""
+ 
+ #: elf.c:518 elf32-arm.c:17695
+ #: elfnn-aarch64.c:8344
+-#: elfnn-loongarch.c:5920
++#: elfnn-loongarch.c:5935
+ #, c-format
+ msgid "%pB symbol number %lu references nonexistent SHT_SYMTAB_SHNDX section"
+ msgstr ""
+@@ -2185,7 +2185,7 @@ msgstr ""
+ #: elfxx-x86.c:970
+ #: elfnn-aarch64.c:7848
+ #: elfnn-kvx.c:3248
+-#: elfnn-loongarch.c:910
++#: elfnn-loongarch.c:916
+ #: elfnn-riscv.c:768
+ #, c-format
+ msgid "%pB: bad symbol index: %d"
+@@ -2202,7 +2202,7 @@ msgstr ""
+ msgid "errors encountered processing file %pB"
+ msgstr ""
+ 
+-#: elf32-arm.c:17364 elflink.c:13561 elflink.c:13608
++#: elf32-arm.c:17364 elflink.c:13563 elflink.c:13610
+ #, c-format
+ msgid "could not find section %s"
+ msgstr ""
+@@ -2792,7 +2792,7 @@ msgstr ""
+ #: elf32-i386.c:1713 elf32-s390.c:1151 elf32-sh.c:5500 elf32-tilepro.c:1548
+ #: elf32-xtensa.c:1263 elf64-s390.c:1083 elfxx-sparc.c:1556
+ #: elfxx-tilegx.c:1767
+-#: elfnn-loongarch.c:726
++#: elfnn-loongarch.c:732
+ #: elfnn-riscv.c:675
+ #, c-format
+ msgid "%pB: `%s' accessed both as normal and thread local symbol"
+@@ -4086,7 +4086,7 @@ msgstr ""
+ #: elf32-tilepro.c:3626 elfxx-tilegx.c:4018 elfxx-x86.c:2727
+ #: elfnn-aarch64.c:10453
+ #: elfnn-kvx.c:4633
+-#: elfnn-loongarch.c:5850
++#: elfnn-loongarch.c:5865
+ #: elfnn-riscv.c:3617
+ #, c-format
+ msgid "discarded output section: `%pA'"
+@@ -4455,9 +4455,9 @@ msgstr ""
+ msgid "%pB: .got subsegment exceeds 64K (size %d)"
+ msgstr ""
+ 
+-#: elf64-alpha.c:2680 elflink.c:15728
++#: elf64-alpha.c:2680 elflink.c:15730
+ #: elfnn-kvx.c:4020
+-#: elfnn-loongarch.c:1927
++#: elfnn-loongarch.c:1933
+ #, c-format
+ msgid "%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"
+ msgstr ""
+@@ -4478,7 +4478,7 @@ msgid "%pB: change in gp: BRSGP %s"
+ msgstr ""
+ 
+ #: elf64-alpha.c:4465 mach-o.c:625
+-#: elfnn-loongarch.c:868
++#: elfnn-loongarch.c:874
+ #: elfnn-riscv.c:726
+ #: elfnn-riscv.c:931
+ #: elfnn-riscv.c:973
+@@ -4642,7 +4642,7 @@ msgstr ""
+ msgid "%pB: linking auto-pic files with non-auto-pic files"
+ msgstr ""
+ 
+-#: elf64-ia64-vms.c:5149 elflink.c:5490
++#: elf64-ia64-vms.c:5149 elflink.c:5491
+ #, c-format
+ msgid ""
+ "warning: alignment %u of common symbol `%s' in %pB is greater than the "
+@@ -4654,7 +4654,7 @@ msgstr ""
+ msgid "warning: alignment %u of symbol `%s' in %pB is smaller than %u in %pB"
+ msgstr ""
+ 
+-#: elf64-ia64-vms.c:5172 elflink.c:5519
++#: elf64-ia64-vms.c:5172 elflink.c:5520
+ #, c-format
+ msgid ""
+ "warning: size of symbol `%s' changed from %<PRIu64> in %pB to %<PRIu64> in %"
+@@ -5093,7 +5093,7 @@ msgid ""
+ "section `%pA' is out of range"
+ msgstr ""
+ 
+-#: elf64-x86-64.c:3714 elflink.c:14034
++#: elf64-x86-64.c:3714 elflink.c:14036
+ msgid "%F%P: corrupt input: %pB\n"
+ msgstr ""
+ 
+@@ -5210,306 +5210,306 @@ msgstr ""
+ msgid "%P: copy reloc against protected `%pT' is dangerous\n"
+ msgstr ""
+ 
+-#: elflink.c:4337
++#: elflink.c:4338
+ msgid "%F%P: %pB: failed to add %s to first hash\n"
+ msgstr ""
+ 
+-#: elflink.c:4405
++#: elflink.c:4406
+ msgid "%F%P: first_hash failed to create: %E\n"
+ msgstr ""
+ 
+-#: elflink.c:4436
++#: elflink.c:4437
+ #, c-format
+ msgid "alternate ELF machine code found (%d) in %pB, expecting %d"
+ msgstr ""
+ 
+-#: elflink.c:4919
++#: elflink.c:4920
+ #, c-format
+ msgid "%pB: invalid version offset %lx (max %lx)"
+ msgstr ""
+ 
+-#: elflink.c:4988
++#: elflink.c:4989
+ #, c-format
+ msgid "%pB: %s local symbol at index %lu (>= sh_info of %lu)"
+ msgstr ""
+ 
+-#: elflink.c:5136
++#: elflink.c:5137
+ #, c-format
+ msgid "%pB: not enough version information"
+ msgstr ""
+ 
+-#: elflink.c:5174
++#: elflink.c:5175
+ #, c-format
+ msgid "%pB: %s: invalid version %u (max %d)"
+ msgstr ""
+ 
+-#: elflink.c:5211
++#: elflink.c:5212
+ #, c-format
+ msgid "%pB: %s: invalid needed version %d"
+ msgstr ""
+ 
+-#: elflink.c:5497
++#: elflink.c:5498
+ #, c-format
+ msgid ""
+ "warning: alignment %u of normal symbol `%s' in %pB is smaller than %u used "
+ "by the common definition in %pB"
+ msgstr ""
+ 
+-#: elflink.c:5504
++#: elflink.c:5505
+ msgid ""
+ "warning: NOTE: alignment discrepancies can cause real problems.  "
+ "Investigation is advised."
+ msgstr ""
+ 
+-#: elflink.c:5526
++#: elflink.c:5527
+ msgid ""
+ "warning: NOTE: size discrepancies can cause real problems.  Investigation is "
+ "advised."
+ msgstr ""
+ 
+-#: elflink.c:5669
++#: elflink.c:5670
+ #, c-format
+ msgid "%pB: undefined reference to symbol '%s'"
+ msgstr ""
+ 
+-#: elflink.c:6759
++#: elflink.c:6761
+ #, c-format
+ msgid "%pB: stack size specified and %s set"
+ msgstr ""
+ 
+-#: elflink.c:6763
++#: elflink.c:6765
+ #, c-format
+ msgid "%pB: %s not absolute"
+ msgstr ""
+ 
+-#: elflink.c:6975
++#: elflink.c:6977
+ #, c-format
+ msgid "%s: undefined version: %s"
+ msgstr ""
+ 
+-#: elflink.c:7364
++#: elflink.c:7366
+ msgid ""
+ "error: creating an executable stack because of -z execstack command line "
+ "option"
+ msgstr ""
+ 
+-#: elflink.c:7370
++#: elflink.c:7372
+ msgid ""
+ "warning: enabling an executable stack because of -z execstack command line "
+ "option"
+ msgstr ""
+ 
+-#: elflink.c:7432
++#: elflink.c:7434
+ #, c-format
+ msgid ""
+ "error: %s: is triggering the generation of an executable stack (because it "
+ "has an executable .note.GNU-stack section)"
+ msgstr ""
+ 
+-#: elflink.c:7438
++#: elflink.c:7440
+ #, c-format
+ msgid ""
+ "warning: %s: requires executable stack (because the .note.GNU-stack section "
+ "is executable)"
+ msgstr ""
+ 
+-#: elflink.c:7446
++#: elflink.c:7448
+ #, c-format
+ msgid ""
+ "error: %s: is triggering the generation of an executable stack because it "
+ "does not have a .note.GNU-stack section"
+ msgstr ""
+ 
+-#: elflink.c:7452
++#: elflink.c:7454
+ #, c-format
+ msgid "warning: %s: missing .note.GNU-stack section implies executable stack"
+ msgstr ""
+ 
+-#: elflink.c:7455
++#: elflink.c:7457
+ msgid ""
+ "NOTE: This behaviour is deprecated and will be removed in a future version "
+ "of the linker"
+ msgstr ""
+ 
+-#: elflink.c:7609
++#: elflink.c:7611
+ #, c-format
+ msgid "%pB: .preinit_array section is not allowed in DSO"
+ msgstr ""
+ 
+-#: elflink.c:9207
++#: elflink.c:9209
+ #, c-format
+ msgid "undefined %s reference in complex symbol: %s"
+ msgstr ""
+ 
+-#: elflink.c:9370 elflink.c:9378
++#: elflink.c:9372 elflink.c:9380
+ msgid "division by zero"
+ msgstr ""
+ 
+-#: elflink.c:9392
++#: elflink.c:9394
+ #, c-format
+ msgid "unknown operator '%c' in complex symbol"
+ msgstr ""
+ 
+ #. PR 21524: Let the user know if a symbol was removed by garbage collection.
+-#: elflink.c:9728
++#: elflink.c:9730
+ #, c-format
+ msgid ""
+ "%pB:%pA: error: relocation references symbol %s which was removed by garbage "
+ "collection"
+ msgstr ""
+ 
+-#: elflink.c:9731
++#: elflink.c:9733
+ #, c-format
+ msgid "%pB:%pA: error: try relinking with --gc-keep-exported enabled"
+ msgstr ""
+ 
+-#: elflink.c:9982 elflink.c:10000 elflink.c:10039 elflink.c:10057
++#: elflink.c:9984 elflink.c:10002 elflink.c:10041 elflink.c:10059
+ #, c-format
+ msgid "%pB: unable to sort relocs - they are in more than one size"
+ msgstr ""
+ 
+ #. The section size is not divisible by either -
+ #. something is wrong.
+-#: elflink.c:10016 elflink.c:10073
++#: elflink.c:10018 elflink.c:10075
+ #, c-format
+ msgid "%pB: unable to sort relocs - they are of an unknown size"
+ msgstr ""
+ 
+-#: elflink.c:10125
++#: elflink.c:10127
+ msgid "not enough memory to sort relocations"
+ msgstr ""
+ 
+-#: elflink.c:10463
++#: elflink.c:10465
+ #, c-format
+ msgid "%pB: too many sections: %d (>= %d)"
+ msgstr ""
+ 
+-#: elflink.c:10739
++#: elflink.c:10741
+ #, c-format
+ msgid "%pB: internal symbol `%s' in %pB is referenced by DSO"
+ msgstr ""
+ 
+-#: elflink.c:10742
++#: elflink.c:10744
+ #, c-format
+ msgid "%pB: hidden symbol `%s' in %pB is referenced by DSO"
+ msgstr ""
+ 
+-#: elflink.c:10745
++#: elflink.c:10747
+ #, c-format
+ msgid "%pB: local symbol `%s' in %pB is referenced by DSO"
+ msgstr ""
+ 
+-#: elflink.c:10838
++#: elflink.c:10840
+ #, c-format
+ msgid "%pB: could not find output section %pA for input section %pA"
+ msgstr ""
+ 
+-#: elflink.c:10996
++#: elflink.c:10998
+ #, c-format
+ msgid "%pB: protected symbol `%s' isn't defined"
+ msgstr ""
+ 
+-#: elflink.c:10999
++#: elflink.c:11001
+ #, c-format
+ msgid "%pB: internal symbol `%s' isn't defined"
+ msgstr ""
+ 
+-#: elflink.c:11002
++#: elflink.c:11004
+ #, c-format
+ msgid "%pB: hidden symbol `%s' isn't defined"
+ msgstr ""
+ 
+-#: elflink.c:11034
++#: elflink.c:11036
+ #, c-format
+ msgid "%pB: no symbol version section for versioned symbol `%s'"
+ msgstr ""
+ 
+-#: elflink.c:11716
++#: elflink.c:11718
+ #, c-format
+ msgid ""
+ "error: %pB contains a reloc (%#<PRIx64>) for section %pA that references a "
+ "non-existent global symbol"
+ msgstr ""
+ 
+-#: elflink.c:12186
++#: elflink.c:12188
+ #, c-format
+ msgid "error: %pB: size of section %pA is not multiple of address size"
+ msgstr ""
+ 
+-#: elflink.c:12466
++#: elflink.c:12468
+ #, c-format
+ msgid "%pB: no symbol found for import library"
+ msgstr ""
+ 
+-#: elflink.c:13072
++#: elflink.c:13074
+ msgid "%F%P: %pB: failed to finish relative relocations\n"
+ msgstr ""
+ 
+-#: elflink.c:13149
++#: elflink.c:13151
+ #, c-format
+ msgid "%pB: file class %s incompatible with %s"
+ msgstr ""
+ 
+-#: elflink.c:13398
++#: elflink.c:13400
+ #, c-format
+ msgid "%pB: failed to generate import library"
+ msgstr ""
+ 
+-#: elflink.c:13566
++#: elflink.c:13568
+ #, c-format
+ msgid "warning: %s section has zero size"
+ msgstr ""
+ 
+-#: elflink.c:13614
++#: elflink.c:13616
+ #, c-format
+ msgid "warning: section '%s' is being made into a note"
+ msgstr ""
+ 
+-#: elflink.c:13708
++#: elflink.c:13710
+ msgid "%P%X: read-only segment has dynamic relocations\n"
+ msgstr ""
+ 
+-#: elflink.c:13711
++#: elflink.c:13713
+ msgid "%P: warning: creating DT_TEXTREL in a shared object\n"
+ msgstr ""
+ 
+-#: elflink.c:13714
++#: elflink.c:13716
+ msgid "%P: warning: creating DT_TEXTREL in a PDE\n"
+ msgstr ""
+ 
+-#: elflink.c:13717
++#: elflink.c:13719
+ msgid "%P: warning: creating DT_TEXTREL in a PIE\n"
+ msgstr ""
+ 
+-#: elflink.c:13854
++#: elflink.c:13856
+ msgid "%P%X: can not read symbols: %E\n"
+ msgstr ""
+ 
+-#: elflink.c:14287
++#: elflink.c:14289
+ msgid "%F%P: %pB(%pA): error: need linked-to section for --gc-sections\n"
+ msgstr ""
+ 
+-#: elflink.c:14767
++#: elflink.c:14769
+ #, c-format
+ msgid "%pB: %pA+%#<PRIx64>: no symbol found for INHERIT"
+ msgstr ""
+ 
+-#: elflink.c:14808
++#: elflink.c:14810
+ #, c-format
+ msgid "%pB: section '%pA': corrupt VTENTRY entry"
+ msgstr ""
+ 
+-#: elflink.c:14951
++#: elflink.c:14953
+ #, c-format
+ msgid "unrecognized INPUT_SECTION_FLAG %s\n"
+ msgstr ""
+ 
+-#: elflink.c:15734
++#: elflink.c:15736
+ #, c-format
+ msgid "%P: %pB: warning: relocation against `%s' in read-only section `%pA'\n"
+ msgstr ""
+ 
+-#: elflink.c:15823
++#: elflink.c:15825
+ msgid ""
+ "%P: warning: GNU indirect functions with DT_TEXTREL may result in a segfault "
+ "at runtime; recompile with %s\n"
+@@ -5918,242 +5918,242 @@ msgstr ""
+ msgid " [not 32bitmode]"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:1799
++#: elfxx-riscv.c:1802
+ #, c-format
+ msgid "x ISA extension `%s' must be set with the versions"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:1805
++#: elfxx-riscv.c:1808
+ #, c-format
+ msgid "cannot find default versions of the ISA extension `%s'"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:1911
++#: elfxx-riscv.c:1914
+ #, c-format
+ msgid "%s: first ISA extension must be `e', `i' or `g'"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:1935
++#: elfxx-riscv.c:1938
+ #, c-format
+ msgid "%s: unknown standard ISA extension or prefix class `%c'"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:1971
++#: elfxx-riscv.c:1974
+ #, c-format
+ msgid "%s: invalid prefixed ISA extension `%s' ends with <number>p"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:1995
++#: elfxx-riscv.c:1998
+ #, c-format
+ msgid "%s: unknown prefixed ISA extension `%s'"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2019
++#: elfxx-riscv.c:2022
+ #, c-format
+ msgid "%s: prefixed ISA extension must separate with _"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2059
++#: elfxx-riscv.c:2062
+ #, c-format
+ msgid "rv%de does not support the `h' extension"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2067
++#: elfxx-riscv.c:2070
+ #, c-format
+ msgid "rv%d does not support the `q' extension"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2074
++#: elfxx-riscv.c:2077
+ msgid "zcmp' is incompatible with `d/zcd' extension"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2081
++#: elfxx-riscv.c:2084
+ #, c-format
+ msgid "rv%d does not support the `zcf' extension"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2088
++#: elfxx-riscv.c:2091
+ msgid "`zfinx' is conflict with the `f/d/q/zfh/zfhmin' extension"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2095
++#: elfxx-riscv.c:2098
+ msgid "`xtheadvector' is conflict with the `v' extension"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2116
++#: elfxx-riscv.c:2119
+ msgid "zvl*b extensions need to enable either `v' or `zve' extension"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2178
++#: elfxx-riscv.c:2181
+ #, c-format
+ msgid "%s: ISA string cannot contain uppercase letters"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2206
++#: elfxx-riscv.c:2209
+ #, c-format
+ msgid "%s: ISA string must begin with rv32 or rv64"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2443
++#: elfxx-riscv.c:2446
+ #, c-format
+ msgid "%sinvalid ISA extension ends with <number>p in %s `%s'"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2466
++#: elfxx-riscv.c:2469
+ #, c-format
+ msgid "%sunknown ISA extension `%s' in %s `%s'"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2478
++#: elfxx-riscv.c:2481
+ #, c-format
+ msgid "%scannot + or - base extension `%s' in %s `%s'"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2763 elfxx-riscv.c:3033
++#: elfxx-riscv.c:2770 elfxx-riscv.c:3044
+ msgid "internal: unreachable INSN_CLASS_*"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2798
++#: elfxx-riscv.c:2805
+ msgid "zihintntl' and `c', or `zihintntl' and `zca"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2803 elfxx-riscv.c:2827
++#: elfxx-riscv.c:2810 elfxx-riscv.c:2836
+ msgid "c' or `zca"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2809
++#: elfxx-riscv.c:2818
+ msgid "m' or `zmmul"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2833
++#: elfxx-riscv.c:2842
+ msgid "f' and `c', or `f' and `zcf"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2838
++#: elfxx-riscv.c:2847
+ msgid "c' or `zcf"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2844
++#: elfxx-riscv.c:2853
+ msgid "d' and `c', or `d' and `zcd"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2849
++#: elfxx-riscv.c:2858
+ msgid "c' or `zcd"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2851
++#: elfxx-riscv.c:2860
+ msgid "f' or `zfinx"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2853
++#: elfxx-riscv.c:2862
+ msgid "d' or `zdinx"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2855
++#: elfxx-riscv.c:2864
+ msgid "q' or `zqinx"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2857
++#: elfxx-riscv.c:2866
+ msgid "zfh' or `zhinx"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2861
++#: elfxx-riscv.c:2870
+ msgid "zfhmin' or `zhinxmin"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2872
++#: elfxx-riscv.c:2881
+ msgid "zfhmin' and `d', or `zhinxmin' and `zdinx"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2883
++#: elfxx-riscv.c:2892
+ msgid "zfhmin' and `q', or `zhinxmin' and `zqinx"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2891
++#: elfxx-riscv.c:2900
+ msgid "d' and `zfa"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2899
++#: elfxx-riscv.c:2908
+ msgid "q' and `zfa"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2907
++#: elfxx-riscv.c:2916
+ msgid "zfh' and `zfa"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2917
++#: elfxx-riscv.c:2926
+ msgid "zfh' and `zfa', or `zvfh' and `zfa"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2922
++#: elfxx-riscv.c:2931
+ msgid "zfh' or `zvfh"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2938
++#: elfxx-riscv.c:2947
+ msgid "zbb' or `zbkb"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2940
++#: elfxx-riscv.c:2949
+ msgid "zbc' or `zbkc"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2948
++#: elfxx-riscv.c:2957
+ msgid "zknd' or `zkne"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2954
++#: elfxx-riscv.c:2963
+ msgid "v' or `zve64x' or `zve32x"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2956
++#: elfxx-riscv.c:2965
+ msgid "v' or `zve64d' or `zve64f' or `zve32f"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2958
++#: elfxx-riscv.c:2967
+ msgid "zvbb"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2960
++#: elfxx-riscv.c:2969
+ msgid "zvbc"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2966
++#: elfxx-riscv.c:2975
+ msgid "zvkb"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2968
++#: elfxx-riscv.c:2977
+ msgid "zvkg"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2970
++#: elfxx-riscv.c:2979
+ msgid "zvkned"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2972
++#: elfxx-riscv.c:2981
+ msgid "zvknha' or `zvknhb"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2974
++#: elfxx-riscv.c:2983
+ msgid "zvksed"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2976
++#: elfxx-riscv.c:2985
+ msgid "zvksh"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2980
++#: elfxx-riscv.c:2989
+ msgid "zcb' and `zba"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2982
++#: elfxx-riscv.c:2991
+ msgid "zcb' and `zbb"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2984
++#: elfxx-riscv.c:2993
+ msgid "zcb' and `zmmul', or `zcb' and `m"
+ msgstr ""
+ 
+-#: elfxx-riscv.c:2990
++#: elfxx-riscv.c:3001
+ msgid "h"
+ msgstr ""
+ 
+@@ -9364,13 +9364,13 @@ msgstr ""
+ msgid "relocation against `%s' has faulty GOT type "
+ msgstr ""
+ 
+-#: elfnn-loongarch.c:283
+-#: elfnn-loongarch.c:335
++#: elfnn-loongarch.c:289
++#: elfnn-loongarch.c:341
+ #, c-format
+ msgid "%#<PRIx64> invaild imm"
+ msgstr ""
+ 
+-#: elfnn-loongarch.c:517
++#: elfnn-loongarch.c:523
+ #: elfnn-riscv.c:4161
+ #, c-format
+ msgid ""
+@@ -9378,47 +9378,47 @@ msgid ""
+ "  target emulation `%s' does not match `%s'"
+ msgstr ""
+ 
+-#: elfnn-loongarch.c:572
++#: elfnn-loongarch.c:578
+ #, c-format
+ msgid "%pB: can't link different ABI object."
+ msgstr ""
+ 
+-#: elfnn-loongarch.c:714
++#: elfnn-loongarch.c:720
+ msgid "Internal error: unreachable."
+ msgstr ""
+ 
+-#: elfnn-loongarch.c:866
++#: elfnn-loongarch.c:872
+ #, c-format
+ msgid ""
+ "%pB:(%pA+%#lx): relocation %s against `%s` can not be used when making a "
+ "shared object; recompile with -fPIC"
+ msgstr ""
+ 
+-#: elfnn-loongarch.c:990
++#: elfnn-loongarch.c:996
+ #, c-format
+ msgid ""
+ "%pB: stack based reloc type (%u) is not supported with -z pack-relative-"
+ "relocs"
+ msgstr ""
+ 
+-#: elfnn-loongarch.c:1151
++#: elfnn-loongarch.c:1157
+ #, c-format
+ msgid ""
+ "%pB: relocation R_LARCH_32 against non-absolute symbol `%s' cannot be used "
+ "in ELFCLASS64 when making a shared object or PIE"
+ msgstr ""
+ 
+-#: elfnn-loongarch.c:1216
++#: elfnn-loongarch.c:1222
+ #, c-format
+ msgid ""
+ "%pB: R_LARCH_ALIGN with offset %<PRId64> not aligned to instruction boundary"
+ msgstr ""
+ 
+-#: elfnn-loongarch.c:4526
++#: elfnn-loongarch.c:4535
+ msgid "recompile with 'gcc -mno-relax' or 'as -mno-relax' or 'ld --no-relax'"
+ msgstr ""
+ 
+-#: elfnn-loongarch.c:5124
++#: elfnn-loongarch.c:5133
+ #: elfnn-riscv.c:4934
+ #, c-format
+ msgid ""
 diff --git a/bfd/version.m4 b/bfd/version.m4
-index e3d21199369..c5b3172c532 100644
+index e3d21199369..f2e4acdb55f 100644
 --- a/bfd/version.m4
 +++ b/bfd/version.m4
 @@ -1 +1 @@
 -m4_define([BFD_VERSION], [2.43])
-+m4_define([BFD_VERSION], [2.43.0])
++m4_define([BFD_VERSION], [2.43.1])
 diff --git a/binutils/configure b/binutils/configure
-index 934b9a7352e..e97f4cba053 100755
+index 934b9a7352e..0e54d77015d 100755
 --- a/binutils/configure
 +++ b/binutils/configure
 @@ -1,6 +1,6 @@
  #! /bin/sh
  # Guess values for system-dependent variables and create Makefiles.
 -# Generated by GNU Autoconf 2.69 for binutils 2.43.
-+# Generated by GNU Autoconf 2.69 for binutils 2.43.0.
++# Generated by GNU Autoconf 2.69 for binutils 2.43.1.
  #
  #
  # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
@@ -365,8 +1709,8 @@ index 934b9a7352e..e97f4cba053 100755
  PACKAGE_TARNAME='binutils'
 -PACKAGE_VERSION='2.43'
 -PACKAGE_STRING='binutils 2.43'
-+PACKAGE_VERSION='2.43.0'
-+PACKAGE_STRING='binutils 2.43.0'
++PACKAGE_VERSION='2.43.1'
++PACKAGE_STRING='binutils 2.43.1'
  PACKAGE_BUGREPORT=''
  PACKAGE_URL=''
  
@@ -375,7 +1719,7 @@ index 934b9a7352e..e97f4cba053 100755
    # This message is too long to be a string in the A/UX 3.1 sh.
    cat <<_ACEOF
 -\`configure' configures binutils 2.43 to adapt to many kinds of systems.
-+\`configure' configures binutils 2.43.0 to adapt to many kinds of systems.
++\`configure' configures binutils 2.43.1 to adapt to many kinds of systems.
  
  Usage: $0 [OPTION]... [VAR=VALUE]...
  
@@ -384,7 +1728,7 @@ index 934b9a7352e..e97f4cba053 100755
  if test -n "$ac_init_help"; then
    case $ac_init_help in
 -     short | recursive ) echo "Configuration of binutils 2.43:";;
-+     short | recursive ) echo "Configuration of binutils 2.43.0:";;
++     short | recursive ) echo "Configuration of binutils 2.43.1:";;
     esac
    cat <<\_ACEOF
  
@@ -393,7 +1737,7 @@ index 934b9a7352e..e97f4cba053 100755
  if $ac_init_version; then
    cat <<\_ACEOF
 -binutils configure 2.43
-+binutils configure 2.43.0
++binutils configure 2.43.1
  generated by GNU Autoconf 2.69
  
  Copyright (C) 2012 Free Software Foundation, Inc.
@@ -402,7 +1746,7 @@ index 934b9a7352e..e97f4cba053 100755
  running configure, to aid debugging if configure makes a mistake.
  
 -It was created by binutils $as_me 2.43, which was
-+It was created by binutils $as_me 2.43.0, which was
++It was created by binutils $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    $ $0 $@
@@ -411,7 +1755,7 @@ index 934b9a7352e..e97f4cba053 100755
  # Define the identity of the package.
   PACKAGE='binutils'
 - VERSION='2.43'
-+ VERSION='2.43.0'
++ VERSION='2.43.1'
  
  
  cat >>confdefs.h <<_ACEOF
@@ -420,7 +1764,7 @@ index 934b9a7352e..e97f4cba053 100755
  # values after options handling.
  ac_log="
 -This file was extended by binutils $as_me 2.43, which was
-+This file was extended by binutils $as_me 2.43.0, which was
++This file was extended by binutils $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    CONFIG_FILES    = $CONFIG_FILES
@@ -429,7 +1773,7 @@ index 934b9a7352e..e97f4cba053 100755
  ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
  ac_cs_version="\\
 -binutils config.status 2.43
-+binutils config.status 2.43.0
++binutils config.status 2.43.1
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
@@ -499,14 +1843,14 @@ index aca60e6c4f5..e37189e7c5e 100644
  
  		know (0);
 diff --git a/gas/configure b/gas/configure
-index b2c5126f788..a4d64ce5289 100755
+index b2c5126f788..8f5450c0947 100755
 --- a/gas/configure
 +++ b/gas/configure
 @@ -1,6 +1,6 @@
  #! /bin/sh
  # Guess values for system-dependent variables and create Makefiles.
 -# Generated by GNU Autoconf 2.69 for gas 2.43.
-+# Generated by GNU Autoconf 2.69 for gas 2.43.0.
++# Generated by GNU Autoconf 2.69 for gas 2.43.1.
  #
  #
  # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
@@ -516,8 +1860,8 @@ index b2c5126f788..a4d64ce5289 100755
  PACKAGE_TARNAME='gas'
 -PACKAGE_VERSION='2.43'
 -PACKAGE_STRING='gas 2.43'
-+PACKAGE_VERSION='2.43.0'
-+PACKAGE_STRING='gas 2.43.0'
++PACKAGE_VERSION='2.43.1'
++PACKAGE_STRING='gas 2.43.1'
  PACKAGE_BUGREPORT=''
  PACKAGE_URL=''
  
@@ -526,7 +1870,7 @@ index b2c5126f788..a4d64ce5289 100755
    # This message is too long to be a string in the A/UX 3.1 sh.
    cat <<_ACEOF
 -\`configure' configures gas 2.43 to adapt to many kinds of systems.
-+\`configure' configures gas 2.43.0 to adapt to many kinds of systems.
++\`configure' configures gas 2.43.1 to adapt to many kinds of systems.
  
  Usage: $0 [OPTION]... [VAR=VALUE]...
  
@@ -535,7 +1879,7 @@ index b2c5126f788..a4d64ce5289 100755
  if test -n "$ac_init_help"; then
    case $ac_init_help in
 -     short | recursive ) echo "Configuration of gas 2.43:";;
-+     short | recursive ) echo "Configuration of gas 2.43.0:";;
++     short | recursive ) echo "Configuration of gas 2.43.1:";;
     esac
    cat <<\_ACEOF
  
@@ -544,7 +1888,7 @@ index b2c5126f788..a4d64ce5289 100755
  if $ac_init_version; then
    cat <<\_ACEOF
 -gas configure 2.43
-+gas configure 2.43.0
++gas configure 2.43.1
  generated by GNU Autoconf 2.69
  
  Copyright (C) 2012 Free Software Foundation, Inc.
@@ -553,7 +1897,7 @@ index b2c5126f788..a4d64ce5289 100755
  running configure, to aid debugging if configure makes a mistake.
  
 -It was created by gas $as_me 2.43, which was
-+It was created by gas $as_me 2.43.0, which was
++It was created by gas $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    $ $0 $@
@@ -562,7 +1906,7 @@ index b2c5126f788..a4d64ce5289 100755
  # Define the identity of the package.
   PACKAGE='gas'
 - VERSION='2.43'
-+ VERSION='2.43.0'
++ VERSION='2.43.1'
  
  
  cat >>confdefs.h <<_ACEOF
@@ -571,7 +1915,7 @@ index b2c5126f788..a4d64ce5289 100755
  # values after options handling.
  ac_log="
 -This file was extended by gas $as_me 2.43, which was
-+This file was extended by gas $as_me 2.43.0, which was
++This file was extended by gas $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    CONFIG_FILES    = $CONFIG_FILES
@@ -580,7 +1924,7 @@ index b2c5126f788..a4d64ce5289 100755
  ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
  ac_cs_version="\\
 -gas config.status 2.43
-+gas config.status 2.43.0
++gas config.status 2.43.1
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
@@ -596,6 +1940,1227 @@ index a35e1356bbf..d0c90d30e47 100644
  		}
  	      sb_reset (&f.actual);
  	      sb_add_char (&f.actual, in->ptr[idx]);
+diff --git a/gas/po/gas.pot b/gas/po/gas.pot
+index be9b0cd3f7d..e052dceed7f 100644
+--- a/gas/po/gas.pot
++++ b/gas/po/gas.pot
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: https://sourceware.org/bugzilla/\n"
+-"POT-Creation-Date: 2024-08-04 14:01+0100\n"
++"POT-Creation-Date: 2024-08-17 17:40+0100\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -187,12 +187,12 @@ msgstr ""
+ msgid "  --elf-stt-common=[no|yes] "
+ msgstr ""
+ 
+-#: as.c:307 as.c:318 config/tc-i386.c:17974 config/tc-i386.c:17994
++#: as.c:307 as.c:318 config/tc-i386.c:17975 config/tc-i386.c:17995
+ #, c-format
+ msgid "(default: yes)\n"
+ msgstr ""
+ 
+-#: as.c:309 as.c:320 config/tc-i386.c:17976 config/tc-i386.c:17996
++#: as.c:309 as.c:320 config/tc-i386.c:17977 config/tc-i386.c:17997
+ #, c-format
+ msgid "(default: no)\n"
+ msgstr ""
+@@ -946,7 +946,7 @@ msgstr ""
+ msgid "Can't set register masks"
+ msgstr ""
+ 
+-#: config/obj-elf.c:318 config/tc-sparc.c:4383 config/tc-v850.c:508
++#: config/obj-elf.c:318 config/tc-sparc.c:4384 config/tc-v850.c:508
+ #, c-format
+ msgid "bad .common segment %s"
+ msgstr ""
+@@ -1629,7 +1629,7 @@ msgstr ""
+ msgid "bad expression"
+ msgstr ""
+ 
+-#: config/tc-aarch64.c:722 config/tc-sparc.c:3379
++#: config/tc-aarch64.c:722 config/tc-sparc.c:3380
+ msgid "bad segment"
+ msgstr ""
+ 
+@@ -2757,12 +2757,12 @@ msgstr ""
+ msgid ".COMMon length (%ld.) <0! Ignored."
+ msgstr ""
+ 
+-#: config/tc-alpha.c:3525 config/tc-ia64.c:1091 config/tc-sparc.c:4273
++#: config/tc-alpha.c:3525 config/tc-ia64.c:1091 config/tc-sparc.c:4274
+ #: config/tc-v850.c:303
+ msgid "Ignoring attempt to re-define symbol"
+ msgstr ""
+ 
+-#: config/tc-alpha.c:3617 config/tc-sparc.c:4281
++#: config/tc-alpha.c:3617 config/tc-sparc.c:4282
+ #, c-format
+ msgid "Length of .comm \"%s\" is already %ld. Not changed to %ld."
+ msgstr ""
+@@ -6255,7 +6255,7 @@ msgstr ""
+ msgid "internal error: reloc %d (`%s') not supported by object file format"
+ msgstr ""
+ 
+-#: config/tc-cr16.c:696 config/tc-i386.c:18173 config/tc-s390.c:2333
++#: config/tc-cr16.c:696 config/tc-i386.c:18174 config/tc-s390.c:2333
+ msgid "GOT already in symbol table"
+ msgstr ""
+ 
+@@ -7433,7 +7433,7 @@ msgid "Invalid expression after # number\n"
+ msgstr ""
+ 
+ #: config/tc-dlx.c:1178 config/tc-m32r.c:2275 config/tc-nds32.c:7841
+-#: config/tc-sparc.c:4014
++#: config/tc-sparc.c:4015
+ #, c-format
+ msgid "internal error: can't export reloc type %d (`%s')"
+ msgstr ""
+@@ -8397,7 +8397,7 @@ msgstr ""
+ msgid "Intel MCU is 32bit ELF only"
+ msgstr ""
+ 
+-#: config/tc-i386.c:3305 config/tc-i386.c:18069
++#: config/tc-i386.c:3305 config/tc-i386.c:18070
+ msgid "unknown architecture"
+ msgstr ""
+ 
+@@ -9029,7 +9029,7 @@ msgstr ""
+ msgid "eGPR use conflicts with encoding specifier"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14003 config/tc-i386.c:14046
++#: config/tc-i386.c:14003 config/tc-i386.c:14047
+ msgid "too many register/memory operands"
+ msgstr ""
+ 
+@@ -9042,7 +9042,7 @@ msgstr ""
+ msgid "constant doesn't fit in %d bits"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14097
++#: config/tc-i386.c:14098
+ msgid "VSIB unavailable with legacy encoding"
+ msgstr ""
+ 
+@@ -9050,372 +9050,372 @@ msgstr ""
+ #. an 8-bit immediate like for 4-register-operand insns, but that
+ #. would require ugly fiddling with process_operands() and/or
+ #. build_modrm_byte().
+-#: config/tc-i386.c:14108
++#: config/tc-i386.c:14109
+ msgid "too many register operands with VSIB"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14127
++#: config/tc-i386.c:14128
+ #, c-format
+ msgid "can't encode register '%s%s' with VEX/XOP/EVEX"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14332
++#: config/tc-i386.c:14333
+ msgid "conflicting .insn operands"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14365 read.c:4266
++#: config/tc-i386.c:14366 read.c:4266
+ msgid "SCFI: hand-crafting instructions not supported"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14434
++#: config/tc-i386.c:14435
+ #, c-format
+ msgid "duplicated `{%s}'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14507
++#: config/tc-i386.c:14508
+ #, c-format
+ msgid "Unsupported broadcast: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14582
++#: config/tc-i386.c:14583
+ #, c-format
+ msgid "`%s%s' can't be used for write mask"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14602
++#: config/tc-i386.c:14603
+ #, c-format
+ msgid "invalid write mask `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14623
++#: config/tc-i386.c:14624
+ #, c-format
+ msgid "duplicated `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14633
++#: config/tc-i386.c:14634
+ #, c-format
+ msgid "invalid zeroing-masking `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14651
++#: config/tc-i386.c:14652
+ #, c-format
+ msgid "missing `}' in `%s'"
+ msgstr ""
+ 
+ #. We don't know this one.
+-#: config/tc-i386.c:14663
++#: config/tc-i386.c:14664
+ #, c-format
+ msgid "unknown vector operation: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14669
++#: config/tc-i386.c:14670
+ msgid "zeroing-masking only allowed with write mask"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14689
++#: config/tc-i386.c:14690
+ #, c-format
+ msgid "at most %d immediate operands are allowed"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14728 config/tc-i386.c:14988
++#: config/tc-i386.c:14729 config/tc-i386.c:14989
+ #, c-format
+ msgid "junk `%s' after expression"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14741
++#: config/tc-i386.c:14742
+ #, c-format
+ msgid "illegal immediate register operand %s"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14755
++#: config/tc-i386.c:14756
+ #, c-format
+ msgid "missing or invalid immediate expression `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14779 config/tc-i386.c:15068
++#: config/tc-i386.c:14780 config/tc-i386.c:15069
+ #, c-format
+ msgid "unimplemented segment %s in operand"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14828
++#: config/tc-i386.c:14829
+ #, c-format
+ msgid "expecting scale factor of 1, 2, 4, or 8: got `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14837
++#: config/tc-i386.c:14838
+ #, c-format
+ msgid "scale factor of %d without an index register"
+ msgstr ""
+ 
+-#: config/tc-i386.c:14859
++#: config/tc-i386.c:14860
+ #, c-format
+ msgid "at most %d displacement operands are allowed"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15043
++#: config/tc-i386.c:15044
+ #, c-format
+ msgid "missing or invalid displacement expression `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15219
++#: config/tc-i386.c:15220
+ #, c-format
+ msgid "`%s' is not valid here (expected `%c%s%s%c')"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15231
++#: config/tc-i386.c:15232
+ #, c-format
+ msgid "`%s' is not a valid %s expression"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15245
++#: config/tc-i386.c:15246
+ #, c-format
+ msgid "invalid `%s' prefix"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15275
++#: config/tc-i386.c:15276
+ #, c-format
+ msgid "`%s' cannot be used here"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15282
++#: config/tc-i386.c:15283
+ msgid "register scaling is being ignored here"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15330
++#: config/tc-i386.c:15331
+ #, c-format
+ msgid "Missing '}': '%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15336
++#: config/tc-i386.c:15337
+ #, c-format
+ msgid "Junk after '}': '%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15411
++#: config/tc-i386.c:15412
+ #, c-format
+ msgid "bad memory operand `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15427
++#: config/tc-i386.c:15428
+ #, c-format
+ msgid "junk `%s' after register"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15434
++#: config/tc-i386.c:15435
+ #, c-format
+ msgid "`%s%s' cannot be used here"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15457
++#: config/tc-i386.c:15458
+ #, c-format
+ msgid "`%s': misplaced `{%s}'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15464 config/tc-i386.c:15638 config/tc-i386.c:15682
++#: config/tc-i386.c:15465 config/tc-i386.c:15639 config/tc-i386.c:15683
+ #, c-format
+ msgid "bad register name `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15472
++#: config/tc-i386.c:15473
+ msgid "immediate operand illegal with absolute jump"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15479
++#: config/tc-i386.c:15480
+ #, c-format
+ msgid "`%s': RC/SAE operand must follow immediate operands"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15492
++#: config/tc-i386.c:15493
+ #, c-format
+ msgid "`%s': misplaced `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15543
++#: config/tc-i386.c:15544
+ msgid "unbalanced figure braces"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15627
++#: config/tc-i386.c:15628
+ #, c-format
+ msgid "expecting `,' or `)' after index register in `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15655
++#: config/tc-i386.c:15656
+ #, c-format
+ msgid "expecting `)' after scale factor in `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15663
++#: config/tc-i386.c:15664
+ #, c-format
+ msgid "expecting index register or scale factor after `,'; got '%c'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:15671
++#: config/tc-i386.c:15672
+ #, c-format
+ msgid "expecting `,' or `)' after base register in `%s'"
+ msgstr ""
+ 
+ #. It's not a memory operand; argh!
+-#: config/tc-i386.c:15721
++#: config/tc-i386.c:15722
+ #, c-format
+ msgid "invalid char %s beginning operand %d `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:16382
++#: config/tc-i386.c:16383
+ #, c-format
+ msgid "%s:%u: add %d%s at 0x%llx to align %s within %d-byte boundary\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:16385
++#: config/tc-i386.c:16386
+ #, c-format
+ msgid ""
+ "%s:%u: add additional %d%s at 0x%llx to align %s within %d-byte boundary\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:16391
++#: config/tc-i386.c:16392
+ #, c-format
+ msgid ""
+ "%s:%u: add %d%s-byte nop at 0x%llx to align %s within %d-byte boundary\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:16458
++#: config/tc-i386.c:16459
+ msgid "long jump required"
+ msgstr ""
+ 
+-#: config/tc-i386.c:16513
++#: config/tc-i386.c:16514
+ msgid "jump target out of range"
+ msgstr ""
+ 
+-#: config/tc-i386.c:16999
++#: config/tc-i386.c:17000
+ #, c-format
+ msgid "register '%s%s' cannot be used here"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17253
++#: config/tc-i386.c:17254
+ #, c-format
+ msgid "invalid -mx86-used-note= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17276
++#: config/tc-i386.c:17277
+ msgid "no compiled in support for x86_64"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17296
++#: config/tc-i386.c:17297
+ msgid "no compiled in support for 32bit x86_64"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17300
++#: config/tc-i386.c:17301
+ msgid "32bit x86_64 is only supported for ELF"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17317
++#: config/tc-i386.c:17318
+ msgid "no compiled in support for ix86"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17350 config/tc-i386.c:17436
++#: config/tc-i386.c:17351 config/tc-i386.c:17437
+ #, c-format
+ msgid "invalid -march= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17406
++#: config/tc-i386.c:17407
+ msgid "Unrecognized vector size specifier ignored"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17446 config/tc-i386.c:17458
++#: config/tc-i386.c:17447 config/tc-i386.c:17459
+ #, c-format
+ msgid "invalid -mtune= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17467
++#: config/tc-i386.c:17468
+ #, c-format
+ msgid "invalid -mmnemonic= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17476
++#: config/tc-i386.c:17477
+ #, c-format
+ msgid "invalid -msyntax= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17504
++#: config/tc-i386.c:17505
+ #, c-format
+ msgid "invalid -msse-check= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17515
++#: config/tc-i386.c:17516
+ #, c-format
+ msgid "invalid -moperand-check= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17524
++#: config/tc-i386.c:17525
+ #, c-format
+ msgid "invalid -mavxscalar= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17533
++#: config/tc-i386.c:17534
+ #, c-format
+ msgid "invalid -mvexwig= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17548
++#: config/tc-i386.c:17549
+ #, c-format
+ msgid "invalid -mevexlig= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17561
++#: config/tc-i386.c:17562
+ #, c-format
+ msgid "invalid -mevexrcig= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17570
++#: config/tc-i386.c:17571
+ #, c-format
+ msgid "invalid -mevexwig= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17585
++#: config/tc-i386.c:17586
+ #, c-format
+ msgid "invalid -momit-lock-prefix= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17594
++#: config/tc-i386.c:17595
+ #, c-format
+ msgid "invalid -mfence-as-lock-add= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17603
++#: config/tc-i386.c:17604
+ #, c-format
+ msgid "invalid -mlfence-after-load= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17620
++#: config/tc-i386.c:17621
+ #, c-format
+ msgid "invalid -mlfence-before-indirect-branch= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17634
++#: config/tc-i386.c:17635
+ #, c-format
+ msgid "invalid -mlfence-before-ret= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17644
++#: config/tc-i386.c:17645
+ #, c-format
+ msgid "invalid -mrelax-relocations= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17673
++#: config/tc-i386.c:17674
+ #, c-format
+ msgid "invalid -malign-branch-boundary= value: %s"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17687
++#: config/tc-i386.c:17688
+ #, c-format
+ msgid "invalid -malign-branch-prefix-size= value: %s"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17714
++#: config/tc-i386.c:17715
+ #, c-format
+ msgid "invalid -malign-branch= option: `%s'"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17881
++#: config/tc-i386.c:17882
+ #, c-format
+ msgid ""
+ "  -Qy, -Qn                ignored\n"
+@@ -9423,7 +9423,7 @@ msgid ""
+ "  -k                      ignored\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17886
++#: config/tc-i386.c:17887
+ #, c-format
+ msgid ""
+ "  -n                      do not optimize code alignment\n"
+@@ -9431,32 +9431,32 @@ msgid ""
+ "  -q                      quieten some warnings\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17891
++#: config/tc-i386.c:17892
+ #, c-format
+ msgid "  -s                      ignored\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17896
++#: config/tc-i386.c:17897
+ #, c-format
+ msgid "  --32/--64/--x32         generate 32bit/64bit/x32 object\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17899
++#: config/tc-i386.c:17900
+ #, c-format
+ msgid "  --32/--64               generate 32bit/64bit object\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17904
++#: config/tc-i386.c:17905
+ #, c-format
+ msgid "  --divide                do not treat `/' as a comment character\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17907
++#: config/tc-i386.c:17908
+ #, c-format
+ msgid "  --divide                ignored\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17910
++#: config/tc-i386.c:17911
+ #, c-format
+ msgid ""
+ "  -march=CPU[,+EXTENSION...]\n"
+@@ -9464,24 +9464,24 @@ msgid ""
+ "of:\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17914
++#: config/tc-i386.c:17915
+ #, c-format
+ msgid ""
+ "                          EXTENSION is combination of (possibly \"no\"-"
+ "prefixed):\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17917
++#: config/tc-i386.c:17918
+ #, c-format
+ msgid "  -mtune=CPU              optimize for CPU, CPU is one of:\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17920
++#: config/tc-i386.c:17921
+ #, c-format
+ msgid "  -msse2avx               encode SSE instructions with VEX prefix\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17922
++#: config/tc-i386.c:17923
+ #, c-format
+ msgid ""
+ "  -muse-unaligned-vector-move\n"
+@@ -9489,21 +9489,21 @@ msgid ""
+ "move\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17925
++#: config/tc-i386.c:17926
+ #, c-format
+ msgid ""
+ "  -msse-check=[none|error|warning] (default: none)\n"
+ "                          check SSE instructions\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17928
++#: config/tc-i386.c:17929
+ #, c-format
+ msgid ""
+ "  -moperand-check=[none|error|warning] (default: warning)\n"
+ "                          check operand combinations for validity\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17931
++#: config/tc-i386.c:17932
+ #, c-format
+ msgid ""
+ "  -mavxscalar=[128|256] (default: 128)\n"
+@@ -9512,7 +9512,7 @@ msgid ""
+ "                           length\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17935
++#: config/tc-i386.c:17936
+ #, c-format
+ msgid ""
+ "  -mvexwig=[0|1] (default: 0)\n"
+@@ -9520,7 +9520,7 @@ msgid ""
+ "                           for VEX.W bit ignored instructions\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17939
++#: config/tc-i386.c:17940
+ #, c-format
+ msgid ""
+ "  -mevexlig=[128|256|512] (default: 128)\n"
+@@ -9529,7 +9529,7 @@ msgid ""
+ "                           length\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17943
++#: config/tc-i386.c:17944
+ #, c-format
+ msgid ""
+ "  -mevexwig=[0|1] (default: 0)\n"
+@@ -9538,7 +9538,7 @@ msgid ""
+ "                           for EVEX.W bit ignored instructions\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17947
++#: config/tc-i386.c:17948
+ #, c-format
+ msgid ""
+ "  -mevexrcig=[rne|rd|ru|rz] (default: rne)\n"
+@@ -9547,77 +9547,77 @@ msgid ""
+ "                           for SAE-only ignored instructions\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17951
++#: config/tc-i386.c:17952
+ #, c-format
+ msgid "  -mmnemonic=[att|intel] "
+ msgstr ""
+ 
+-#: config/tc-i386.c:17954
++#: config/tc-i386.c:17955
+ #, c-format
+ msgid "(default: att)\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17956
+-#, c-format
+-msgid "(default: intel)\n"
+-msgstr ""
+-
+ #: config/tc-i386.c:17957
+ #, c-format
++msgid "(default: intel)\n"
++msgstr ""
++
++#: config/tc-i386.c:17958
++#, c-format
+ msgid "                          use AT&T/Intel mnemonic (AT&T syntax only)\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17959
++#: config/tc-i386.c:17960
+ #, c-format
+ msgid ""
+ "  -msyntax=[att|intel] (default: att)\n"
+ "                          use AT&T/Intel syntax\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17962
++#: config/tc-i386.c:17963
+ #, c-format
+ msgid "  -mindex-reg             support pseudo index registers\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17964
++#: config/tc-i386.c:17965
+ #, c-format
+ msgid "  -mnaked-reg             don't require `%%' prefix for registers\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17966
++#: config/tc-i386.c:17967
+ #, c-format
+ msgid "  -madd-bnd-prefix        add BND prefix for all valid branches\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17969
++#: config/tc-i386.c:17970
+ #, c-format
+ msgid "  -mshared                disable branch optimization for shared code\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17971
++#: config/tc-i386.c:17972
+ #, c-format
+ msgid "  -mx86-used-note=[no|yes] "
+ msgstr ""
+ 
+-#: config/tc-i386.c:17977
++#: config/tc-i386.c:17978
+ #, c-format
+ msgid ""
+ "                          generate x86 used ISA and feature properties\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17981
++#: config/tc-i386.c:17982
+ #, c-format
+ msgid "  -mbig-obj               generate big object files\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17984
++#: config/tc-i386.c:17985
+ #, c-format
+ msgid ""
+ "  -momit-lock-prefix=[no|yes] (default: no)\n"
+ "                          strip all lock prefixes\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17987
++#: config/tc-i386.c:17988
+ #, c-format
+ msgid ""
+ "  -mfence-as-lock-add=[no|yes] (default: no)\n"
+@@ -9625,24 +9625,24 @@ msgid ""
+ "                           lock addl $0x0, (%%{re}sp)\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17991
++#: config/tc-i386.c:17992
+ #, c-format
+ msgid "  -mrelax-relocations=[no|yes] "
+ msgstr ""
+ 
+-#: config/tc-i386.c:17997
++#: config/tc-i386.c:17998
+ #, c-format
+ msgid "                          generate relax relocations\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:17999
++#: config/tc-i386.c:18000
+ #, c-format
+ msgid ""
+ "  -malign-branch-boundary=NUM (default: 0)\n"
+ "                          align branches within NUM byte boundary\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18002
++#: config/tc-i386.c:18003
+ #, c-format
+ msgid ""
+ "  -malign-branch=TYPE[+TYPE...] (default: jcc+fused+jmp)\n"
+@@ -9652,28 +9652,28 @@ msgid ""
+ "                          specify types of branches to align\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18007
++#: config/tc-i386.c:18008
+ #, c-format
+ msgid ""
+ "  -malign-branch-prefix-size=NUM (default: 5)\n"
+ "                          align branches with NUM prefixes per instruction\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18010
++#: config/tc-i386.c:18011
+ #, c-format
+ msgid ""
+ "  -mbranches-within-32B-boundaries\n"
+ "                          align branches within 32 byte boundary\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18013
++#: config/tc-i386.c:18014
+ #, c-format
+ msgid ""
+ "  -mlfence-after-load=[no|yes] (default: no)\n"
+ "                          generate lfence after load\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18016
++#: config/tc-i386.c:18017
+ #, c-format
+ msgid ""
+ "  -mlfence-before-indirect-branch=[none|all|register|memory] (default: "
+@@ -9681,74 +9681,74 @@ msgid ""
+ "                          generate lfence before indirect near branch\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18019
++#: config/tc-i386.c:18020
+ #, c-format
+ msgid ""
+ "  -mlfence-before-ret=[none|or|not|shl|yes] (default: none)\n"
+ "                          generate lfence before ret\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18022
++#: config/tc-i386.c:18023
+ #, c-format
+ msgid "  -mamd64                 accept only AMD64 ISA [default]\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18024
++#: config/tc-i386.c:18025
+ #, c-format
+ msgid "  -mintel64               accept only Intel64 ISA\n"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18065
++#: config/tc-i386.c:18066
+ #, c-format
+ msgid "Intel MCU doesn't support `%s' architecture"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18073
++#: config/tc-i386.c:18074
+ msgid "SCFI is not supported for this ABI"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18136
++#: config/tc-i386.c:18137
+ msgid "Intel MCU is 32bit only"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18254
++#: config/tc-i386.c:18255
+ #, c-format
+ msgid "invalid %s relocation against register"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18387
++#: config/tc-i386.c:18388
+ msgid "symbol size computation overflow"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18466 config/tc-sparc.c:3855
++#: config/tc-i386.c:18467 config/tc-sparc.c:3856
+ #, c-format
+ msgid "can not do %d byte pc-relative relocation"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18484
++#: config/tc-i386.c:18485
+ #, c-format
+ msgid "can not do %d byte relocation"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18552
++#: config/tc-i386.c:18553
+ #, c-format
+ msgid "cannot represent relocation type %s in x32 mode"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18593 config/tc-s390.c:2828
++#: config/tc-i386.c:18594 config/tc-s390.c:2828
+ #, c-format
+ msgid "cannot represent relocation type %s"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18728
++#: config/tc-i386.c:18729
+ msgid "bad .section directive: want a,l,w,x,M,S,G,T in string"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18731
++#: config/tc-i386.c:18732
+ msgid "bad .section directive: want a,w,x,M,S,G,T in string"
+ msgstr ""
+ 
+-#: config/tc-i386.c:18741
++#: config/tc-i386.c:18742
+ msgid ".largecomm supported only in 64bit mode, producing .comm"
+ msgstr ""
+ 
+@@ -11608,7 +11608,7 @@ msgstr ""
+ msgid "wrong register in floating-point reglist"
+ msgstr ""
+ 
+-#: config/tc-m68k.c:3820 config/tc-m68k.c:3852 config/tc-sparc.c:3139
++#: config/tc-m68k.c:3820 config/tc-m68k.c:3852 config/tc-sparc.c:3140
+ msgid "failed sanity check."
+ msgstr ""
+ 
+@@ -17492,7 +17492,7 @@ msgstr ""
+ msgid "error setting flags for \".sbss\": %s"
+ msgstr ""
+ 
+-#: config/tc-score.c:6124 config/tc-sparc.c:4164
++#: config/tc-score.c:6124 config/tc-sparc.c:4165
+ msgid "missing alignment"
+ msgstr ""
+ 
+@@ -17860,8 +17860,8 @@ msgstr ""
+ msgid "overflow in branch to %s; converted into longer instruction sequence"
+ msgstr ""
+ 
+-#: config/tc-sh.c:3204 config/tc-sh.c:3251 config/tc-sparc.c:4628
+-#: config/tc-sparc.c:4652
++#: config/tc-sh.c:3204 config/tc-sh.c:3251 config/tc-sparc.c:4629
++#: config/tc-sparc.c:4653
+ msgid "misaligned data"
+ msgstr ""
+ 
+@@ -18068,8 +18068,8 @@ msgstr ""
+ msgid ": expecting crypto immediate"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2239 config/tc-sparc.c:2278 config/tc-sparc.c:2705
+-#: config/tc-sparc.c:2741
++#: config/tc-sparc.c:2239 config/tc-sparc.c:2278 config/tc-sparc.c:2706
++#: config/tc-sparc.c:2742
+ #, c-format
+ msgid "Illegal operands: %%%s requires arguments in ()"
+ msgstr ""
+@@ -18102,193 +18102,193 @@ msgstr ""
+ msgid ": There are only 32 single precision f registers; [0-31]"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2599
++#: config/tc-sparc.c:2631
+ msgid ": Instruction requires frs2 and frsd must be the same register"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2750
++#: config/tc-sparc.c:2751
+ #, c-format
+ msgid "Expression inside %%%s could not be parsed"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2758
++#: config/tc-sparc.c:2759
+ #, c-format
+ msgid ""
+ "Illegal operands: Can't do arithmetics other than + and - involving %%%s()"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2875
++#: config/tc-sparc.c:2876
+ #, c-format
+ msgid "Illegal operands: Can't add non-constant expression to %%%s()"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2885
++#: config/tc-sparc.c:2886
+ #, c-format
+ msgid ""
+ "Illegal operands: Can't do arithmetics involving %%%s() of a relocatable "
+ "symbol"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2903
++#: config/tc-sparc.c:2904
+ msgid ": PC-relative operand can't be a constant"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2910
++#: config/tc-sparc.c:2911
+ msgid ": TLS operand can't be a constant"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2938
++#: config/tc-sparc.c:2939
+ msgid ": Immediate value in cbcond is out of range."
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2964
++#: config/tc-sparc.c:2965
+ msgid ": invalid ASI name"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2973
++#: config/tc-sparc.c:2974
+ msgid ": invalid ASI expression"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:2978
++#: config/tc-sparc.c:2979
+ msgid ": invalid ASI number"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3083
++#: config/tc-sparc.c:3084
+ msgid ": non-immdiate imm2 operand"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3088
++#: config/tc-sparc.c:3089
+ msgid ": imm2 immediate operand out of range (0-3)"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3107
++#: config/tc-sparc.c:3108
+ msgid "OPF immediate operand out of range (0-0x1ff)"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3112
++#: config/tc-sparc.c:3113
+ msgid "non-immediate OPF operand, ignored"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3131
++#: config/tc-sparc.c:3132
+ msgid ": invalid cpreg name"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3160
++#: config/tc-sparc.c:3161
+ #, c-format
+ msgid "Illegal operands%s"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3209
++#: config/tc-sparc.c:3210
+ #, c-format
+ msgid "architecture bumped from \"%s\" to \"%s\" on \"%s\""
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3250
+-#, c-format
+-msgid "Architecture mismatch on \"%s %s\"."
+-msgstr ""
+-
+ #: config/tc-sparc.c:3251
+ #, c-format
++msgid "Architecture mismatch on \"%s %s\"."
++msgstr ""
++
++#: config/tc-sparc.c:3252
++#, c-format
+ msgid "(Requires %s; requested architecture is %s.)"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3263
++#: config/tc-sparc.c:3264
+ #, c-format
+ msgid "Hardware capability \"%s\" not enabled for \"%s\"."
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3649 config/tc-sparc.c:3656 config/tc-sparc.c:3663
+-#: config/tc-sparc.c:3670 config/tc-sparc.c:3677 config/tc-sparc.c:3686
+-#: config/tc-sparc.c:3698 config/tc-sparc.c:3709 config/tc-sparc.c:3731
+-#: config/tc-sparc.c:3755 write.c:1202
++#: config/tc-sparc.c:3650 config/tc-sparc.c:3657 config/tc-sparc.c:3664
++#: config/tc-sparc.c:3671 config/tc-sparc.c:3678 config/tc-sparc.c:3687
++#: config/tc-sparc.c:3699 config/tc-sparc.c:3710 config/tc-sparc.c:3732
++#: config/tc-sparc.c:3756 write.c:1202
+ msgid "relocation overflow"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:3810
++#: config/tc-sparc.c:3811
+ #, c-format
+ msgid "bad or unhandled relocation type: 0x%02x"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4126
++#: config/tc-sparc.c:4127
+ msgid "Expected comma after name"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4135
++#: config/tc-sparc.c:4136
+ #, c-format
+ msgid "BSS length (%d.) <0! Ignored."
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4147
++#: config/tc-sparc.c:4148
+ msgid "bad .reserve segment -- expected BSS segment"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4173 config/tc-sparc.c:4300
++#: config/tc-sparc.c:4174 config/tc-sparc.c:4301
+ msgid "negative alignment"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4183 config/tc-sparc.c:4321 read.c:1536 read.c:2579
++#: config/tc-sparc.c:4184 config/tc-sparc.c:4322 read.c:1536 read.c:2579
+ msgid "alignment not a power of 2"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4229
++#: config/tc-sparc.c:4230
+ #, c-format
+ msgid "Ignoring attempt to re-define symbol %s"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4252 config/tc-v850.c:280
++#: config/tc-sparc.c:4253 config/tc-v850.c:280
+ msgid "Expected comma after symbol-name"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4262
++#: config/tc-sparc.c:4263
+ #, c-format
+ msgid ".COMMon length (%lu) out of range ignored"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4288
++#: config/tc-sparc.c:4289
+ msgid "Expected comma after common length"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4433
++#: config/tc-sparc.c:4434
+ msgid "Unknown segment type"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4502 config/tc-sparc.c:4511
++#: config/tc-sparc.c:4503 config/tc-sparc.c:4512
+ #, c-format
+ msgid "register syntax is .register %%g[2367],{#scratch|symbolname|#ignore}"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4529
++#: config/tc-sparc.c:4530
+ msgid "redefinition of global register"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4540
++#: config/tc-sparc.c:4541
+ #, c-format
+ msgid "Register symbol %s already defined."
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4742
++#: config/tc-sparc.c:4743
+ #, c-format
+ msgid "Illegal operands: %%r_plt in %d-byte data field"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4752
++#: config/tc-sparc.c:4753
+ #, c-format
+ msgid "Illegal operands: %%r_tls_dtpoff in %d-byte data field"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4789 config/tc-vax.c:3315
++#: config/tc-sparc.c:4790 config/tc-vax.c:3315
+ #, c-format
+ msgid "Illegal operands: Only %%r_%s%d allowed in %d-byte data fields"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4797 config/tc-sparc.c:4828 config/tc-sparc.c:4837
++#: config/tc-sparc.c:4798 config/tc-sparc.c:4829 config/tc-sparc.c:4838
+ #: config/tc-vax.c:3323 config/tc-vax.c:3354 config/tc-vax.c:3363
+ #, c-format
+ msgid "Illegal operands: %%r_%s%d requires arguments in ()"
+ msgstr ""
+ 
+-#: config/tc-sparc.c:4846 config/tc-vax.c:3372
++#: config/tc-sparc.c:4847 config/tc-vax.c:3372
+ #, c-format
+ msgid "Illegal operands: garbage after %%r_%s%d()"
+ msgstr ""
 diff --git a/gas/testsuite/gas/i386/x86-64-apx-evex-promoted-bad.d b/gas/testsuite/gas/i386/x86-64-apx-evex-promoted-bad.d
 index 7c2efb08d71..667e6f27130 100644
 --- a/gas/testsuite/gas/i386/x86-64-apx-evex-promoted-bad.d
@@ -858,14 +3423,14 @@ index 0a0155f3376..58ca2b5f368 100644
 -	faligndata %f0, %f62, %f4, %f62
 +	faligndata %g0, %f62, %f4, %f62
 diff --git a/gprof/configure b/gprof/configure
-index 6c0bf5ef050..e3c86d3f1ed 100755
+index 6c0bf5ef050..2b82abb191d 100755
 --- a/gprof/configure
 +++ b/gprof/configure
 @@ -1,6 +1,6 @@
  #! /bin/sh
  # Guess values for system-dependent variables and create Makefiles.
 -# Generated by GNU Autoconf 2.69 for gprof 2.43.
-+# Generated by GNU Autoconf 2.69 for gprof 2.43.0.
++# Generated by GNU Autoconf 2.69 for gprof 2.43.1.
  #
  #
  # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
@@ -875,8 +3440,8 @@ index 6c0bf5ef050..e3c86d3f1ed 100755
  PACKAGE_TARNAME='gprof'
 -PACKAGE_VERSION='2.43'
 -PACKAGE_STRING='gprof 2.43'
-+PACKAGE_VERSION='2.43.0'
-+PACKAGE_STRING='gprof 2.43.0'
++PACKAGE_VERSION='2.43.1'
++PACKAGE_STRING='gprof 2.43.1'
  PACKAGE_BUGREPORT=''
  PACKAGE_URL=''
  
@@ -885,7 +3450,7 @@ index 6c0bf5ef050..e3c86d3f1ed 100755
    # This message is too long to be a string in the A/UX 3.1 sh.
    cat <<_ACEOF
 -\`configure' configures gprof 2.43 to adapt to many kinds of systems.
-+\`configure' configures gprof 2.43.0 to adapt to many kinds of systems.
++\`configure' configures gprof 2.43.1 to adapt to many kinds of systems.
  
  Usage: $0 [OPTION]... [VAR=VALUE]...
  
@@ -894,7 +3459,7 @@ index 6c0bf5ef050..e3c86d3f1ed 100755
  if test -n "$ac_init_help"; then
    case $ac_init_help in
 -     short | recursive ) echo "Configuration of gprof 2.43:";;
-+     short | recursive ) echo "Configuration of gprof 2.43.0:";;
++     short | recursive ) echo "Configuration of gprof 2.43.1:";;
     esac
    cat <<\_ACEOF
  
@@ -903,7 +3468,7 @@ index 6c0bf5ef050..e3c86d3f1ed 100755
  if $ac_init_version; then
    cat <<\_ACEOF
 -gprof configure 2.43
-+gprof configure 2.43.0
++gprof configure 2.43.1
  generated by GNU Autoconf 2.69
  
  Copyright (C) 2012 Free Software Foundation, Inc.
@@ -912,7 +3477,7 @@ index 6c0bf5ef050..e3c86d3f1ed 100755
  running configure, to aid debugging if configure makes a mistake.
  
 -It was created by gprof $as_me 2.43, which was
-+It was created by gprof $as_me 2.43.0, which was
++It was created by gprof $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    $ $0 $@
@@ -921,7 +3486,7 @@ index 6c0bf5ef050..e3c86d3f1ed 100755
  # Define the identity of the package.
   PACKAGE='gprof'
 - VERSION='2.43'
-+ VERSION='2.43.0'
++ VERSION='2.43.1'
  
  
  cat >>confdefs.h <<_ACEOF
@@ -930,7 +3495,7 @@ index 6c0bf5ef050..e3c86d3f1ed 100755
  # values after options handling.
  ac_log="
 -This file was extended by gprof $as_me 2.43, which was
-+This file was extended by gprof $as_me 2.43.0, which was
++This file was extended by gprof $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    CONFIG_FILES    = $CONFIG_FILES
@@ -939,7 +3504,7 @@ index 6c0bf5ef050..e3c86d3f1ed 100755
  ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
  ac_cs_version="\\
 -gprof config.status 2.43
-+gprof config.status 2.43.0
++gprof config.status 2.43.1
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
@@ -1126,6 +3691,20 @@ index e12f9c850b6..4c55f672332 100755
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
+diff --git a/gprofng/src/collctrl.cc b/gprofng/src/collctrl.cc
+index ece01d17f32..029c0387f19 100644
+--- a/gprofng/src/collctrl.cc
++++ b/gprofng/src/collctrl.cc
+@@ -109,7 +109,8 @@ read_cpuinfo ()
+ 	    cpu_info.cpu_clk_freq = read_int (temp + 9);
+ 	  else if (strncmp (temp, "cpu family", 10) == 0)
+ 	    cpu_info.cpu_family = read_int (temp + 10);
+-	  else if ((strncmp (temp, "vendor_id", 9) || strncmp (temp, "mvendorid", 9)) == 0)
++	  else if (strncmp (temp, "vendor_id", 9) == 0
++		   || strncmp (temp, "mvendorid", 9) == 0)
+ 	    {
+ 	      if (cpu_info.cpu_vendorstr == NULL)
+ 		read_str (temp + 9, &cpu_info.cpu_vendorstr);
 diff --git a/include/opcode/riscv-opc.h b/include/opcode/riscv-opc.h
 index f0e1d99a5a9..22e63baf2e3 100644
 --- a/include/opcode/riscv-opc.h
@@ -1327,14 +3906,14 @@ index fedd47837e4..9ccf0ec2454 100644
    INSN_CLASS_SVINVAL,
    INSN_CLASS_ZICBOM,
 diff --git a/ld/configure b/ld/configure
-index 44d79c2445d..1d89e3b0677 100755
+index 44d79c2445d..cb3bcae4d3a 100755
 --- a/ld/configure
 +++ b/ld/configure
 @@ -1,6 +1,6 @@
  #! /bin/sh
  # Guess values for system-dependent variables and create Makefiles.
 -# Generated by GNU Autoconf 2.69 for ld 2.43.
-+# Generated by GNU Autoconf 2.69 for ld 2.43.0.
++# Generated by GNU Autoconf 2.69 for ld 2.43.1.
  #
  #
  # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
@@ -1344,8 +3923,8 @@ index 44d79c2445d..1d89e3b0677 100755
  PACKAGE_TARNAME='ld'
 -PACKAGE_VERSION='2.43'
 -PACKAGE_STRING='ld 2.43'
-+PACKAGE_VERSION='2.43.0'
-+PACKAGE_STRING='ld 2.43.0'
++PACKAGE_VERSION='2.43.1'
++PACKAGE_STRING='ld 2.43.1'
  PACKAGE_BUGREPORT=''
  PACKAGE_URL=''
  
@@ -1354,7 +3933,7 @@ index 44d79c2445d..1d89e3b0677 100755
    # This message is too long to be a string in the A/UX 3.1 sh.
    cat <<_ACEOF
 -\`configure' configures ld 2.43 to adapt to many kinds of systems.
-+\`configure' configures ld 2.43.0 to adapt to many kinds of systems.
++\`configure' configures ld 2.43.1 to adapt to many kinds of systems.
  
  Usage: $0 [OPTION]... [VAR=VALUE]...
  
@@ -1363,7 +3942,7 @@ index 44d79c2445d..1d89e3b0677 100755
  if test -n "$ac_init_help"; then
    case $ac_init_help in
 -     short | recursive ) echo "Configuration of ld 2.43:";;
-+     short | recursive ) echo "Configuration of ld 2.43.0:";;
++     short | recursive ) echo "Configuration of ld 2.43.1:";;
     esac
    cat <<\_ACEOF
  
@@ -1372,7 +3951,7 @@ index 44d79c2445d..1d89e3b0677 100755
  if $ac_init_version; then
    cat <<\_ACEOF
 -ld configure 2.43
-+ld configure 2.43.0
++ld configure 2.43.1
  generated by GNU Autoconf 2.69
  
  Copyright (C) 2012 Free Software Foundation, Inc.
@@ -1381,7 +3960,7 @@ index 44d79c2445d..1d89e3b0677 100755
  running configure, to aid debugging if configure makes a mistake.
  
 -It was created by ld $as_me 2.43, which was
-+It was created by ld $as_me 2.43.0, which was
++It was created by ld $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    $ $0 $@
@@ -1390,7 +3969,7 @@ index 44d79c2445d..1d89e3b0677 100755
  # Define the identity of the package.
   PACKAGE='ld'
 - VERSION='2.43'
-+ VERSION='2.43.0'
++ VERSION='2.43.1'
  
  
  cat >>confdefs.h <<_ACEOF
@@ -1399,7 +3978,7 @@ index 44d79c2445d..1d89e3b0677 100755
  # values after options handling.
  ac_log="
 -This file was extended by ld $as_me 2.43, which was
-+This file was extended by ld $as_me 2.43.0, which was
++This file was extended by ld $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    CONFIG_FILES    = $CONFIG_FILES
@@ -1408,7 +3987,7 @@ index 44d79c2445d..1d89e3b0677 100755
  ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
  ac_cs_version="\\
 -ld config.status 2.43
-+ld config.status 2.43.0
++ld config.status 2.43.1
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
@@ -1519,6 +4098,77 @@ index 03ee9880d10..34ae3a0e0d8 100644
        ibfd->plugin_dummy_bfd = abfd;
        bfd_make_readable (abfd);
        abfd->no_export = ibfd->no_export;
+diff --git a/ld/po/ld.pot b/ld/po/ld.pot
+index a2598d9f0da..c0668603ced 100644
+--- a/ld/po/ld.pot
++++ b/ld/po/ld.pot
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: https://sourceware.org/bugzilla/\n"
+-"POT-Creation-Date: 2024-08-04 14:11+0100\n"
++"POT-Creation-Date: 2024-08-17 17:49+0100\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -3440,7 +3440,7 @@ msgstr ""
+ msgid "<no plugin>"
+ msgstr ""
+ 
+-#: plugin.c:255 plugin.c:1135
++#: plugin.c:255 plugin.c:1145
+ msgid "%F%P: %s: error loading plugin: %s\n"
+ msgstr ""
+ 
+@@ -3480,39 +3480,39 @@ msgid "unknown LTO visibility value %x"
+ msgstr ""
+ 
+ #. We should not have a new, indirect or warning symbol here.
+-#: plugin.c:828
++#: plugin.c:838
+ msgid "%F%P: %s: plugin symbol table corrupt (sym type %d)\n"
+ msgstr ""
+ 
+-#: plugin.c:893
++#: plugin.c:903
+ msgid "%P: %pB: symbol `%s' definition: %s, visibility: %s, resolution: %s\n"
+ msgstr ""
+ 
+-#: plugin.c:976
++#: plugin.c:986
+ msgid "%P: warning: "
+ msgstr ""
+ 
+-#: plugin.c:987
++#: plugin.c:997
+ msgid "%P: error: "
+ msgstr ""
+ 
+-#: plugin.c:1142
++#: plugin.c:1152
+ msgid "%F%P: %s: plugin error: %d\n"
+ msgstr ""
+ 
+-#: plugin.c:1201
++#: plugin.c:1216
+ msgid "%F%P: plugin_strdup failed to allocate memory: %s\n"
+ msgstr ""
+ 
+-#: plugin.c:1238
++#: plugin.c:1258
+ msgid "%F%P: plugin failed to allocate memory for input: %s\n"
+ msgstr ""
+ 
+-#: plugin.c:1266
++#: plugin.c:1287
+ msgid "%F%P: %s: plugin reported error claiming file\n"
+ msgstr ""
+ 
+-#: plugin.c:1379
++#: plugin.c:1406
+ msgid "%P: %s: error in plugin cleanup: %d (ignored)\n"
+ msgstr ""
+ 
 diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
 index ad6ad2e725e..8dafb6261fb 100644
 --- a/ld/testsuite/ld-i386/i386.exp
@@ -1689,14 +4339,14 @@ index 742823e6458..0697e67faf3 100644
  
      if  {[istarget "x86_64-*-linux*-gnux32"]} {
 diff --git a/opcodes/configure b/opcodes/configure
-index 1a6289af1cd..313cbd436ed 100755
+index 1a6289af1cd..29e13afe42c 100755
 --- a/opcodes/configure
 +++ b/opcodes/configure
 @@ -1,6 +1,6 @@
  #! /bin/sh
  # Guess values for system-dependent variables and create Makefiles.
 -# Generated by GNU Autoconf 2.69 for opcodes 2.43.
-+# Generated by GNU Autoconf 2.69 for opcodes 2.43.0.
++# Generated by GNU Autoconf 2.69 for opcodes 2.43.1.
  #
  #
  # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
@@ -1706,8 +4356,8 @@ index 1a6289af1cd..313cbd436ed 100755
  PACKAGE_TARNAME='opcodes'
 -PACKAGE_VERSION='2.43'
 -PACKAGE_STRING='opcodes 2.43'
-+PACKAGE_VERSION='2.43.0'
-+PACKAGE_STRING='opcodes 2.43.0'
++PACKAGE_VERSION='2.43.1'
++PACKAGE_STRING='opcodes 2.43.1'
  PACKAGE_BUGREPORT=''
  PACKAGE_URL=''
  
@@ -1716,7 +4366,7 @@ index 1a6289af1cd..313cbd436ed 100755
    # This message is too long to be a string in the A/UX 3.1 sh.
    cat <<_ACEOF
 -\`configure' configures opcodes 2.43 to adapt to many kinds of systems.
-+\`configure' configures opcodes 2.43.0 to adapt to many kinds of systems.
++\`configure' configures opcodes 2.43.1 to adapt to many kinds of systems.
  
  Usage: $0 [OPTION]... [VAR=VALUE]...
  
@@ -1725,7 +4375,7 @@ index 1a6289af1cd..313cbd436ed 100755
  if test -n "$ac_init_help"; then
    case $ac_init_help in
 -     short | recursive ) echo "Configuration of opcodes 2.43:";;
-+     short | recursive ) echo "Configuration of opcodes 2.43.0:";;
++     short | recursive ) echo "Configuration of opcodes 2.43.1:";;
     esac
    cat <<\_ACEOF
  
@@ -1734,7 +4384,7 @@ index 1a6289af1cd..313cbd436ed 100755
  if $ac_init_version; then
    cat <<\_ACEOF
 -opcodes configure 2.43
-+opcodes configure 2.43.0
++opcodes configure 2.43.1
  generated by GNU Autoconf 2.69
  
  Copyright (C) 2012 Free Software Foundation, Inc.
@@ -1743,7 +4393,7 @@ index 1a6289af1cd..313cbd436ed 100755
  running configure, to aid debugging if configure makes a mistake.
  
 -It was created by opcodes $as_me 2.43, which was
-+It was created by opcodes $as_me 2.43.0, which was
++It was created by opcodes $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    $ $0 $@
@@ -1752,7 +4402,7 @@ index 1a6289af1cd..313cbd436ed 100755
  # Define the identity of the package.
   PACKAGE='opcodes'
 - VERSION='2.43'
-+ VERSION='2.43.0'
++ VERSION='2.43.1'
  
  
  cat >>confdefs.h <<_ACEOF
@@ -1761,7 +4411,7 @@ index 1a6289af1cd..313cbd436ed 100755
  # values after options handling.
  ac_log="
 -This file was extended by opcodes $as_me 2.43, which was
-+This file was extended by opcodes $as_me 2.43.0, which was
++This file was extended by opcodes $as_me 2.43.1, which was
  generated by GNU Autoconf 2.69.  Invocation command line was
  
    CONFIG_FILES    = $CONFIG_FILES
@@ -1770,10 +4420,23 @@ index 1a6289af1cd..313cbd436ed 100755
  ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
  ac_cs_version="\\
 -opcodes config.status 2.43
-+opcodes config.status 2.43.0
++opcodes config.status 2.43.1
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
  
+diff --git a/opcodes/po/opcodes.pot b/opcodes/po/opcodes.pot
+index 2eb0162775d..44f8f47a013 100644
+--- a/opcodes/po/opcodes.pot
++++ b/opcodes/po/opcodes.pot
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+ "Report-Msgid-Bugs-To: https://sourceware.org/bugzilla/\n"
+-"POT-Creation-Date: 2024-08-04 14:00+0100\n"
++"POT-Creation-Date: 2024-08-17 17:40+0100\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
 diff --git a/opcodes/riscv-opc.c b/opcodes/riscv-opc.c
 index 14ec2903cdd..e6831bda9fd 100644
 --- a/opcodes/riscv-opc.c
