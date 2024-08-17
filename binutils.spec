@@ -9,7 +9,7 @@
 #
 Name     : binutils
 Version  : 2.43
-Release  : 549
+Release  : 550
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz.sig
@@ -175,7 +175,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1723821250
+export SOURCE_DATE_EPOCH=1723924644
 export GCC_IGNORE_WERROR=1
 CLEAR_INTERMEDIATE_CFLAGS="$CLEAR_INTERMEDIATE_CFLAGS -fno-lto "
 CLEAR_INTERMEDIATE_FCFLAGS="$CLEAR_INTERMEDIATE_FFLAGS -fno-lto "
@@ -210,7 +210,7 @@ FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS"
 FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS"
 ASFLAGS="$CLEAR_INTERMEDIATE_ASFLAGS"
 LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS"
-export SOURCE_DATE_EPOCH=1723821250
+export SOURCE_DATE_EPOCH=1723924644
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
@@ -6790,7 +6790,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib64/gprofng/libgp-heap.so
 /usr/lib64/gprofng/libgp-iotrace.so
 /usr/lib64/gprofng/libgp-sync.so
-/usr/lib64/libbfd-2.43.0.so
+/usr/lib64/libbfd-2.43.1.so
 /usr/lib64/libbfd.so
 /usr/lib64/libctf-nobfd.so
 /usr/lib64/libctf-nobfd.so.0
@@ -6801,7 +6801,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib64/libgprofng.so
 /usr/lib64/libgprofng.so.0
 /usr/lib64/libgprofng.so.0.0.0
-/usr/lib64/libopcodes-2.43.0.so
+/usr/lib64/libopcodes-2.43.1.so
 /usr/lib64/libopcodes.so
 /usr/lib64/libsframe.so
 /usr/lib64/libsframe.so.1
