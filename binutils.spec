@@ -9,7 +9,7 @@
 #
 Name     : binutils
 Version  : 2.43
-Release  : 550
+Release  : 551
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz.sig
