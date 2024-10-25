@@ -3,6 +3,9 @@ Alan Modra (3):
       PR32109, aborting at bfd/bfd.c:1236 in int _bfd_doprnt
       segv in bfd_elf_get_str_section
 
+Andreas Krebbel (1):
+      s390: Add arch15 instructions
+
 H.J. Lu (11):
       LTO: Restore the wrapper symbol check for standard function
       ld: Add PR ld/32067 tests
@@ -20,6 +23,12 @@ Jan Beulich (2):
       x86: correct .insn with opcode extension and VEX/XOP/EVEX encoding
       gas: correct .irpc handling with empty string
 
+Jens Remus (4):
+      s390: Document syntax to omit base register operand
+      s390: Align opcodes to lower-case
+      s390: Simplify (dis)assembly of insn operands with const bits
+      s390: Relax risbg[n]z, risb{h|l}gz, {rns|ros|rxs}bgt operand constraints
+
 Nick Clifton (2):
       Re-enable development on 2.43 branch
       This is the 2.43.1 release
@@ -36,6 +45,9 @@ Xi Ruoyao (1):
 Xiao Zeng (2):
       RISC-V: Add support for Zimop extension
       RISC-V: Add support for Zcmop extension
+
+Xin Wang (1):
+      LoongArch: Add elfNN_loongarch_mkobject to initialize LoongArch tdata
 
 diff --git a/ChangeLog.git b/ChangeLog.git
 index 2c017a55c0d..bea2a9bf80c 100644
@@ -545,10 +557,25 @@ index a180e59e8ca..336bcbf4658 100644
        int r_sym_shift;
  
 diff --git a/bfd/elfnn-loongarch.c b/bfd/elfnn-loongarch.c
-index db6d419a052..731af6a79a6 100644
+index db6d419a052..312707bb00b 100644
 --- a/bfd/elfnn-loongarch.c
 +++ b/bfd/elfnn-loongarch.c
-@@ -121,6 +121,12 @@ struct loongarch_elf_link_hash_table
+@@ -84,6 +84,14 @@ struct _bfd_loongarch_elf_obj_tdata
+    && elf_tdata (bfd) != NULL						\
+    && elf_object_id (bfd) == LARCH_ELF_DATA)
+ 
++static bool
++elfNN_loongarch_object (bfd *abfd)
++{
++  return bfd_elf_allocate_object (abfd,
++				  sizeof (struct _bfd_loongarch_elf_obj_tdata),
++				  LARCH_ELF_DATA);
++}
++
+ struct relr_entry
+ {
+   asection *sec;
+@@ -121,6 +129,12 @@ struct loongarch_elf_link_hash_table
  
    /* Layout recomputation count.  */
    bfd_size_type relr_layout_iter;
@@ -561,7 +588,7 @@ index db6d419a052..731af6a79a6 100644
  };
  
  struct loongarch_elf_section_data
-@@ -2212,6 +2218,8 @@ loongarch_elf_size_relative_relocs (struct bfd_link_info *info,
+@@ -2212,6 +2226,8 @@ loongarch_elf_size_relative_relocs (struct bfd_link_info *info,
  	  *need_layout = false;
  	}
      }
@@ -570,7 +597,7 @@ index db6d419a052..731af6a79a6 100644
    return true;
  }
  
-@@ -4133,7 +4141,8 @@ loongarch_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
+@@ -4133,7 +4149,8 @@ loongarch_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
  							    bfd_link_pic (info),
  							    h)
  			  && bfd_link_pic (info)
@@ -580,7 +607,7 @@ index db6d419a052..731af6a79a6 100644
  			{
  			  Elf_Internal_Rela rela;
  			  rela.r_offset = sec_addr (got) + got_off;
-@@ -5259,6 +5268,12 @@ loongarch_elf_relax_section (bfd *abfd, asection *sec,
+@@ -5259,6 +5276,12 @@ loongarch_elf_relax_section (bfd *abfd, asection *sec,
    *again = false;
    bfd_vma max_alignment = 0;
  
@@ -593,6 +620,15 @@ index db6d419a052..731af6a79a6 100644
    if (bfd_link_relocatable (info)
        || sec->sec_flg0
        || (sec->flags & SEC_RELOC) == 0
+@@ -6132,6 +6155,8 @@ elf_loongarch64_hash_symbol (struct elf_link_hash_entry *h)
+ #define bfd_elfNN_bfd_reloc_name_lookup loongarch_reloc_name_lookup
+ #define elf_info_to_howto_rel NULL /* Fall through to elf_info_to_howto.  */
+ #define elf_info_to_howto loongarch_info_to_howto_rela
++#define bfd_elfNN_mkobject						  \
++  elfNN_loongarch_object
+ #define bfd_elfNN_bfd_merge_private_bfd_data				  \
+   elfNN_loongarch_merge_private_bfd_data
+ 
 diff --git a/bfd/elfxx-riscv.c b/bfd/elfxx-riscv.c
 index b3adbed1913..80260d513c4 100644
 --- a/bfd/elfxx-riscv.c
@@ -1917,6 +1953,33 @@ index f7be075d14b..bed54f18e8f 100644
  	  && (fixp->fx_r_type == BFD_RELOC_386_PLT32
  	      || fixp->fx_r_type == BFD_RELOC_X86_64_PLT32)
  	  && symbol_section_p (fixp->fx_addsy))
+diff --git a/gas/config/tc-s390.c b/gas/config/tc-s390.c
+index 659c6af392b..055b6948c84 100644
+--- a/gas/config/tc-s390.c
++++ b/gas/config/tc-s390.c
+@@ -342,6 +342,8 @@ s390_parse_cpu (const char *arg,
+     { STRING_COMMA_LEN ("z15"), STRING_COMMA_LEN ("arch13"),
+       S390_INSTR_FLAG_HTM | S390_INSTR_FLAG_VX },
+     { STRING_COMMA_LEN ("z16"), STRING_COMMA_LEN ("arch14"),
++      S390_INSTR_FLAG_HTM | S390_INSTR_FLAG_VX },
++    { STRING_COMMA_LEN (""), STRING_COMMA_LEN ("arch15"),
+       S390_INSTR_FLAG_HTM | S390_INSTR_FLAG_VX }
+   };
+   static struct
+@@ -795,13 +797,6 @@ s390_insert_operand (unsigned char *insn,
+       uval &= 0xf;
+     }
+ 
+-  if (operand->flags & S390_OPERAND_OR1)
+-    uval |= 1;
+-  if (operand->flags & S390_OPERAND_OR2)
+-    uval |= 2;
+-  if (operand->flags & S390_OPERAND_OR8)
+-    uval |= 8;
+-
+   /* Duplicate the GPR/VR operand at bit pos 12 to 16.  */
+   if (operand->flags & S390_OPERAND_CP16)
+     {
 diff --git a/gas/config/tc-sparc.c b/gas/config/tc-sparc.c
 index aca60e6c4f5..e37189e7c5e 100644
 --- a/gas/config/tc-sparc.c
@@ -2040,6 +2103,58 @@ index b2c5126f788..8f5450c0947 100755
 +gas config.status 2.43.1
  configured by $0, generated by GNU Autoconf 2.69,
    with options \\"\$ac_cs_config\\"
+ 
+diff --git a/gas/doc/as.texi b/gas/doc/as.texi
+index 3501744dd31..b7fefa1fe49 100644
+--- a/gas/doc/as.texi
++++ b/gas/doc/as.texi
+@@ -1961,7 +1961,7 @@ Specify which s390 processor variant is the target, @samp{g5} (or
+ @samp{arch6}), @samp{z9-109}, @samp{z9-ec} (or @samp{arch7}), @samp{z10} (or
+ @samp{arch8}), @samp{z196} (or @samp{arch9}), @samp{zEC12} (or @samp{arch10}),
+ @samp{z13} (or @samp{arch11}), @samp{z14} (or @samp{arch12}), @samp{z15}
+-(or @samp{arch13}), or @samp{z16} (or @samp{arch14}).
++(or @samp{arch13}), @samp{z16} (or @samp{arch14}), or @samp{arch15}.
+ @item -mregnames
+ @itemx -mno-regnames
+ Allow or disallow symbolic names for registers.
+diff --git a/gas/doc/c-s390.texi b/gas/doc/c-s390.texi
+index f73dfdeae60..9a4fdfe14f1 100644
+--- a/gas/doc/c-s390.texi
++++ b/gas/doc/c-s390.texi
+@@ -18,7 +18,7 @@ and eleven chip levels. The architecture modes are the Enterprise System
+ Architecture (ESA) and the newer z/Architecture mode. The chip levels
+ are g5 (or arch3), g6, z900 (or arch5), z990 (or arch6), z9-109, z9-ec
+ (or arch7), z10 (or arch8), z196 (or arch9), zEC12 (or arch10), z13
+-(or arch11), z14 (or arch12), z15 (or arch13), or z16 (or arch14).
++(or arch11), z14 (or arch12), z15 (or arch13), z16 (or arch14), or arch15.
+ 
+ @menu
+ * s390 Options::                Command-line Options.
+@@ -71,8 +71,9 @@ are recognized:
+ @code{zEC12} (or @code{arch10}),
+ @code{z13} (or @code{arch11}),
+ @code{z14} (or @code{arch12}),
+-@code{z15} (or @code{arch13}), and
+-@code{z16} (or @code{arch14}).
++@code{z15} (or @code{arch13}),
++@code{z16} (or @code{arch14}), and
++@code{arch15}.
+ 
+ Assembling an instruction that is not supported on the target
+ processor results in an error message.
+@@ -300,10 +301,11 @@ field. The notation changes as follows:
+ @display
+ @multitable @columnfractions 0.30 0.30
+ @headitem full notation @tab short notation
+-@item Dn(0,Bn) @tab Dn(Bn)
++@item Dn(Xn,0) @tab Dn(Xn,)
++@item Dn(0,Bn) @tab Dn(,Bn) or Dn(Bn)
+ @item Dn(0,0) @tab Dn
+ @item Dn(0) @tab Dn
+-@item Dn(Ln,0) @tab Dn(Ln)
++@item Dn(Ln,0) @tab Dn(Ln,) or Dn(Ln)
+ @end multitable
+ @end display
  
 diff --git a/gas/macro.c b/gas/macro.c
 index a35e1356bbf..d0c90d30e47 100644
@@ -3720,6 +3835,290 @@ index 00000000000..d244c1fb0fb
 +	mop.rr.5 a0, a1, a2
 +	mop.rr.6 a0, a1, a2
 +	mop.rr.7 a0, a1, a2
+diff --git a/gas/testsuite/gas/s390/s390.exp b/gas/testsuite/gas/s390/s390.exp
+index a4e8dbc44a5..1d5d97f4863 100644
+--- a/gas/testsuite/gas/s390/s390.exp
++++ b/gas/testsuite/gas/s390/s390.exp
+@@ -43,6 +43,7 @@ if [expr [istarget "s390-*-*"] ||  [istarget "s390x-*-*"]]  then {
+     run_dump_test "zarch-arch12" "{as -m64} {as -march=arch12}"
+     run_dump_test "zarch-arch13" "{as -m64} {as -march=arch13}"
+     run_dump_test "zarch-arch14" "{as -m64} {as -march=arch14}"
++    run_dump_test "zarch-arch15" "{as -m64} {as -march=arch15}"
+     run_dump_test "zarch-reloc" "{as -m64}"
+     run_dump_test "zarch-operands" "{as -m64} {as -march=z9-109}"
+     run_dump_test "zarch-machine" "{as -m64} {as -march=z900}"
+diff --git a/gas/testsuite/gas/s390/zarch-arch15.d b/gas/testsuite/gas/s390/zarch-arch15.d
+new file mode 100644
+index 00000000000..955c9706b35
+--- /dev/null
++++ b/gas/testsuite/gas/s390/zarch-arch15.d
+@@ -0,0 +1,102 @@
++#name: s390x opcode
++#objdump: -dr
++
++.*: +file format .*
++
++Disassembly of section .text:
++
++.* <foo>:
++.*:	e7 f1 4d 00 87 89 [	 ]*vblend	%v15,%v17,%v20,%v24,13
++.*:	e7 f1 40 00 87 89 [	 ]*vblendb	%v15,%v17,%v20,%v24
++.*:	e7 f1 41 00 87 89 [	 ]*vblendh	%v15,%v17,%v20,%v24
++.*:	e7 f1 42 00 87 89 [	 ]*vblendf	%v15,%v17,%v20,%v24
++.*:	e7 f1 43 00 87 89 [	 ]*vblendg	%v15,%v17,%v20,%v24
++.*:	e7 f1 44 00 87 89 [	 ]*vblendq	%v15,%v17,%v20,%v24
++.*:	e7 f1 40 fd 87 88 [	 ]*veval	%v15,%v17,%v20,%v24,253
++.*:	e7 f1 00 00 d4 54 [	 ]*vgem	%v15,%v17,13
++.*:	e7 f1 00 00 04 54 [	 ]*vgemb	%v15,%v17
++.*:	e7 f1 00 00 14 54 [	 ]*vgemh	%v15,%v17
++.*:	e7 f1 00 00 24 54 [	 ]*vgemf	%v15,%v17
++.*:	e7 f1 00 00 34 54 [	 ]*vgemg	%v15,%v17
++.*:	e7 f1 00 00 44 54 [	 ]*vgemq	%v15,%v17
++.*:	e7 f1 00 00 34 d7 [	 ]*vuphg	%v15,%v17
++.*:	e7 f1 00 00 34 d5 [	 ]*vuplhg	%v15,%v17
++.*:	e7 f1 00 00 34 d6 [	 ]*vuplg	%v15,%v17
++.*:	e7 f1 00 00 34 d4 [	 ]*vupllg	%v15,%v17
++.*:	e7 f1 40 00 46 f2 [	 ]*vavgq	%v15,%v17,%v20
++.*:	e7 f1 40 00 46 f0 [	 ]*vavglq	%v15,%v17,%v20
++.*:	e7 f1 00 00 44 db [	 ]*vecq	%v15,%v17
++.*:	e7 f1 00 00 44 d9 [	 ]*veclq	%v15,%v17
++.*:	e7 f1 40 00 46 f8 [	 ]*vceqq	%v15,%v17,%v20
++.*:	e7 f1 40 10 46 f8 [	 ]*vceqqs	%v15,%v17,%v20
++.*:	e7 f1 40 00 46 fb [	 ]*vchq	%v15,%v17,%v20
++.*:	e7 f1 40 10 46 fb [	 ]*vchqs	%v15,%v17,%v20
++.*:	e7 f1 40 00 46 f9 [	 ]*vchlq	%v15,%v17,%v20
++.*:	e7 f1 40 10 46 f9 [	 ]*vchlqs	%v15,%v17,%v20
++.*:	e7 f1 00 00 44 53 [	 ]*vclzq	%v15,%v17
++.*:	e7 f1 00 00 44 52 [	 ]*vctzq	%v15,%v17
++.*:	e7 f1 00 00 44 de [	 ]*vlcq	%v15,%v17
++.*:	e7 f1 00 00 44 df [	 ]*vlpq	%v15,%v17
++.*:	e7 f1 40 00 46 ff [	 ]*vmxq	%v15,%v17,%v20
++.*:	e7 f1 40 00 46 fd [	 ]*vmxlq	%v15,%v17,%v20
++.*:	e7 f1 40 00 46 fe [	 ]*vmnq	%v15,%v17,%v20
++.*:	e7 f1 40 00 46 fc [	 ]*vmnlq	%v15,%v17,%v20
++.*:	e7 f1 43 00 87 aa [	 ]*vmalg	%v15,%v17,%v20,%v24
++.*:	e7 f1 44 00 87 aa [	 ]*vmalq	%v15,%v17,%v20,%v24
++.*:	e7 f1 43 00 87 ab [	 ]*vmahg	%v15,%v17,%v20,%v24
++.*:	e7 f1 44 00 87 ab [	 ]*vmahq	%v15,%v17,%v20,%v24
++.*:	e7 f1 43 00 87 a9 [	 ]*vmalhg	%v15,%v17,%v20,%v24
++.*:	e7 f1 44 00 87 a9 [	 ]*vmalhq	%v15,%v17,%v20,%v24
++.*:	e7 f1 43 00 87 ae [	 ]*vmaeg	%v15,%v17,%v20,%v24
++.*:	e7 f1 43 00 87 ac [	 ]*vmaleg	%v15,%v17,%v20,%v24
++.*:	e7 f1 43 00 87 af [	 ]*vmaog	%v15,%v17,%v20,%v24
++.*:	e7 f1 43 00 87 ad [	 ]*vmalog	%v15,%v17,%v20,%v24
++.*:	e7 f1 40 00 36 a3 [	 ]*vmhg	%v15,%v17,%v20
++.*:	e7 f1 40 00 46 a3 [	 ]*vmhq	%v15,%v17,%v20
++.*:	e7 f1 40 00 36 a1 [	 ]*vmlhg	%v15,%v17,%v20
++.*:	e7 f1 40 00 46 a1 [	 ]*vmlhq	%v15,%v17,%v20
++.*:	e7 f1 40 00 36 a2 [	 ]*vmlg	%v15,%v17,%v20
++.*:	e7 f1 40 00 46 a2 [	 ]*vmlq	%v15,%v17,%v20
++.*:	e7 f1 40 00 36 a6 [	 ]*vmeg	%v15,%v17,%v20
++.*:	e7 f1 40 00 36 a4 [	 ]*vmleg	%v15,%v17,%v20
++.*:	e7 f1 40 00 36 a7 [	 ]*vmog	%v15,%v17,%v20
++.*:	e7 f1 40 00 36 a5 [	 ]*vmlog	%v15,%v17,%v20
++.*:	e7 f1 40 0c d6 b2 [	 ]*vd	%v15,%v17,%v20,13,12
++.*:	e7 f1 40 0d 26 b2 [	 ]*vdf	%v15,%v17,%v20,13
++.*:	e7 f1 40 0d 36 b2 [	 ]*vdg	%v15,%v17,%v20,13
++.*:	e7 f1 40 0d 46 b2 [	 ]*vdq	%v15,%v17,%v20,13
++.*:	e7 f1 40 0c d6 b0 [	 ]*vdl	%v15,%v17,%v20,13,12
++.*:	e7 f1 40 0d 26 b0 [	 ]*vdlf	%v15,%v17,%v20,13
++.*:	e7 f1 40 0d 36 b0 [	 ]*vdlg	%v15,%v17,%v20,13
++.*:	e7 f1 40 0d 46 b0 [	 ]*vdlq	%v15,%v17,%v20,13
++.*:	e7 f1 40 0c d6 b3 [	 ]*vr	%v15,%v17,%v20,13,12
++.*:	e7 f1 40 0d 26 b3 [	 ]*vrf	%v15,%v17,%v20,13
++.*:	e7 f1 40 0d 36 b3 [	 ]*vrg	%v15,%v17,%v20,13
++.*:	e7 f1 40 0d 46 b3 [	 ]*vrq	%v15,%v17,%v20,13
++.*:	e7 f1 40 0c d6 b1 [	 ]*vrl	%v15,%v17,%v20,13,12
++.*:	e7 f1 40 0d 26 b1 [	 ]*vrlf	%v15,%v17,%v20,13
++.*:	e7 f1 40 0d 36 b1 [	 ]*vrlg	%v15,%v17,%v20,13
++.*:	e7 f1 40 0d 46 b1 [	 ]*vrlq	%v15,%v17,%v20,13
++.*:	b9 68 00 69 [	 ]*clzg	%r6,%r9
++.*:	b9 69 00 69 [	 ]*ctzg	%r6,%r9
++.*:	e3 69 b8 f0 fd 60 [	 ]*lxab	%r6,-10000\(%r9,%r11\)
++.*:	e3 69 b8 f0 fd 62 [	 ]*lxah	%r6,-10000\(%r9,%r11\)
++.*:	e3 69 b8 f0 fd 64 [	 ]*lxaf	%r6,-10000\(%r9,%r11\)
++.*:	e3 69 b8 f0 fd 66 [	 ]*lxag	%r6,-10000\(%r9,%r11\)
++.*:	e3 69 b8 f0 fd 68 [	 ]*lxaq	%r6,-10000\(%r9,%r11\)
++.*:	e3 69 b8 f0 fd 61 [	 ]*llxab	%r6,-10000\(%r9,%r11\)
++.*:	e3 69 b8 f0 fd 63 [	 ]*llxah	%r6,-10000\(%r9,%r11\)
++.*:	e3 69 b8 f0 fd 65 [	 ]*llxaf	%r6,-10000\(%r9,%r11\)
++.*:	e3 69 b8 f0 fd 67 [	 ]*llxag	%r6,-10000\(%r9,%r11\)
++.*:	e3 69 b8 f0 fd 69 [	 ]*llxaq	%r6,-10000\(%r9,%r11\)
++.*:	b9 6c b0 69 [	 ]*bextg	%r6,%r9,%r11
++.*:	b9 6d b0 69 [	 ]*bdepg	%r6,%r9,%r11
++.*:	b9 3e 00 69 [	 ]*kimd	%r6,%r9
++.*:	b9 3e d0 69 [	 ]*kimd	%r6,%r9,13
++.*:	b9 3f 00 69 [	 ]*klmd	%r6,%r9
++.*:	b9 3f d0 69 [	 ]*klmd	%r6,%r9,13
++.*:	e6 f1 00 d0 04 4e [	 ]*vcvbq	%v15,%v17,13
++.*:	e6 f1 00 cf d4 4a [	 ]*vcvdq	%v15,%v17,253,12
++.*:	e6 0f 00 00 00 5f [	 ]*vtp	%v15
++.*:	e6 0f 0f ff d0 5f [	 ]*vtp	%v15,65533
++.*:	e6 0f 1f ff d2 7f [	 ]*vtz	%v15,%v17,65533
+diff --git a/gas/testsuite/gas/s390/zarch-arch15.s b/gas/testsuite/gas/s390/zarch-arch15.s
+new file mode 100644
+index 00000000000..43be9d46a48
+--- /dev/null
++++ b/gas/testsuite/gas/s390/zarch-arch15.s
+@@ -0,0 +1,96 @@
++.text
++foo:
++	vblend	%v15,%v17,%v20,%v24,13
++	vblendb	%v15,%v17,%v20,%v24
++	vblendh	%v15,%v17,%v20,%v24
++	vblendf	%v15,%v17,%v20,%v24
++	vblendg	%v15,%v17,%v20,%v24
++	vblendq	%v15,%v17,%v20,%v24
++	veval	%v15,%v17,%v20,%v24,253
++	vgem	%v15,%v17,13
++	vgemb	%v15,%v17
++	vgemh	%v15,%v17
++	vgemf	%v15,%v17
++	vgemg	%v15,%v17
++	vgemq	%v15,%v17
++	vuphg	%v15,%v17
++	vuplhg	%v15,%v17
++	vuplg	%v15,%v17
++	vupllg	%v15,%v17
++	vavgq	%v15,%v17,%v20
++	vavglq	%v15,%v17,%v20
++	vecq	%v15,%v17
++	veclq	%v15,%v17
++	vceqq	%v15,%v17,%v20
++	vceqqs	%v15,%v17,%v20
++	vchq	%v15,%v17,%v20
++	vchqs	%v15,%v17,%v20
++	vchlq	%v15,%v17,%v20
++	vchlqs	%v15,%v17,%v20
++	vclzq	%v15,%v17
++	vctzq	%v15,%v17
++	vlcq	%v15,%v17
++	vlpq	%v15,%v17
++	vmxq	%v15,%v17,%v20
++	vmxlq	%v15,%v17,%v20
++	vmnq	%v15,%v17,%v20
++	vmnlq	%v15,%v17,%v20
++	vmalg	%v15,%v17,%v20,%v24
++	vmalq	%v15,%v17,%v20,%v24
++	vmahg	%v15,%v17,%v20,%v24
++	vmahq	%v15,%v17,%v20,%v24
++	vmalhg	%v15,%v17,%v20,%v24
++	vmalhq	%v15,%v17,%v20,%v24
++	vmaeg	%v15,%v17,%v20,%v24
++	vmaleg	%v15,%v17,%v20,%v24
++	vmaog	%v15,%v17,%v20,%v24
++	vmalog	%v15,%v17,%v20,%v24
++	vmhg	%v15,%v17,%v20
++	vmhq	%v15,%v17,%v20
++	vmlhg	%v15,%v17,%v20
++	vmlhq	%v15,%v17,%v20
++	vmlg	%v15,%v17,%v20
++	vmlq	%v15,%v17,%v20
++	vmeg	%v15,%v17,%v20
++	vmleg	%v15,%v17,%v20
++	vmog	%v15,%v17,%v20
++	vmlog	%v15,%v17,%v20
++	vd	%v15,%v17,%v20,13,12
++	vdf	%v15,%v17,%v20,13
++	vdg	%v15,%v17,%v20,13
++	vdq	%v15,%v17,%v20,13
++	vdl	%v15,%v17,%v20,13,12
++	vdlf	%v15,%v17,%v20,13
++	vdlg	%v15,%v17,%v20,13
++	vdlq	%v15,%v17,%v20,13
++	vr	%v15,%v17,%v20,13,12
++	vrf	%v15,%v17,%v20,13
++	vrg	%v15,%v17,%v20,13
++	vrq	%v15,%v17,%v20,13
++	vrl	%v15,%v17,%v20,13,12
++	vrlf	%v15,%v17,%v20,13
++	vrlg	%v15,%v17,%v20,13
++	vrlq	%v15,%v17,%v20,13
++	clzg	%r6,%r9
++	ctzg	%r6,%r9
++	lxab	%r6,-10000(%r9,%r11)
++	lxah	%r6,-10000(%r9,%r11)
++	lxaf	%r6,-10000(%r9,%r11)
++	lxag	%r6,-10000(%r9,%r11)
++	lxaq	%r6,-10000(%r9,%r11)
++	llxab	%r6,-10000(%r9,%r11)
++	llxah	%r6,-10000(%r9,%r11)
++	llxaf	%r6,-10000(%r9,%r11)
++	llxag	%r6,-10000(%r9,%r11)
++	llxaq	%r6,-10000(%r9,%r11)
++	bextg	%r6,%r9,%r11
++	bdepg	%r6,%r9,%r11
++	kimd	%r6,%r9
++	kimd	%r6,%r9,13
++	klmd	%r6,%r9
++	klmd	%r6,%r9,13
++	vcvbq	%v15,%v17,13
++	vcvdq	%v15,%v17,253,12
++	vtp	%v15
++	vtp	%v15,65533
++	vtz	%v15,%v17,65533
+diff --git a/gas/testsuite/gas/s390/zarch-z10.d b/gas/testsuite/gas/s390/zarch-z10.d
+index 4a051533f93..beb057878d6 100644
+--- a/gas/testsuite/gas/s390/zarch-z10.d
++++ b/gas/testsuite/gas/s390/zarch-z10.d
+@@ -359,20 +359,20 @@ Disassembly of section .text:
+ .*:	c2 60 ff fe 79 60 [	 ]*msgfi	%r6,-100000
+ .*:	e3 a6 75 b3 01 36 [	 ]*pfd	10,5555\(%r6,%r7\)
+  *([\da-f]+):	c6 a2 00 00 00 00 [	 ]*pfdrl	10,\1 <foo\+0x\1>
+-.*:	ec 67 d2 dc e6 54 [	 ]*rnsbg	%r6,%r7,210,220,230
+-.*:	ec 67 d2 dc 00 54 [	 ]*rnsbg	%r6,%r7,210,220
++.*:	ec 67 6e dc e6 54 [	 ]*rnsbg	%r6,%r7,110,220,230
++.*:	ec 67 6e dc 00 54 [	 ]*rnsbg	%r6,%r7,110,220
+ .*:	ec 67 92 dc e6 54 [	 ]*rnsbgt	%r6,%r7,18,220,230
+ .*:	ec 67 92 dc 00 54 [	 ]*rnsbgt	%r6,%r7,18,220
+ .*:	ec 67 92 1c 26 54 [	 ]*rnsbgt	%r6,%r7,18,28,38
+ .*:	ec 67 92 1c 00 54 [	 ]*rnsbgt	%r6,%r7,18,28
+-.*:	ec 67 d2 dc e6 57 [	 ]*rxsbg	%r6,%r7,210,220,230
+-.*:	ec 67 d2 dc 00 57 [	 ]*rxsbg	%r6,%r7,210,220
++.*:	ec 67 6e dc e6 57 [	 ]*rxsbg	%r6,%r7,110,220,230
++.*:	ec 67 6e dc 00 57 [	 ]*rxsbg	%r6,%r7,110,220
+ .*:	ec 67 92 dc e6 57 [	 ]*rxsbgt	%r6,%r7,18,220,230
+ .*:	ec 67 92 dc 00 57 [	 ]*rxsbgt	%r6,%r7,18,220
+ .*:	ec 67 92 1c 26 57 [	 ]*rxsbgt	%r6,%r7,18,28,38
+ .*:	ec 67 92 1c 00 57 [	 ]*rxsbgt	%r6,%r7,18,28
+-.*:	ec 67 d2 dc e6 56 [	 ]*rosbg	%r6,%r7,210,220,230
+-.*:	ec 67 d2 dc 00 56 [	 ]*rosbg	%r6,%r7,210,220
++.*:	ec 67 6e dc e6 56 [	 ]*rosbg	%r6,%r7,110,220,230
++.*:	ec 67 6e dc 00 56 [	 ]*rosbg	%r6,%r7,110,220
+ .*:	ec 67 92 dc e6 56 [	 ]*rosbgt	%r6,%r7,18,220,230
+ .*:	ec 67 92 dc 00 56 [	 ]*rosbgt	%r6,%r7,18,220
+ .*:	ec 67 92 1c 26 56 [	 ]*rosbgt	%r6,%r7,18,28,38
+diff --git a/gas/testsuite/gas/s390/zarch-z10.s b/gas/testsuite/gas/s390/zarch-z10.s
+index 45bb8944793..a6245888c4c 100644
+--- a/gas/testsuite/gas/s390/zarch-z10.s
++++ b/gas/testsuite/gas/s390/zarch-z10.s
+@@ -353,20 +353,20 @@ foo:
+ 	msgfi	%r6,-100000
+ 	pfd	10,5555(%r6,%r7)
+ 	pfdrl	10,.
+-	rnsbg	%r6,%r7,210,220,230
+-	rnsbg	%r6,%r7,210,220
++	rnsbg	%r6,%r7,110,220,230
++	rnsbg	%r6,%r7,110,220
+ 	rnsbg	%r6,%r7,146,220,230
+ 	rnsbg	%r6,%r7,146,220
+ 	rnsbgt	%r6,%r7,18,28,38
+ 	rnsbgt	%r6,%r7,18,28
+-	rxsbg	%r6,%r7,210,220,230
+-	rxsbg	%r6,%r7,210,220
++	rxsbg	%r6,%r7,110,220,230
++	rxsbg	%r6,%r7,110,220
+ 	rxsbg	%r6,%r7,146,220,230
+ 	rxsbg	%r6,%r7,146,220
+ 	rxsbgt	%r6,%r7,18,28,38
+ 	rxsbgt	%r6,%r7,18,28
+-	rosbg	%r6,%r7,210,220,230
+-	rosbg	%r6,%r7,210,220
++	rosbg	%r6,%r7,110,220,230
++	rosbg	%r6,%r7,110,220
+ 	rosbg	%r6,%r7,146,220,230
+ 	rosbg	%r6,%r7,146,220
+ 	rosbgt	%r6,%r7,18,28,38
 diff --git a/gas/testsuite/gas/sparc/sparc5vis4.d b/gas/testsuite/gas/sparc/sparc5vis4.d
 index bf5c90bbcf3..7820c2a5672 100644
 --- a/gas/testsuite/gas/sparc/sparc5vis4.d
@@ -4223,6 +4622,27 @@ index fedd47837e4..9ccf0ec2454 100644
    INSN_CLASS_ZCMP,
    INSN_CLASS_SVINVAL,
    INSN_CLASS_ZICBOM,
+diff --git a/include/opcode/s390.h b/include/opcode/s390.h
+index e5dfcb27570..8322882410e 100644
+--- a/include/opcode/s390.h
++++ b/include/opcode/s390.h
+@@ -45,6 +45,7 @@ enum s390_opcode_cpu_val
+     S390_OPCODE_ARCH12,
+     S390_OPCODE_ARCH13,
+     S390_OPCODE_ARCH14,
++    S390_OPCODE_ARCH15,
+     S390_OPCODE_MAXCPU
+   };
+ 
+@@ -193,8 +194,4 @@ extern const struct s390_operand s390_operands[];
+ 
+ #define S390_OPERAND_CP16 0x1000
+ 
+-#define S390_OPERAND_OR1 0x2000
+-#define S390_OPERAND_OR2 0x4000
+-#define S390_OPERAND_OR8 0x8000
+-
+ #endif /* S390_H */
 diff --git a/ld/configure b/ld/configure
 index 44d79c2445d..cb3bcae4d3a 100755
 --- a/ld/configure
@@ -5798,6 +6218,343 @@ index 14ec2903cdd..e6831bda9fd 100644
  /* Zcmp instructions.  */
  {"cm.push",    0,  INSN_CLASS_ZCMP, "{Wcr},Wcp",  MATCH_CM_PUSH, MASK_CM_PUSH, match_opcode, 0 },
  {"cm.pop",     0,  INSN_CLASS_ZCMP, "{Wcr},Wcp",  MATCH_CM_POP, MASK_CM_POP, match_opcode, 0 },
+diff --git a/opcodes/s390-dis.c b/opcodes/s390-dis.c
+index ee2f2cb62ed..852d2f6ebb9 100644
+--- a/opcodes/s390-dis.c
++++ b/opcodes/s390-dis.c
+@@ -299,12 +299,14 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
+ 	{
+ 	  enum disassembler_style style;
+ 
+-	  if (flags & S390_OPERAND_OR1)
+-	    val.u &= ~1;
+-	  if (flags & S390_OPERAND_OR2)
+-	    val.u &= ~2;
+-	  if (flags & S390_OPERAND_OR8)
+-	    val.u &= ~8;
++	  if (!(flags & S390_OPERAND_LENGTH))
++	    {
++	      union operand_value insn_opval;
++
++	      /* Mask any constant operand bits set in insn template.  */
++	      insn_opval = s390_extract_operand (opcode->opcode, operand);
++	      val.u &= ~insn_opval.u;
++	    }
+ 
+ 	  if ((opcode->flags & S390_INSTR_FLAG_OPTPARM)
+ 	      && val.u == 0
+diff --git a/opcodes/s390-mkopc.c b/opcodes/s390-mkopc.c
+index 1f5729a3db0..825188407ee 100644
+--- a/opcodes/s390-mkopc.c
++++ b/opcodes/s390-mkopc.c
+@@ -443,6 +443,8 @@ main (void)
+       else if (strcmp (cpu_string, "z16") == 0
+ 	       || strcmp (cpu_string, "arch14") == 0)
+ 	min_cpu = S390_OPCODE_ARCH14;
++      else if (strcmp (cpu_string, "arch15") == 0)
++	min_cpu = S390_OPCODE_ARCH15;
+       else {
+ 	print_error ("Mnemonic \"%s\": Couldn't parse CPU string: %s\n",
+ 		     mnemonic, cpu_string);
+diff --git a/opcodes/s390-opc.c b/opcodes/s390-opc.c
+index 10482fbc1e0..9d9f0973e55 100644
+--- a/opcodes/s390-opc.c
++++ b/opcodes/s390-opc.c
+@@ -208,31 +208,17 @@ const struct s390_operand s390_operands[] =
+   { 4, 20, 0 },
+ #define U4_24       (U4_20 + 1)   /* 4 bit unsigned value starting at 24 */
+   { 4, 24, 0 },
+-#define U4_OR1_24   (U4_24 + 1)   /* 4 bit unsigned value ORed with 1 */
+-  { 4, 24, S390_OPERAND_OR1 },	  /* starting at 24 */
+-#define U4_OR2_24   (U4_OR1_24+1) /* 4 bit unsigned value ORed with 2 */
+-  { 4, 24, S390_OPERAND_OR2 },    /* starting at 24 */
+-#define U4_OR3_24   (U4_OR2_24+1) /* 4 bit unsigned value ORed with 3 */
+-  { 4, 24, S390_OPERAND_OR1 | S390_OPERAND_OR2 }, /* starting at 24 */
+-#define U4_28       (U4_OR3_24+1) /* 4 bit unsigned value starting at 28 */
++#define U4_28       (U4_24+1)     /* 4 bit unsigned value starting at 28 */
+   { 4, 28, 0 },
+-#define U4_OR8_28   (U4_28 + 1)   /* 4 bit unsigned value ORed with 8 */
+-  { 4, 28, S390_OPERAND_OR8 },    /* starting at 28 */
+-#define U4_32       (U4_OR8_28+1) /* 4 bit unsigned value starting at 32 */
++#define U4_32       (U4_28+1)     /* 4 bit unsigned value starting at 32 */
+   { 4, 32, 0 },
+ #define U4_36       (U4_32 + 1)   /* 4 bit unsigned value starting at 36 */
+   { 4, 36, 0 },
+ #define U8_8        (U4_36 + 1)   /* 8 bit unsigned value starting at 8 */
+   { 8, 8, 0 },
+-#define U6_18       (U8_8 + 1)    /* 6 bit unsigned value starting at 18 */
+-  { 6, 18, 0 },
+-#define U8_16       (U6_18 + 1)   /* 8 bit unsigned value starting at 16 */
++#define U8_16       (U8_8 + 1)    /* 8 bit unsigned value starting at 16 */
+   { 8, 16, 0 },
+-#define U5_27       (U8_16 + 1)   /* 5 bit unsigned value starting at 27 */
+-  { 5, 27, 0 },
+-#define U6_26       (U5_27 + 1)   /* 6 bit unsigned value starting at 26 */
+-  { 6, 26, 0 },
+-#define U8_24       (U6_26 + 1)   /* 8 bit unsigned value starting at 24 */
++#define U8_24       (U8_16 + 1)   /* 8 bit unsigned value starting at 24 */
+   { 8, 24, 0 },
+ #define U8_28       (U8_24 + 1)   /* 8 bit unsigned value starting at 28 */
+   { 8, 28, 0 },
+@@ -242,7 +228,9 @@ const struct s390_operand s390_operands[] =
+   { 12, 16, 0 },
+ #define U16_16      (U12_16 + 1)  /* 16 bit unsigned value starting at 16 */
+   { 16, 16, 0 },
+-#define U16_32      (U16_16 + 1)  /* 16 bit unsigned value starting at 32 */
++#define U16_20      (U16_16 + 1)  /* 16 bit unsigned value starting at 20 */
++  { 16, 20, 0 },
++#define U16_32      (U16_20 + 1)  /* 16 bit unsigned value starting at 32 */
+   { 16, 32, 0 },
+ #define U32_16      (U16_32 + 1)  /* 32 bit unsigned value starting at 16 */
+   { 32, 16, 0 },
+@@ -296,7 +284,7 @@ unused_s390_operands_static_asserts (void)
+       p - pc relative
+       r - general purpose register
+       re - gpr extended operand, a valid general purpose register pair
+-      u - unsigned integer, 4, 6, 8, 16 or 32 bit
++      u - unsigned integer, 4, 8, 16 or 32 bit
+       m - mode field, 4 bit
+       0 - operand skipped.
+       The order of the letters reflects the layout of the format in
+@@ -332,9 +320,9 @@ unused_s390_operands_static_asserts (void)
+ #define INSTR_RIE_R0U0     6, { R_8,U16_16,0,0,0,0 }             /* e.g. clfitne */
+ #define INSTR_RIE_RUI0     6, { R_8,I16_16,U4_12,0,0,0 }         /* e.g. lochi */
+ #define INSTR_RIE_RRUUU    6, { R_8,R_12,U8_16,U8_24,U8_32,0 }   /* e.g. rnsbg */
+-#define INSTR_RIE_RRUUU2   6, { R_8,R_12,U8_16,U6_26,U8_32,0 }   /* e.g. risbgz */
+-#define INSTR_RIE_RRUUU3   6, { R_8,R_12,U8_16,U5_27,U8_32,0 }   /* e.g. risbhg */
+-#define INSTR_RIE_RRUUU4   6, { R_8,R_12,U6_18,U8_24,U8_32,0 }   /* e.g. rnsbgt */
++#define INSTR_RIE_RRUUU2   INSTR_RIE_RRUUU                       /* e.g. risbgz */
++#define INSTR_RIE_RRUUU3   INSTR_RIE_RRUUU                       /* e.g. risbhg */
++#define INSTR_RIE_RRUUU4   INSTR_RIE_RRUUU                       /* e.g. rnsbgt */
+ #define INSTR_RIL_0P       6, { J32_16,0,0,0,0 }                 /* e.g. jg    */
+ #define INSTR_RIL_RP       6, { R_8,J32_16,0,0,0,0 }             /* e.g. brasl */
+ #define INSTR_RIL_UP       6, { U4_8,J32_16,0,0,0,0 }            /* e.g. brcl  */
+@@ -498,6 +486,8 @@ unused_s390_operands_static_asserts (void)
+ #define INSTR_VRI_VVUUU    6, { V_8,V_12,U12_16,U4_32,U4_28,0 }  /* e.g. vftci */
+ #define INSTR_VRI_VVUUU2   6, { V_8,V_12,U8_28,U8_16,U4_24,0 }   /* e.g. vpsop */
+ #define INSTR_VRI_VR0UU    6, { V_8,R_12,U8_28,U4_24,0,0 }       /* e.g. vcvd  */
++#define INSTR_VRI_VV0UU    6, { V_8,V_12,U8_28,U4_24,0,0 }       /* e.g. vcvdq */
++#define INSTR_VRI_VVV0UV   6, { V_8,V_12,V_16,V_32,U8_24,0 }     /* e.g. veval */
+ #define INSTR_VRX_VRRD     6, { V_8,D_20,X_12,B_16,0,0 }         /* e.g. vl    */
+ #define INSTR_VRX_VV       6, { V_8,V_12,0,0,0,0 }               /* e.g. vlr   */
+ #define INSTR_VRX_VRRDU    6, { V_8,D_20,X_12,B_16,U4_32,0 }     /* e.g. vlrep */
+@@ -508,27 +498,27 @@ unused_s390_operands_static_asserts (void)
+ #define INSTR_VRS_VRRDU    6, { V_8,R_12,D_20,B_16,U4_32,0 }     /* e.g. vlvg  */
+ #define INSTR_VRS_VRRD     6, { V_8,R_12,D_20,B_16,0,0 }         /* e.g. vlvgb */
+ #define INSTR_VRS_RRDV     6, { V_32,R_12,D_20,B_16,0,0 }        /* e.g. vlrlr */
+-#define INSTR_VRR_0V       6, { V_12,0,0,0,0,0 }                 /* e.g. vtp   */
+ #define INSTR_VRR_VRR      6, { V_8,R_12,R_16,0,0,0 }            /* e.g. vlvgp */
+ #define INSTR_VRR_VVV0U    6, { V_8,V_12,V_16,U4_32,0,0 }        /* e.g. vmrh  */
+ #define INSTR_VRR_VVV0U0   6, { V_8,V_12,V_16,U4_24,0,0 }        /* e.g. vfaeb */
+-#define INSTR_VRR_VVV0U1   6, { V_8,V_12,V_16,U4_OR1_24,0,0 }    /* e.g. vfaebs*/
+-#define INSTR_VRR_VVV0U2   6, { V_8,V_12,V_16,U4_OR2_24,0,0 }    /* e.g. vfaezb*/
+-#define INSTR_VRR_VVV0U3   6, { V_8,V_12,V_16,U4_OR3_24,0,0 }    /* e.g. vfaezbs*/
++#define INSTR_VRR_VVV0U02  6, { V_8,V_12,V_16,U4_28,0,0 }        /* e.g. vd */
++#define INSTR_VRR_VVV0U1   INSTR_VRR_VVV0U0                      /* e.g. vfaebs*/
++#define INSTR_VRR_VVV0U2   INSTR_VRR_VVV0U0                      /* e.g. vfaezb*/
++#define INSTR_VRR_VVV0U3   INSTR_VRR_VVV0U0                      /* e.g. vfaezbs*/
+ #define INSTR_VRR_VVV      6, { V_8,V_12,V_16,0,0,0 }            /* e.g. vmrhb */
+ #define INSTR_VRR_VVV2     6, { V_8,V_CP16_12,0,0,0,0 }          /* e.g. vnot  */
+ #define INSTR_VRR_VV0U     6, { V_8,V_12,U4_32,0,0,0 }           /* e.g. vseg  */
+ #define INSTR_VRR_VV0U2    6, { V_8,V_12,U4_24,0,0,0 }           /* e.g. vistrb*/
+ #define INSTR_VRR_VV0UU    6, { V_8,V_12,U4_28,U4_24,0,0 }       /* e.g. vcdgb */
+ #define INSTR_VRR_VV0UU2   6, { V_8,V_12,U4_32,U4_28,0,0 }       /* e.g. wfc */
+-#define INSTR_VRR_VV0UU8   6, { V_8,V_12,U4_OR8_28,U4_24,0,0 }   /* e.g. wcdgb */
++#define INSTR_VRR_VV0UU8   INSTR_VRR_VV0UU                       /* e.g. wcdgb */
+ #define INSTR_VRR_VV       6, { V_8,V_12,0,0,0,0 }               /* e.g. vsegb */
+ #define INSTR_VRR_VVVUU0V  6, { V_8,V_12,V_16,V_32,U4_20,U4_24 } /* e.g. vstrc */
+ #define INSTR_VRR_VVVU0V   6, { V_8,V_12,V_16,V_32,U4_20,0 }     /* e.g. vac   */
+ #define INSTR_VRR_VVVU0VB  6, { V_8,V_12,V_16,V_32,U4_24,0 }     /* e.g. vstrcb*/
+-#define INSTR_VRR_VVVU0VB1 6, { V_8,V_12,V_16,V_32,U4_OR1_24,0 } /* e.g. vstrcbs*/
+-#define INSTR_VRR_VVVU0VB2 6, { V_8,V_12,V_16,V_32,U4_OR2_24,0 } /* e.g. vstrczb*/
+-#define INSTR_VRR_VVVU0VB3 6, { V_8,V_12,V_16,V_32,U4_OR3_24,0 } /* e.g. vstrczbs*/
++#define INSTR_VRR_VVVU0VB1 INSTR_VRR_VVVU0VB                     /* e.g. vstrcbs*/
++#define INSTR_VRR_VVVU0VB2 INSTR_VRR_VVVU0VB                     /* e.g. vstrczb*/
++#define INSTR_VRR_VVVU0VB3 INSTR_VRR_VVVU0VB                     /* e.g. vstrczbs*/
+ #define INSTR_VRR_VVV0V    6, { V_8,V_12,V_16,V_32,0,0 }         /* e.g. vacq  */
+ #define INSTR_VRR_VVV0U0U  6, { V_8,V_12,V_16,U4_32,U4_24,0 }    /* e.g. vfae  */
+ #define INSTR_VRR_VVVV     6, { V_8,V_12,V_16,V_32,0,0 }         /* e.g. vfmadb*/
+@@ -537,6 +527,9 @@ unused_s390_operands_static_asserts (void)
+ #define INSTR_VRR_VV0UUU   6, { V_8,V_12,U4_32,U4_28,U4_24,0 }   /* e.g. vcdg  */
+ #define INSTR_VRR_VVVU0UV  6, { V_8,V_12,V_16,V_32,U4_28,U4_20 } /* e.g. vfma  */
+ #define INSTR_VRR_VV0U0U   6, { V_8,V_12,U4_32,U4_24,0,0 }       /* e.g. vistr */
++#define INSTR_VRR_0V       6, { V_12,0,0,0,0,0 }                 /* e.g. vtp   */
++#define INSTR_VRR_0V0U     6, { V_12,U16_20,0,0,0,0 }            /* e.g. vtp   */
++#define INSTR_VRR_0VVU     6, { V_12,V_16,U16_20,0,0,0 }         /* e.g. vtz   */
+ #define INSTR_VRR_0VV0U    6, { V_12,V_16,U4_24,0,0,0 }          /* e.g. vcp   */
+ #define INSTR_VRR_RV0U     6, { R_8,V_12,U4_24,0,0,0 }           /* e.g. vcvb  */
+ #define INSTR_VRR_RV0UU    6, { R_8,V_12,U4_24,U4_28,0,0 }       /* e.g. vcvb  */
+@@ -559,9 +552,9 @@ unused_s390_operands_static_asserts (void)
+ #define MASK_RIE_R0U0     { 0xff, 0x0f, 0x00, 0x00, 0xff, 0xff }
+ #define MASK_RIE_RUI0     { 0xff, 0x00, 0x00, 0x00, 0xff, 0xff }
+ #define MASK_RIE_RRUUU    { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
+-#define MASK_RIE_RRUUU2   { 0xff, 0x00, 0x00, 0xc0, 0x00, 0xff }
+-#define MASK_RIE_RRUUU3   { 0xff, 0x00, 0x00, 0xe0, 0x00, 0xff }
+-#define MASK_RIE_RRUUU4   { 0xff, 0x00, 0xc0, 0x00, 0x00, 0xff }
++#define MASK_RIE_RRUUU2   { 0xff, 0x00, 0x00, 0x80, 0x00, 0xff }
++#define MASK_RIE_RRUUU3   { 0xff, 0x00, 0x00, 0x80, 0x00, 0xff }
++#define MASK_RIE_RRUUU4   { 0xff, 0x00, 0x80, 0x00, 0x00, 0xff }
+ #define MASK_RIL_0P       { 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 }
+ #define MASK_RIL_RP       { 0xff, 0x0f, 0x00, 0x00, 0x00, 0x00 }
+ #define MASK_RIL_UP       { 0xff, 0x0f, 0x00, 0x00, 0x00, 0x00 }
+@@ -725,6 +718,8 @@ unused_s390_operands_static_asserts (void)
+ #define MASK_VRI_VVUUU    { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
+ #define MASK_VRI_VVUUU2   { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
+ #define MASK_VRI_VR0UU    { 0xff, 0x00, 0xff, 0x00, 0x00, 0xff }
++#define MASK_VRI_VV0UU    { 0xff, 0x00, 0xff, 0x00, 0x00, 0xff }
++#define MASK_VRI_VVV0UV   { 0xff, 0x00, 0x0f, 0x00, 0x00, 0xff }
+ #define MASK_VRX_VRRD     { 0xff, 0x00, 0x00, 0x00, 0xf0, 0xff }
+ #define MASK_VRX_VV       { 0xff, 0x00, 0xff, 0xff, 0xf0, 0xff }
+ #define MASK_VRX_VRRDU    { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
+@@ -735,10 +730,10 @@ unused_s390_operands_static_asserts (void)
+ #define MASK_VRS_VRRDU    { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
+ #define MASK_VRS_VRRD     { 0xff, 0x00, 0x00, 0x00, 0xf0, 0xff }
+ #define MASK_VRS_RRDV     { 0xff, 0xf0, 0x00, 0x00, 0x00, 0xff }
+-#define MASK_VRR_0V       { 0xff, 0xf0, 0xff, 0xff, 0xf0, 0xff }
+ #define MASK_VRR_VRR      { 0xff, 0x00, 0x0f, 0xff, 0xf0, 0xff }
+ #define MASK_VRR_VVV0U    { 0xff, 0x00, 0x0f, 0xff, 0x00, 0xff }
+ #define MASK_VRR_VVV0U0   { 0xff, 0x00, 0x0f, 0x0f, 0xf0, 0xff }
++#define MASK_VRR_VVV0U02  { 0xff, 0x00, 0x0f, 0xf0, 0xf0, 0xff }
+ #define MASK_VRR_VVV0U1   { 0xff, 0x00, 0x0f, 0x1f, 0xf0, 0xff }
+ #define MASK_VRR_VVV0U2   { 0xff, 0x00, 0x0f, 0x2f, 0xf0, 0xff }
+ #define MASK_VRR_VVV0U3   { 0xff, 0x00, 0x0f, 0x3f, 0xf0, 0xff }
+@@ -764,6 +759,9 @@ unused_s390_operands_static_asserts (void)
+ #define MASK_VRR_VV0UUU   { 0xff, 0x00, 0xff, 0x00, 0x00, 0xff }
+ #define MASK_VRR_VVVU0UV  { 0xff, 0x00, 0x00, 0xf0, 0x00, 0xff }
+ #define MASK_VRR_VV0U0U   { 0xff, 0x00, 0xff, 0x0f, 0x00, 0xff }
++#define MASK_VRR_0V       { 0xff, 0xf0, 0xff, 0xff, 0xf0, 0xff }
++#define MASK_VRR_0V0U     { 0xff, 0xf0, 0xf0, 0x00, 0x00, 0xff }
++#define MASK_VRR_0VVU     { 0xff, 0xf0, 0x00, 0x00, 0x00, 0xff }
+ #define MASK_VRR_0VV0U    { 0xff, 0xf0, 0x0f, 0x0f, 0xf0, 0xff }
+ #define MASK_VRR_RV0U     { 0xff, 0x00, 0xff, 0x0f, 0xf0, 0xff }
+ #define MASK_VRR_RV0UU    { 0xff, 0x00, 0xff, 0x00, 0xf0, 0xff }
+diff --git a/opcodes/s390-opc.txt b/opcodes/s390-opc.txt
+index 1182e196059..bbc00b10355 100644
+--- a/opcodes/s390-opc.txt
++++ b/opcodes/s390-opc.txt
+@@ -2061,7 +2061,7 @@ e60000000055 vcnf VRR_VV0UU2 "vector fp convert to nnp" arch14 zarch
+ 
+ # Reset-DAT-Protection Facility
+ 
+-b98B rdp RRF_RURR2 "reset dat protection" arch14 zarch optparm
++b98b rdp RRF_RURR2 "reset dat protection" arch14 zarch optparm
+ 
+ # BEAR-Enhancement Facility
+ 
+@@ -2072,3 +2072,113 @@ b201 stbear S_RD "store bear" arch14 zarch
+ # Processor-Activity-Instrumentation Facility
+ 
+ b28f qpaci S_RD "query processor activity counter information" arch14 zarch
++
++
++# arch15 instructions
++
++e70000000089 vblend VRR_VVVU0V " " arch15 zarch
++e70000000089 vblendb VRR_VVV0V " " arch15 zarch
++e70001000089 vblendh VRR_VVV0V " " arch15 zarch
++e70002000089 vblendf VRR_VVV0V " " arch15 zarch
++e70003000089 vblendg VRR_VVV0V " " arch15 zarch
++e70004000089 vblendq VRR_VVV0V " " arch15 zarch
++
++e70000000088 veval VRI_VVV0UV " " arch15 zarch
++
++e70000000054 vgem VRR_VV0U " " arch15 zarch
++e70000000054 vgemb VRR_VV " " arch15 zarch
++e70000001054 vgemh VRR_VV " " arch15 zarch
++e70000002054 vgemf VRR_VV " " arch15 zarch
++e70000003054 vgemg VRR_VV " " arch15 zarch
++e70000004054 vgemq VRR_VV " " arch15 zarch
++
++e700000030d7 vuphg VRR_VV " " arch15 zarch
++e700000030d5 vuplhg VRR_VV " " arch15 zarch
++e700000030d6 vuplg VRR_VV " " arch15 zarch
++e700000030d4 vupllg VRR_VV " " arch15 zarch
++
++e700000040f2 vavgq VRR_VVV " " arch15 zarch
++e700000040f0 vavglq VRR_VVV " " arch15 zarch
++e700000040db vecq VRR_VV " " arch15 zarch
++e700000040d9 veclq VRR_VV " " arch15 zarch
++e700000040f8 vceqq VRR_VVV " " arch15 zarch
++e700001040f8 vceqqs VRR_VVV " " arch15 zarch
++e700000040fb vchq VRR_VVV " " arch15 zarch
++e700001040fb vchqs VRR_VVV " " arch15 zarch
++e700000040f9 vchlq VRR_VVV " " arch15 zarch
++e700001040f9 vchlqs VRR_VVV " " arch15 zarch
++e70000004053 vclzq VRR_VV " " arch15 zarch
++e70000004052 vctzq VRR_VV " " arch15 zarch
++e700000040de vlcq VRR_VV " " arch15 zarch
++e700000040df vlpq VRR_VV " " arch15 zarch
++e700000040ff vmxq VRR_VVV " " arch15 zarch
++e700000040fd vmxlq VRR_VVV " " arch15 zarch
++e700000040fe vmnq VRR_VVV " " arch15 zarch
++e700000040fc vmnlq VRR_VVV " " arch15 zarch
++e700030000aa vmalg VRR_VVV0V " " arch15 zarch
++e700040000aa vmalq VRR_VVV0V " " arch15 zarch
++e700030000ab vmahg VRR_VVV0V " " arch15 zarch
++e700040000ab vmahq VRR_VVV0V " " arch15 zarch
++e700030000a9 vmalhg VRR_VVV0V " " arch15 zarch
++e700040000a9 vmalhq VRR_VVV0V " " arch15 zarch
++e700030000ae vmaeg VRR_VVV0V " " arch15 zarch
++e700030000ac vmaleg VRR_VVV0V " " arch15 zarch
++e700030000af vmaog VRR_VVV0V " " arch15 zarch
++e700030000ad vmalog VRR_VVV0V " " arch15 zarch
++e700000030a3 vmhg VRR_VVV " " arch15 zarch
++e700000040a3 vmhq VRR_VVV " " arch15 zarch
++e700000030a1 vmlhg VRR_VVV " " arch15 zarch
++e700000040a1 vmlhq VRR_VVV " " arch15 zarch
++e700000030a2 vmlg VRR_VVV " " arch15 zarch
++e700000040a2 vmlq VRR_VVV " " arch15 zarch
++e700000030a6 vmeg VRR_VVV " " arch15 zarch
++e700000030a4 vmleg VRR_VVV " " arch15 zarch
++e700000030a7 vmog VRR_VVV " " arch15 zarch
++e700000030a5 vmlog VRR_VVV " " arch15 zarch
++
++e700000000b2 vd VRR_VVV0UU " " arch15 zarch
++e700000020b2 vdf VRR_VVV0U02 " " arch15 zarch
++e700000030b2 vdg VRR_VVV0U02 " " arch15 zarch
++e700000040b2 vdq VRR_VVV0U02 " " arch15 zarch
++
++e700000000b0 vdl VRR_VVV0UU " " arch15 zarch
++e700000020b0 vdlf VRR_VVV0U02 " " arch15 zarch
++e700000030b0 vdlg VRR_VVV0U02 " " arch15 zarch
++e700000040b0 vdlq VRR_VVV0U02 " " arch15 zarch
++
++e700000000b3 vr VRR_VVV0UU " " arch15 zarch
++e700000020b3 vrf VRR_VVV0U02 " " arch15 zarch
++e700000030b3 vrg VRR_VVV0U02 " " arch15 zarch
++e700000040b3 vrq VRR_VVV0U02 " " arch15 zarch
++
++e700000000b1 vrl VRR_VVV0UU " " arch15 zarch
++e700000020b1 vrlf VRR_VVV0U02 " " arch15 zarch
++e700000030b1 vrlg VRR_VVV0U02 " " arch15 zarch
++e700000040b1 vrlq VRR_VVV0U02 " " arch15 zarch
++
++b968 clzg RRE_RR " " arch15 zarch
++b969 ctzg RRE_RR " " arch15 zarch
++
++e30000000060 lxab RXY_RRRD " " arch15 zarch
++e30000000062 lxah RXY_RRRD " " arch15 zarch
++e30000000064 lxaf RXY_RRRD " " arch15 zarch
++e30000000066 lxag RXY_RRRD " " arch15 zarch
++e30000000068 lxaq RXY_RRRD " " arch15 zarch
++
++e30000000061 llxab RXY_RRRD " " arch15 zarch
++e30000000063 llxah RXY_RRRD " " arch15 zarch
++e30000000065 llxaf RXY_RRRD " " arch15 zarch
++e30000000067 llxag RXY_RRRD " " arch15 zarch
++e30000000069 llxaq RXY_RRRD " " arch15 zarch
++
++b96c bextg RRF_R0RR2 " " arch15 zarch
++b96d bdepg RRF_R0RR2 " " arch15 zarch
++
++b93e kimd RRF_U0RR " " arch15 zarch optparm
++b93f klmd RRF_U0RR " " arch15 zarch optparm
++
++e6000000004e vcvbq VRR_VV0U2 " " arch15 zarch
++e6000000004a vcvdq VRI_VV0UU " " arch15 zarch
++
++e6000000005f vtp VRR_0V0U " " arch15 zarch optparm
++e6000000007f vtz VRR_0VVU " " arch15 zarch
 diff --git a/opcodes/sparc-opc.c b/opcodes/sparc-opc.c
 index fb7ebe38d46..19f7f62f1a3 100644
 --- a/opcodes/sparc-opc.c
