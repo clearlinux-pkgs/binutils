@@ -1,8 +1,9 @@
-Alan Modra (4):
+Alan Modra (5):
       PR32067, ld -Wl,--oformat,binary crash in _bfd_elf_link_keep_memory
       PR32109, aborting at bfd/bfd.c:1236 in int _bfd_doprnt
       segv in bfd_elf_get_str_section
       PR32300, --dependency-file: link dependencies are not all collected
+      PR32387 ppc64 TLS optimization bug with -fno-plt code
 
 Andreas Krebbel (1):
       s390: Add arch15 instructions
@@ -570,7 +571,7 @@ index eb7fef9331e..58f79e55529 100644
      {
        /* Check if the original relocation is against a literal being
 diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
-index cd3aaacaeb3..9674fcdd6be 100644
+index cd3aaacaeb3..f7debc1edbc 100644
 --- a/bfd/elf64-ppc.c
 +++ b/bfd/elf64-ppc.c
 @@ -4664,7 +4664,7 @@ update_local_sym_info (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
@@ -582,6 +583,22 @@ index cd3aaacaeb3..9674fcdd6be 100644
  	  ent->next = local_got_ents[r_symndx];
  	  ent->addend = r_addend;
  	  ent->owner = abfd;
+@@ -4915,6 +4915,15 @@ ppc64_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
+       tls_type = 0;
+       switch (r_type)
+ 	{
++	case R_PPC64_PLTSEQ:
++	case R_PPC64_PLTSEQ_NOTOC:
++	  /* Inline plt call code emitted by gcc doesn't support
++	     modifying the tls_index words to short-circuit
++	     __tls_get_addr calls.  See PR32387.  */
++	  if (h != NULL && (h == tga || h == dottga))
++	    htab->params->tls_get_addr_opt = 0;
++	  break;
++
+ 	case R_PPC64_TLSGD:
+ 	case R_PPC64_TLSLD:
+ 	  /* These special tls relocs tie a call to __tls_get_addr with
 diff --git a/bfd/elflink.c b/bfd/elflink.c
 index a180e59e8ca..336bcbf4658 100644
 --- a/bfd/elflink.c
