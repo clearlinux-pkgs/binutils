@@ -21,9 +21,10 @@ H.J. Lu (11):
       x86: Turn PLT32 to PC32 only for PC-relative relocations
       ld: Don't explicitly add .note.gnu.build-id in elf.sc
 
-Jan Beulich (2):
+Jan Beulich (3):
       x86: correct .insn with opcode extension and VEX/XOP/EVEX encoding
       gas: correct .irpc handling with empty string
+      x86-64: correct CODE_5 relocs
 
 Jens Remus (6):
       s390: Document syntax to omit base register operand
@@ -4601,6 +4602,35 @@ index ece01d17f32..029c0387f19 100644
  	    {
  	      if (cpu_info.cpu_vendorstr == NULL)
  		read_str (temp + 9, &cpu_info.cpu_vendorstr);
+diff --git a/include/elf/x86-64.h b/include/elf/x86-64.h
+index 6b5ada8e579..4ced40c96ec 100644
+--- a/include/elf/x86-64.h
++++ b/include/elf/x86-64.h
+@@ -96,18 +96,18 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
+ 	instruction starts at 5 bytes before the relocation offset,
+ 	relaxable.  */
+      RELOC_NUMBER (R_X86_64_CODE_5_GOTPCRELX, 46)
++     /* PC relative offset to IE GOT entry if the instruction starts at
++        5 bytes before the relocation offset.  */
++     RELOC_NUMBER (R_X86_64_CODE_5_GOTTPOFF, 47)
+      /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
+ 	instruction starts at 5 bytes before the relocation offset.  */
+-     RELOC_NUMBER (R_X86_64_CODE_5_GOTPC32_TLSDESC, 47)
+-    /* PC relative offset to IE GOT entry if the instruction starts at
+-       5 bytes before the relocation offset.  */
+-     RELOC_NUMBER (R_X86_64_CODE_5_GOTTPOFF, 48)
++     RELOC_NUMBER (R_X86_64_CODE_5_GOTPC32_TLSDESC, 48)
+      /* Load from 32 bit signed pc relative offset to GOT entry if the
+ 	instruction starts at 6 bytes before the relocation offset,
+ 	relaxable.  */
+      RELOC_NUMBER (R_X86_64_CODE_6_GOTPCRELX, 49)
+-    /* PC relative offset to IE GOT entry if the instruction starts at
+-       6 bytes before the relocation offset.  */
++     /* PC relative offset to IE GOT entry if the instruction starts at
++        6 bytes before the relocation offset.  */
+      RELOC_NUMBER (R_X86_64_CODE_6_GOTTPOFF, 50)
+      /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
+ 	instruction starts at 6 bytes before the relocation offset.  */
 diff --git a/include/opcode/riscv-opc.h b/include/opcode/riscv-opc.h
 index f0e1d99a5a9..22e63baf2e3 100644
 --- a/include/opcode/riscv-opc.h
