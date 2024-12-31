@@ -62,6 +62,9 @@ Xiao Zeng (2):
 Xin Wang (1):
       LoongArch: Add elfNN_loongarch_mkobject to initialize LoongArch tdata
 
+mengqinggang (1):
+      LoongArch: Add relaxation support for call36 that jump to PLT entry
+
 diff --git a/ChangeLog.git b/ChangeLog.git
 index 2c017a55c0d..bea2a9bf80c 100644
 --- a/ChangeLog.git
@@ -634,7 +637,7 @@ index a180e59e8ca..336bcbf4658 100644
        int r_sym_shift;
  
 diff --git a/bfd/elfnn-loongarch.c b/bfd/elfnn-loongarch.c
-index db6d419a052..7760b5279f8 100644
+index db6d419a052..610713a9d7e 100644
 --- a/bfd/elfnn-loongarch.c
 +++ b/bfd/elfnn-loongarch.c
 @@ -84,6 +84,14 @@ struct _bfd_loongarch_elf_obj_tdata
@@ -708,7 +711,19 @@ index db6d419a052..7760b5279f8 100644
        bool local_got = false;
        Elf_Internal_Rela *rel = relocs + i;
        struct elf_link_hash_entry *h = NULL;
-@@ -5395,14 +5418,33 @@ loongarch_elf_relax_section (bfd *abfd, asection *sec,
+@@ -5387,6 +5410,11 @@ loongarch_elf_relax_section (bfd *abfd, asection *sec,
+ 		    && GOT_TLS_GD_BOTH_P (tls_type))
+ 		symval += 2 * GOT_ENTRY_SIZE;
+ 	    }
++	  else if (h->plt.offset != MINUS_ONE)
++	    {
++	      sym_sec = htab->elf.splt ? htab->elf.splt : htab->elf.iplt;
++	      symval = h->plt.offset;
++	    }
+ 	  else if ((h->root.type == bfd_link_hash_defined
+ 		  || h->root.type == bfd_link_hash_defweak)
+ 		&& h->root.u.def.section != NULL
+@@ -5395,14 +5423,33 @@ loongarch_elf_relax_section (bfd *abfd, asection *sec,
  	      symval = h->root.u.def.value;
  	      sym_sec = h->root.u.def.section;
  	    }
@@ -744,7 +759,7 @@ index db6d419a052..7760b5279f8 100644
        if (sym_sec->sec_info_type == SEC_INFO_TYPE_MERGE
  	   && (sym_sec->flags & SEC_MERGE))
  	{
-@@ -5430,24 +5472,6 @@ loongarch_elf_relax_section (bfd *abfd, asection *sec,
+@@ -5430,24 +5477,6 @@ loongarch_elf_relax_section (bfd *abfd, asection *sec,
  
        symval += sec_addr (sym_sec);
  
@@ -769,7 +784,7 @@ index db6d419a052..7760b5279f8 100644
        switch (r_type)
  	{
  	case R_LARCH_ALIGN:
-@@ -6132,6 +6156,8 @@ elf_loongarch64_hash_symbol (struct elf_link_hash_entry *h)
+@@ -6132,6 +6161,8 @@ elf_loongarch64_hash_symbol (struct elf_link_hash_entry *h)
  #define bfd_elfNN_bfd_reloc_name_lookup loongarch_reloc_name_lookup
  #define elf_info_to_howto_rel NULL /* Fall through to elf_info_to_howto.  */
  #define elf_info_to_howto loongarch_info_to_howto_rela
