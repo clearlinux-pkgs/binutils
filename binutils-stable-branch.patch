@@ -1,12 +1,17 @@
-Alan Modra (5):
+Alan Modra (7):
       PR32067, ld -Wl,--oformat,binary crash in _bfd_elf_link_keep_memory
       PR32109, aborting at bfd/bfd.c:1236 in int _bfd_doprnt
       segv in bfd_elf_get_str_section
       PR32300, --dependency-file: link dependencies are not all collected
       PR32387 ppc64 TLS optimization bug with -fno-plt code
+      PR32266, segv when linking libclang_rt.asan-powerpc64.so
+      _bfd_write_ar_hdr
 
 Andreas Krebbel (1):
       s390: Add arch15 instructions
+
+Andrew Carlotti (1):
+      aarch64: Fix incorrect gating of sme-lutv2 instructions
 
 H.J. Lu (11):
       LTO: Restore the wrapper symbol check for standard function
@@ -499,10 +504,10 @@ index c66a79ee343..90a60f50822 100755
    with options \\"\$ac_cs_config\\"
  
 diff --git a/bfd/elf.c b/bfd/elf.c
-index f85f79e1e35..b02d95579b7 100644
+index f85f79e1e35..fa7ecd3dab8 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
-@@ -285,9 +285,7 @@ bfd_elf_get_str_section (bfd *abfd, unsigned int shindex)
+@@ -285,26 +285,22 @@ bfd_elf_get_str_section (bfd *abfd, unsigned int shindex)
        offset = i_shdrp[shindex]->sh_offset;
        shstrtabsize = i_shdrp[shindex]->sh_size;
  
@@ -511,9 +516,12 @@ index f85f79e1e35..b02d95579b7 100644
 -      if (shstrtabsize + 1 <= 1
 +      if (shstrtabsize == 0
  	  || bfd_seek (abfd, offset, SEEK_SET) != 0
- 	  || (shstrtab
- 	      = _bfd_mmap_readonly_persistent (abfd, shstrtabsize)) == NULL)
-@@ -297,14 +295,14 @@ bfd_elf_get_str_section (bfd *abfd, unsigned int shindex)
+-	  || (shstrtab
+-	      = _bfd_mmap_readonly_persistent (abfd, shstrtabsize)) == NULL)
++	  || (shstrtab = _bfd_mmap_persistent (abfd, shstrtabsize)) == NULL)
+ 	{
+ 	  /* Once we've failed to read it, make sure we don't keep
+ 	     trying.  Otherwise, we'll keep allocating space for
  	     the string table over and over.  */
  	  i_shdrp[shindex]->sh_size = 0;
  	}
@@ -527,12 +535,61 @@ index f85f79e1e35..b02d95579b7 100644
 -	     abfd, i_shdrp[shindex]->bfd_section);
 -	  return NULL;
 +	    (_("%pB: string table [%u] is corrupt"), abfd, shindex);
-+	  shstrtab = NULL;
-+	  i_shdrp[shindex]->sh_size = 0;
++	  shstrtab[shstrtabsize - 1] = 0;
  	}
        i_shdrp[shindex]->contents = shstrtab;
      }
-@@ -1914,7 +1912,7 @@ _bfd_elf_get_dynamic_symbols (bfd *abfd, Elf_Internal_Phdr *phdr,
+@@ -524,9 +520,9 @@ bfd_elf_get_elf_syms (bfd *ibfd,
+       }
+ 
+  out1:
+-  _bfd_munmap_readonly_temporary (alloc_extshndx, alloc_extshndx_size);
++  _bfd_munmap_temporary (alloc_extshndx, alloc_extshndx_size);
+  out2:
+-  _bfd_munmap_readonly_temporary (alloc_ext, alloc_ext_size);
++  _bfd_munmap_temporary (alloc_ext, alloc_ext_size);
+ 
+   return intsym_buf;
+ }
+@@ -1736,8 +1732,7 @@ get_hash_table_data (bfd *abfd, bfd_size_type number,
+       return NULL;
+     }
+ 
+-  e_data = _bfd_mmap_readonly_temporary (abfd, size, &e_data_addr,
+-					 &e_data_size);
++  e_data = _bfd_mmap_temporary (abfd, size, &e_data_addr, &e_data_size);
+   if (e_data == NULL)
+     return NULL;
+ 
+@@ -1755,7 +1750,7 @@ get_hash_table_data (bfd *abfd, bfd_size_type number,
+     while (number--)
+       i_data[number] = bfd_get_64 (abfd, e_data + number * ent_size);
+ 
+-  _bfd_munmap_readonly_temporary (e_data_addr, e_data_size);
++  _bfd_munmap_temporary (e_data_addr, e_data_size);
+   return i_data;
+ }
+ 
+@@ -1826,8 +1821,7 @@ _bfd_elf_get_dynamic_symbols (bfd *abfd, Elf_Internal_Phdr *phdr,
+     goto error_return;
+ 
+   dynbuf_size = phdr->p_filesz;
+-  dynbuf = _bfd_mmap_readonly_temporary (abfd, dynbuf_size,
+-					 &dynbuf_addr, &dynbuf_size);
++  dynbuf = _bfd_mmap_temporary (abfd, dynbuf_size, &dynbuf_addr, &dynbuf_size);
+   if (dynbuf == NULL)
+     goto error_return;
+ 
+@@ -1905,7 +1899,7 @@ _bfd_elf_get_dynamic_symbols (bfd *abfd, Elf_Internal_Phdr *phdr,
+     goto error_return;
+ 
+   /* Dynamic string table must be valid until ABFD is closed.  */
+-  strbuf = (char *) _bfd_mmap_readonly_persistent (abfd, dt_strsz);
++  strbuf = (char *) _bfd_mmap_persistent (abfd, dt_strsz);
+   if (strbuf == NULL)
+     goto error_return;
+   if (strbuf[dt_strsz - 1] != 0)
+@@ -1914,7 +1908,7 @@ _bfd_elf_get_dynamic_symbols (bfd *abfd, Elf_Internal_Phdr *phdr,
        _bfd_error_handler
  	/* xgettext:c-format */
  	(_("%pB: DT_STRTAB table is corrupt"), abfd);
@@ -541,6 +598,107 @@ index f85f79e1e35..b02d95579b7 100644
      }
  
    /* Get the real symbol count from DT_HASH or DT_GNU_HASH.  Prefer
+@@ -2091,9 +2085,8 @@ _bfd_elf_get_dynamic_symbols (bfd *abfd, Elf_Internal_Phdr *phdr,
+       || bfd_seek (abfd, filepos, SEEK_SET) != 0)
+     goto error_return;
+   esymbuf_size = amt;
+-  esymbuf = _bfd_mmap_readonly_temporary (abfd, esymbuf_size,
+-					  &esymbuf_addr,
+-					  &esymbuf_size);
++  esymbuf = _bfd_mmap_temporary (abfd, esymbuf_size,
++				 &esymbuf_addr, &esymbuf_size);
+   if (esymbuf == NULL)
+     goto error_return;
+ 
+@@ -2137,7 +2130,7 @@ _bfd_elf_get_dynamic_symbols (bfd *abfd, Elf_Internal_Phdr *phdr,
+ 	goto error_return;
+ 
+       /* DT_VERSYM info must be valid until ABFD is closed.  */
+-      versym = _bfd_mmap_readonly_persistent (abfd, amt);
++      versym = _bfd_mmap_persistent (abfd, amt);
+ 
+       if (dt_verdef)
+ 	{
+@@ -2149,7 +2142,7 @@ _bfd_elf_get_dynamic_symbols (bfd *abfd, Elf_Internal_Phdr *phdr,
+ 	    goto error_return;
+ 
+ 	  /* DT_VERDEF info must be valid until ABFD is closed.  */
+-	  verdef = _bfd_mmap_readonly_persistent (abfd, verdef_size);
++	  verdef = _bfd_mmap_persistent (abfd, verdef_size);
+ 	}
+ 
+       if (dt_verneed)
+@@ -2162,7 +2155,7 @@ _bfd_elf_get_dynamic_symbols (bfd *abfd, Elf_Internal_Phdr *phdr,
+ 	    goto error_return;
+ 
+ 	  /* DT_VERNEED info must be valid until ABFD is closed.  */
+-	  verneed = _bfd_mmap_readonly_persistent (abfd, verneed_size);
++	  verneed = _bfd_mmap_persistent (abfd, verneed_size);
+ 	}
+     }
+ 
+@@ -2185,8 +2178,8 @@ _bfd_elf_get_dynamic_symbols (bfd *abfd, Elf_Internal_Phdr *phdr,
+   /* Restore file position for elf_object_p.  */
+   if (bfd_seek (abfd, saved_filepos, SEEK_SET) != 0)
+     res = false;
+-  _bfd_munmap_readonly_temporary (dynbuf_addr, dynbuf_size);
+-  _bfd_munmap_readonly_temporary (esymbuf_addr, esymbuf_size);
++  _bfd_munmap_temporary (dynbuf_addr, dynbuf_size);
++  _bfd_munmap_temporary (esymbuf_addr, esymbuf_size);
+   free (gnubuckets);
+   free (gnuchains);
+   free (mipsxlat);
+@@ -9288,9 +9281,8 @@ _bfd_elf_slurp_version_tables (bfd *abfd, bool default_imported_symver)
+ 	  if (bfd_seek (abfd, hdr->sh_offset, SEEK_SET) != 0)
+ 	    goto error_return_verref;
+ 	  contents_size = hdr->sh_size;
+-	  contents = _bfd_mmap_readonly_temporary (abfd, contents_size,
+-						   &contents_addr,
+-						   &contents_size);
++	  contents = _bfd_mmap_temporary (abfd, contents_size,
++					  &contents_addr, &contents_size);
+ 	  if (contents == NULL)
+ 	    goto error_return_verref;
+ 
+@@ -9423,7 +9415,7 @@ _bfd_elf_slurp_version_tables (bfd *abfd, bool default_imported_symver)
+       elf_tdata (abfd)->cverrefs = i;
+ 
+       if (contents != elf_tdata (abfd)->dt_verneed)
+-	_bfd_munmap_readonly_temporary (contents_addr, contents_size);
++	_bfd_munmap_temporary (contents_addr, contents_size);
+       contents = NULL;
+       contents_addr = NULL;
+     }
+@@ -9467,9 +9459,8 @@ _bfd_elf_slurp_version_tables (bfd *abfd, bool default_imported_symver)
+ 	  if (bfd_seek (abfd, hdr->sh_offset, SEEK_SET) != 0)
+ 	    goto error_return_verdef;
+ 	  contents_size = hdr->sh_size;
+-	  contents = _bfd_mmap_readonly_temporary (abfd, contents_size,
+-						   &contents_addr,
+-						   &contents_size);
++	  contents = _bfd_mmap_temporary (abfd, contents_size,
++					  &contents_addr, &contents_size);
+ 	  if (contents == NULL)
+ 	    goto error_return_verdef;
+ 
+@@ -9623,7 +9614,7 @@ _bfd_elf_slurp_version_tables (bfd *abfd, bool default_imported_symver)
+ 	}
+ 
+       if (contents != elf_tdata (abfd)->dt_verdef)
+-	_bfd_munmap_readonly_temporary (contents_addr, contents_size);
++	_bfd_munmap_temporary (contents_addr, contents_size);
+       contents = NULL;
+       contents_addr = NULL;
+     }
+@@ -9681,7 +9672,7 @@ _bfd_elf_slurp_version_tables (bfd *abfd, bool default_imported_symver)
+  error_return:
+   if (contents != elf_tdata (abfd)->dt_verneed
+       && contents != elf_tdata (abfd)->dt_verdef)
+-    _bfd_munmap_readonly_temporary (contents_addr, contents_size);
++    _bfd_munmap_temporary (contents_addr, contents_size);
+   return false;
+ }
+ 
 diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
 index a5370a0624e..8c89ae1611f 100644
 --- a/bfd/elf32-ppc.c
@@ -606,7 +764,7 @@ index cd3aaacaeb3..f7debc1edbc 100644
  	case R_PPC64_TLSLD:
  	  /* These special tls relocs tie a call to __tls_get_addr with
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index a180e59e8ca..336bcbf4658 100644
+index a180e59e8ca..faf65120a94 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -64,7 +64,7 @@ _bfd_elf_link_keep_memory (struct bfd_link_info *info)
@@ -618,6 +776,24 @@ index a180e59e8ca..336bcbf4658 100644
      return false;
  #endif
    bfd *abfd;
+@@ -2877,7 +2877,7 @@ _bfd_elf_link_info_read_relocs (bfd *abfd,
+   if (keep_memory)
+     esdo->relocs = internal_relocs;
+ 
+-  _bfd_munmap_readonly_temporary (alloc1, alloc1_size);
++  _bfd_munmap_temporary (alloc1, alloc1_size);
+ 
+   /* Don't free alloc2, since if it was allocated we are passing it
+      back (under the name of internal_relocs).  */
+@@ -2885,7 +2885,7 @@ _bfd_elf_link_info_read_relocs (bfd *abfd,
+   return internal_relocs;
+ 
+  error_return:
+-  _bfd_munmap_readonly_temporary (alloc1, alloc1_size);
++  _bfd_munmap_temporary (alloc1, alloc1_size);
+   if (alloc2 != NULL)
+     {
+       if (keep_memory)
 @@ -3653,6 +3653,7 @@ elf_link_is_defined_archive_symbol (bfd * abfd, carsym * symdef)
       object file is an IR object, give linker LTO plugin a chance to
       get the correct symbol table.  */
@@ -857,19 +1033,346 @@ index b3adbed1913..80260d513c4 100644
      case INSN_CLASS_ZCMP:
        return "zcmp";
      case INSN_CLASS_SVINVAL:
+diff --git a/bfd/libbfd-in.h b/bfd/libbfd-in.h
+index f7f5773510b..1430086db73 100644
+--- a/bfd/libbfd-in.h
++++ b/bfd/libbfd-in.h
+@@ -248,7 +248,7 @@ extern int bfd_generic_stat_arch_elt
+ #define _bfd_read_ar_hdr(abfd) \
+ 	BFD_SEND (abfd, _bfd_read_ar_hdr_fn, (abfd))
+ #define _bfd_write_ar_hdr(archive, abfd)	 \
+-	BFD_SEND (abfd, _bfd_write_ar_hdr_fn, (archive, abfd))
++	BFD_SEND (archive, _bfd_write_ar_hdr_fn, (archive, abfd))
+ 
+ /* Generic routines to use for BFD_JUMP_TABLE_GENERIC.  Use
+    BFD_JUMP_TABLE_GENERIC (_bfd_generic).  */
+@@ -889,53 +889,57 @@ _bfd_alloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
+   return NULL;
+ }
+ 
++static inline void *
++_bfd_malloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
++{
++  void *mem;
++  if (!_bfd_constant_p (rsize))
++    {
++      ufile_ptr filesize = bfd_get_file_size (abfd);
++      if (filesize != 0 && rsize > filesize)
++	{
++	  bfd_set_error (bfd_error_file_truncated);
++	  return NULL;
++	}
++    }
++  mem = bfd_malloc (asize);
++  if (mem != NULL)
++    {
++      if (bfd_read (mem, rsize, abfd) == rsize)
++	return mem;
++      free (mem);
++    }
++  return NULL;
++}
++
+ #ifdef USE_MMAP
+-extern void *_bfd_mmap_readonly_persistent
++extern void *_bfd_mmap_persistent
+   (bfd *, size_t) ATTRIBUTE_HIDDEN;
+-extern void *_bfd_mmap_readonly_temporary
++extern void *_bfd_mmap_temporary
+   (bfd *, size_t, void **, size_t *) ATTRIBUTE_HIDDEN;
+-extern void _bfd_munmap_readonly_temporary
++extern void _bfd_munmap_temporary
+   (void *, size_t) ATTRIBUTE_HIDDEN;
+ #else
+-#define _bfd_mmap_readonly_persistent(abfd, rsize) \
+-  _bfd_alloc_and_read (abfd, rsize, rsize)
+-#define _bfd_munmap_readonly_temporary(ptr, rsize) free (ptr)
+-#endif
+-
+-extern bool _bfd_mmap_read_temporary
+-  (void **, size_t *, void **, bfd *, bool) ATTRIBUTE_HIDDEN;
+-
+ static inline void *
+-_bfd_malloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
++_bfd_mmap_persistent (bfd *abfd, size_t rsize)
+ {
+-  void *mem;
+-  if (!_bfd_constant_p (rsize))
+-    {
+-      ufile_ptr filesize = bfd_get_file_size (abfd);
+-      if (filesize != 0 && rsize > filesize)
+-	{
+-	  bfd_set_error (bfd_error_file_truncated);
+-	  return NULL;
+-	}
+-    }
+-  mem = bfd_malloc (asize);
+-  if (mem != NULL)
+-    {
+-      if (bfd_read (mem, rsize, abfd) == rsize)
+-	return mem;
+-      free (mem);
+-    }
+-  return NULL;
++  return _bfd_alloc_and_read (abfd, rsize, rsize);
+ }
+-
+-#ifndef USE_MMAP
+ static inline void *
+-_bfd_mmap_readonly_temporary (bfd *abfd, size_t rsize, void **map_addr,
+-			      size_t *map_size)
++_bfd_mmap_temporary (bfd *abfd, size_t rsize, void **map_addr,
++		     size_t *map_size)
+ {
+   void *mem = _bfd_malloc_and_read (abfd, rsize, rsize);
+   *map_addr = mem;
+   *map_size = rsize;
+   return mem;
+ }
++static inline void
++_bfd_munmap_temporary (void *ptr, size_t rsize ATTRIBUTE_UNUSED)
++{
++  free (ptr);
++}
+ #endif
++
++extern bool _bfd_mmap_read_temporary
++  (void **, size_t *, void **, bfd *, bool) ATTRIBUTE_HIDDEN;
 diff --git a/bfd/libbfd.c b/bfd/libbfd.c
-index 53868471001..4da842ead84 100644
+index 53868471001..4ab5bf498fd 100644
 --- a/bfd/libbfd.c
 +++ b/bfd/libbfd.c
-@@ -1126,7 +1126,7 @@ _bfd_munmap_readonly_temporary (void *ptr, size_t rsize)
+@@ -1064,13 +1064,12 @@ bfd_allocate_mmapped_page (bfd *abfd, struct bfd_mmapped_entry **entry)
+   return mmapped;
+ }
+ 
+-/* Mmap a memory region of RSIZE bytes with PROT at the current offset.
++/* Mmap a memory region of RSIZE bytes at the current file offset.
+    Return mmap address and size in MAP_ADDR and MAP_SIZE.  Return NULL
+    on invalid input and MAP_FAILED for mmap failure.  */
+ 
+ static void *
+-bfd_mmap_local (bfd *abfd, size_t rsize, int prot, void **map_addr,
+-		size_t *map_size)
++bfd_mmap_local (bfd *abfd, size_t rsize, void **map_addr, size_t *map_size)
  {
-   /* NB: Since _bfd_munmap_readonly_temporary is called like free, PTR
-      may be NULL.  Otherwise, PTR and RSIZE must be valid.  If RSIZE is
+   /* We mmap on the underlying file.  In an archive it might be nice
+      to limit RSIZE to the element size, but that can be fuzzed and
+@@ -1092,18 +1091,18 @@ bfd_mmap_local (bfd *abfd, size_t rsize, int prot, void **map_addr,
+     }
+ 
+   void *mem;
+-  mem = bfd_mmap (abfd, NULL, rsize, prot, MAP_PRIVATE, offset,
+-		  map_addr, map_size);
++  mem = bfd_mmap (abfd, NULL, rsize, PROT_READ | PROT_WRITE, MAP_PRIVATE,
++		  offset, map_addr, map_size);
+   return mem;
+ }
+ 
+-/* Mmap a readonly memory region of RSIZE bytes at the current offset.
++/* Mmap a memory region of RSIZE bytes at the current offset.
+    Return mmap address and size in MAP_ADDR and MAP_SIZE.  Return NULL
+    on invalid input and MAP_FAILED for mmap failure.  */
+ 
+ void *
+-_bfd_mmap_readonly_temporary (bfd *abfd, size_t rsize, void **map_addr,
+-			      size_t *map_size)
++_bfd_mmap_temporary (bfd *abfd, size_t rsize, void **map_addr,
++		     size_t *map_size)
+ {
+   /* Use mmap only if section size >= the minimum mmap section size.  */
+   if (rsize < _bfd_minimum_mmap_size)
+@@ -1116,17 +1115,17 @@ _bfd_mmap_readonly_temporary (bfd *abfd, size_t rsize, void **map_addr,
+       return mem;
+     }
+ 
+-  return bfd_mmap_local (abfd, rsize, PROT_READ, map_addr, map_size);
++  return bfd_mmap_local (abfd, rsize, map_addr, map_size);
+ }
+ 
+ /* Munmap RSIZE bytes at PTR.  */
+ 
+ void
+-_bfd_munmap_readonly_temporary (void *ptr, size_t rsize)
++_bfd_munmap_temporary (void *ptr, size_t rsize)
+ {
+-  /* NB: Since _bfd_munmap_readonly_temporary is called like free, PTR
+-     may be NULL.  Otherwise, PTR and RSIZE must be valid.  If RSIZE is
 -     0, _bfd_malloc_and_read is called.  */
-+     0, free is called.  */
++  /* NB: Since _bfd_munmap_temporary is called like free, PTR may be
++     NULL.  Otherwise, PTR and RSIZE must be valid.  If RSIZE is 0,
++     free is called.  */
    if (ptr == NULL)
      return;
    if (rsize != 0)
+@@ -1138,11 +1137,11 @@ _bfd_munmap_readonly_temporary (void *ptr, size_t rsize)
+     free (ptr);
+ }
+ 
+-/* Mmap a readonly memory region of RSIZE bytes at the current offset.
++/* Mmap a memory region of RSIZE bytes at the current offset.
+    Return NULL on invalid input or mmap failure.  */
+ 
+ void *
+-_bfd_mmap_readonly_persistent (bfd *abfd, size_t rsize)
++_bfd_mmap_persistent (bfd *abfd, size_t rsize)
+ {
+   /* Use mmap only if section size >= the minimum mmap section size.  */
+   if (rsize < _bfd_minimum_mmap_size)
+@@ -1150,7 +1149,7 @@ _bfd_mmap_readonly_persistent (bfd *abfd, size_t rsize)
+ 
+   void *mem, *map_addr;
+   size_t map_size;
+-  mem = bfd_mmap_local (abfd, rsize, PROT_READ, &map_addr, &map_size);
++  mem = bfd_mmap_local (abfd, rsize, &map_addr, &map_size);
+   if (mem == NULL)
+     return mem;
+   if (mem == MAP_FAILED)
+@@ -1213,9 +1212,7 @@ _bfd_mmap_read_temporary (void **data_p, size_t *size_p,
+ 		 && (abfd->flags & BFD_PLUGIN) == 0);
+   if (use_mmmap)
+     {
+-      void *mmaped = _bfd_mmap_readonly_temporary (abfd, size,
+-						   mmap_base,
+-						   size_p);
++      void *mmaped = _bfd_mmap_temporary (abfd, size, mmap_base, size_p);
+       /* MAP_FAILED is returned when called from GDB on an object with
+ 	 opncls_iovec.  Use bfd_read in this case.  */
+       if (mmaped != MAP_FAILED)
+@@ -1234,8 +1231,7 @@ _bfd_mmap_read_temporary (void **data_p, size_t *size_p,
+       if (data == NULL)
+ 	return false;
+       *data_p = data;
+-      /* NB: _bfd_munmap_readonly_temporary will free *MMAP_BASE if
+-	 *SIZE_P == 0.  */
++      /* NB: _bfd_munmap_temporary will free *MMAP_BASE if *SIZE_P == 0.  */
+       *mmap_base = data;
+     }
+   else
+@@ -1302,12 +1298,9 @@ _bfd_generic_get_section_contents (bfd *abfd,
+ 	  || bfd_get_flavour (abfd) != bfd_target_elf_flavour)
+ 	abort ();
+ 
+-      int prot = ((section->reloc_count == 0)
+-		  ? PROT_READ : PROT_READ | PROT_WRITE);
+-
+-      location = bfd_mmap_local
+-	(abfd, count, prot, &elf_section_data (section)->contents_addr,
+-	 &elf_section_data (section)->contents_size);
++      location = bfd_mmap_local (abfd, count,
++				 &elf_section_data (section)->contents_addr,
++				 &elf_section_data (section)->contents_size);
+ 
+       if (location == NULL)
+ 	return false;
+diff --git a/bfd/libbfd.h b/bfd/libbfd.h
+index 5e8ed9eeefe..10371c4ab56 100644
+--- a/bfd/libbfd.h
++++ b/bfd/libbfd.h
+@@ -254,7 +254,7 @@ extern int bfd_generic_stat_arch_elt
+ #define _bfd_read_ar_hdr(abfd) \
+ 	BFD_SEND (abfd, _bfd_read_ar_hdr_fn, (abfd))
+ #define _bfd_write_ar_hdr(archive, abfd)	 \
+-	BFD_SEND (abfd, _bfd_write_ar_hdr_fn, (archive, abfd))
++	BFD_SEND (archive, _bfd_write_ar_hdr_fn, (archive, abfd))
+ 
+ /* Generic routines to use for BFD_JUMP_TABLE_GENERIC.  Use
+    BFD_JUMP_TABLE_GENERIC (_bfd_generic).  */
+@@ -895,56 +895,60 @@ _bfd_alloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
+   return NULL;
+ }
+ 
++static inline void *
++_bfd_malloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
++{
++  void *mem;
++  if (!_bfd_constant_p (rsize))
++    {
++      ufile_ptr filesize = bfd_get_file_size (abfd);
++      if (filesize != 0 && rsize > filesize)
++	{
++	  bfd_set_error (bfd_error_file_truncated);
++	  return NULL;
++	}
++    }
++  mem = bfd_malloc (asize);
++  if (mem != NULL)
++    {
++      if (bfd_read (mem, rsize, abfd) == rsize)
++	return mem;
++      free (mem);
++    }
++  return NULL;
++}
++
+ #ifdef USE_MMAP
+-extern void *_bfd_mmap_readonly_persistent
++extern void *_bfd_mmap_persistent
+   (bfd *, size_t) ATTRIBUTE_HIDDEN;
+-extern void *_bfd_mmap_readonly_temporary
++extern void *_bfd_mmap_temporary
+   (bfd *, size_t, void **, size_t *) ATTRIBUTE_HIDDEN;
+-extern void _bfd_munmap_readonly_temporary
++extern void _bfd_munmap_temporary
+   (void *, size_t) ATTRIBUTE_HIDDEN;
+ #else
+-#define _bfd_mmap_readonly_persistent(abfd, rsize) \
+-  _bfd_alloc_and_read (abfd, rsize, rsize)
+-#define _bfd_munmap_readonly_temporary(ptr, rsize) free (ptr)
+-#endif
+-
+-extern bool _bfd_mmap_read_temporary
+-  (void **, size_t *, void **, bfd *, bool) ATTRIBUTE_HIDDEN;
+-
+ static inline void *
+-_bfd_malloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
++_bfd_mmap_persistent (bfd *abfd, size_t rsize)
+ {
+-  void *mem;
+-  if (!_bfd_constant_p (rsize))
+-    {
+-      ufile_ptr filesize = bfd_get_file_size (abfd);
+-      if (filesize != 0 && rsize > filesize)
+-	{
+-	  bfd_set_error (bfd_error_file_truncated);
+-	  return NULL;
+-	}
+-    }
+-  mem = bfd_malloc (asize);
+-  if (mem != NULL)
+-    {
+-      if (bfd_read (mem, rsize, abfd) == rsize)
+-	return mem;
+-      free (mem);
+-    }
+-  return NULL;
++  return _bfd_alloc_and_read (abfd, rsize, rsize);
+ }
+-
+-#ifndef USE_MMAP
+ static inline void *
+-_bfd_mmap_readonly_temporary (bfd *abfd, size_t rsize, void **map_addr,
+-			      size_t *map_size)
++_bfd_mmap_temporary (bfd *abfd, size_t rsize, void **map_addr,
++		     size_t *map_size)
+ {
+   void *mem = _bfd_malloc_and_read (abfd, rsize, rsize);
+   *map_addr = mem;
+   *map_size = rsize;
+   return mem;
+ }
++static inline void
++_bfd_munmap_temporary (void *ptr, size_t rsize ATTRIBUTE_UNUSED)
++{
++  free (ptr);
++}
+ #endif
++
++extern bool _bfd_mmap_read_temporary
++  (void **, size_t *, void **, bfd *, bool) ATTRIBUTE_HIDDEN;
+ /* Extracted from libbfd.c.  */
+ void *bfd_malloc (bfd_size_type /*size*/) ATTRIBUTE_HIDDEN;
+ 
 diff --git a/bfd/mach-o.c b/bfd/mach-o.c
 index 93224aaed00..974747caadd 100644
 --- a/bfd/mach-o.c
@@ -3649,6 +4152,26 @@ index be9b0cd3f7d..e052dceed7f 100644
  #, c-format
  msgid "Illegal operands: garbage after %%r_%s%d()"
  msgstr ""
+diff --git a/gas/testsuite/gas/aarch64/sme2-lutv2-bad-2.d b/gas/testsuite/gas/aarch64/sme2-lutv2-bad-2.d
+new file mode 100644
+index 00000000000..d96315f3fb3
+--- /dev/null
++++ b/gas/testsuite/gas/aarch64/sme2-lutv2-bad-2.d
+@@ -0,0 +1,3 @@
++#as: -march=armv8-a+sme2+sme-lutv2
++#source: sme2-lutv2.s
++#error_output: sme2-lutv2-bad-2.l
+diff --git a/gas/testsuite/gas/aarch64/sme2-lutv2-bad-2.l b/gas/testsuite/gas/aarch64/sme2-lutv2-bad-2.l
+new file mode 100644
+index 00000000000..ada6d3a5ed0
+--- /dev/null
++++ b/gas/testsuite/gas/aarch64/sme2-lutv2-bad-2.l
+@@ -0,0 +1,5 @@
++[^ :]+: Assembler messages:
++.*: Error: selected processor does not support `luti4 { ?z0.b,z4.b,z8.b,z12.b ?},zt0,{ ?z0 ?- ?z1 ?}'
++.*: Error: selected processor does not support `luti4 { ?z19.b,z23.b,z27.b,z31.b ?},zt0,{ ?z0 ?- ?z1 ?}'
++.*: Error: selected processor does not support `luti4 { ?z0.b,z4.b,z8.b,z12.b ?},zt0,{ ?z30 ?- ?z31 ?}'
++.*: Error: selected processor does not support `luti4 { ?z17.b,z21.b,z25.b,z29.b ?},zt0,{ ?z12 ?- ?z13 ?}'
 diff --git a/gas/testsuite/gas/i386/reloc32.d b/gas/testsuite/gas/i386/reloc32.d
 index 263a742022e..96c5224393f 100644
 --- a/gas/testsuite/gas/i386/reloc32.d
@@ -6201,6 +6724,52 @@ index 742823e6458..89ce531a5a9 100644
      ]
  
      # Run-time tests which require working ifunc attribute support.
+diff --git a/opcodes/aarch64-tbl.h b/opcodes/aarch64-tbl.h
+index 172c9a44845..61af3d9792e 100644
+--- a/opcodes/aarch64-tbl.h
++++ b/opcodes/aarch64-tbl.h
+@@ -2841,8 +2841,10 @@ static const aarch64_feature_set aarch64_feature_lut_sve2 =
+   AARCH64_FEATURES (2, LUT, SVE2);
+ static const aarch64_feature_set aarch64_feature_brbe =
+   AARCH64_FEATURE (BRBE);
+-static const aarch64_feature_set aarch64_feature_sme_lutv2 =
+-  AARCH64_FEATURES (3, SME_LUTv2, SME2, SME2p1);
++static const aarch64_feature_set aarch64_feature_lutv2_sme2 =
++  AARCH64_FEATURES (2, SME_LUTv2, SME2);
++static const aarch64_feature_set aarch64_feature_lutv2_sme2p1 =
++  AARCH64_FEATURES (2, SME_LUTv2, SME2p1);
+ static const aarch64_feature_set aarch64_feature_fp8fma =
+   AARCH64_FEATURE (FP8FMA);
+ static const aarch64_feature_set aarch64_feature_fp8dot4 =
+@@ -2938,7 +2940,8 @@ static const aarch64_feature_set aarch64_feature_sme_f16f16_f8f16 =
+ #define LUT &aarch64_feature_lut
+ #define LUT_SVE2 &aarch64_feature_lut_sve2
+ #define BRBE		&aarch64_feature_brbe
+-#define LUTv2_SME2 &aarch64_feature_sme_lutv2
++#define LUTv2_SME2	&aarch64_feature_lutv2_sme2
++#define LUTv2_SME2p1	&aarch64_feature_lutv2_sme2p1
+ #define FP8FMA		&aarch64_feature_fp8fma
+ #define FP8DOT4		&aarch64_feature_fp8dot4
+ #define FP8DOT2		&aarch64_feature_fp8dot2
+@@ -3151,6 +3154,9 @@ static const aarch64_feature_set aarch64_feature_sme_f16f16_f8f16 =
+ #define LUTv2_SME2_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS)	\
+   { NAME, OPCODE, MASK, CLASS, 0, LUTv2_SME2, OPS, QUALS, \
+     FLAGS, 0, 0, NULL }
++#define LUTv2_SME2p1_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS)	\
++  { NAME, OPCODE, MASK, CLASS, 0, LUTv2_SME2p1, OPS, QUALS, \
++    FLAGS, 0, 0, NULL }
+ #define FP8FMA_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
+   { NAME, OPCODE, MASK, CLASS, 0, FP8FMA, OPS, QUALS, FLAGS, 0, 0, NULL }
+ #define FP8DOT4_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
+@@ -6807,7 +6813,7 @@ const struct aarch64_opcode aarch64_opcode_table[] =
+ 
+   /* SME2 lutv2.  */
+   LUTv2_SME2_INSN ("luti4", 0xc08b0000, 0xffffcc23, sme_size_12_b, OP3 (SME_Zdnx4, SME_ZT0, SME_Znx2_BIT_INDEX), OP_SVE_VUU_B, F_STRICT | 0),
+-  LUTv2_SME2_INSN ("luti4", 0xc09b0000, 0xffffcc2c, sme_size_12_b, OP3 (SME_Zdnx4_STRIDED, SME_ZT0, SME_Znx2_BIT_INDEX), OP_SVE_VUU_B, F_STRICT | 0),
++  LUTv2_SME2p1_INSN ("luti4", 0xc09b0000, 0xffffcc2c, sme_size_12_b, OP3 (SME_Zdnx4_STRIDED, SME_ZT0, SME_Znx2_BIT_INDEX), OP_SVE_VUU_B, F_STRICT | 0),
+   LUTv2_SME2_INSN ("movt", 0xc04f03e0, 0xffffcfe0, sme_misc, OP2 (SME_ZT0_INDEX2_12, SVE_Zt), {}, 0),
+   /* SME FP16 ZA-targeting addition instructions.  */
+   SME_F16F16_F8F16_INSNC("fadd", 0xc1a41c00, 0xffff9c38, sme_misc, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_HH, F_OD (2), 0),
 diff --git a/opcodes/configure b/opcodes/configure
 index 1a6289af1cd..29e13afe42c 100755
 --- a/opcodes/configure
