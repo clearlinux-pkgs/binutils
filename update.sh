@@ -5,7 +5,7 @@ BINUTILS_GIT=~/git/binutils-gdb
 BINUTILS_VER=2_44
 
 #BINUTILS_TAG="binutils-${BINUTILS_VER}"
-BINUTILS_TAG="binutils-2_43"
+BINUTILS_TAG="binutils-2_44"
 
 BINUTILS_BRANCH=origin/binutils-$(echo "${BINUTILS_VER}" | sed -re "s|([0-9]+)\.([0-9]+)(\.[0-9]+)?|\1_\2|")-branch
 
