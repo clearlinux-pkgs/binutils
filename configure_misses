@@ -1,4 +1,3 @@
-Configure miss: -fcf-protection
 Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: CFLocaleCopyPreferredLanguages
@@ -6,8 +5,6 @@ Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: CFLocaleCopyPreferredLanguages
 Configure miss: CFLocaleCopyPreferredLanguages
-Configure miss: CFLocaleCopyPreferredLanguages
-Configure miss: chsize
 Configure miss: dsymutil
 Configure miss: dsymutil
 Configure miss: elf-hints.h
@@ -60,7 +57,9 @@ Configure miss: whether declaration is required for environ
 Configure miss: whether declaration is required for ffs
 Configure miss: whether errno must be declared
 Configure miss: whether the D compiler works
+Configure miss: whether to enable libdiagnostics
 Configure miss: whether to use debuginfod
+Configure miss: whether to use xxhash
 Configure miss: win32_pstatus_t in sys/procfs.h
 Configure miss: windres
 Configure miss: windres
@@ -68,7 +67,6 @@ Configure miss: x86_64-generic-linux-dsymutil
 Configure miss: x86_64-generic-linux-gdc
 Configure miss: x86_64-generic-linux-gm2
 Configure miss: x86_64-generic-linux-otool
-Configure miss: x86_64-generic-linux-pkg-config
 Configure miss: x86_64-generic-linux-pkg-config
 Configure miss: x86_64-generic-linux-pkg-config
 Configure miss: x86_64-generic-linux-pkg-config

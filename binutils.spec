@@ -8,11 +8,11 @@
 # Source0 file verified with key 0x13FCEF89DD9E3C4F (nickc@redhat.com)
 #
 Name     : binutils
-Version  : 2.43
-Release  : 558
-URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz
-Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz
-Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.43.tar.xz.sig
+Version  : 2.44
+Release  : 559
+URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.44.tar.xz
+Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.44.tar.xz
+Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.44.tar.xz.sig
 Source2  : 13FCEF89DD9E3C4F.pkey
 Summary  : zlib compression library
 Group    : Development/Tools
@@ -33,6 +33,7 @@ BuildRequires : gnupg
 BuildRequires : lz4-dev
 BuildRequires : lzo-dev
 BuildRequires : pypi(msgpack)
+BuildRequires : rustc
 BuildRequires : texinfo
 BuildRequires : valgrind
 BuildRequires : zlib-dev
@@ -65,12 +66,14 @@ Requires: binutils = %{version}-%{release}
 dev components for the binutils package.
 
 
-%package extras
-Summary: extras components for the binutils package.
-Group: Default
+%package doc
+Summary: doc components for the binutils package.
+Group: Documentation
+Requires: binutils-man = %{version}-%{release}
+Requires: binutils-info = %{version}-%{release}
 
-%description extras
-extras components for the binutils package.
+%description doc
+doc components for the binutils package.
 
 
 %package info
@@ -129,8 +132,8 @@ chmod 700 .gnupg
 gpg --homedir .gnupg --import %{SOURCE2}
 gpg --homedir .gnupg --status-fd 1 --verify %{SOURCE1} %{SOURCE0} > gpg.status
 grep -E '^\[GNUPG:\] (GOODSIG|EXPKEYSIG) 13FCEF89DD9E3C4F' gpg.status
-%setup -q -n binutils-2.43
-cd %{_builddir}/binutils-2.43
+%setup -q -n binutils-2.44
+cd %{_builddir}/binutils-2.44
 %patch -P 1 -p1
 %patch -P 2 -p1
 
@@ -175,7 +178,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1737743338
+export SOURCE_DATE_EPOCH=1738600223
 export GCC_IGNORE_WERROR=1
 CLEAR_INTERMEDIATE_CFLAGS="$CLEAR_INTERMEDIATE_CFLAGS -fno-lto "
 CLEAR_INTERMEDIATE_FCFLAGS="$CLEAR_INTERMEDIATE_FFLAGS -fno-lto "
@@ -210,7 +213,7 @@ FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS"
 FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS"
 ASFLAGS="$CLEAR_INTERMEDIATE_ASFLAGS"
 LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS"
-export SOURCE_DATE_EPOCH=1737743338
+export SOURCE_DATE_EPOCH=1738600223
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
 cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
@@ -232,7 +235,6 @@ GOAMD64=v2
 %find_lang bfd
 %find_lang opcodes
 %find_lang gas
-%find_lang gold
 ## Remove excluded files
 rm -f %{buildroot}*/usr/bin/dlltool
 rm -f %{buildroot}*/usr/bin/windres
@@ -6066,59 +6068,6 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib/ldscripts/nds32elf_linux.xse
 /usr/lib/ldscripts/nds32elf_linux.xser
 /usr/lib/ldscripts/nds32elf_linux.xu
-/usr/lib/ldscripts/nios2elf.x
-/usr/lib/ldscripts/nios2elf.xbn
-/usr/lib/ldscripts/nios2elf.xc
-/usr/lib/ldscripts/nios2elf.xce
-/usr/lib/ldscripts/nios2elf.xcer
-/usr/lib/ldscripts/nios2elf.xd
-/usr/lib/ldscripts/nios2elf.xdc
-/usr/lib/ldscripts/nios2elf.xdce
-/usr/lib/ldscripts/nios2elf.xdcer
-/usr/lib/ldscripts/nios2elf.xde
-/usr/lib/ldscripts/nios2elf.xder
-/usr/lib/ldscripts/nios2elf.xdw
-/usr/lib/ldscripts/nios2elf.xdwe
-/usr/lib/ldscripts/nios2elf.xdwer
-/usr/lib/ldscripts/nios2elf.xe
-/usr/lib/ldscripts/nios2elf.xer
-/usr/lib/ldscripts/nios2elf.xn
-/usr/lib/ldscripts/nios2elf.xr
-/usr/lib/ldscripts/nios2elf.xu
-/usr/lib/ldscripts/nios2elf.xw
-/usr/lib/ldscripts/nios2elf.xwe
-/usr/lib/ldscripts/nios2elf.xwer
-/usr/lib/ldscripts/nios2linux.x
-/usr/lib/ldscripts/nios2linux.xbn
-/usr/lib/ldscripts/nios2linux.xc
-/usr/lib/ldscripts/nios2linux.xce
-/usr/lib/ldscripts/nios2linux.xcer
-/usr/lib/ldscripts/nios2linux.xd
-/usr/lib/ldscripts/nios2linux.xdc
-/usr/lib/ldscripts/nios2linux.xdce
-/usr/lib/ldscripts/nios2linux.xdcer
-/usr/lib/ldscripts/nios2linux.xde
-/usr/lib/ldscripts/nios2linux.xder
-/usr/lib/ldscripts/nios2linux.xdw
-/usr/lib/ldscripts/nios2linux.xdwe
-/usr/lib/ldscripts/nios2linux.xdwer
-/usr/lib/ldscripts/nios2linux.xe
-/usr/lib/ldscripts/nios2linux.xer
-/usr/lib/ldscripts/nios2linux.xn
-/usr/lib/ldscripts/nios2linux.xr
-/usr/lib/ldscripts/nios2linux.xs
-/usr/lib/ldscripts/nios2linux.xsc
-/usr/lib/ldscripts/nios2linux.xsce
-/usr/lib/ldscripts/nios2linux.xscer
-/usr/lib/ldscripts/nios2linux.xse
-/usr/lib/ldscripts/nios2linux.xser
-/usr/lib/ldscripts/nios2linux.xsw
-/usr/lib/ldscripts/nios2linux.xswe
-/usr/lib/ldscripts/nios2linux.xswer
-/usr/lib/ldscripts/nios2linux.xu
-/usr/lib/ldscripts/nios2linux.xw
-/usr/lib/ldscripts/nios2linux.xwe
-/usr/lib/ldscripts/nios2linux.xwer
 /usr/lib/ldscripts/ns32knbsd.x
 /usr/lib/ldscripts/ns32knbsd.xbn
 /usr/lib/ldscripts/ns32knbsd.xe
@@ -6669,7 +6618,6 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/bin/c++filt
 /usr/bin/coffdump
 /usr/bin/dllwrap
-/usr/bin/dwp
 /usr/bin/elfedit
 /usr/bin/gp-archive
 /usr/bin/gp-collect-app
@@ -6678,6 +6626,11 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/bin/gp-display-text
 /usr/bin/gprof
 /usr/bin/gprofng
+/usr/bin/gprofng-archive
+/usr/bin/gprofng-collect-app
+/usr/bin/gprofng-display-html
+/usr/bin/gprofng-display-src
+/usr/bin/gprofng-display-text
 /usr/bin/ld
 /usr/bin/ld.bfd
 /usr/bin/nm
@@ -6766,9 +6719,9 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/include/sframe.h
 /usr/include/symcat.h
 
-%files extras
-%defattr(-,root,root,-)
-/usr/bin/ld.gold
+%files doc
+%defattr(0644,root,root,0755)
+/usr/share/doc/gprofng/examples.tar.gz
 
 %files info
 %defattr(0644,root,root,0755)
@@ -6790,7 +6743,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib64/gprofng/libgp-heap.so
 /usr/lib64/gprofng/libgp-iotrace.so
 /usr/lib64/gprofng/libgp-sync.so
-/usr/lib64/libbfd-2.43.1.so
+/usr/lib64/libbfd-2.44.0.so
 /usr/lib64/libbfd.so
 /usr/lib64/libctf-nobfd.so
 /usr/lib64/libctf-nobfd.so.0
@@ -6801,7 +6754,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/lib64/libgprofng.so
 /usr/lib64/libgprofng.so.0
 /usr/lib64/libgprofng.so.0.0.0
-/usr/lib64/libopcodes-2.43.1.so
+/usr/lib64/libopcodes-2.44.0.so
 /usr/lib64/libopcodes.so
 /usr/lib64/libsframe.so
 /usr/lib64/libsframe.so.1
@@ -6824,12 +6777,12 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/share/man/man1/c++filt.1
 /usr/share/man/man1/dlltool.1
 /usr/share/man/man1/elfedit.1
-/usr/share/man/man1/gp-archive.1
-/usr/share/man/man1/gp-collect-app.1
-/usr/share/man/man1/gp-display-html.1
-/usr/share/man/man1/gp-display-src.1
-/usr/share/man/man1/gp-display-text.1
 /usr/share/man/man1/gprof.1
+/usr/share/man/man1/gprofng-archive.1
+/usr/share/man/man1/gprofng-collect-app.1
+/usr/share/man/man1/gprofng-display-html.1
+/usr/share/man/man1/gprofng-display-src.1
+/usr/share/man/man1/gprofng-display-text.1
 /usr/share/man/man1/gprofng.1
 /usr/share/man/man1/ld.1
 /usr/share/man/man1/nm.1
@@ -6847,6 +6800,6 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 %defattr(-,root,root,-)
 /usr/lib64/libiberty.a
 
-%files locales -f binutils.lang -f gprof.lang -f ld.lang -f bfd.lang -f opcodes.lang -f gas.lang -f gold.lang
+%files locales -f binutils.lang -f gprof.lang -f ld.lang -f bfd.lang -f opcodes.lang -f gas.lang
 %defattr(-,root,root,-)
 
