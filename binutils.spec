@@ -9,10 +9,10 @@
 #
 Name     : binutils
 Version  : 2.44
-Release  : 559
-URL      : https://mirrors.kernel.org/gnu/binutils/binutils-2.44.tar.xz
-Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-2.44.tar.xz
-Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-2.44.tar.xz.sig
+Release  : 560
+URL      : https://mirrors.kernel.org/gnu/binutils/binutils-with-gold-2.44.tar.xz
+Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-with-gold-2.44.tar.xz
+Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-with-gold-2.44.tar.xz.sig
 Source2  : 13FCEF89DD9E3C4F.pkey
 Summary  : zlib compression library
 Group    : Development/Tools
@@ -76,6 +76,14 @@ Requires: binutils-info = %{version}-%{release}
 doc components for the binutils package.
 
 
+%package extras
+Summary: extras components for the binutils package.
+Group: Default
+
+%description extras
+extras components for the binutils package.
+
+
 %package info
 Summary: info components for the binutils package.
 Group: Default
@@ -132,8 +140,8 @@ chmod 700 .gnupg
 gpg --homedir .gnupg --import %{SOURCE2}
 gpg --homedir .gnupg --status-fd 1 --verify %{SOURCE1} %{SOURCE0} > gpg.status
 grep -E '^\[GNUPG:\] (GOODSIG|EXPKEYSIG) 13FCEF89DD9E3C4F' gpg.status
-%setup -q -n binutils-2.44
-cd %{_builddir}/binutils-2.44
+%setup -q -n binutils-with-gold-2.44
+cd %{_builddir}/binutils-with-gold-2.44
 %patch -P 1 -p1
 %patch -P 2 -p1
 
@@ -178,7 +186,7 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1738600223
+export SOURCE_DATE_EPOCH=1738612528
 export GCC_IGNORE_WERROR=1
 CLEAR_INTERMEDIATE_CFLAGS="$CLEAR_INTERMEDIATE_CFLAGS -fno-lto "
 CLEAR_INTERMEDIATE_FCFLAGS="$CLEAR_INTERMEDIATE_FFLAGS -fno-lto "
@@ -213,19 +221,19 @@ FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS"
 FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS"
 ASFLAGS="$CLEAR_INTERMEDIATE_ASFLAGS"
 LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS"
-export SOURCE_DATE_EPOCH=1738600223
+export SOURCE_DATE_EPOCH=1738612528
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/binutils
-cp %{_builddir}/binutils-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
-cp %{_builddir}/binutils-%{version}/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d || :
-cp %{_builddir}/binutils-%{version}/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02 || :
-cp %{_builddir}/binutils-%{version}/COPYING3.LIB %{buildroot}/usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9 || :
-cp %{_builddir}/binutils-%{version}/bfd/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02 || :
-cp %{_builddir}/binutils-%{version}/gas/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02 || :
-cp %{_builddir}/binutils-%{version}/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
-cp %{_builddir}/binutils-%{version}/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02 || :
-cp %{_builddir}/binutils-%{version}/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d || :
-cp %{_builddir}/binutils-%{version}/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0 || :
+cp %{_builddir}/binutils-with-gold-%{version}/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
+cp %{_builddir}/binutils-with-gold-%{version}/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/0e8e850b0580fbaaa0872326cb1b8ad6adda9b0d || :
+cp %{_builddir}/binutils-with-gold-%{version}/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02 || :
+cp %{_builddir}/binutils-with-gold-%{version}/COPYING3.LIB %{buildroot}/usr/share/package-licenses/binutils/e7d563f52bf5295e6dba1d67ac23e9f6a160fab9 || :
+cp %{_builddir}/binutils-with-gold-%{version}/bfd/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02 || :
+cp %{_builddir}/binutils-with-gold-%{version}/gas/COPYING %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02 || :
+cp %{_builddir}/binutils-with-gold-%{version}/include/COPYING %{buildroot}/usr/share/package-licenses/binutils/68c94ffc34f8ad2d7bfae3f5a6b996409211c1b1 || :
+cp %{_builddir}/binutils-with-gold-%{version}/include/COPYING3 %{buildroot}/usr/share/package-licenses/binutils/8624bcdae55baeef00cd11d5dfcfa60f68710a02 || :
+cp %{_builddir}/binutils-with-gold-%{version}/libiberty/COPYING.LIB %{buildroot}/usr/share/package-licenses/binutils/597bf5f9c0904bd6c48ac3a3527685818d11246d || :
+cp %{_builddir}/binutils-with-gold-%{version}/zlib/contrib/dotzlib/LICENSE_1_0.txt %{buildroot}/usr/share/package-licenses/binutils/892b34f7865d90a6f949f50d95e49625a10bc7f0 || :
 export GOAMD64=v2
 GOAMD64=v2
 %make_install tooldir=/usr
@@ -235,6 +243,7 @@ GOAMD64=v2
 %find_lang bfd
 %find_lang opcodes
 %find_lang gas
+%find_lang gold
 ## Remove excluded files
 rm -f %{buildroot}*/usr/bin/dlltool
 rm -f %{buildroot}*/usr/bin/windres
@@ -6618,6 +6627,7 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 /usr/bin/c++filt
 /usr/bin/coffdump
 /usr/bin/dllwrap
+/usr/bin/dwp
 /usr/bin/elfedit
 /usr/bin/gp-archive
 /usr/bin/gp-collect-app
@@ -6723,6 +6733,10 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 %defattr(0644,root,root,0755)
 /usr/share/doc/gprofng/examples.tar.gz
 
+%files extras
+%defattr(-,root,root,-)
+/usr/bin/ld.gold
+
 %files info
 %defattr(0644,root,root,0755)
 /usr/share/info/as.info
@@ -6800,6 +6814,6 @@ cp -a %{buildroot}/usr/bin/as %{buildroot}/usr/lib64/gcc/x86_64-generic-linux/12
 %defattr(-,root,root,-)
 /usr/lib64/libiberty.a
 
-%files locales -f binutils.lang -f gprof.lang -f ld.lang -f bfd.lang -f opcodes.lang -f gas.lang
+%files locales -f binutils.lang -f gprof.lang -f ld.lang -f bfd.lang -f opcodes.lang -f gas.lang -f gold.lang
 %defattr(-,root,root,-)
 
