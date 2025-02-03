@@ -2,7 +2,7 @@
 set -e -o pipefail
 
 BINUTILS_GIT=~/git/binutils-gdb
-BINUTILS_VER=2_43
+BINUTILS_VER=2_44
 
 #BINUTILS_TAG="binutils-${BINUTILS_VER}"
 BINUTILS_TAG="binutils-2_43"
