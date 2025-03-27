@@ -9,7 +9,7 @@
 #
 Name     : binutils
 Version  : 2.44
-Release  : 565
+Release  : 566
 URL      : https://mirrors.kernel.org/gnu/binutils/binutils-with-gold-2.44.tar.xz
 Source0  : https://mirrors.kernel.org/gnu/binutils/binutils-with-gold-2.44.tar.xz
 Source1  : https://mirrors.kernel.org/gnu/binutils/binutils-with-gold-2.44.tar.xz.sig
