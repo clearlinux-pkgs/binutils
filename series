@@ -11,3 +11,4 @@ binutils-add-LD_AS_NEEDED-global-env.patch
 #v1-0007-With-text-ordering-file-support.patch
 #v1-0008-ld-gold-Support-alignment-for-functions.patch
 #binutils-apx.patch
+zstd-compression-level.patch

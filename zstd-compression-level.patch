@@ -1,0 +1,11 @@
+--- binutils-with-gold-2.44/bfd/compress.c~	2025-02-02 00:00:00.000000000 +0000
++++ binutils-with-gold-2.44/bfd/compress.c	2025-04-01 15:13:54.265340036 +0000
+@@ -658,7 +658,7 @@
+ 					   compressed_size,
+ 					   input_buffer,
+ 					   uncompressed_size,
+-					   ZSTD_CLEVEL_DEFAULT);
++					   ZSTD_maxCLevel());
+ 	  if (ZSTD_isError (compressed_size))
+ 	    {
+ 	      bfd_release (abfd, buffer);
